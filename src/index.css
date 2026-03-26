@@ -1,0 +1,4 @@
+/* Global imports and overrides will go here */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
