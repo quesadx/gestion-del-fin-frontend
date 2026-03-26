@@ -249,6 +249,27 @@ import { LowStockAlert, useResources } from '@/features/inventory'
 
 ## CODE CONVENTIONS
 
+### Language — English ONLY
+All source code must be written in **English**:
+- Variable, function, and type names
+- Comments and docstrings
+- Commit messages
+- File and folder names
+
+**Exception:** UI text displayed to users can be localized (Spanish, etc.), but code infrastructure is always English.
+
+### Good practices checklist
+Before writing any code:
+- [ ] No `any` or `as any` — use explicit types
+- [ ] No `console.log` — use `shared/utils/logger.ts`
+- [ ] No magic numbers — extract to named constants
+- [ ] Functions have single responsibility (max 20 lines)
+- [ ] Error handling in all async functions
+- [ ] Imports organized: react | libraries | features | shared | local
+- [ ] Components use named exports only
+- [ ] Types at top of file, component below
+- [ ] No unused variables or imports
+
 ### Component file structure
 ```typescript
 // 1. Imports — group: react | libraries | @/features | @/shared | ./local
