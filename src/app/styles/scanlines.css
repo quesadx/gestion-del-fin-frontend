@@ -23,10 +23,10 @@
   /* Creates repeating horizontal lines of 2 pixels each */
   background: repeating-linear-gradient(
     0deg,
-    transparent,
+    rgba(0, 0, 0, 0.3),
+    rgba(0, 0, 0, 0.3) 2px,
     transparent 2px,
-    rgba(0, 0, 0, 0.04) 2px,
-    rgba(0, 0, 0, 0.04) 4px
+    transparent 4px
   );
 
   /* CRITICAL: Allows user to click buttons/inputs under the lines */
