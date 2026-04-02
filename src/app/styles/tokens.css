@@ -1,0 +1,54 @@
+:root {
+  /**
+   * BACKGROUNDS
+   * --clr-bg-deep: Main outer container background.
+   * --clr-bg-screen: Inside the CRT screen.
+   * --clr-bg-panel: Elevated cards or inner containers.
+   */
+  --clr-bg-deep: #010802;
+  --clr-bg-screen: #020f04;
+  --clr-bg-panel: #041508;
+  --clr-bg-hover: #071f0b;
+
+  /**
+   * TEXT AND BORDERS (Phosphor Green Scale)
+   * Sorted from dimmest (inactive/borders) to brightest (alerts).
+   */
+  --clr-green-dim: #1a3d1f; /* Inactive or subtle borders */
+  --clr-green-mid: #2d6b35; /* Secondary text or main borders */
+  --clr-green-base: #3d8b46; /* Regular body text */
+  --clr-green-bright: #4dbd57; /* Primary text and active UI elements */
+  --clr-green-hi: #6de87a; /* Emphasized data values */
+  --clr-green-max: #a0f5a8; /* System messages or highlights */
+  --clr-green-glow: #c8ffce; /* Cursor blinking effects */
+
+  /**
+   * DEVICE HARDWARE
+   * Colors for the physical outer casing (bezel) of the terminal.
+   */
+  --clr-bezel: #1a1a18;
+  --clr-bezel-hi: #2e2e2a;
+  --clr-screw: #111110;
+
+  /**
+   * SEMANTIC STATES
+   * Colors for errors or low resources alerts.
+   */
+  --clr-danger: #8b1a1a;
+  --clr-danger-text: #ff4444;
+  --clr-warn: #3d3000;
+  --clr-warn-text: #c8a800;
+
+  /**
+   * EFFECTS & GEOMETRY
+   * standard sizes and glow shadows for active elements.
+   */
+  --glow-text: 0 0 8px rgba(77, 189, 87, 0.6);
+  --glow-strong: 0 0 16px rgba(109, 232, 122, 0.5);
+  --glow-subtle: 0 0 4px rgba(61, 139, 70, 0.3);
+
+  --border-thin: 1px solid var(--clr-green-mid);
+  --border-panel: 2px solid var(--clr-green-mid);
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}
