@@ -12,7 +12,7 @@ interface Props {
 export function ScreenSurface({ children }: Props) {
   return (
     <div className="relative flex h-full w-full flex-col overflow-hidden rounded-md border-4 border-black bg-bg-screen p-4 shadow-inner crt-screen">
-      {/* 
+      {/*
         This wrapper creates the subtle glow and noise effect 
         and ensures typography defaults to the Share Tech Mono font.
       */}

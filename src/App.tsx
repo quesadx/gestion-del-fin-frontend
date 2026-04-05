@@ -1,11 +1,21 @@
 import { DeviceFrame, ScreenSurface, StatusBar } from "@/shared/ui/device";
+import { motion, useReducedMotion } from "framer-motion";
+import { crtOn } from "@/shared/lib/motion";
 
 function App() {
+  const reduceMotion = useReducedMotion();
+  const animationVariant = reduceMotion ? {} : crtOn;
+
   return (
     <DeviceFrame>
       <ScreenSurface>
-        <StatusBar /> {/* Contenido temporal de prueba */}
-        <div className="flex flex-col h-full bg-panel p-6 border-thin rounded-md">
+        <StatusBar />
+        <motion.div
+          className="flex flex-col h-full bg-panel p-6 border-thin rounded-md origin-center"
+          variants={animationVariant}
+          initial="initial"
+          animate="animate"
+        >
           <h1 className="text-green-hi text-2xl font-display mb-4 pb-2 border-b border-green-dim">
             [SYSTEM DIAGNOSTICS V1.0]
           </h1>
@@ -30,7 +40,7 @@ function App() {
               Awaiting connection from Front A module...
             </p>
           </div>
-        </div>
+        </motion.div>
       </ScreenSurface>
     </DeviceFrame>
   );

@@ -41,7 +41,8 @@
     "AIAnalysis",
     "AIDecision",
     "contenido",
-    "prueba"
+    "prueba",
+    "scanline"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md"]
 }

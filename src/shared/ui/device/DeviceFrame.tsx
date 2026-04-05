@@ -11,10 +11,10 @@ interface Props {
 export function DeviceFrame({ children }: Props) {
   return (
     <div className="flex h-screen w-full items-center justify-center bg-black p-2 md:p-6 lg:p-10">
-      {/* 
-        The Bezel: Dark casing with a subtle top highlight 
-        and rounded tactical corners. Uses max-width so it 
-        looks like a device on large screens. 
+      {/*
+        The Bezel: Dark casing with a subtle top highlight
+        and rounded tactical corners. Uses max-width so it
+        looks like a device on large screens.
       */}
       <div className="relative flex h-full w-full max-w-6xl flex-col rounded-2xl border-t-2 border-t-bezel-hi bg-bezel p-3 shadow-2xl md:p-6">
         {/* Decorative Screws (Top Left, Top Right, Bottom Left, Bottom Right) */}
