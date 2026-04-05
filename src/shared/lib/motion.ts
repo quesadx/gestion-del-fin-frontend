@@ -5,7 +5,7 @@ export const crtOn: Variants = {
   animate: {
     scaleY: 1,
     opacity: 1,
-    transition: { duration: 0.25, ease: [0.23, 1, 0.32, 1] },
+    transition: { duration: 0.8, ease: [0.23, 1, 0.32, 1] },
   },
 };
 export const fadeIn: Variants = {

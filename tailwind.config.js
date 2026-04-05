@@ -17,6 +17,8 @@ export default {
         "danger-text": "var(--clr-danger-text)",
         "warn-text": "var(--clr-warn-text)",
         bezel: "var(--clr-bezel)",
+        "bezel-hi": "var(--clr-bezel-hi)",
+        screw: "var(--clr-screw)",
       },
       fontFamily: {
         display: ['"Press Start 2P"', "monospace"],

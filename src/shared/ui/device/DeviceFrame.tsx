@@ -18,10 +18,10 @@ export function DeviceFrame({ children }: Props) {
       */}
       <div className="relative flex h-full w-full max-w-6xl flex-col rounded-2xl border-t-2 border-t-bezel-hi bg-bezel p-3 shadow-2xl md:p-6">
         {/* Decorative Screws (Top Left, Top Right, Bottom Left, Bottom Right) */}
-        <div className="absolute left-2 top-2 h-2 w-2 rounded-full bg-screw shadow-inner" />
-        <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-screw shadow-inner" />
-        <div className="absolute bottom-2 left-2 h-2 w-2 rounded-full bg-screw shadow-inner" />
-        <div className="absolute bottom-2 right-2 h-2 w-2 rounded-full bg-screw shadow-inner" />
+        <div className="absolute left-3 top-3 h-3 w-3 rounded-full bg-screw border border-black shadow-inner" />
+        <div className="absolute right-3 top-3 h-3 w-3 rounded-full bg-screw border border-black shadow-inner" />
+        <div className="absolute bottom-3 left-3 h-3 w-3 rounded-full bg-screw border border-black shadow-inner" />
+        <div className="absolute bottom-3 right-3 h-3 w-3 rounded-full bg-screw border border-black shadow-inner" />
 
         {/* This is where the glass screen will be inserted */}
         {children}
