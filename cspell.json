@@ -1,0 +1,22 @@
+{
+  "version": "0.2",
+  "language": "en,es",
+  "dictionaries": ["es-es", "typescript", "node", "css"],
+  "words": [
+    "partialize",
+    "queryClient",
+    "devtools",
+    "phosphor",
+    "scanlines",
+    "apocalypse",
+    "survivorship",
+    "ingresseval",
+    "Zustand",
+    "tanstack",
+    "vite",
+    "shadcn",
+    "recharts"
+  ],
+  "ignoreWords": [],
+  "import": []
+}
