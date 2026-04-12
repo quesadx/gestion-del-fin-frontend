@@ -1,46 +1,18 @@
 import { DeviceFrame, ScreenSurface, StatusBar } from "@/shared/ui/device";
-import { motion, useReducedMotion } from "framer-motion";
-import { crtOn } from "@/shared/lib/motion";
+import { AppRouter } from "@/app/AppRouter";
 
+/**
+ * Root App Component
+ *
+ * Wraps the entire application with device chrome (bezel, screen, status bar)
+ * and integrates the main router.
+ */
 function App() {
-  const reduceMotion = useReducedMotion();
-  const animationVariant = reduceMotion ? {} : crtOn;
-
   return (
     <DeviceFrame>
       <ScreenSurface>
         <StatusBar />
-        <motion.div
-          className="flex flex-col h-full bg-panel p-6 border-thin rounded-md origin-center"
-          variants={animationVariant}
-          initial="initial"
-          animate="animate"
-        >
-          <h1 className="text-green-hi text-2xl font-display mb-4 pb-2 border-b border-green-dim">
-            [SYSTEM DIAGNOSTICS V1.0]
-          </h1>
-
-          <ul className="space-y-4 text-green-base font-mono">
-            <li className="flex items-center gap-2">
-              <span className="text-green-bright animate-pulse">▶</span>
-              React 18: Operational
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-bright animate-pulse">▶</span>
-              Tailwind CSS: Operational
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-bright animate-pulse">▶</span>
-              Device Layout: ONLINE
-            </li>
-          </ul>
-
-          <div className="mt-auto">
-            <p className="text-xs text-green-dim font-system uppercase tracking-widest animate-pulse">
-              Awaiting connection from Front A module...
-            </p>
-          </div>
-        </motion.div>
+        <AppRouter />
       </ScreenSurface>
     </DeviceFrame>
   );
