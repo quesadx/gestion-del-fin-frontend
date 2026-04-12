@@ -8,6 +8,7 @@
     "skipLibCheck": true,
 
     /* PATH ALIASES (Fundamental para el Front A) */
+    "baseUrl": ".",
 
     "paths": {
       "@/*": ["./src/*"]
