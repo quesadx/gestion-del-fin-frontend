@@ -1,6 +1,0 @@
-@import "./app/styles/tokens.css";
-@import "./app/styles/scanlines.css";
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
