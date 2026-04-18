@@ -43,7 +43,8 @@
     "contenido",
     "prueba",
     "scanline",
-    "partialize"
+    "partialize",
+    "CAMPAMENTO"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md"]
 }

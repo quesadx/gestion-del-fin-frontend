@@ -1,8 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { crtOn, glitch, cursorBlink } from "@/shared/lib/motion";
+import { useAuthStore } from "../store/auth.store";
 
 export function LoginPage() {
+  const navigate = useNavigate();
+  const login = useAuthStore((state) => state.login);
   const reduceMotion = useReducedMotion();
   const pageIntro = reduceMotion ? {} : crtOn;
 
@@ -53,10 +57,22 @@ export function LoginPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleBypass = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+
+    login("fake-jwt-token-777", {
+      id: "u-001",
+      username: username || "ADMIN_DEV",
+      role: "system_admin",
+      campId: "camp-alpha",
+    });
+
+    navigate("/dashboard");
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Persona A - Conectar login real a auth.store.ts
-    console.log("Login triggered:", username);
+    handleBypass();
   };
 
   return (
@@ -169,6 +185,7 @@ export function LoginPage() {
                 </button>
                 <button
                   type="button"
+                  onClick={handleBypass}
                   className="group flex-1 border-2 border-green-bright bg-transparent py-4 font-display text-sm text-green-bright transition-colors hover:bg-green-mid hover:text-black focus:outline-none uppercase tracking-wide relative overflow-hidden"
                 >
                   <span className="relative z-10 transition-all group-hover:tracking-[0.15em]">
