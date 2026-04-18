@@ -150,7 +150,7 @@ export function PeopleListPage() {
             <motion.li
               key={person.id}
               variants={staggerItem}
-              className="group flex gap-3 border border-green-mid bg-bg-deep p-3 hover:border-green-bright hover:shadow-glow-subtle transition-all cursor-crosshair"
+              className="group flex gap-3 border border-green-mid bg-bg-deep p-3 transition-all duration-200 hover:border-green-bright hover:-translate-y-1 hover:shadow-glow-subtle cursor-pointer hover:bg-green-mid/5"
             >
               <div className="flex h-20 w-20 shrink-0 flex-col items-center justify-center border border-dashed border-green-dim bg-bg-screen relative overflow-hidden">
                 <div className="absolute inset-0 bg-green-dim/5 group-hover:bg-green-bright/10 transition-colors" />

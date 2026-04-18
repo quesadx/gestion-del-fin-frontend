@@ -118,7 +118,7 @@ export function ExplorationsPage() {
               <motion.li
                 key={exp.id}
                 variants={staggerItem}
-                className="flex items-center justify-between border border-green-mid bg-bg-deep pr-4 transition-colors hover:border-green-bright group"
+                className="flex items-center justify-between border border-green-mid bg-bg-deep pr-4 transition-all duration-200 hover:border-green-bright hover:translate-x-1 hover:shadow-glow-subtle cursor-pointer group hover:bg-green-mid/5"
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div

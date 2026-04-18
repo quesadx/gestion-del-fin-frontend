@@ -1,6 +1,7 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { crtOn } from "@/shared/lib/motion";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { crtOn, pageTransition } from "@/shared/lib/motion";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 import {
   Activity,
   Users,
@@ -13,6 +14,13 @@ import {
 // cspell:disable
 export function PrivateLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const NAV_ITEMS = [
     { path: "/dashboard", label: "STAT", icon: Activity },
@@ -53,13 +61,16 @@ export function PrivateLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`group flex flex-col items-center justify-center border-2 border-dashed p-3 transition-colors ${
+                className={`group flex flex-col items-center justify-center border-2 border-dashed p-3 transition-all duration-200 ${
                   isActive
-                    ? "border-green-bright bg-green-bright/10 text-green-hi shadow-glow-subtle"
-                    : "border-green-mid/50 text-green-mid hover:border-green-base hover:text-green-bright"
+                    ? "border-green-bright bg-green-bright/10 text-green-hi shadow-glow-subtle scale-105"
+                    : "border-green-mid/50 text-green-mid hover:border-green-base hover:text-green-bright hover:scale-105 hover:bg-green-base/10 hover:shadow-glow-subtle"
                 }`}
               >
-                <Icon size={24} className="mb-2" />
+                <Icon
+                  size={24}
+                  className="mb-2 transition-transform duration-200 group-hover:scale-110"
+                />
                 <span className="font-display text-[10px] uppercase tracking-wider">
                   {item.label}
                 </span>
@@ -68,7 +79,10 @@ export function PrivateLayout() {
           })}
         </nav>
 
-        <button className="mt-auto flex flex-col items-center text-danger hover:text-danger-text hover:shadow-glow-text transition-colors shrink-0 pt-4">
+        <button
+          onClick={handleLogout}
+          className="mt-auto flex flex-col items-center text-danger hover:text-danger-text hover:shadow-glow-text transition-colors shrink-0 pt-4"
+        >
           <LogOut size={20} className="mb-2" />
           <span className="font-display text-[9px] tracking-widest">
             REBOOT
@@ -88,8 +102,19 @@ export function PrivateLayout() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-          <Outlet />
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              variants={pageTransition}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="h-full w-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
     </motion.div>

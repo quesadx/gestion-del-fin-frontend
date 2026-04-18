@@ -59,31 +59,5 @@
   }
 }
 
-@keyframes terminalBlink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  92% {
-    opacity: 1;
-  }
-  93% {
-    opacity: 0.8;
-  }
-  94% {
-    opacity: 0.95;
-  }
-  95% {
-    opacity: 0.6;
-  }
-  96% {
-    opacity: 1;
-  }
-  98% {
-    opacity: 0.9;
-  }
-}
-
 body {
-  animation: terminalBlink 12s infinite;
 }

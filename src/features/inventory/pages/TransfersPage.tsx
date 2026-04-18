@@ -157,7 +157,7 @@ export function TransfersPage() {
               <motion.li
                 key={trx.id}
                 variants={staggerItem}
-                className="group flex flex-col md:grid md:grid-cols-12 md:items-center gap-2 md:gap-4 p-3 border border-green-mid/30 bg-bg-deep hover:border-green-base transition-colors"
+                className="group flex flex-col md:grid md:grid-cols-12 md:items-center gap-2 md:gap-4 p-3 border border-green-mid/30 bg-bg-deep hover:border-green-bright hover:bg-green-mid/10 hover:shadow-glow-subtle transition-all duration-200 hover:translate-x-1 cursor-pointer"
               >
                 <div className="col-span-1 flex items-center justify-center">
                   {trx.direction === "OUTGOING" ? (

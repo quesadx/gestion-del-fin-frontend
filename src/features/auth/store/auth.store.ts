@@ -60,7 +60,6 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      // cspell: disable-line
       partialize: (s) => ({ token: s.token, user: s.user, role: s.role }),
     },
   ),

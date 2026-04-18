@@ -10,6 +10,7 @@ export function ScreenSurface({ children }: Props) {
       <div className="relative z-0 flex h-full w-full flex-col text-green-base font-mono">
         {children}
       </div>
+      <div className="crt-sweep"></div>
     </div>
   );
 }
