@@ -1,20 +1,8 @@
-/**
- * CRT SCANLINE EFFECT
- * Adds a retro TV scanline overlay to any container.
- *
- * Usage: Add className="crt-screen" to your container div.
- * No modifications to the container's children are needed.
- */
 .crt-screen {
   position: relative;
-  /* Prevents the scanlines from overflowing the container */
   overflow: hidden;
 }
 
-/**
- * Create a pronounced internal shadow to
- * give the illusion of a bulbous, curved crystal.
- */
 .crt-screen::before {
   content: "";
   position: absolute;
@@ -26,16 +14,11 @@
   z-index: 5;
 }
 
-/**
- * The '::after' pseudoelement creates a transparent visual layer
- * on top of the container to render the scanlines.
- */
 .crt-screen::after {
   content: "";
   position: absolute;
   inset: 0;
 
-  /* Creates repeating horizontal lines of 2 pixels each */
   background: repeating-linear-gradient(
     0deg,
     rgba(0, 0, 0, 0.3),
@@ -44,7 +27,6 @@
     transparent 4px
   );
 
-  /* CRITICAL: Allows user to click buttons/inputs under the lines */
   pointer-events: none;
   z-index: 10;
 }

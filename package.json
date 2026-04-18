@@ -9,7 +9,7 @@
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write src/",
-    "spell": "cspell 'src/**/*.{ts,tsx}'",
+    "spell": "cspell \"src/**/*.{ts,tsx}\"",
     "check": "npm run lint && npm run spell && npm run build",
     "preview": "vite preview"
   },
