@@ -33,3 +33,32 @@ export const scanlineSweep: { animate: object; transition: Transition } = {
   animate: { y: ["-100%", "100%"] },
   transition: { duration: 3, repeat: Infinity, ease: "linear" },
 };
+
+export const cursorBlink: Variants = {
+  animate: {
+    opacity: [1, 0, 1],
+    transition: {
+      duration: 1,
+      repeat: Infinity,
+      ease: "linear",
+      times: [0, 0.5, 1],
+    },
+  },
+};
+
+export const pageTransition: Variants = {
+  initial: {
+    opacity: 0,
+    scale: 0.99,
+  },
+  animate: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.25, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.99,
+    transition: { duration: 0.15, ease: "easeIn" },
+  },
+};
