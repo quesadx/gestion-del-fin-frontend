@@ -1,13 +1,15 @@
 import { BrowserRouter } from "react-router-dom";
 import { AppRouter } from "@/app/AppRouter";
-import { PipBoyRoom } from "@/shared/ui/pipboy";
+import { DeviceFrame, ScreenSurface } from "@/shared/ui/device";
 
 function App() {
   return (
     <BrowserRouter>
-      <PipBoyRoom>
-        <AppRouter />
-      </PipBoyRoom>
+      <DeviceFrame>
+        <ScreenSurface>
+          <AppRouter />
+        </ScreenSurface>
+      </DeviceFrame>
     </BrowserRouter>
   );
 }
