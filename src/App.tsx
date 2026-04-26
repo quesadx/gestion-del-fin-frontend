@@ -1,15 +1,15 @@
-import { DeviceFrame, ScreenSurface, StatusBar } from "@/shared/ui/device";
-import { AppRouter } from "@/app/AppRouter";
+import { BrowserRouter } from 'react-router-dom';
+import { AppRouter } from '@/app/AppRouter';
+import { DeviceFrame, ScreenSurface } from '@/shared/ui/device';
 
-function App() {
+export function App() {
   return (
-    <DeviceFrame>
-      <ScreenSurface>
-        <StatusBar />
-        <AppRouter />
-      </ScreenSurface>
-    </DeviceFrame>
+    <BrowserRouter>
+      <DeviceFrame>
+        <ScreenSurface>
+          <AppRouter />
+        </ScreenSurface>
+      </DeviceFrame>
+    </BrowserRouter>
   );
 }
-
-export default App;

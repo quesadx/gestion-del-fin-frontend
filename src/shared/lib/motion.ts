@@ -1,11 +1,11 @@
-import type { Variants, Transition } from "framer-motion";
+import type { Variants, Transition } from 'framer-motion';
 
 export const crtOn: Variants = {
   initial: { scaleY: 0.01, opacity: 0 },
   animate: {
     scaleY: 1,
     opacity: 1,
-    transition: { duration: 0.8, ease: [0.23, 1, 0.32, 1] },
+    transition: { duration: 0.25, ease: [0.23, 1, 0.32, 1] },
   },
 };
 export const fadeIn: Variants = {
@@ -30,8 +30,8 @@ export const staggerItem: Variants = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.2 } },
 };
 export const scanlineSweep: { animate: object; transition: Transition } = {
-  animate: { y: ["-100%", "100%"] },
-  transition: { duration: 3, repeat: Infinity, ease: "linear" },
+  animate: { y: ['-100%', '100%'] },
+  transition: { duration: 3, repeat: Infinity, ease: 'linear' },
 };
 
 export const cursorBlink: Variants = {
@@ -40,25 +40,8 @@ export const cursorBlink: Variants = {
     transition: {
       duration: 1,
       repeat: Infinity,
-      ease: "linear",
+      ease: 'linear',
       times: [0, 0.5, 1],
     },
-  },
-};
-
-export const pageTransition: Variants = {
-  initial: {
-    opacity: 0,
-    scale: 0.99,
-  },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.25, ease: "easeOut" },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.99,
-    transition: { duration: 0.15, ease: "easeIn" },
   },
 };

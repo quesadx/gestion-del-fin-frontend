@@ -1,29 +1,34 @@
-import { Battery, Wifi } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 
 export function StatusBar() {
+  const navigate = useNavigate();
+  const { token, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
-    <header className="mb-6 flex shrink-0 items-center justify-between border-b-2 border-b-green-mid pb-2 font-display text-xs text-green-bright uppercase uppercase tracking-wider shadow-glow-subtle">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1">
-          <Wifi className="h-4 w-4 animate-pulse" />
-          <span className="hidden sm:inline">UPLINK</span>
-        </div>
-        <div className="flex items-center gap-1 opacity-80">
-          <Battery className="h-4 w-4" />
-          <span className="hidden sm:inline">98%</span>
-        </div>
-      </div>
-
-      <div className="text-center font-bold">
-        <span>CAMPAMENTO OMEGA</span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <span className="hidden sm:inline text-green-base text-[10px]">
-          TIME /
+    <div className="pip-topbar">
+      <span>VAULT-TEC - PIP-BOY 3000 - SURVIVAL TERMINAL v2.4</span>
+      <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center' }}>
+        <span>SIG</span>
+        <span className="pip-signal">
+          <i style={{ height: 3 }} />
+          <i style={{ height: 5 }} />
+          <i style={{ height: 7 }} />
+          <i style={{ height: 9 }} />
+          <i style={{ height: 5, opacity: 0.3 }} />
         </span>
-        <span className="animate-pulse">15:42:01</span>
-      </div>
-    </header>
+        <span>BAT 87%</span>
+        {token && (
+          <button type="button" onClick={handleLogout} className="pip-topbar-action">
+            REBOOT
+          </button>
+        )}
+      </span>
+    </div>
   );
 }

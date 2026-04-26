@@ -1,11 +1,11 @@
-import axios from "axios";
-import { useAuthStore } from "@/features/auth/store/auth.store";
-import { useCampStore } from "@/features/camps/store/camp.store";
+import axios from 'axios';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { useCampStore } from '@/features/camps/store/camp.store';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
   timeout: 10_000,
-  headers: { "Content-Type": "application/json" },
+  headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.request.use((config) => {
@@ -17,7 +17,7 @@ api.interceptors.request.use((config) => {
   }
 
   if (campId) {
-    config.headers["X-Camp-Id"] = campId;
+    config.headers['X-Camp-Id'] = campId;
   }
 
   return config;
@@ -28,7 +28,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = "/login";
+      window.location.href = '/login';
     }
 
     return Promise.reject(error);
