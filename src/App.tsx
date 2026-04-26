@@ -1,14 +1,14 @@
-import { DeviceFrame, ScreenSurface, StatusBar } from "@/shared/ui/device";
+import { BrowserRouter } from "react-router-dom";
 import { AppRouter } from "@/app/AppRouter";
+import { PipBoyRoom } from "@/shared/ui/pipboy";
 
 function App() {
   return (
-    <DeviceFrame>
-      <ScreenSurface>
-        <StatusBar />
+    <BrowserRouter>
+      <PipBoyRoom>
         <AppRouter />
-      </ScreenSurface>
-    </DeviceFrame>
+      </PipBoyRoom>
+    </BrowserRouter>
   );
 }
 

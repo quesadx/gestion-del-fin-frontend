@@ -1,7 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowUpRight, ArrowDownLeft, Search, Activity } from "lucide-react";
-import { staggerContainer, staggerItem } from "@/shared/lib/motion";
 
 const DUMMY_TRANSFERS = [
   {
@@ -46,18 +43,18 @@ const DUMMY_TRANSFERS = [
   },
 ];
 
-const getStatusStyle = (status: string) => {
+const getStatusTone = (status: string) => {
   switch (status) {
-    case "DELIVERED":
-      return "text-green-base border-green-base bg-green-base/10";
-    case "IN_TRANSIT":
-      return "text-green-bright border-green-bright bg-green-bright/10";
-    case "APPROVED":
-      return "text-green-dim border-green-dim bg-transparent";
     case "PENDING":
-      return "text-warn-text border-warn-text bg-warn-text/10";
+      return "amber";
+    case "IN_TRANSIT":
+      return "";
+    case "DELIVERED":
+      return "";
+    case "APPROVED":
+      return "";
     default:
-      return "text-green-mid border-green-mid bg-transparent";
+      return "";
   }
 };
 
@@ -71,147 +68,93 @@ export function TransfersPage() {
       trx.origin.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
+  const splitIndex = Math.ceil(filteredTransfers.length / 2);
+  const leftList = filteredTransfers.slice(0, splitIndex);
+  const rightList = filteredTransfers.slice(splitIndex);
+
   return (
-    <div className="flex h-full w-full flex-col gap-4">
-      <div className="flex flex-1 flex-col border-2 border-green-mid bg-bg-panel p-4 pb-2 sm:p-6">
-        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-dashed border-green-dim pb-4">
-          <div>
-            <h1 className="font-display text-lg sm:text-2xl text-green-hi tracking-widest uppercase mb-1">
-              RESOURCE_TRANSFER_LOG //
-              <br />
-              <span className="text-green-base">MANIFEST_INDEX</span>
-            </h1>
-            <p className="font-system text-xs text-green-dim uppercase">
-              SECTOR_7_LOGISTICS // TERMINAL_REF: 0xFF92A
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-2 w-full sm:w-80 shrink-0">
-            <div className="relative w-full">
-              <Search
-                size={16}
-                className="absolute left-2 top-1/2 -translate-y-1/2 text-green-mid"
-              />
-              <input
-                type="text"
-                placeholder="QUERY_MANIFEST..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-transparent border-b border-green-mid py-2 pl-8 pr-2 font-mono text-xs text-green-bright placeholder:text-green-dim focus:outline-none focus:border-green-bright transition-colors uppercase"
-              />
-            </div>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 shrink-0">
-          <div className="border border-green-mid bg-bg-deep p-3 flex flex-col justify-between">
-            <span className="font-system text-[10px] text-green-dim uppercase">
-              NETWORK_STABILITY
-            </span>
-            <span className="font-display text-lg text-green-bright mt-2">
-              98.4%
-            </span>
-            <div className="w-full h-[2px] bg-green-bright mt-1"></div>
-          </div>
-          <div className="border border-green-mid bg-bg-deep p-3 flex flex-col justify-between">
-            <span className="font-system text-[10px] text-green-dim uppercase">
-              TOTAL_THROUGHPUT
-            </span>
-            <span className="font-display text-lg text-green-hi mt-2">
-              14.2 TB
-            </span>
-          </div>
-          <div className="border border-green-mid bg-bg-deep p-3 flex flex-col justify-between">
-            <span className="font-system text-[10px] text-green-dim uppercase">
-              QUEUE_DEPTH
-            </span>
-            <span className="font-display text-lg text-warn-text mt-2">
-              18_OPS
-            </span>
-          </div>
-          <div className="border border-green-mid bg-bg-deep p-3 flex items-center justify-center">
-            <button className="flex items-center gap-2 border border-green-bright px-4 py-2 font-display text-xs text-green-bright hover:bg-green-bright hover:text-bg-screen transition-colors">
-              <Activity size={16} />
-              INITIATE_TRANSFER
-            </button>
-          </div>
+    <>
+      <div className="pip-frame">
+        <span className="pip-frame-title">QUERY</span>
+        <div className="pip-label" style={{ marginBottom: 4 }}>
+          MANIFEST
         </div>
-
-        <div className="hidden border-b-2 border-green-mid pb-2 px-2 md:grid grid-cols-12 gap-4 font-display text-[9px] text-green-dim uppercase tracking-widest mb-2 shrink-0">
-          <div className="col-span-1 text-center">DIR</div>
-          <div className="col-span-4">ORIGIN / DESTINATION</div>
-          <div className="col-span-4">CARGO_DATA</div>
-          <div className="col-span-3 text-right">OPERATIONAL_STATUS</div>
-        </div>
-
-        <motion.ul
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-          className="flex flex-col flex-1 gap-2 overflow-y-auto custom-scrollbar pr-2 min-h-0"
-        >
-          {filteredTransfers.map((trx) => {
-            const statusConfig = getStatusStyle(trx.status);
-
-            return (
-              <motion.li
-                key={trx.id}
-                variants={staggerItem}
-                className="group flex flex-col md:grid md:grid-cols-12 md:items-center gap-2 md:gap-4 p-3 border border-green-mid/30 bg-bg-deep hover:border-green-bright hover:bg-green-mid/10 hover:shadow-glow-subtle transition-all duration-200 hover:translate-x-1 cursor-pointer"
-              >
-                <div className="col-span-1 flex items-center justify-center">
-                  {trx.direction === "OUTGOING" ? (
-                    <ArrowUpRight size={20} className="text-green-bright" />
-                  ) : (
-                    <ArrowDownLeft size={20} className="text-green-dim" />
-                  )}
-                </div>
-
-                <div className="col-span-4 flex flex-col justify-center">
-                  <div className="font-system text-[10px] text-green-dim uppercase">
-                    FROM: <span className="text-green-base">{trx.origin}</span>
-                  </div>
-                  <div className="font-system text-[10px] text-green-dim uppercase mt-1">
-                    TO:{" "}
-                    <span className="text-green-base">{trx.destination}</span>
-                  </div>
-                </div>
-
-                <div className="col-span-4 flex flex-col justify-center">
-                  <div className="font-display text-xs text-green-hi uppercase mb-1">
-                    {trx.item}
-                  </div>
-                  <div className="font-system text-[9px] text-green-dim uppercase">
-                    QTY: {trx.qty} {trx.unit} // REF: {trx.id}
-                  </div>
-                </div>
-
-                <div className="col-span-3 flex justify-start md:justify-end items-center mt-2 md:mt-0">
-                  <div
-                    className={`border px-3 py-1 font-display text-[10px] tracking-widest uppercase ${statusConfig}`}
-                  >
-                    [ {trx.status} ]
-                  </div>
-                </div>
-              </motion.li>
-            );
-          })}
-        </motion.ul>
-
-        <footer className="mt-4 flex justify-between border-t border-green-mid pt-2 font-system text-[10px] sm:text-xs">
-          <div className="flex gap-4 text-green-dim uppercase">
-            <span>
-              PENDING_REQUESTS: <span className="text-warn-text">1</span>
-            </span>
-            <span>
-              ACTIVE_ROUTES: <span className="text-green-bright">3</span>
-            </span>
-          </div>
-          <div className="text-green-dim uppercase">
-            SYS_LOG // EMERGENCY_SHUTDOWN
-          </div>
-        </footer>
+        <input
+          type="text"
+          placeholder="SEARCH TRANSFERS"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pip-input"
+        />
+        <div style={{ height: 6 }} />
+        <button className="pip-button" type="button">
+          INITIATE TRANSFER
+        </button>
       </div>
-    </div>
+
+      <div className="pip-frame">
+        <span className="pip-frame-title">STATUS</span>
+        <div className="pip-row">
+          <span className="pip-label">THROUGHPUT</span>
+          <span className="pip-value">14.2 TB</span>
+        </div>
+        <div style={{ height: 6 }} />
+        <div className="pip-row">
+          <span className="pip-label">QUEUE</span>
+          <span className="pip-value amber">18 OPS</span>
+        </div>
+        <div style={{ height: 6 }} />
+        <div className="pip-row">
+          <span className="pip-label">NETWORK</span>
+          <span className="pip-value">98.4%</span>
+        </div>
+      </div>
+
+      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+        <span className="pip-frame-title">TRANSFERS A</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+          {leftList.map((trx) => (
+            <div key={trx.id}>
+              <div className="pip-row">
+                <span className="pip-label">{trx.direction}</span>
+                <span className={`pip-value ${getStatusTone(trx.status)}`} style={{ fontSize: 16 }}>
+                  {trx.status}
+                </span>
+              </div>
+              <div className="pip-value" style={{ fontSize: 18 }}>
+                {trx.item}
+              </div>
+              <div className="pip-label">FROM {trx.origin}</div>
+              <div className="pip-label">TO {trx.destination}</div>
+              <div className="pip-label">QTY {trx.qty} {trx.unit} / REF {trx.id}</div>
+            </div>
+          ))}
+          {leftList.length === 0 && <div className="pip-label">NO MATCHES</div>}
+        </div>
+      </div>
+
+      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+        <span className="pip-frame-title">TRANSFERS B</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+          {rightList.map((trx) => (
+            <div key={trx.id}>
+              <div className="pip-row">
+                <span className="pip-label">{trx.direction}</span>
+                <span className={`pip-value ${getStatusTone(trx.status)}`} style={{ fontSize: 16 }}>
+                  {trx.status}
+                </span>
+              </div>
+              <div className="pip-value" style={{ fontSize: 18 }}>
+                {trx.item}
+              </div>
+              <div className="pip-label">FROM {trx.origin}</div>
+              <div className="pip-label">TO {trx.destination}</div>
+              <div className="pip-label">QTY {trx.qty} {trx.unit} / REF {trx.id}</div>
+            </div>
+          ))}
+          {rightList.length === 0 && <div className="pip-label">NO MATCHES</div>}
+        </div>
+      </div>
+    </>
   );
 }

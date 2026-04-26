@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
@@ -12,23 +12,21 @@ import { PrivateLayout } from "@/shared/ui/layout/PrivateLayout";
 
 export function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<LoginPage />} />
 
-        <Route element={<PrivateRoute />}>
-          <Route element={<PrivateLayout />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/people" element={<PeopleListPage />} />
-            <Route path="/inventory" element={<InventoryPage />} />
-            <Route path="/explorations" element={<ExplorationsPage />} />
-            <Route path="/transfers" element={<TransfersPage />} />
-          </Route>
+      <Route element={<PrivateRoute />}>
+        <Route element={<PrivateLayout />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/people" element={<PeopleListPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/explorations" element={<ExplorationsPage />} />
+          <Route path="/transfers" element={<TransfersPage />} />
         </Route>
+      </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </BrowserRouter>
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   );
 }
