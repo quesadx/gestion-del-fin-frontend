@@ -1,19 +1,19 @@
-import type { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { motion, useReducedMotion } from "framer-motion";
-import { crtOn } from "@/shared/lib/motion";
-import { StatusBar } from "./StatusBar";
+import type { ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
+import { crtOn } from '@/shared/lib/motion';
+import { StatusBar } from './StatusBar';
 
 interface Props {
   children: ReactNode;
 }
 
 const NAV_ITEMS = [
-  { path: "/dashboard", label: "STAT" },
-  { path: "/inventory", label: "INV" },
-  { path: "/people", label: "DATA" },
-  { path: "/explorations", label: "MAP" },
-  { path: "/transfers", label: "RADIO" },
+  { path: '/dashboard', label: 'STAT' },
+  { path: '/inventory', label: 'INV' },
+  { path: '/people', label: 'DATA' },
+  { path: '/explorations', label: 'MAP' },
+  { path: '/transfers', label: 'RADIO' },
 ];
 
 export function ScreenSurface({ children }: Props) {
@@ -23,20 +23,20 @@ export function ScreenSurface({ children }: Props) {
 
   return (
     <div className="pip-screen-well">
-      <div className="pip-screen">
+      <div className="pip-screen crt-screen">
         <div className="pip-content">
           <StatusBar />
 
           <div className="pip-h">
-            &gt;{" "}
+            &gt;{' '}
             {NAV_ITEMS.map((item, index) => {
               const isActive = location.pathname.startsWith(item.path);
               return (
                 <span key={item.path}>
-                  <Link className={`pip-tab${isActive ? " active" : ""}`} to={item.path}>
+                  <Link className={`pip-tab${isActive ? ' active' : ''}`} to={item.path}>
                     {item.label}
                   </Link>
-                  {index < NAV_ITEMS.length - 1 ? "  /  " : ""}
+                  {index < NAV_ITEMS.length - 1 ? '  /  ' : ''}
                 </span>
               );
             })}
@@ -56,7 +56,8 @@ export function ScreenSurface({ children }: Props) {
           <div className="pip-divider" />
           <div className="pip-footer">
             <span>
-              &gt; SYSTEM NOMINAL<span className="pip-cursor" />
+              &gt; SYSTEM NOMINAL
+              <span className="pip-cursor" />
             </span>
             <span className="pip-label">
               UPLINK <span className="pip-spin" />

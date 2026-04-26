@@ -1,4 +1,4 @@
-import { mockData } from "../mockData";
+import { mockData } from '../mockData';
 
 const compass = `   N
  NW | NE
@@ -11,8 +11,10 @@ export function LocationPanel() {
   return (
     <div className="pip-frame">
       <span className="pip-frame-title">LOCATION</span>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, alignItems: "start" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 4, columnGap: 10 }}>
+      <div
+        style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start' }}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', rowGap: 4, columnGap: 10 }}>
           <div>
             <div className="pip-label">COORDS</div>
             <div className="pip-value">{location.coords}</div>
@@ -27,12 +29,12 @@ export function LocationPanel() {
           </div>
           <div>
             <div className="pip-label">THREATS</div>
-            <div className={`pip-value ${location.threats > 0 ? "amber" : ""}`}>
-              {String(location.threats).padStart(2, "0")}
+            <div className={`pip-value ${location.threats > 0 ? 'amber' : ''}`}>
+              {String(location.threats).padStart(2, '0')}
             </div>
           </div>
         </div>
-        <div style={{ textAlign: "center" }}>
+        <div style={{ textAlign: 'center' }}>
           <div className="pip-label">HEADING</div>
           <div className="pip-compass">{compass}</div>
           <div className="pip-value" style={{ marginTop: 2 }}>

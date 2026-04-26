@@ -4,7 +4,7 @@
 }
 
 .crt-screen::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   box-shadow:
@@ -15,7 +15,7 @@
 }
 
 .crt-screen::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   background: repeating-linear-gradient(

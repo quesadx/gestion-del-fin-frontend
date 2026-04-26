@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/auth.store";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/auth.store';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-  const fullTitle = "RESTRICTED ACCESS";
-  const [displayedTitle, setDisplayedTitle] = useState("");
+  const fullTitle = 'RESTRICTED ACCESS';
+  const [displayedTitle, setDisplayedTitle] = useState('');
 
   const playTickSound = () => {
     try {
@@ -27,7 +27,7 @@ export function LoginPage() {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      osc.type = "square";
+      osc.type = 'square';
       osc.frequency.setValueAtTime(150, ctx.currentTime);
       gain.gain.setValueAtTime(0.05, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
@@ -56,14 +56,14 @@ export function LoginPage() {
   const handleBypass = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
 
-    login("fake-jwt-token-777", {
-      id: "u-001",
-      username: username || "ADMIN_DEV",
-      role: "system_admin",
-      campId: "camp-alpha",
+    login('fake-jwt-token-777', {
+      id: 'u-001',
+      username: username || 'ADMIN_DEV',
+      role: 'system_admin',
+      campId: 'camp-alpha',
     });
 
-    navigate("/dashboard");
+    navigate('/dashboard');
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -79,7 +79,7 @@ export function LoginPage() {
           <span className="pip-label">STATUS</span>
           <span className="pip-value">LOCKED</span>
         </div>
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div>
             <div className="pip-label" style={{ marginBottom: 4 }}>
               LOGIN
@@ -104,7 +104,7 @@ export function LoginPage() {
               className="pip-input"
             />
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
             <button type="submit" className="pip-button">
               EXECUTE
             </button>

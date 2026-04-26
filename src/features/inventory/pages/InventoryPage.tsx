@@ -1,62 +1,62 @@
-import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { staggerContainer, staggerItem } from "@/shared/lib/motion";
+import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { staggerContainer, staggerItem } from '@/shared/lib/motion';
 
 const DUMMY_INVENTORY = [
   {
-    id: "RES-01A",
-    name: "MRE RATIONS",
-    category: "FOOD",
+    id: 'RES-01A',
+    name: 'MRE RATIONS',
+    category: 'FOOD',
     quantity: 140,
-    unit: "UNITS",
+    unit: 'UNITS',
     minThreshold: 50,
   },
   {
-    id: "RES-02B",
-    name: "PURIFIED WATER",
-    category: "WATER",
+    id: 'RES-02B',
+    name: 'PURIFIED WATER',
+    category: 'WATER',
     quantity: 35,
-    unit: "L",
+    unit: 'L',
     minThreshold: 50,
   },
   {
-    id: "RES-05X",
-    name: "9MM AMMUNITION",
-    category: "AMMO",
+    id: 'RES-05X',
+    name: '9MM AMMUNITION',
+    category: 'AMMO',
     quantity: 850,
-    unit: "ROUNDS",
+    unit: 'ROUNDS',
     minThreshold: 200,
   },
   {
-    id: "RES-11F",
-    name: "ANTIBIOTICS",
-    category: "MEDICAL",
+    id: 'RES-11F',
+    name: 'ANTIBIOTICS',
+    category: 'MEDICAL',
     quantity: 12,
-    unit: "DOSES",
+    unit: 'DOSES',
     minThreshold: 20,
   },
   {
-    id: "RES-44C",
-    name: "DIESEL FUEL",
-    category: "FUEL",
+    id: 'RES-44C',
+    name: 'DIESEL FUEL',
+    category: 'FUEL',
     quantity: 300,
-    unit: "L",
+    unit: 'L',
     minThreshold: 100,
   },
   {
-    id: "RES-66P",
-    name: "HAZMAT SUITS",
-    category: "EQUIPMENT",
+    id: 'RES-66P',
+    name: 'HAZMAT SUITS',
+    category: 'EQUIPMENT',
     quantity: 5,
-    unit: "UNITS",
+    unit: 'UNITS',
     minThreshold: 10,
   },
   {
-    id: "RES-99K",
-    name: "RADIOS",
-    category: "EQUIPMENT",
+    id: 'RES-99K',
+    name: 'RADIOS',
+    category: 'EQUIPMENT',
     quantity: 15,
-    unit: "UNITS",
+    unit: 'UNITS',
     minThreshold: 5,
   },
 ];
@@ -65,22 +65,19 @@ export function InventoryPage() {
   const reduceMotion = useReducedMotion();
   const listVariants = reduceMotion ? {} : staggerContainer;
   const itemVariants = reduceMotion ? {} : staggerItem;
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
 
   const filteredInventory = DUMMY_INVENTORY.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "ALL" || item.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'ALL' || item.category === categoryFilter;
 
     return matchesSearch && matchesCategory;
   });
 
-  const lowStockCount = DUMMY_INVENTORY.filter(
-    (item) => item.quantity <= item.minThreshold,
-  ).length;
+  const lowStockCount = DUMMY_INVENTORY.filter((item) => item.quantity <= item.minThreshold).length;
 
   const splitIndex = Math.ceil(filteredInventory.length / 2);
   const leftList = filteredInventory.slice(0, splitIndex);
@@ -90,7 +87,7 @@ export function InventoryPage() {
     <>
       <div className="pip-frame">
         <span className="pip-frame-title">FILTERS</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div>
             <div className="pip-label" style={{ marginBottom: 4 }}>
               QUERY
@@ -123,24 +120,24 @@ export function InventoryPage() {
         <span className="pip-frame-title">SUMMARY</span>
         <div className="pip-row">
           <span className="pip-label">TOTAL ITEMS</span>
-          <span className="pip-value">{String(DUMMY_INVENTORY.length).padStart(3, "0")}</span>
+          <span className="pip-value">{String(DUMMY_INVENTORY.length).padStart(3, '0')}</span>
         </div>
         <div style={{ height: 6 }} />
         <div className="pip-row">
           <span className="pip-label">LOW STOCK</span>
-          <span className="pip-value amber">{String(lowStockCount).padStart(3, "0")}</span>
+          <span className="pip-value amber">{String(lowStockCount).padStart(3, '0')}</span>
         </div>
         <div style={{ height: 6 }} />
         <div className="pip-row">
           <span className="pip-label">FILTERED</span>
-          <span className="pip-value">{String(filteredInventory.length).padStart(3, "0")}</span>
+          <span className="pip-value">{String(filteredInventory.length).padStart(3, '0')}</span>
         </div>
       </div>
 
-      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
         <span className="pip-frame-title">STOCK A</span>
         <motion.div
-          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
           className="custom-scrollbar"
           variants={listVariants}
           initial="initial"
@@ -152,7 +149,10 @@ export function InventoryPage() {
               <motion.div key={item.id} variants={itemVariants}>
                 <div className="pip-row">
                   <span className="pip-label">{item.id}</span>
-                  <span className={`pip-value ${isLowStock ? "amber" : ""}`} style={{ fontSize: 16 }}>
+                  <span
+                    className={`pip-value ${isLowStock ? 'amber' : ''}`}
+                    style={{ fontSize: 16 }}
+                  >
                     {item.quantity} {item.unit}
                   </span>
                 </div>
@@ -169,10 +169,10 @@ export function InventoryPage() {
         </motion.div>
       </div>
 
-      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
         <span className="pip-frame-title">STOCK B</span>
         <motion.div
-          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
           className="custom-scrollbar"
           variants={listVariants}
           initial="initial"
@@ -184,7 +184,10 @@ export function InventoryPage() {
               <motion.div key={item.id} variants={itemVariants}>
                 <div className="pip-row">
                   <span className="pip-label">{item.id}</span>
-                  <span className={`pip-value ${isLowStock ? "amber" : ""}`} style={{ fontSize: 16 }}>
+                  <span
+                    className={`pip-value ${isLowStock ? 'amber' : ''}`}
+                    style={{ fontSize: 16 }}
+                  >
                     {item.quantity} {item.unit}
                   </span>
                 </div>

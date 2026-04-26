@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 const MAX_ROT_Y = 22;
 const MAX_ROT_X = 14;
@@ -24,24 +24,24 @@ export function DeviceFrame({ children }: Props) {
     let curRotX = 0;
 
     const apply = (rx: number, ry: number) => {
-      room.style.setProperty("--pip-rot-x", `${rx}deg`);
-      room.style.setProperty("--pip-rot-y", `${ry}deg`);
+      room.style.setProperty('--pip-rot-x', `${rx}deg`);
+      room.style.setProperty('--pip-rot-y', `${ry}deg`);
     };
 
     const isInteractiveTarget = (target: EventTarget | null) => {
       if (!(target instanceof HTMLElement)) return false;
-      return Boolean(target.closest("button, a, input, select, textarea, [data-no-rotate]"));
+      return Boolean(target.closest('button, a, input, select, textarea, [data-no-rotate]'));
     };
 
     const onPointerDown = (e: PointerEvent) => {
-      if ("button" in e && e.button !== 0) return;
+      if ('button' in e && e.button !== 0) return;
       if (isInteractiveTarget(e.target)) return;
       dragging = true;
       startX = e.clientX;
       startY = e.clientY;
       baseRotY = curRotY;
       baseRotX = curRotX;
-      room.classList.add("pip-dragging");
+      room.classList.add('pip-dragging');
       room.setPointerCapture(e.pointerId);
       setHint(false);
     };
@@ -60,30 +60,30 @@ export function DeviceFrame({ children }: Props) {
     const onPointerUp = (e: PointerEvent) => {
       if (!dragging) return;
       dragging = false;
-      room.classList.remove("pip-dragging");
+      room.classList.remove('pip-dragging');
       try {
         room.releasePointerCapture(e.pointerId);
       } catch {
         // no-op
       }
-      room.classList.add("pip-easing");
+      room.classList.add('pip-easing');
       curRotX = 0;
       curRotY = 0;
       apply(0, 0);
-      window.setTimeout(() => room.classList.remove("pip-easing"), 900);
+      window.setTimeout(() => room.classList.remove('pip-easing'), 900);
     };
 
     apply(0, 0);
-    room.addEventListener("pointerdown", onPointerDown);
-    room.addEventListener("pointermove", onPointerMove);
-    room.addEventListener("pointerup", onPointerUp);
-    room.addEventListener("pointercancel", onPointerUp);
+    room.addEventListener('pointerdown', onPointerDown);
+    room.addEventListener('pointermove', onPointerMove);
+    room.addEventListener('pointerup', onPointerUp);
+    room.addEventListener('pointercancel', onPointerUp);
 
     return () => {
-      room.removeEventListener("pointerdown", onPointerDown);
-      room.removeEventListener("pointermove", onPointerMove);
-      room.removeEventListener("pointerup", onPointerUp);
-      room.removeEventListener("pointercancel", onPointerUp);
+      room.removeEventListener('pointerdown', onPointerDown);
+      room.removeEventListener('pointermove', onPointerMove);
+      room.removeEventListener('pointerup', onPointerUp);
+      room.removeEventListener('pointercancel', onPointerUp);
     };
   }, []);
 

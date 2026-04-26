@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { PipBoyScreenShell } from "./PipBoyScreenShell";
+import type { ReactNode } from 'react';
+import { PipBoyScreenShell } from './PipBoyScreenShell';
 
 interface Props {
   children: ReactNode;

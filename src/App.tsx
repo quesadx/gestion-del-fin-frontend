@@ -1,8 +1,8 @@
-import { BrowserRouter } from "react-router-dom";
-import { AppRouter } from "@/app/AppRouter";
-import { DeviceFrame, ScreenSurface } from "@/shared/ui/device";
+import { BrowserRouter } from 'react-router-dom';
+import { AppRouter } from '@/app/AppRouter';
+import { DeviceFrame, ScreenSurface } from '@/shared/ui/device';
 
-function App() {
+export function App() {
   return (
     <BrowserRouter>
       <DeviceFrame>
@@ -13,5 +13,3 @@ function App() {
     </BrowserRouter>
   );
 }
-
-export default App;

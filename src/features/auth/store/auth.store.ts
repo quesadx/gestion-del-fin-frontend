@@ -1,7 +1,7 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-import type { Role, User } from "../types/auth.types";
+import type { Role, User } from '../types/auth.types';
 
 interface AuthState {
   user: User | null;
@@ -48,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
       lock: () => set({ isLocked: true }),
 
       unlock: async (password) => {
-        const { authApi } = await import("../api/auth.api");
+        const { authApi } = await import('../api/auth.api');
         const result = await authApi.verifySession(password);
 
         if (result.valid) {
@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "auth-storage",
+      name: 'auth-storage',
       partialize: (s) => ({ token: s.token, user: s.user, role: s.role }),
     },
   ),

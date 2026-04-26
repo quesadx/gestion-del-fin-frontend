@@ -1,54 +1,54 @@
-import { useMemo } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { staggerContainer, staggerItem } from "@/shared/lib/motion";
+import { useMemo } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { staggerContainer, staggerItem } from '@/shared/lib/motion';
 
 const DUMMY_EXPLORATIONS = [
   {
-    id: "EXP-77",
-    destination: "RUINED HOSPITAL",
-    leadSurvivor: "MARCUS REED",
-    time: "3 DAYS AGO",
-    status: "COMPLETED",
-    action: "DEBRIEF_LOG",
+    id: 'EXP-77',
+    destination: 'RUINED HOSPITAL',
+    leadSurvivor: 'MARCUS REED',
+    time: '3 DAYS AGO',
+    status: 'COMPLETED',
+    action: 'DEBRIEF_LOG',
   },
   {
-    id: "EXP-82",
-    destination: "SECTOR B // POWER PLANT",
-    leadSurvivor: "ELIAS VANCE",
-    time: "EST: 5 DAYS",
-    status: "IN_PROGRESS",
-    action: "MONITOR_FEED",
+    id: 'EXP-82',
+    destination: 'SECTOR B // POWER PLANT',
+    leadSurvivor: 'ELIAS VANCE',
+    time: 'EST: 5 DAYS',
+    status: 'IN_PROGRESS',
+    action: 'MONITOR_FEED',
   },
   {
-    id: "EXP-85",
-    destination: "SUBWAY TUNNEL ALPHA",
-    leadSurvivor: "SARAH CONNOR",
-    time: "LOST: 2 DAYS AGO",
-    status: "FAILED",
-    action: "INITIATE_RECOVERY",
+    id: 'EXP-85',
+    destination: 'SUBWAY TUNNEL ALPHA',
+    leadSurvivor: 'SARAH CONNOR',
+    time: 'LOST: 2 DAYS AGO',
+    status: 'FAILED',
+    action: 'INITIATE_RECOVERY',
   },
   {
-    id: "EXP-88",
-    destination: "OLD WORLD ARCHIVE",
-    leadSurvivor: "DR. ARIS",
-    time: "DURATION: 4 DAYS",
-    status: "PENDING",
-    action: "DEPLOY_UNIT",
+    id: 'EXP-88',
+    destination: 'OLD WORLD ARCHIVE',
+    leadSurvivor: 'DR. ARIS',
+    time: 'DURATION: 4 DAYS',
+    status: 'PENDING',
+    action: 'DEPLOY_UNIT',
   },
 ];
 
 const getStatusTone = (status: string) => {
   switch (status) {
-    case "FAILED":
-      return "red";
-    case "IN_PROGRESS":
-      return "";
-    case "PENDING":
-      return "amber";
-    case "COMPLETED":
-      return "";
+    case 'FAILED':
+      return 'red';
+    case 'IN_PROGRESS':
+      return '';
+    case 'PENDING':
+      return 'amber';
+    case 'COMPLETED':
+      return '';
     default:
-      return "";
+      return '';
   }
 };
 
@@ -94,29 +94,33 @@ export function ExplorationsPage() {
         <span className="pip-frame-title">STATUS</span>
         <div className="pip-row">
           <span className="pip-label">COMPLETED</span>
-          <span className="pip-value">{String(statusCounts.COMPLETED || 0).padStart(2, "0")}</span>
+          <span className="pip-value">{String(statusCounts.COMPLETED || 0).padStart(2, '0')}</span>
         </div>
         <div style={{ height: 6 }} />
         <div className="pip-row">
           <span className="pip-label">IN PROGRESS</span>
-          <span className="pip-value">{String(statusCounts.IN_PROGRESS || 0).padStart(2, "0")}</span>
+          <span className="pip-value">
+            {String(statusCounts.IN_PROGRESS || 0).padStart(2, '0')}
+          </span>
         </div>
         <div style={{ height: 6 }} />
         <div className="pip-row">
           <span className="pip-label">PENDING</span>
-          <span className="pip-value amber">{String(statusCounts.PENDING || 0).padStart(2, "0")}</span>
+          <span className="pip-value amber">
+            {String(statusCounts.PENDING || 0).padStart(2, '0')}
+          </span>
         </div>
         <div style={{ height: 6 }} />
         <div className="pip-row">
           <span className="pip-label">FAILED</span>
-          <span className="pip-value red">{String(statusCounts.FAILED || 0).padStart(2, "0")}</span>
+          <span className="pip-value red">{String(statusCounts.FAILED || 0).padStart(2, '0')}</span>
         </div>
       </div>
 
-      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
         <span className="pip-frame-title">EXPEDITIONS A</span>
         <motion.div
-          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
           className="custom-scrollbar"
           variants={listVariants}
           initial="initial"
@@ -141,10 +145,10 @@ export function ExplorationsPage() {
         </motion.div>
       </div>
 
-      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
         <span className="pip-frame-title">EXPEDITIONS B</span>
         <motion.div
-          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
           className="custom-scrollbar"
           variants={listVariants}
           initial="initial"

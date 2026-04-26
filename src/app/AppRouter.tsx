@@ -1,14 +1,14 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-import { LoginPage } from "@/features/auth/pages/LoginPage";
-import { DashboardPage } from "@/features/dashboard/pages/DashboardPage";
-import { PeopleListPage } from "@/features/people/pages/PeopleListPage";
-import { InventoryPage } from "@/features/inventory/pages/InventoryPage";
-import { ExplorationsPage } from "@/features/explorations/pages/ExplorationsPage";
-import { TransfersPage } from "@/features/inventory/pages/TransfersPage";
+import { LoginPage } from '@/features/auth/pages/LoginPage';
+import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { PeopleListPage } from '@/features/people/pages/PeopleListPage';
+import { InventoryPage } from '@/features/inventory/pages/InventoryPage';
+import { ExplorationsPage } from '@/features/explorations/pages/ExplorationsPage';
+import { TransfersPage } from '@/features/inventory/pages/TransfersPage';
 
-import { PrivateRoute } from "@/shared/guards/PrivateRoute";
-import { PrivateLayout } from "@/shared/ui/layout/PrivateLayout";
+import { PrivateRoute } from '@/shared/guards/PrivateRoute';
+import { PrivateLayout } from '@/shared/ui/layout/PrivateLayout';
 
 export function AppRouter() {
   return (

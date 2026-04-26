@@ -1,4 +1,4 @@
-import { mockData } from "../mockData";
+import { mockData } from '../mockData';
 
 export function TimePanel() {
   const { time } = mockData;
@@ -10,10 +10,10 @@ export function TimePanel() {
           <div className="pip-label">LOCAL TIME</div>
           <div className="pip-value lg">
             {time.clock}
-            <span style={{ fontSize: "0.55em", opacity: 0.7, marginLeft: 4 }}>:{time.seconds}</span>
+            <span style={{ fontSize: '0.55em', opacity: 0.7, marginLeft: 4 }}>:{time.seconds}</span>
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <div style={{ textAlign: 'right' }}>
           <div className="pip-label">DATE</div>
           <div className="pip-value lg">{time.date}</div>
         </div>
@@ -21,7 +21,7 @@ export function TimePanel() {
       <div style={{ height: 8 }} />
       <div className="pip-row">
         <div className="pip-label">DAYS SINCE ARRIVAL</div>
-        <div className="pip-value">{String(time.daysSinceArrival).padStart(4, "0")}</div>
+        <div className="pip-value">{String(time.daysSinceArrival).padStart(4, '0')}</div>
       </div>
     </div>
   );

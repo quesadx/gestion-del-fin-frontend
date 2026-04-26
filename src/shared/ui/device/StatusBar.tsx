@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/features/auth/store/auth.store";
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 
 export function StatusBar() {
   const navigate = useNavigate();
@@ -7,13 +7,13 @@ export function StatusBar() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate('/login');
   };
 
   return (
     <div className="pip-topbar">
       <span>VAULT-TEC - PIP-BOY 3000 - SURVIVAL TERMINAL v2.4</span>
-      <span style={{ display: "inline-flex", gap: 14, alignItems: "center" }}>
+      <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center' }}>
         <span>SIG</span>
         <span className="pip-signal">
           <i style={{ height: 3 }} />

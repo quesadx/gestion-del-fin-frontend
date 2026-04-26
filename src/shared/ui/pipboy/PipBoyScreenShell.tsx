@@ -1,17 +1,17 @@
-import type { ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/features/auth/store/auth.store";
+import type { ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/features/auth/store/auth.store';
 
 interface Props {
   children: ReactNode;
 }
 
 const NAV_ITEMS = [
-  { path: "/dashboard", label: "STAT" },
-  { path: "/inventory", label: "INV" },
-  { path: "/people", label: "DATA" },
-  { path: "/explorations", label: "MAP" },
-  { path: "/transfers", label: "RADIO" },
+  { path: '/dashboard', label: 'STAT' },
+  { path: '/inventory', label: 'INV' },
+  { path: '/people', label: 'DATA' },
+  { path: '/explorations', label: 'MAP' },
+  { path: '/transfers', label: 'RADIO' },
 ];
 
 export function PipBoyScreenShell({ children }: Props) {
@@ -21,7 +21,7 @@ export function PipBoyScreenShell({ children }: Props) {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate('/login');
   };
 
   return (
@@ -30,7 +30,7 @@ export function PipBoyScreenShell({ children }: Props) {
         <div className="pip-content">
           <div className="pip-topbar">
             <span>VAULT-TEC - PIP-BOY 3000 - SURVIVAL TERMINAL v2.4</span>
-            <span style={{ display: "inline-flex", gap: 14, alignItems: "center" }}>
+            <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center' }}>
               <span>SIG</span>
               <span className="pip-signal">
                 <i style={{ height: 3 }} />
@@ -49,15 +49,15 @@ export function PipBoyScreenShell({ children }: Props) {
           </div>
 
           <div className="pip-h">
-            &gt;{" "}
+            &gt;{' '}
             {NAV_ITEMS.map((item, index) => {
               const isActive = location.pathname.startsWith(item.path);
               return (
                 <span key={item.path}>
-                  <Link className={`pip-tab${isActive ? " active" : ""}`} to={item.path}>
+                  <Link className={`pip-tab${isActive ? ' active' : ''}`} to={item.path}>
                     {item.label}
                   </Link>
-                  {index < NAV_ITEMS.length - 1 ? "  /  " : ""}
+                  {index < NAV_ITEMS.length - 1 ? '  /  ' : ''}
                 </span>
               );
             })}
@@ -69,7 +69,8 @@ export function PipBoyScreenShell({ children }: Props) {
           <div className="pip-divider" />
           <div className="pip-footer">
             <span>
-              &gt; SYSTEM NOMINAL<span className="pip-cursor" />
+              &gt; SYSTEM NOMINAL
+              <span className="pip-cursor" />
             </span>
             <span className="pip-label">
               UPLINK <span className="pip-spin" />

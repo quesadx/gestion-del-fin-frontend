@@ -1,62 +1,62 @@
-import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { staggerContainer, staggerItem } from "@/shared/lib/motion";
+import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { staggerContainer, staggerItem } from '@/shared/lib/motion';
 
 const DUMMY_TRANSFERS = [
   {
-    id: "TRX-40492",
-    direction: "OUTGOING",
-    origin: "CAMP_OMEGA",
-    destination: "OUTPOST_ALPHA",
-    item: "PURIFIED WATER",
+    id: 'TRX-40492',
+    direction: 'OUTGOING',
+    origin: 'CAMP_OMEGA',
+    destination: 'OUTPOST_ALPHA',
+    item: 'PURIFIED WATER',
     qty: 50,
-    unit: "L",
-    status: "DELIVERED",
+    unit: 'L',
+    status: 'DELIVERED',
   },
   {
-    id: "TRX-40493",
-    direction: "INCOMING",
-    origin: "SECTOR_7_CENTRAL",
-    destination: "CAMP_OMEGA",
-    item: "9MM AMMUNITION",
+    id: 'TRX-40493',
+    direction: 'INCOMING',
+    origin: 'SECTOR_7_CENTRAL',
+    destination: 'CAMP_OMEGA',
+    item: '9MM AMMUNITION',
     qty: 200,
-    unit: "ROUNDS",
-    status: "IN_TRANSIT",
+    unit: 'ROUNDS',
+    status: 'IN_TRANSIT',
   },
   {
-    id: "TRX-40494",
-    direction: "OUTGOING",
-    origin: "CAMP_OMEGA",
-    destination: "FUEL_DEPOT_09",
-    item: "MRE RATIONS",
+    id: 'TRX-40494',
+    direction: 'OUTGOING',
+    origin: 'CAMP_OMEGA',
+    destination: 'FUEL_DEPOT_09',
+    item: 'MRE RATIONS',
     qty: 100,
-    unit: "UNITS",
-    status: "PENDING",
+    unit: 'UNITS',
+    status: 'PENDING',
   },
   {
-    id: "TRX-40495",
-    direction: "INCOMING",
-    origin: "HQ_COMMAND",
-    destination: "CAMP_OMEGA",
-    item: "ANTIBIOTICS",
+    id: 'TRX-40495',
+    direction: 'INCOMING',
+    origin: 'HQ_COMMAND',
+    destination: 'CAMP_OMEGA',
+    item: 'ANTIBIOTICS',
     qty: 12,
-    unit: "DOSES",
-    status: "APPROVED",
+    unit: 'DOSES',
+    status: 'APPROVED',
   },
 ];
 
 const getStatusTone = (status: string) => {
   switch (status) {
-    case "PENDING":
-      return "amber";
-    case "IN_TRANSIT":
-      return "";
-    case "DELIVERED":
-      return "";
-    case "APPROVED":
-      return "";
+    case 'PENDING':
+      return 'amber';
+    case 'IN_TRANSIT':
+      return '';
+    case 'DELIVERED':
+      return '';
+    case 'APPROVED':
+      return '';
     default:
-      return "";
+      return '';
   }
 };
 
@@ -64,7 +64,7 @@ export function TransfersPage() {
   const reduceMotion = useReducedMotion();
   const listVariants = reduceMotion ? {} : staggerContainer;
   const itemVariants = reduceMotion ? {} : staggerItem;
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
 
   const filteredTransfers = DUMMY_TRANSFERS.filter(
     (trx) =>
@@ -115,10 +115,10 @@ export function TransfersPage() {
         </div>
       </div>
 
-      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
         <span className="pip-frame-title">TRANSFERS A</span>
         <motion.div
-          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
           className="custom-scrollbar"
           variants={listVariants}
           initial="initial"
@@ -137,17 +137,19 @@ export function TransfersPage() {
               </div>
               <div className="pip-label">FROM {trx.origin}</div>
               <div className="pip-label">TO {trx.destination}</div>
-              <div className="pip-label">QTY {trx.qty} {trx.unit} / REF {trx.id}</div>
+              <div className="pip-label">
+                QTY {trx.qty} {trx.unit} / REF {trx.id}
+              </div>
             </motion.div>
           ))}
           {leftList.length === 0 && <div className="pip-label">NO MATCHES</div>}
         </motion.div>
       </div>
 
-      <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
+      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
         <span className="pip-frame-title">TRANSFERS B</span>
         <motion.div
-          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
           className="custom-scrollbar"
           variants={listVariants}
           initial="initial"
@@ -166,7 +168,9 @@ export function TransfersPage() {
               </div>
               <div className="pip-label">FROM {trx.origin}</div>
               <div className="pip-label">TO {trx.destination}</div>
-              <div className="pip-label">QTY {trx.qty} {trx.unit} / REF {trx.id}</div>
+              <div className="pip-label">
+                QTY {trx.qty} {trx.unit} / REF {trx.id}
+              </div>
             </motion.div>
           ))}
           {rightList.length === 0 && <div className="pip-label">NO MATCHES</div>}

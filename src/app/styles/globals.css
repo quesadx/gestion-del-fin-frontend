@@ -1,4 +1,5 @@
-@import "./tokens.css";
+@import './tokens.css';
+@import './fonts.css';
 
 @tailwind base;
 @tailwind components;
@@ -25,11 +26,6 @@
 
   /* Workbench */
   --pip-room-bg: var(--clr-bg-deep);
-}
-
-@font-face {
-  font-family: "PipBoyBody";
-  src: local("VT323");
 }
 
 * {
@@ -117,7 +113,7 @@ textarea {
   justify-content: center;
   padding: 2rem 1rem;
   overflow: hidden;
-  font-family: "Share Tech Mono", "VT323", ui-monospace, monospace;
+  font-family: 'Share Tech Mono', 'VT323', ui-monospace, monospace;
   perspective: 1400px;
   perspective-origin: 50% 45%;
   cursor: grab;
@@ -129,7 +125,7 @@ textarea {
 }
 
 .pip-room::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   background-image:
@@ -159,7 +155,12 @@ textarea {
   right: 4%;
   bottom: -8%;
   height: 18%;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.55) 35%, transparent 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.55) 35%,
+    transparent 70%
+  );
   filter: blur(22px);
   transform: translateZ(-40px) rotateX(82deg);
   transform-origin: 50% 100%;
@@ -218,7 +219,7 @@ textarea {
   bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.32em;
   color: rgba(140, 200, 150, 0.55);
@@ -241,7 +242,7 @@ textarea {
 }
 
 .pip-front::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: var(--pip-radius);
@@ -255,14 +256,19 @@ textarea {
 }
 
 .pip-front::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: var(--pip-radius);
   background-image:
     repeating-linear-gradient(102deg, rgba(0, 0, 0, 0.08) 0 1px, transparent 1px 3px),
     repeating-linear-gradient(17deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 5px),
-    linear-gradient(180deg, transparent calc(72% - 1px), rgba(0, 0, 0, 0.28) 72%, transparent calc(72% + 1px));
+    linear-gradient(
+      180deg,
+      transparent calc(72% - 1px),
+      rgba(0, 0, 0, 0.28) 72%,
+      transparent calc(72% + 1px)
+    );
   mix-blend-mode: overlay;
   pointer-events: none;
 }
@@ -278,7 +284,12 @@ textarea {
   right: 0;
   top: 0;
   height: var(--pip-depth);
-  background: linear-gradient(180deg, var(--pip-casing-dark) 0%, var(--pip-casing-dark) 60%, var(--clr-bg-deep) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--pip-casing-dark) 0%,
+    var(--pip-casing-dark) 60%,
+    var(--clr-bg-deep) 100%
+  );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.18),
     inset 0 -2px 4px rgba(0, 0, 0, 0.6);
@@ -292,7 +303,12 @@ textarea {
   right: 0;
   bottom: 0;
   height: var(--pip-depth);
-  background: linear-gradient(0deg, var(--clr-bg-deep) 0%, var(--pip-casing-dark) 60%, var(--clr-bg-deep) 100%);
+  background: linear-gradient(
+    0deg,
+    var(--clr-bg-deep) 0%,
+    var(--pip-casing-dark) 60%,
+    var(--clr-bg-deep) 100%
+  );
   box-shadow:
     inset 0 -1px 0 rgba(255, 255, 255, 0.04),
     inset 0 2px 6px rgba(0, 0, 0, 0.85);
@@ -306,7 +322,12 @@ textarea {
   bottom: 0;
   left: 0;
   width: var(--pip-depth);
-  background: linear-gradient(90deg, var(--pip-casing-dark) 0%, var(--pip-casing-dark) 60%, var(--clr-bg-deep) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--pip-casing-dark) 0%,
+    var(--pip-casing-dark) 60%,
+    var(--clr-bg-deep) 100%
+  );
   box-shadow:
     inset 1px 0 0 rgba(255, 255, 255, 0.16),
     inset -2px 0 4px rgba(0, 0, 0, 0.6);
@@ -320,7 +341,12 @@ textarea {
   bottom: 0;
   right: 0;
   width: var(--pip-depth);
-  background: linear-gradient(-90deg, var(--clr-bg-deep) 0%, var(--pip-casing-dark) 60%, var(--clr-bg-deep) 100%);
+  background: linear-gradient(
+    -90deg,
+    var(--clr-bg-deep) 0%,
+    var(--pip-casing-dark) 60%,
+    var(--clr-bg-deep) 100%
+  );
   box-shadow:
     inset -1px 0 0 rgba(255, 255, 255, 0.04),
     inset 2px 0 6px rgba(0, 0, 0, 0.85);
@@ -338,7 +364,11 @@ textarea {
   transform: translateY(-50%);
   width: 22px;
   height: 90px;
-  background: repeating-linear-gradient(0deg, var(--clr-bg-deep) 0 2px, var(--pip-casing-dark) 2px 6px);
+  background: repeating-linear-gradient(
+    0deg,
+    var(--clr-bg-deep) 0 2px,
+    var(--pip-casing-dark) 2px 6px
+  );
   border-radius: 4px;
   box-shadow:
     inset 1px 1px 2px rgba(0, 0, 0, 0.8),
@@ -353,7 +383,13 @@ textarea {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 25%, var(--pip-metal) 0%, var(--pip-metal) 35%, var(--pip-metal-dark) 80%, var(--clr-bg-deep) 100%);
+  background: radial-gradient(
+    circle at 30% 25%,
+    var(--pip-metal) 0%,
+    var(--pip-metal) 35%,
+    var(--pip-metal-dark) 80%,
+    var(--clr-bg-deep) 100%
+  );
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
     inset 0 -1px 2px rgba(0, 0, 0, 0.7),
@@ -377,7 +413,7 @@ textarea {
   top: 14px;
   left: 50%;
   transform: translateX(-50%);
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.32em;
   color: var(--pip-casing-dark);
@@ -390,17 +426,29 @@ textarea {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--pip-metal) 0%, var(--pip-metal) 30%, var(--pip-metal-dark) 80%, var(--clr-bg-deep) 100%);
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--pip-metal) 0%,
+    var(--pip-metal) 30%,
+    var(--pip-metal-dark) 80%,
+    var(--clr-bg-deep) 100%
+  );
   box-shadow:
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
     inset 0 -1px 2px rgba(0, 0, 0, 0.6),
     0 1px 2px rgba(0, 0, 0, 0.6);
 }
 .pip-screw::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 4px;
-  background: linear-gradient(120deg, transparent 45%, var(--clr-bg-deep) 47%, var(--clr-bg-deep) 53%, transparent 55%);
+  background: linear-gradient(
+    120deg,
+    transparent 45%,
+    var(--clr-bg-deep) 47%,
+    var(--clr-bg-deep) 53%,
+    transparent 55%
+  );
   border-radius: 50%;
 }
 .pip-screw.tl {
@@ -438,7 +486,12 @@ textarea {
   width: 32px;
   height: 14px;
   border-radius: 6px 6px 3px 3px;
-  background: radial-gradient(ellipse at 30% 25%, var(--pip-casing-light) 0%, var(--pip-casing) 40%, var(--pip-casing-dark) 100%);
+  background: radial-gradient(
+    ellipse at 30% 25%,
+    var(--pip-casing-light) 0%,
+    var(--pip-casing) 40%,
+    var(--pip-casing-dark) 100%
+  );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.25),
     inset 0 -2px 3px rgba(0, 0, 0, 0.5),
@@ -447,14 +500,21 @@ textarea {
 }
 .pip-antenna-base::before,
 .pip-antenna-base::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 4px;
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--pip-metal) 0%, var(--pip-metal) 35%, var(--pip-metal-dark) 90%);
-  box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.6), 0 1px 1px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--pip-metal) 0%,
+    var(--pip-metal) 35%,
+    var(--pip-metal-dark) 90%
+  );
+  box-shadow:
+    inset 0 -1px 1px rgba(0, 0, 0, 0.6),
+    0 1px 1px rgba(0, 0, 0, 0.5);
 }
 .pip-antenna-base::before {
   left: 4px;
@@ -470,7 +530,14 @@ textarea {
   transform: translateX(-50%);
   width: 4px;
   height: 30px;
-  background: linear-gradient(90deg, var(--clr-bg-deep) 0%, var(--pip-metal) 35%, var(--pip-metal) 50%, var(--pip-metal) 65%, var(--clr-bg-deep) 100%);
+  background: linear-gradient(
+    90deg,
+    var(--clr-bg-deep) 0%,
+    var(--pip-metal) 35%,
+    var(--pip-metal) 50%,
+    var(--pip-metal) 65%,
+    var(--clr-bg-deep) 100%
+  );
   box-shadow:
     0 0 0 0.5px rgba(0, 0, 0, 0.6),
     1px 0 2px rgba(0, 0, 0, 0.6);
@@ -485,7 +552,11 @@ textarea {
   width: 8px;
   height: 10px;
   border-radius: 2px;
-  background: repeating-linear-gradient(0deg, var(--clr-bg-deep) 0 1px, var(--pip-metal-dark) 1px 2px);
+  background: repeating-linear-gradient(
+    0deg,
+    var(--clr-bg-deep) 0 1px,
+    var(--pip-metal-dark) 1px 2px
+  );
   box-shadow:
     inset 0 0 0 0.5px rgba(0, 0, 0, 0.7),
     0 1px 2px rgba(0, 0, 0, 0.6);
@@ -499,7 +570,12 @@ textarea {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, var(--pip-amber) 0%, var(--pip-amber) 45%, var(--pip-amber) 100%);
+  background: radial-gradient(
+    circle at 30% 30%,
+    var(--pip-amber) 0%,
+    var(--pip-amber) 45%,
+    var(--pip-amber) 100%
+  );
   box-shadow:
     0 0 4px var(--pip-amber),
     0 0 10px rgba(255, 184, 77, 0.7),
@@ -514,7 +590,12 @@ textarea {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, var(--pip-green-bright), var(--pip-green) 50%, var(--pip-green-dim) 100%);
+  background: radial-gradient(
+    circle at 30% 30%,
+    var(--pip-green-bright),
+    var(--pip-green) 50%,
+    var(--pip-green-dim) 100%
+  );
   box-shadow:
     0 0 8px var(--pip-green),
     0 0 16px rgba(63, 207, 111, 0.5),
@@ -544,15 +625,18 @@ textarea {
     0 4px 8px rgba(0, 0, 0, 0.7);
 }
 .pip-knob::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 6px;
   border-radius: 50%;
-  background: repeating-conic-gradient(var(--clr-bg-deep) 0deg 8deg, var(--pip-casing-dark) 8deg 16deg);
+  background: repeating-conic-gradient(
+    var(--clr-bg-deep) 0deg 8deg,
+    var(--pip-casing-dark) 8deg 16deg
+  );
   box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.8);
 }
 .pip-knob::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 6px;
   left: 50%;
@@ -582,7 +666,7 @@ textarea {
     inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 .pip-switch::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 3px;
   left: 3px;
@@ -630,18 +714,20 @@ textarea {
   );
   overflow: hidden;
   color: var(--pip-green);
-  font-family: "VT323", "Share Tech Mono", monospace;
+  font-family: 'VT323', 'Share Tech Mono', monospace;
   font-size: 22px;
   line-height: 1.15;
   letter-spacing: 0.03em;
-  text-shadow: 0 0 2px rgba(140, 255, 170, 0.55), 0 0 6px rgba(63, 207, 111, 0.25);
+  text-shadow:
+    0 0 2px rgba(140, 255, 170, 0.55),
+    0 0 6px rgba(63, 207, 111, 0.25);
   box-shadow:
     inset 0 0 60px rgba(0, 0, 0, 0.85),
     inset 0 0 120px rgba(0, 30, 10, 0.55);
 }
 
 .pip-screen::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   border-radius: 14px;
@@ -653,7 +739,13 @@ textarea {
 .pip-scanlines {
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.45) 3px, rgba(0, 0, 0, 0) 4px);
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.45) 3px,
+    rgba(0, 0, 0, 0) 4px
+  );
   pointer-events: none;
   z-index: 20;
   mix-blend-mode: multiply;
@@ -766,7 +858,7 @@ textarea {
 }
 
 .pip-h {
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.28em;
@@ -806,7 +898,7 @@ textarea {
   left: 12px;
   background: var(--pip-screen);
   padding: 0 8px;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.3em;
@@ -821,7 +913,7 @@ textarea {
   gap: 12px;
 }
 .pip-label {
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.22em;
@@ -829,10 +921,12 @@ textarea {
   text-shadow: none;
 }
 .pip-value {
-  font-family: "VT323", monospace;
+  font-family: 'VT323', monospace;
   font-size: 22px;
   color: var(--pip-green-bright);
-  text-shadow: 0 0 1.5px rgba(140, 255, 170, 0.7), 0 0 4px rgba(63, 207, 111, 0.35);
+  text-shadow:
+    0 0 1.5px rgba(140, 255, 170, 0.7),
+    0 0 4px rgba(63, 207, 111, 0.35);
 }
 .pip-value.lg {
   font-size: 28px;
@@ -840,11 +934,15 @@ textarea {
 }
 .pip-value.amber {
   color: var(--pip-amber);
-  text-shadow: 0 0 1.5px rgba(255, 210, 140, 0.7), 0 0 4px rgba(255, 184, 77, 0.5);
+  text-shadow:
+    0 0 1.5px rgba(255, 210, 140, 0.7),
+    0 0 4px rgba(255, 184, 77, 0.5);
 }
 .pip-value.red {
   color: var(--pip-red);
-  text-shadow: 0 0 1.5px rgba(255, 170, 150, 0.7), 0 0 4px rgba(255, 90, 60, 0.5);
+  text-shadow:
+    0 0 1.5px rgba(255, 170, 150, 0.7),
+    0 0 4px rgba(255, 90, 60, 0.5);
 }
 
 .pip-bar {
@@ -888,28 +986,28 @@ textarea {
 }
 
 .pip-spin::after {
-  content: "|";
+  content: '|';
   display: inline-block;
   margin-left: 6px;
   animation: pip-spin 0.5s steps(4, end) infinite;
 }
 @keyframes pip-spin {
   0% {
-    content: "|";
+    content: '|';
   }
   25% {
-    content: "/";
+    content: '/';
   }
   50% {
-    content: "-";
+    content: '-';
   }
   75% {
-    content: "\\";
+    content: '\\';
   }
 }
 
 .pip-compass {
-  font-family: "VT323", monospace;
+  font-family: 'VT323', monospace;
   font-size: 18px;
   line-height: 1.05;
   white-space: pre;
@@ -921,7 +1019,7 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.3em;
   color: var(--pip-green-bright);
@@ -977,7 +1075,7 @@ textarea {
   border: 1px solid var(--pip-green-dim);
   color: var(--pip-green-bright);
   padding: 6px 8px;
-  font-family: "VT323", monospace;
+  font-family: 'VT323', monospace;
   font-size: 20px;
   letter-spacing: 0.08em;
   outline: none;
@@ -991,7 +1089,7 @@ textarea {
   border: 1px solid var(--pip-green-dim);
   color: var(--pip-green-bright);
   padding: 4px 6px;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -1006,7 +1104,7 @@ textarea {
   background: transparent;
   color: var(--pip-green-bright);
   padding: 6px 10px;
-  font-family: "Share Tech Mono", monospace;
+  font-family: 'Share Tech Mono', monospace;
   font-size: 11px;
   letter-spacing: 0.22em;
   cursor: pointer;

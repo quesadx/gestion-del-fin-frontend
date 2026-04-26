@@ -1,4 +1,4 @@
-import { mockData } from "../mockData";
+import { mockData } from '../mockData';
 
 export function IdentityPanel() {
   const { operator } = mockData;
@@ -10,7 +10,7 @@ export function IdentityPanel() {
           <div className="pip-label">NAME</div>
           <div className="pip-value">{operator.name}</div>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <div style={{ textAlign: 'right' }}>
           <div className="pip-label">ID</div>
           <div className="pip-value">{operator.id}</div>
         </div>
@@ -21,7 +21,7 @@ export function IdentityPanel() {
           <div className="pip-label">CAMP</div>
           <div className="pip-value lg">{operator.camp}</div>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <div style={{ textAlign: 'right' }}>
           <div className="pip-label">ROLE</div>
           <div className="pip-value lg">{operator.role}</div>
         </div>

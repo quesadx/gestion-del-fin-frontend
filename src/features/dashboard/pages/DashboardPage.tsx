@@ -1,9 +1,4 @@
-import {
-  IdentityPanel,
-  TimePanel,
-  LocationPanel,
-  ResourcesPanel,
-} from "@/shared/ui/pipboy";
+import { IdentityPanel, TimePanel, LocationPanel, ResourcesPanel } from '@/shared/ui/pipboy';
 
 export function DashboardPage() {
   return (
