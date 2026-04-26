@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { staggerContainer, staggerItem } from "@/shared/lib/motion";
 
 const DUMMY_EXPLORATIONS = [
   {
@@ -51,6 +53,9 @@ const getStatusTone = (status: string) => {
 };
 
 export function ExplorationsPage() {
+  const reduceMotion = useReducedMotion();
+  const listVariants = reduceMotion ? {} : staggerContainer;
+  const itemVariants = reduceMotion ? {} : staggerItem;
   const statusCounts = useMemo(() => {
     return DUMMY_EXPLORATIONS.reduce(
       (acc, exp) => {
@@ -110,9 +115,15 @@ export function ExplorationsPage() {
 
       <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
         <span className="pip-frame-title">EXPEDITIONS A</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+        <motion.div
+          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          className="custom-scrollbar"
+          variants={listVariants}
+          initial="initial"
+          animate="animate"
+        >
           {leftList.map((exp) => (
-            <div key={exp.id}>
+            <motion.div key={exp.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{exp.id}</span>
                 <span className={`pip-value ${getStatusTone(exp.status)}`} style={{ fontSize: 16 }}>
@@ -125,16 +136,22 @@ export function ExplorationsPage() {
               <div className="pip-label">UNIT {exp.leadSurvivor}</div>
               <div className="pip-label">TIME {exp.time}</div>
               <div className="pip-label">ACTION {exp.action}</div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
         <span className="pip-frame-title">EXPEDITIONS B</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+        <motion.div
+          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          className="custom-scrollbar"
+          variants={listVariants}
+          initial="initial"
+          animate="animate"
+        >
           {rightList.map((exp) => (
-            <div key={exp.id}>
+            <motion.div key={exp.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{exp.id}</span>
                 <span className={`pip-value ${getStatusTone(exp.status)}`} style={{ fontSize: 16 }}>
@@ -147,9 +164,9 @@ export function ExplorationsPage() {
               <div className="pip-label">UNIT {exp.leadSurvivor}</div>
               <div className="pip-label">TIME {exp.time}</div>
               <div className="pip-label">ACTION {exp.action}</div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </>
   );

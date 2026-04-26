@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { staggerContainer, staggerItem } from "@/shared/lib/motion";
 
 const DUMMY_PEOPLE = [
   {
@@ -46,6 +48,9 @@ const DUMMY_PEOPLE = [
 ];
 
 export function PeopleListPage() {
+  const reduceMotion = useReducedMotion();
+  const listVariants = reduceMotion ? {} : staggerContainer;
+  const itemVariants = reduceMotion ? {} : staggerItem;
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [conditionFilter, setConditionFilter] = useState("ALL");
@@ -158,9 +163,15 @@ export function PeopleListPage() {
 
       <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
         <span className="pip-frame-title">ROSTER A</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+        <motion.div
+          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          className="custom-scrollbar"
+          variants={listVariants}
+          initial="initial"
+          animate="animate"
+        >
           {leftList.map((person) => (
-            <div key={person.id}>
+            <motion.div key={person.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{person.id}</span>
                 <span className={`pip-value ${getConditionTone(person.condition)}`} style={{ fontSize: 16 }}>
@@ -174,17 +185,23 @@ export function PeopleListPage() {
                 <span className="pip-label">{person.role}</span>
               </div>
               <div className="pip-label">LOC {person.location}</div>
-            </div>
+            </motion.div>
           ))}
           {leftList.length === 0 && <div className="pip-label">NO MATCHES</div>}
-        </div>
+        </motion.div>
       </div>
 
       <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
         <span className="pip-frame-title">ROSTER B</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+        <motion.div
+          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          className="custom-scrollbar"
+          variants={listVariants}
+          initial="initial"
+          animate="animate"
+        >
           {rightList.map((person) => (
-            <div key={person.id}>
+            <motion.div key={person.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{person.id}</span>
                 <span className={`pip-value ${getConditionTone(person.condition)}`} style={{ fontSize: 16 }}>
@@ -198,10 +215,10 @@ export function PeopleListPage() {
                 <span className="pip-label">{person.role}</span>
               </div>
               <div className="pip-label">LOC {person.location}</div>
-            </div>
+            </motion.div>
           ))}
           {rightList.length === 0 && <div className="pip-label">NO MATCHES</div>}
-        </div>
+        </motion.div>
       </div>
     </>
   );

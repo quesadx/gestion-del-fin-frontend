@@ -15,9 +15,9 @@
   --pip-red: var(--clr-danger-text);
 
   /* Casing */
-  --pip-casing: var(--clr-bezel);
-  --pip-casing-light: var(--clr-bezel-hi);
-  --pip-casing-dark: var(--clr-bg-deep);
+  --pip-casing: #3a4426;
+  --pip-casing-light: #4a562e;
+  --pip-casing-dark: #242913;
   --pip-casing-shadow: var(--clr-bg-deep);
   --pip-metal: var(--clr-green-mid);
   --pip-metal-dark: var(--clr-green-dim);

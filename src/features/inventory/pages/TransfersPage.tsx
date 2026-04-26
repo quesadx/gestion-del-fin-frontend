@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { staggerContainer, staggerItem } from "@/shared/lib/motion";
 
 const DUMMY_TRANSFERS = [
   {
@@ -59,6 +61,9 @@ const getStatusTone = (status: string) => {
 };
 
 export function TransfersPage() {
+  const reduceMotion = useReducedMotion();
+  const listVariants = reduceMotion ? {} : staggerContainer;
+  const itemVariants = reduceMotion ? {} : staggerItem;
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredTransfers = DUMMY_TRANSFERS.filter(
@@ -112,9 +117,15 @@ export function TransfersPage() {
 
       <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
         <span className="pip-frame-title">TRANSFERS A</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+        <motion.div
+          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          className="custom-scrollbar"
+          variants={listVariants}
+          initial="initial"
+          animate="animate"
+        >
           {leftList.map((trx) => (
-            <div key={trx.id}>
+            <motion.div key={trx.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{trx.direction}</span>
                 <span className={`pip-value ${getStatusTone(trx.status)}`} style={{ fontSize: 16 }}>
@@ -127,17 +138,23 @@ export function TransfersPage() {
               <div className="pip-label">FROM {trx.origin}</div>
               <div className="pip-label">TO {trx.destination}</div>
               <div className="pip-label">QTY {trx.qty} {trx.unit} / REF {trx.id}</div>
-            </div>
+            </motion.div>
           ))}
           {leftList.length === 0 && <div className="pip-label">NO MATCHES</div>}
-        </div>
+        </motion.div>
       </div>
 
       <div className="pip-frame" style={{ minHeight: 0, overflow: "hidden" }}>
         <span className="pip-frame-title">TRANSFERS B</span>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }} className="custom-scrollbar">
+        <motion.div
+          style={{ display: "flex", flexDirection: "column", gap: 8, overflowY: "auto" }}
+          className="custom-scrollbar"
+          variants={listVariants}
+          initial="initial"
+          animate="animate"
+        >
           {rightList.map((trx) => (
-            <div key={trx.id}>
+            <motion.div key={trx.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{trx.direction}</span>
                 <span className={`pip-value ${getStatusTone(trx.status)}`} style={{ fontSize: 16 }}>
@@ -150,10 +167,10 @@ export function TransfersPage() {
               <div className="pip-label">FROM {trx.origin}</div>
               <div className="pip-label">TO {trx.destination}</div>
               <div className="pip-label">QTY {trx.qty} {trx.unit} / REF {trx.id}</div>
-            </div>
+            </motion.div>
           ))}
           {rightList.length === 0 && <div className="pip-label">NO MATCHES</div>}
-        </div>
+        </motion.div>
       </div>
     </>
   );
