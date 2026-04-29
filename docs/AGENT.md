@@ -308,6 +308,23 @@ export function SurvivorCard({ survivorId, onSelect }: Props) {
 
 ---
 
+## MIGRATION WORKFLOW (dummy -> real endpoints)
+
+### Rules
+- One endpoint per step (no multi-endpoint changes in the same commit).
+- I must stop after each endpoint and wait for your test/commit confirmation.
+- Each step includes: API function -> hook -> UI wiring -> quick test notes.
+- If a step fails, revert only that step; do not touch other endpoints.
+
+### Step output checklist
+- Updated API function (features/[x]/api).
+- Updated TanStack Query hook (features/[x]/hooks).
+- Updated UI component(s) that used dummy data.
+- Test notes: where to click, expected data, and error state check.
+- Wait for your approval before continuing.
+
+---
+
 ## TOOLING SETUP
 
 ### ESLint + Prettier + CSpell scripts (`package.json`)

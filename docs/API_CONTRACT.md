@@ -513,3 +513,45 @@ export interface Exploration {
 | GET | `/transfers` | resource_manager, travel_lead | `['transfers', campId]` |
 | POST | `/transfers/request` | travel_lead | invalidates `['transfers', campId]` |
 | PATCH | `/transfers/:id/approve` | resource_manager | invalidates `['transfers', campId]`, `['resources', campId]` |
+
+---
+
+## MIGRATION PLAN (dummy -> real endpoints)
+
+### Step protocol (one endpoint at a time)
+1) Locate the current dummy source (component/hook/mock data).
+2) Implement or adjust API function in `features/[x]/api/`.
+3) Implement or adjust TanStack Query hook in `features/[x]/hooks/`.
+4) Wire the UI to the hook (remove dummy data usage).
+5) Provide test notes for the specific screen and error path.
+6) Stop and wait for confirmation before next endpoint.
+
+### Initial endpoint checklist (order)
+- [ ] POST `/auth/login` (LoginPage)
+- [ ] GET `/system/time` (StatusBar / server time)
+- [ ] GET `/camps` (CampsPage)
+- [ ] GET `/people` (PeopleListPage)
+- [ ] GET `/people/:id` (PersonDetailPage)
+- [ ] POST `/people` (PersonIngressPage)
+- [ ] PATCH `/people/:id/condition` (PeopleListPage)
+- [ ] POST `/people/ingress-eval` (PersonIngressPage)
+- [ ] GET `/resources` (InventoryPage)
+- [ ] GET `/resources/mine` (InventoryPage - worker role)
+- [ ] POST `/resources/entry` (ResourceEntryForm)
+- [ ] POST `/resources/exit` (TransfersPage or Inventory exit flow)
+- [ ] GET `/explorations` (ExplorationsPage)
+- [ ] POST `/explorations` (ExplorationsPage)
+- [ ] PATCH `/explorations/:id/return` (ExplorationsPage)
+- [ ] GET `/transfers` (TransfersPage)
+- [ ] POST `/transfers/request` (TransferRequestForm)
+- [ ] PATCH `/transfers/:id/approve` (TransfersPage)
+
+### Per-step test notes template
+```
+Screen:
+User role:
+Steps to reproduce:
+Expected result:
+Error state checked:
+```
+
