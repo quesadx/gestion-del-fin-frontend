@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { authApi } from '../api/auth.api';
 import { useAuthStore } from '../store/auth.store';
+import type { ApiError } from '@/shared/lib/api.types';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -8,6 +11,8 @@ export function LoginPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fullTitle = 'RESTRICTED ACCESS';
   const [displayedTitle, setDisplayedTitle] = useState('');
@@ -53,22 +58,32 @@ export function LoginPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleBypass = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
+  const getErrorMessage = (error: unknown) => {
+    if (axios.isAxiosError(error)) {
+      const data = error.response?.data;
+      if (data && typeof data === 'object' && 'message' in data) {
+        return (data as ApiError).message;
+      }
+      return 'Login failed. Please check your credentials.';
+    }
 
-    login('fake-jwt-token-777', {
-      id: 'u-001',
-      username: username || 'ADMIN_DEV',
-      role: 'system_admin',
-      campId: 'camp-alpha',
-    });
-
-    navigate('/dashboard');
+    return 'Unexpected error. Please try again.';
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleBypass();
+    setErrorMessage(null);
+    setIsSubmitting(true);
+
+    try {
+      const result = await authApi.login({ username, password });
+      login(result.token, result.user);
+      navigate('/dashboard');
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,12 +119,10 @@ export function LoginPage() {
               className="pip-input"
             />
           </div>
+          {errorMessage ? <div className="pip-label">{errorMessage}</div> : null}
           <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            <button type="submit" className="pip-button">
-              EXECUTE
-            </button>
-            <button type="button" onClick={handleBypass} className="pip-button">
-              BYPASS
+            <button type="submit" className="pip-button" disabled={isSubmitting}>
+              {isSubmitting ? 'EXECUTING...' : 'EXECUTE'}
             </button>
           </div>
         </form>

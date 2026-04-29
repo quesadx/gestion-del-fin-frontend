@@ -527,24 +527,35 @@ export interface Exploration {
 6) Stop and wait for confirmation before next endpoint.
 
 ### Initial endpoint checklist (order)
+#### Phase 1 — existing screens only (recommended first)
 - [ ] POST `/auth/login` (LoginPage)
-- [ ] GET `/system/time` (StatusBar / server time)
-- [ ] GET `/camps` (CampsPage)
+- [ ] GET `/system/time` (Dashboard TimePanel)
 - [ ] GET `/people` (PeopleListPage)
-- [ ] GET `/people/:id` (PersonDetailPage)
-- [ ] POST `/people` (PersonIngressPage)
-- [ ] PATCH `/people/:id/condition` (PeopleListPage)
-- [ ] POST `/people/ingress-eval` (PersonIngressPage)
 - [ ] GET `/resources` (InventoryPage)
 - [ ] GET `/resources/mine` (InventoryPage - worker role)
-- [ ] POST `/resources/entry` (ResourceEntryForm)
-- [ ] POST `/resources/exit` (TransfersPage or Inventory exit flow)
 - [ ] GET `/explorations` (ExplorationsPage)
-- [ ] POST `/explorations` (ExplorationsPage)
-- [ ] PATCH `/explorations/:id/return` (ExplorationsPage)
 - [ ] GET `/transfers` (TransfersPage)
-- [ ] POST `/transfers/request` (TransferRequestForm)
-- [ ] PATCH `/transfers/:id/approve` (TransfersPage)
+
+#### Phase 2 — only after UI exists
+- [ ] GET `/camps` (CampsPage not implemented)
+- [ ] GET `/people/:id` (PersonDetailPage not implemented)
+- [ ] POST `/people` (PersonIngressPage not implemented)
+- [ ] PATCH `/people/:id/condition` (PeopleListPage - no UI controls yet)
+- [ ] POST `/people/ingress-eval` (PersonIngressPage not implemented)
+- [ ] POST `/resources/entry` (ResourceEntryForm not implemented)
+- [ ] POST `/resources/exit` (Inventory/Transfers flow not implemented)
+- [ ] POST `/explorations` (Explorations create flow not implemented)
+- [ ] PATCH `/explorations/:id/return` (Explorations return flow not implemented)
+- [ ] POST `/transfers/request` (TransferRequestForm not implemented)
+- [ ] PATCH `/transfers/:id/approve` (Transfers approval flow not implemented)
+
+### Dummy sources currently in use (replace first)
+- Login: `features/auth/pages/LoginPage.tsx`
+- People list: `features/people/pages/PeopleListPage.tsx`
+- Inventory: `features/inventory/pages/InventoryPage.tsx`
+- Transfers: `features/inventory/pages/TransfersPage.tsx`
+- Explorations: `features/explorations/pages/ExplorationsPage.tsx`
+- Dashboard panels: `shared/ui/pipboy/panels/TimePanel.tsx`, `ResourcesPanel.tsx`, `IdentityPanel.tsx`, `LocationPanel.tsx`
 
 ### Per-step test notes template
 ```
