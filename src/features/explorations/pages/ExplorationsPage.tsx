@@ -1,44 +1,11 @@
 import { useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { staggerContainer, staggerItem } from '@/shared/lib/motion';
-
-const DUMMY_EXPLORATIONS = [
-  {
-    id: 'EXP-77',
-    destination: 'RUINED HOSPITAL',
-    leadSurvivor: 'MARCUS REED',
-    time: '3 DAYS AGO',
-    status: 'COMPLETED',
-    action: 'DEBRIEF_LOG',
-  },
-  {
-    id: 'EXP-82',
-    destination: 'SECTOR B // POWER PLANT',
-    leadSurvivor: 'ELIAS VANCE',
-    time: 'EST: 5 DAYS',
-    status: 'IN_PROGRESS',
-    action: 'MONITOR_FEED',
-  },
-  {
-    id: 'EXP-85',
-    destination: 'SUBWAY TUNNEL ALPHA',
-    leadSurvivor: 'SARAH CONNOR',
-    time: 'LOST: 2 DAYS AGO',
-    status: 'FAILED',
-    action: 'INITIATE_RECOVERY',
-  },
-  {
-    id: 'EXP-88',
-    destination: 'OLD WORLD ARCHIVE',
-    leadSurvivor: 'DR. ARIS',
-    time: 'DURATION: 4 DAYS',
-    status: 'PENDING',
-    action: 'DEPLOY_UNIT',
-  },
-];
+import { useCampStore } from '@/features/camps/store/camp.store';
+import { useExplorations } from '@/features/explorations/hooks/useExplorations';
 
 const getStatusTone = (status: string) => {
-  switch (status) {
+  switch (status.toUpperCase()) {
     case 'FAILED':
       return 'red';
     case 'IN_PROGRESS':
@@ -56,19 +23,27 @@ export function ExplorationsPage() {
   const reduceMotion = useReducedMotion();
   const listVariants = reduceMotion ? {} : staggerContainer;
   const itemVariants = reduceMotion ? {} : staggerItem;
+  const activeCamp = useCampStore((state) => state.activeCamp);
+  const explorationsQuery = useExplorations(activeCamp?.id);
+  const explorations = explorationsQuery.data ?? [];
+  const errorMessage = explorationsQuery.error instanceof Error ? explorationsQuery.error.message : undefined;
+  const isLoading = explorationsQuery.isLoading;
+  const isError = explorationsQuery.isError;
+
   const statusCounts = useMemo(() => {
-    return DUMMY_EXPLORATIONS.reduce(
+    return explorations.reduce(
       (acc, exp) => {
-        acc[exp.status] = (acc[exp.status] || 0) + 1;
+        const status = String(exp.status ?? 'UNKNOWN').toUpperCase();
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>,
     );
-  }, []);
+  }, [explorations]);
 
-  const splitIndex = Math.ceil(DUMMY_EXPLORATIONS.length / 2);
-  const leftList = DUMMY_EXPLORATIONS.slice(0, splitIndex);
-  const rightList = DUMMY_EXPLORATIONS.slice(splitIndex);
+  const splitIndex = Math.ceil(explorations.length / 2);
+  const leftList = explorations.slice(0, splitIndex);
+  const rightList = explorations.slice(splitIndex);
 
   return (
     <>
@@ -126,22 +101,32 @@ export function ExplorationsPage() {
           initial="initial"
           animate="animate"
         >
-          {leftList.map((exp) => (
-            <motion.div key={exp.id} variants={itemVariants}>
-              <div className="pip-row">
-                <span className="pip-label">{exp.id}</span>
-                <span className={`pip-value ${getStatusTone(exp.status)}`} style={{ fontSize: 16 }}>
-                  {exp.status}
-                </span>
-              </div>
-              <div className="pip-value" style={{ fontSize: 18 }}>
-                {exp.destination}
-              </div>
-              <div className="pip-label">UNIT {exp.leadSurvivor}</div>
-              <div className="pip-label">TIME {exp.time}</div>
-              <div className="pip-label">ACTION {exp.action}</div>
-            </motion.div>
-          ))}
+          {!activeCamp ? (
+            <div className="pip-label">SELECT AN ACTIVE CAMP TO LOAD EXPEDITIONS.</div>
+          ) : isLoading ? (
+            <div className="pip-label">LOADING EXPEDITIONS...</div>
+          ) : isError ? (
+            <div className="pip-label">ERROR LOADING EXPEDITIONS{errorMessage ? `: ${errorMessage}` : ''}</div>
+          ) : leftList.length === 0 ? (
+            <div className="pip-label">NO EXPEDITIONS</div>
+          ) : (
+            leftList.map((exp) => (
+              <motion.div key={exp.id} variants={itemVariants}>
+                <div className="pip-row">
+                  <span className="pip-label">{exp.id}</span>
+                  <span className={`pip-value ${getStatusTone(exp.status ?? '')}`} style={{ fontSize: 16 }}>
+                    {String(exp.status ?? '')}
+                  </span>
+                </div>
+                <div className="pip-value" style={{ fontSize: 18 }}>
+                  {String(exp.destination ?? '')}
+                </div>
+                <div className="pip-label">UNIT {String(exp.leadSurvivor ?? '')}</div>
+                <div className="pip-label">TIME {String(exp.time ?? '')}</div>
+                <div className="pip-label">ACTION {String(exp.action ?? '')}</div>
+              </motion.div>
+            ))
+          )}
         </motion.div>
       </div>
 
@@ -154,22 +139,32 @@ export function ExplorationsPage() {
           initial="initial"
           animate="animate"
         >
-          {rightList.map((exp) => (
-            <motion.div key={exp.id} variants={itemVariants}>
-              <div className="pip-row">
-                <span className="pip-label">{exp.id}</span>
-                <span className={`pip-value ${getStatusTone(exp.status)}`} style={{ fontSize: 16 }}>
-                  {exp.status}
-                </span>
-              </div>
-              <div className="pip-value" style={{ fontSize: 18 }}>
-                {exp.destination}
-              </div>
-              <div className="pip-label">UNIT {exp.leadSurvivor}</div>
-              <div className="pip-label">TIME {exp.time}</div>
-              <div className="pip-label">ACTION {exp.action}</div>
-            </motion.div>
-          ))}
+          {!activeCamp ? (
+            <div className="pip-label">SELECT AN ACTIVE CAMP TO LOAD EXPEDITIONS.</div>
+          ) : isLoading ? (
+            <div className="pip-label">LOADING EXPEDITIONS...</div>
+          ) : isError ? (
+            <div className="pip-label">ERROR LOADING EXPEDITIONS{errorMessage ? `: ${errorMessage}` : ''}</div>
+          ) : rightList.length === 0 ? (
+            <div className="pip-label">NO EXPEDITIONS</div>
+          ) : (
+            rightList.map((exp) => (
+              <motion.div key={exp.id} variants={itemVariants}>
+                <div className="pip-row">
+                  <span className="pip-label">{exp.id}</span>
+                  <span className={`pip-value ${getStatusTone(exp.status ?? '')}`} style={{ fontSize: 16 }}>
+                    {String(exp.status ?? '')}
+                  </span>
+                </div>
+                <div className="pip-value" style={{ fontSize: 18 }}>
+                  {String(exp.destination ?? '')}
+                </div>
+                <div className="pip-label">UNIT {String(exp.leadSurvivor ?? '')}</div>
+                <div className="pip-label">TIME {String(exp.time ?? '')}</div>
+                <div className="pip-label">ACTION {String(exp.action ?? '')}</div>
+              </motion.div>
+            ))
+          )}
         </motion.div>
       </div>
     </>
