@@ -1,53 +1,76 @@
 # API_CONTRACT.md — Gestión del Fin · Backend API & Data Layer
 
-> Load this when working on: API functions, TanStack Query hooks, Zustand stores, Axios config.
+> Load this when working on API functions, TanStack Query hooks, Zustand stores, Axios config, and endpoint wiring.
+
+This contract is aligned with [docs/Endpoints.json](docs/Endpoints.json). If the OpenAPI changes, update this file first and then update the API layer and UI hooks.
 
 ---
 
-## BASE URL & HEADERS
+## BASE URL & AUTH
 
-```
+```text
 Base URL: http://localhost:3000/api   (env: VITE_API_URL)
 ```
 
-Every request except `/auth/login` requires:
-```
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
-X-Camp-Id: <camp_uuid>
-```
+Rules:
+- `POST /auth/login` is public.
+- All other endpoints require `Authorization: Bearer <jwt_token>`.
+- Send `Content-Type: application/json` for JSON requests.
+- Camp-scoped endpoints use `campId` in the path, not a global `X-Camp-Id` contract.
 
-`X-Camp-Id` enables multi-tenant isolation. Injected automatically by the Axios interceptor.
-
----
-
-## STATE SPLIT — THE KEY RULE
-
-```
-Zustand  → auth session, active camp, UI state (never API data)
-TanStack Query → everything that comes from the API
-```
-
-When the camp changes: call `queryClient.clear()` — one call invalidates all cached server data.
+If the current implementation keeps `X-Camp-Id` as an internal convenience header, document it as an implementation detail only. It is not part of the OpenAPI contract.
 
 ---
 
-## STANDARD RESPONSE ENVELOPE
+## STATE SPLIT
+
+```text
+Zustand       -> auth session, active camp, UI state
+TanStack Query -> everything that comes from the API
+```
+
+Rules:
+- Never store API response data in Zustand.
+- Never fetch API data inside Zustand actions.
+- When the active camp changes, call `queryClient.clear()` to drop cached server state.
+
+---
+
+## RESPONSE SHAPE
+
+The OpenAPI document defines responses endpoint by endpoint. Use the documented schema for each route.
+
+Known shared shapes:
 
 ```typescript
-interface ApiResponse<T> {
-  success: boolean
-  data: T
-  message?: string
+interface ErrorResponse {
+  error: {
+    message: string
+    statusCode: number
+    details?: unknown
+  }
 }
 
-interface ApiError {
-  success: false
-  message: string
-  errors?: { field: string; message: string }[]  // Zod field errors
-  statusCode: number
+interface LoginRequest {
+  username: string
+  password: string
+}
+
+interface LoginResponse {
+  user: {
+    username: string
+  }
+  token: string
+}
+
+interface SystemTimeResponse {
+  now: string
+  iso: string
+  today: string
 }
 ```
+
+Do not assume a `success/data` wrapper unless the backend explicitly returns it for a given route.
 
 ---
 
@@ -57,7 +80,6 @@ interface ApiError {
 // src/shared/api/axiosInstance.ts
 import axios from 'axios'
 import { useAuthStore } from '@/features/auth/store/auth.store'
-import { useCampStore } from '@/features/camps/store/camp.store'
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
@@ -67,9 +89,7 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token
-  const campId = useCampStore.getState().activeCamp?.id
   if (token) config.headers.Authorization = `Bearer ${token}`
-  if (campId) config.headers['X-Camp-Id'] = campId
   return config
 })
 
@@ -85,9 +105,11 @@ api.interceptors.response.use(
 )
 ```
 
+If the app later needs a camp header for legacy compatibility, inject it in a second interceptor only if the backend still requires it.
+
 ---
 
-## TANSTACK QUERY CLIENT
+## QUERY CLIENT
 
 ```typescript
 // src/shared/lib/queryClient.ts
@@ -96,8 +118,8 @@ import { QueryClient } from '@tanstack/react-query'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,        // data stays fresh 30s
-      retry: 2,                 // retry failed requests twice
+      staleTime: 30_000,
+      retry: 2,
       refetchOnWindowFocus: true,
     },
     mutations: {
@@ -123,238 +145,221 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### Query key conventions
-```typescript
-// Always include campId so queries are isolated per camp
-['resources', campId]
-['people', campId]
-['explorations', campId]
-['transfers', campId]
-['dashboard', campId]
-['person', campId, personId]      // single resource
-['resource', campId, resourceId]
-```
+Query key conventions:
 
-### Camp switch — cache invalidation
 ```typescript
-// When user switches camp, clear ALL server state in one call
-import { queryClient } from '@/shared/lib/queryClient'
-queryClient.clear()
+['camps']
+['system', 'time']
+['people', campId]
+['person', campId, personId]
+['resources', campId]
+['resource', resourceId]
+['inventory', campId]
+['inventory-audit', campId]
+['professions']
+['expeditions', campId]
+['admissions', campId]
+['users']
 ```
 
 ---
 
-## API FUNCTIONS (plain Axios — no hooks here)
+## API FUNCTIONS
 
-API files export plain async functions. TanStack Query hooks call these functions.
+API files export plain async functions. TanStack Query hooks wrap these functions.
 
 ### auth.api.ts
+
 ```typescript
-// features/auth/api/auth.api.ts
+// src/features/auth/api/auth.api.ts
 import { api } from '@/shared/api/axiosInstance'
-import type { User } from '../types/auth.types'
 
 export const authApi = {
-  login: (credentials: { username: string; password: string }) =>
-    api.post<ApiResponse<{ token: string; user: User }>>('/auth/login', credentials)
-      .then(r => r.data.data),
+  login: (credentials: LoginRequest) =>
+    api.post<LoginResponse>('/auth/login', credentials).then((r) => r.data),
+}
+```
 
-  logout: () => api.post('/auth/logout'),
+### system.api.ts
 
-  verifySession: (password: string) =>
-    api.post<ApiResponse<{ valid: boolean }>>('/auth/verify-session', { password })
-      .then(r => r.data.data),
+```typescript
+// src/shared/api/system.api.ts
+import { api } from '@/shared/api/axiosInstance'
+
+export const systemApi = {
+  getTime: () => api.get<SystemTimeResponse>('/system/time').then((r) => r.data),
+}
+```
+
+### camps.api.ts
+
+```typescript
+// src/features/camps/api/camps.api.ts
+import { api } from '@/shared/api/axiosInstance'
+
+export const campsApi = {
+  getAll: () => api.get('/camps').then((r) => r.data),
+  getById: (id: string) => api.get(`/camps/${id}`).then((r) => r.data),
+  create: (payload: unknown) => api.post('/camps', payload).then((r) => r.data),
+  update: (id: string, payload: unknown) => api.put(`/camps/${id}`, payload).then((r) => r.data),
+  remove: (id: string) => api.delete(`/camps/${id}`).then((r) => r.data),
 }
 ```
 
 ### people.api.ts
+
 ```typescript
-// features/people/api/people.api.ts
+// src/features/people/api/people.api.ts
 import { api } from '@/shared/api/axiosInstance'
-import type { Survivor, IngressEvalRequest, AIAnalysisResult } from '../types/person.types'
 
 export const peopleApi = {
-  getAll: () =>
-    api.get<ApiResponse<Survivor[]>>('/people').then(r => r.data.data),
-
-  getById: (id: string) =>
-    api.get<ApiResponse<Survivor>>(`/people/${id}`).then(r => r.data.data),
-
-  create: (payload: CreateSurvivorPayload) =>
-    api.post<ApiResponse<Survivor>>('/people', payload).then(r => r.data.data),
-
-  updateCondition: (id: string, condition: Condition) =>
-    api.patch<ApiResponse<Survivor>>(`/people/${id}/condition`, { condition })
-      .then(r => r.data.data),
-
-  evaluateIngress: (data: IngressEvalRequest) =>
-    api.post<ApiResponse<AIAnalysisResult>>('/people/ingress-eval', data)
-      .then(r => r.data.data),
+  getAllByCamp: (campId: string) => api.get(`/camps/${campId}/people`).then((r) => r.data),
+  getById: (campId: string, id: string) => api.get(`/camps/${campId}/people/${id}`).then((r) => r.data),
+  create: (campId: string, payload: unknown) => api.post(`/camps/${campId}/people`, payload).then((r) => r.data),
+  update: (campId: string, id: string, payload: unknown) => api.put(`/camps/${campId}/people/${id}`, payload).then((r) => r.data),
+  remove: (campId: string, id: string) => api.delete(`/camps/${campId}/people/${id}`).then((r) => r.data),
+  addStatusLog: (campId: string, payload: unknown) => api.post(`/camps/${campId}/people/status-log`, payload).then((r) => r.data),
+  createProfessionReassignment: (campId: string, payload: unknown) => api.post(`/camps/${campId}/people/profession-reassignments`, payload).then((r) => r.data),
+  createContributionOverride: (campId: string, payload: unknown) => api.post(`/camps/${campId}/people/contribution-overrides`, payload).then((r) => r.data),
 }
 ```
 
 ### resources.api.ts
+
 ```typescript
-// features/inventory/api/resources.api.ts
+// src/features/inventory/api/resources.api.ts
 import { api } from '@/shared/api/axiosInstance'
-import type { Resource } from '../types/resource.types'
 
 export const resourcesApi = {
-  getAll: () =>
-    api.get<ApiResponse<Resource[]>>('/resources').then(r => r.data.data),
+  getAll: () => api.get('/resources').then((r) => r.data),
+  getById: (id: string) => api.get(`/resources/${id}`).then((r) => r.data),
+  create: (payload: unknown) => api.post('/resources', payload).then((r) => r.data),
+  update: (id: string, payload: unknown) => api.put(`/resources/${id}`, payload).then((r) => r.data),
+  remove: (id: string) => api.delete(`/resources/${id}`).then((r) => r.data),
+}
+```
 
-  getMine: () =>
-    api.get<ApiResponse<Resource[]>>('/resources/mine').then(r => r.data.data),
+### inventory.api.ts
 
-  addEntry: (payload: ResourceEntryPayload) =>
-    api.post<ApiResponse<Resource>>('/resources/entry', payload).then(r => r.data.data),
+```typescript
+// src/features/inventory/api/inventory.api.ts
+import { api } from '@/shared/api/axiosInstance'
 
-  requestExit: (payload: ResourceExitPayload) =>
-    api.post<ApiResponse<void>>('/resources/exit', payload).then(r => r.data.data),
+export const inventoryApi = {
+  getByCamp: (campId: string) => api.get(`/inventory/${campId}`).then((r) => r.data),
+  getAuditByCamp: (campId: string) => api.get(`/inventory/audit/${campId}`).then((r) => r.data),
+  createAdjustment: (payload: unknown) => api.post('/inventory/adjustment', payload).then((r) => r.data),
+}
+```
+
+### professions.api.ts
+
+```typescript
+// src/features/people/api/professions.api.ts
+import { api } from '@/shared/api/axiosInstance'
+
+export const professionsApi = {
+  getAll: () => api.get('/professions').then((r) => r.data),
+  getById: (id: string) => api.get(`/professions/${id}`).then((r) => r.data),
+  create: (payload: unknown) => api.post('/professions', payload).then((r) => r.data),
+  update: (id: string, payload: unknown) => api.put(`/professions/${id}`, payload).then((r) => r.data),
+  remove: (id: string) => api.delete(`/professions/${id}`).then((r) => r.data),
+}
+```
+
+### expeditions.api.ts
+
+```typescript
+// src/features/explorations/api/expeditions.api.ts
+import { api } from '@/shared/api/axiosInstance'
+
+export const expeditionsApi = {
+  getAll: () => api.get('/expeditions').then((r) => r.data),
+  getById: (id: string) => api.get(`/expeditions/${id}`).then((r) => r.data),
+  create: (payload: unknown) => api.post('/expeditions', payload).then((r) => r.data),
+  update: (id: string, payload: unknown) => api.put(`/expeditions/${id}`, payload).then((r) => r.data),
+  remove: (id: string, payload: unknown) => api.delete(`/expeditions/${id}`, { data: payload }).then((r) => r.data),
+  updateStatus: (id: string, payload: unknown) => api.patch(`/expeditions/${id}/status`, payload).then((r) => r.data),
+}
+```
+
+### admissions.api.ts
+
+```typescript
+// src/features/admissions/api/admissions.api.ts
+import { api } from '@/shared/api/axiosInstance'
+
+export const admissionsApi = {
+  createForCamp: (campId: string, payload: unknown) => api.post(`/admission/camps/${campId}`, payload).then((r) => r.data),
+  getByCamp: (campId: string) => api.get(`/admission/camps/${campId}`).then((r) => r.data),
+  getById: (id: string) => api.get(`/admission/${id}`).then((r) => r.data),
+  review: (id: string, payload: unknown) => api.patch(`/admission/${id}/review`, payload).then((r) => r.data),
+}
+```
+
+### users.api.ts
+
+```typescript
+// src/features/users/api/users.api.ts
+import { api } from '@/shared/api/axiosInstance'
+
+export const usersApi = {
+  getAll: () => api.get('/users').then((r) => r.data),
+  getById: (id: string) => api.get(`/users/${id}`).then((r) => r.data),
+  create: (payload: unknown) => api.post('/users', payload).then((r) => r.data),
+  update: (id: string, payload: unknown) => api.put(`/users/${id}`, payload).then((r) => r.data),
+  remove: (id: string) => api.delete(`/users/${id}`).then((r) => r.data),
 }
 ```
 
 ---
 
-## TANSTACK QUERY HOOKS (one file per feature)
+## TANSTACK QUERY HOOKS
 
-Query hooks live in `features/[x]/hooks/`. They wrap API functions with `useQuery`/`useMutation`.
+Hooks should be one file per feature. Use route-scoped query keys that include `campId` where applicable.
 
-### useResources.ts
+Guideline:
+- `useQuery` for lists and details.
+- `useMutation` for create, update, review, approve, delete, and one-off workflow actions.
+- Invalidate only the affected query keys after a mutation.
+
+Example pattern:
+
 ```typescript
-// features/inventory/hooks/useResources.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCampStore } from '@/features/camps/store/camp.store'
-import { resourcesApi } from '../api/resources.api'
-import { useAuthStore } from '@/features/auth/store/auth.store'
-import type { Role } from '@/features/auth/types/auth.types'
+const query = useQuery({
+  queryKey: ['people', campId],
+  queryFn: () => peopleApi.getAllByCamp(campId!),
+  enabled: !!campId,
+})
 
-const WORKER_ROLES: Role[] = ['worker']
-
-export function useResources() {
-  const campId = useCampStore(s => s.activeCamp?.id)
-  const role = useAuthStore(s => s.role)
-  const queryClient = useQueryClient()
-
-  // Workers get only their assigned resources
-  const fetcher = role && WORKER_ROLES.includes(role)
-    ? resourcesApi.getMine
-    : resourcesApi.getAll
-
-  const query = useQuery({
-    queryKey: ['resources', campId],
-    queryFn: fetcher,
-    enabled: !!campId,
-    staleTime: 30_000,
-  })
-
-  // Derived — no store needed
-  const lowStock = query.data?.filter(r => r.quantity < r.minThreshold) ?? []
-
-  const addEntry = useMutation({
-    mutationFn: resourcesApi.addEntry,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['resources', campId] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard', campId] })
-    },
-  })
-
-  const requestExit = useMutation({
-    mutationFn: resourcesApi.requestExit,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['resources', campId] })
-    },
-  })
-
-  return { ...query, lowStock, addEntry, requestExit }
-}
-```
-
-### usePeople.ts
-```typescript
-// features/people/hooks/usePeople.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCampStore } from '@/features/camps/store/camp.store'
-import { peopleApi } from '../api/people.api'
-
-export function usePeople() {
-  const campId = useCampStore(s => s.activeCamp?.id)
-  const queryClient = useQueryClient()
-
-  const query = useQuery({
-    queryKey: ['people', campId],
-    queryFn: peopleApi.getAll,
-    enabled: !!campId,
-  })
-
-  const updateCondition = useMutation({
-    mutationFn: ({ id, condition }: { id: string; condition: Condition }) =>
-      peopleApi.updateCondition(id, condition),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['people', campId] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard', campId] })
-    },
-  })
-
-  return { ...query, updateCondition }
-}
-
-export function usePerson(personId: string) {
-  const campId = useCampStore(s => s.activeCamp?.id)
-  return useQuery({
-    queryKey: ['person', campId, personId],
-    queryFn: () => peopleApi.getById(personId),
-    enabled: !!campId && !!personId,
-  })
-}
-```
-
-### useAIDecision.ts
-```typescript
-// features/people/hooks/useAIDecision.ts
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCampStore } from '@/features/camps/store/camp.store'
-import { peopleApi } from '../api/people.api'
-
-export function useAIDecision() {
-  const campId = useCampStore(s => s.activeCamp?.id)
-  const queryClient = useQueryClient()
-
-  const evaluate = useMutation({
-    mutationFn: peopleApi.evaluateIngress,
-    // result stays in mutation.data — no caching needed for one-off evaluation
-  })
-
-  const confirm = useMutation({
-    mutationFn: peopleApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['people', campId] })
-    },
-  })
-
-  return { evaluate, confirm }
-}
+const createPerson = useMutation({
+  mutationFn: (payload: unknown) => peopleApi.create(campId!, payload),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['people', campId] })
+  },
+})
 ```
 
 ---
 
-## ZUSTAND STORES (client state only)
+## ZUSTAND STORES
+
+Keep stores client-only.
 
 ### auth.store.ts
+
 ```typescript
-// features/auth/store/auth.store.ts
+// src/features/auth/store/auth.store.ts
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, Role } from '../types/auth.types'
 
 interface AuthState {
-  user: User | null
+  user: { username: string } | null
   token: string | null
-  role: Role | null
   lastActivity: number
   isLocked: boolean
 
-  login: (token: string, user: User) => void
+  login: (token: string, user: { username: string }) => void
   logout: () => void
   updateActivity: () => void
   lock: () => void
@@ -366,51 +371,39 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
-      role: null,
       lastActivity: Date.now(),
       isLocked: false,
 
-      login: (token, user) =>
-        set({ token, user, role: user.role, lastActivity: Date.now(), isLocked: false }),
-
-      logout: () =>
-        set({ user: null, token: null, role: null, isLocked: false }),
-
+      login: (token, user) => set({ token, user, lastActivity: Date.now(), isLocked: false }),
+      logout: () => set({ user: null, token: null, isLocked: false }),
       updateActivity: () => set({ lastActivity: Date.now() }),
-
       lock: () => set({ isLocked: true }),
-
-      unlock: async (password) => {
-        const { authApi } = await import('../api/auth.api')
-        const result = await authApi.verifySession(password)
-        if (result.valid) {
-          set({ isLocked: false, lastActivity: Date.now() })
-        }
-        return result.valid
-      },
+      unlock: async () => false,
     }),
     {
       name: 'auth-storage',
-      partialize: (s) => ({ token: s.token, user: s.user, role: s.role }),
+      partialize: (s) => ({ token: s.token, user: s.user }),
     }
   )
 )
 ```
 
+If the backend later exposes role or camp in auth payloads, add them back explicitly and update [docs/ROLES_ACCESS.md](docs/ROLES_ACCESS.md).
+
 ### camp.store.ts
+
 ```typescript
-// features/camps/store/camp.store.ts
+// src/features/camps/store/camp.store.ts
 import { create } from 'zustand'
-import type { Camp } from '../types/camp.types'
 
 interface CampState {
-  activeCamp: Camp | null
-  availableCamps: Camp[]
-  serverTime: number      // last known server Unix ms
-  lastSyncLocal: number   // local Date.now() at sync time
+  activeCamp: { id: string; name?: string } | null
+  availableCamps: { id: string; name?: string }[]
+  serverTime: number
+  lastSyncLocal: number
 
-  setActiveCamp: (camp: Camp) => void
-  setAvailableCamps: (camps: Camp[]) => void
+  setActiveCamp: (camp: { id: string; name?: string } | null) => void
+  setAvailableCamps: (camps: { id: string; name?: string }[]) => void
   resetCamp: () => void
   setServerTime: (serverTime: number) => void
 }
@@ -428,88 +421,93 @@ export const useCampStore = create<CampState>()((set) => ({
 }))
 ```
 
-### uiStore — `app/` level
-```typescript
-interface UIState {
-  sidebarOpen: boolean
-  activeModal: string | null
-  notifications: AppNotification[]
-
-  toggleSidebar: () => void
-  openModal: (id: string) => void
-  closeModal: () => void
-  pushNotification: (n: AppNotification) => void
-  dismissNotification: (id: string) => void
-}
-```
-
 ---
 
 ## KEY TYPES
 
+Use these as the starting point, then refine them after you implement each endpoint from the OpenAPI schemas.
+
 ```typescript
-// features/auth/types/auth.types.ts
-export type Role = 'system_admin' | 'resource_manager' | 'worker' | 'travel_lead'
-export interface User { id: string; username: string; role: Role; campId: string }
+// src/features/auth/types/auth.types.ts
+export type Role = 'system_admin' | 'resource_manager' | 'worker' | 'travel_coordinator'
 
-// features/people/types/person.types.ts
+// src/features/people/types/person.types.ts
 export type Condition = 'healthy' | 'injured' | 'sick' | 'away'
-export interface Survivor {
-  id: string; name: string; age: number; profession: string
-  role: Role; condition: Condition; campId: string
-  daysActive: number; createdAt: number
-}
-export interface IngressEvalRequest {
-  name: string; age: number; skills: string[]
-  physicalState: string; itemsFoundWith: string[]
-  context: string; imageUrls?: string[]
-}
-export interface AIAnalysisResult {
-  decision: 'ADMIT' | 'REJECT' | 'QUARANTINE'
-  confidence: number         // 0-100
-  reasons: string[]
-  suggestedRole?: Role
-  suggestedProfession?: string
-  flaggedRisks?: string[]
-}
 
-// features/inventory/types/resource.types.ts
+// src/features/inventory/types/resource.types.ts
 export type ResourceType = 'food' | 'water' | 'medicine' | 'ammo' | 'hygiene' | 'defense'
-export interface Resource {
-  id: string; type: ResourceType; name: string
-  quantity: number; minThreshold: number; unit: string; campId: string
-}
 
-// features/explorations/types/exploration.types.ts
-export type ExplorationStatus = 'scheduled' | 'active' | 'returned' | 'failed'
-export interface Exploration {
-  id: string; campId: string; teamIds: string[]
-  scheduledDays: number; bufferDays: number
-  status: ExplorationStatus; departureDate: number; returnDate?: number
-  resourcesFound?: Partial<Record<ResourceType, number>>
-}
+// src/features/explorations/types/exploration.types.ts
+export type ExpeditionStatus = 'scheduled' | 'active' | 'returned' | 'failed'
 ```
+
+Important alignment notes:
+- The current front code uses `travel_lead`, but the OpenAPI text says `travel_coordinator` for expedition routes. Verify the backend enum before wiring guards.
+- Do not keep `transfers` in the API layer unless the backend adds those endpoints back.
 
 ---
 
 ## ENDPOINTS REFERENCE
 
-| Method | Endpoint | Role | Query key |
-|---|---|---|---|
-| POST | `/auth/login` | Public | — |
-| GET | `/system/time` | All | — |
-| GET | `/camps` | All | `['camps']` |
-| GET | `/people` | system_admin | `['people', campId]` |
-| POST | `/people` | system_admin | invalidates `['people', campId]` |
-| PATCH | `/people/:id/condition` | system_admin | invalidates `['people', campId]` |
-| POST | `/people/ingress-eval` | system_admin | — (mutation only) |
-| GET | `/resources` | resource_manager, worker | `['resources', campId]` |
-| GET | `/resources/mine` | worker | `['resources', campId]` |
-| POST | `/resources/entry` | resource_manager | invalidates `['resources', campId]` |
-| POST | `/resources/exit` | worker | invalidates `['resources', campId]` |
-| GET | `/explorations` | travel_lead | `['explorations', campId]` |
-| POST | `/explorations` | travel_lead | invalidates `['explorations', campId]` |
-| PATCH | `/explorations/:id/return` | travel_lead | invalidates `['explorations', campId]`, `['resources', campId]` |
-| GET | `/transfers` | resource_manager, travel_lead | `['transfers', campId]` |
-| POST | `/transfers/request` | travel_lead | invalidates `['transfers', campId]` |
-| PATCH | `/transfers/:id/approve` | resource_manager | invalidates `['transfers', campId]`, `['resources', campId]` |
+| Method | Endpoint | Notes |
+|---|---|---|
+| POST | `/auth/login` | Public login, returns `{ user: { username }, token }` |
+| GET | `/system/time` | Public time snapshot |
+| GET | `/camps` | Authenticated list |
+| POST | `/camps` | Create camp |
+| GET | `/camps/{id}` | Camp detail |
+| PUT | `/camps/{id}` | Update camp |
+| DELETE | `/camps/{id}` | Delete camp |
+| POST | `/admission/camps/{campId}` | Create admission request |
+| GET | `/admission/camps/{campId}` | List admissions by camp |
+| GET | `/admission/{id}` | Admission detail |
+| PATCH | `/admission/{id}/review` | Review admission |
+| GET | `/inventory/{campId}` | Inventory snapshot by camp |
+| GET | `/inventory/audit/{campId}` | Inventory audit trail |
+| POST | `/inventory/adjustment` | Manual inventory adjustment |
+| GET | `/camps/{campId}/people` | List people in camp |
+| POST | `/camps/{campId}/people` | Create person in camp |
+| GET | `/camps/{campId}/people/{id}` | Person detail |
+| PUT | `/camps/{campId}/people/{id}` | Update person |
+| DELETE | `/camps/{campId}/people/{id}` | Delete person |
+| POST | `/camps/{campId}/people/status-log` | Add status log |
+| POST | `/camps/{campId}/people/profession-reassignments` | Create reassignment |
+| POST | `/camps/{campId}/people/contribution-overrides` | Create override |
+| GET | `/professions` | List professions |
+| POST | `/professions` | Create profession |
+| GET | `/professions/{id}` | Profession detail |
+| PUT | `/professions/{id}` | Update profession |
+| DELETE | `/professions/{id}` | Delete profession |
+| GET | `/resources` | List resources |
+| POST | `/resources` | Create resource |
+| GET | `/resources/{id}` | Resource detail |
+| PUT | `/resources/{id}` | Update resource |
+| DELETE | `/resources/{id}` | Delete resource |
+| GET | `/expeditions` | List expeditions |
+| POST | `/expeditions` | Create expedition |
+| GET | `/expeditions/{id}` | Expedition detail |
+| PUT | `/expeditions/{id}` | Update expedition |
+| DELETE | `/expeditions/{id}` | Delete expedition |
+| PATCH | `/expeditions/{id}/status` | Update expedition status |
+| GET | `/users` | List users |
+| POST | `/users` | Create user |
+| GET | `/users/{id}` | User detail |
+| PUT | `/users/{id}` | Update user |
+| DELETE | `/users/{id}` | Delete user |
+
+---
+
+## IMPLEMENTATION RULE
+
+Implement one endpoint at a time.
+
+For each endpoint:
+1. Add or update the plain API function.
+2. Add or update the hook if the UI needs cached state.
+3. Wire the existing view or form to the new hook.
+4. Remove or replace dummy data for that view.
+5. Run the targeted tests/lint for the touched files.
+6. Review the diff.
+7. Commit only that endpoint change.
+
+Do not start the next endpoint until the current one is reviewed, tested, and committed.
