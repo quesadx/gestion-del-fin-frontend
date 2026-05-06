@@ -6,8 +6,8 @@
 export type Role = 'system_admin' | 'resource_manager' | 'worker' | 'travel_lead';
 
 export interface User {
-  id: string;
+  id?: string;
   username: string;
-  role: Role;
-  campId: string;
+  role?: Role;
+  campId?: string;
 }

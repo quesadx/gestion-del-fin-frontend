@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
+import { authApi } from '../api/auth.api';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -8,6 +9,8 @@ export function LoginPage() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fullTitle = 'RESTRICTED ACCESS';
   const [displayedTitle, setDisplayedTitle] = useState('');
@@ -53,22 +56,25 @@ export function LoginPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleBypass = (e?: React.MouseEvent) => {
-    if (e) e.preventDefault();
-
-    login('fake-jwt-token-777', {
-      id: 'u-001',
-      username: username || 'ADMIN_DEV',
-      role: 'system_admin',
-      campId: 'camp-alpha',
-    });
-
-    navigate('/dashboard');
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    handleBypass();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const response = await authApi.login({ username, password });
+      login(response.token, {
+        id: response.user.id,
+        username: response.user.username,
+        role: response.user.role,
+        campId: response.user.campId,
+      });
+      navigate('/dashboard');
+    } catch {
+      setError('Login failed. Check your username and password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -104,13 +110,15 @@ export function LoginPage() {
               className="pip-input"
             />
           </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            <button type="submit" className="pip-button">
-              EXECUTE
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+            <button type="submit" className="pip-button" disabled={loading}>
+              {loading ? 'AUTHENTICATING' : 'EXECUTE'}
             </button>
-            <button type="button" onClick={handleBypass} className="pip-button">
-              BYPASS
-            </button>
+            {error && (
+              <div className="pip-label" style={{ color: '#ff6b6b' }}>
+                {error}
+              </div>
+            )}
           </div>
         </form>
       </div>
