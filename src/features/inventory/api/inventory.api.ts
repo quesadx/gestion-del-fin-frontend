@@ -10,5 +10,6 @@ export interface InventoryItem {
 }
 
 export const inventoryApi = {
-  getByCamp: (campId: string) => api.get<InventoryItem[]>(`/inventory/${campId}`).then((response) => response.data),
+  getByCamp: (campId: string) =>
+    api.get<InventoryItem[]>(`/inventory/${campId}`).then((response) => response.data),
 };

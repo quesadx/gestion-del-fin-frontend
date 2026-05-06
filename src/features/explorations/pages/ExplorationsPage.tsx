@@ -25,8 +25,9 @@ export function ExplorationsPage() {
   const itemVariants = reduceMotion ? {} : staggerItem;
   const activeCamp = useCampStore((state) => state.activeCamp);
   const explorationsQuery = useExplorations(activeCamp?.id);
-  const explorations = explorationsQuery.data ?? [];
-  const errorMessage = explorationsQuery.error instanceof Error ? explorationsQuery.error.message : undefined;
+  const explorations = useMemo(() => explorationsQuery.data ?? [], [explorationsQuery.data]);
+  const errorMessage =
+    explorationsQuery.error instanceof Error ? explorationsQuery.error.message : undefined;
   const isLoading = explorationsQuery.isLoading;
   const isError = explorationsQuery.isError;
 
@@ -106,7 +107,9 @@ export function ExplorationsPage() {
           ) : isLoading ? (
             <div className="pip-label">LOADING EXPEDITIONS...</div>
           ) : isError ? (
-            <div className="pip-label">ERROR LOADING EXPEDITIONS{errorMessage ? `: ${errorMessage}` : ''}</div>
+            <div className="pip-label">
+              ERROR LOADING EXPEDITIONS{errorMessage ? `: ${errorMessage}` : ''}
+            </div>
           ) : leftList.length === 0 ? (
             <div className="pip-label">NO EXPEDITIONS</div>
           ) : (
@@ -114,7 +117,10 @@ export function ExplorationsPage() {
               <motion.div key={exp.id} variants={itemVariants}>
                 <div className="pip-row">
                   <span className="pip-label">{exp.id}</span>
-                  <span className={`pip-value ${getStatusTone(exp.status ?? '')}`} style={{ fontSize: 16 }}>
+                  <span
+                    className={`pip-value ${getStatusTone(exp.status ?? '')}`}
+                    style={{ fontSize: 16 }}
+                  >
                     {String(exp.status ?? '')}
                   </span>
                 </div>
@@ -144,7 +150,9 @@ export function ExplorationsPage() {
           ) : isLoading ? (
             <div className="pip-label">LOADING EXPEDITIONS...</div>
           ) : isError ? (
-            <div className="pip-label">ERROR LOADING EXPEDITIONS{errorMessage ? `: ${errorMessage}` : ''}</div>
+            <div className="pip-label">
+              ERROR LOADING EXPEDITIONS{errorMessage ? `: ${errorMessage}` : ''}
+            </div>
           ) : rightList.length === 0 ? (
             <div className="pip-label">NO EXPEDITIONS</div>
           ) : (
@@ -152,7 +160,10 @@ export function ExplorationsPage() {
               <motion.div key={exp.id} variants={itemVariants}>
                 <div className="pip-row">
                   <span className="pip-label">{exp.id}</span>
-                  <span className={`pip-value ${getStatusTone(exp.status ?? '')}`} style={{ fontSize: 16 }}>
+                  <span
+                    className={`pip-value ${getStatusTone(exp.status ?? '')}`}
+                    style={{ fontSize: 16 }}
+                  >
                     {String(exp.status ?? '')}
                   </span>
                 </div>

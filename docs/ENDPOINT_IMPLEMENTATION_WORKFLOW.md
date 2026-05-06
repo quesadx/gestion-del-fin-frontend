@@ -19,7 +19,7 @@ Rule:
 6. `GET /resources`
 7. `GET /inventory/{campId}` D
 8. `GET /professions`
-9. `GET /expeditions`
+9. `GET /expeditions` D
 10. `GET /admission/camps/{campId}`
 11. `GET /users`
 

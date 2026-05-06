@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { staggerContainer, staggerItem } from '@/shared/lib/motion';
 import { useCampStore } from '@/features/camps/store/camp.store';
 import { useCamp } from '@/features/camps/hooks/useCamp';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useInventory } from '@/features/inventory/hooks/useInventory';
+import type { InventoryItem } from '@/features/inventory/api/inventory.api';
 
 export function InventoryPage() {
   const reduceMotion = useReducedMotion();
@@ -15,41 +16,15 @@ export function InventoryPage() {
   const [selectedCampId, setSelectedCampId] = useState('');
 
   const activeCamp = useCampStore((state) => state.activeCamp);
-  const setActiveCamp = useCampStore((state) => state.setActiveCamp);
 
   const campsQuery = useCamps();
   const campQuery = useCamp(selectedCampId);
   const inventoryQuery = useInventory(activeCamp?.id);
 
-  useEffect(() => {
-    if (!selectedCampId && campsQuery.data?.length) {
-      const firstCampId = campsQuery.data[0]?.id;
-      const initialId = activeCamp?.id ? String(activeCamp.id) : String(firstCampId);
-
-      if (initialId) {
-        setSelectedCampId(initialId);
-      }
-    }
-  }, [activeCamp?.id, campsQuery.data, selectedCampId]);
-
-  useEffect(() => {
-    if (campQuery.data && String(campQuery.data.id) !== String(activeCamp?.id)) {
-      setActiveCamp({
-        id: String(campQuery.data.id),
-        name: campQuery.data.name,
-      });
-    }
-  }, [activeCamp?.id, campQuery.data, setActiveCamp]);
-
-  const inventory = useMemo(() => {
-    const data = inventoryQuery.data;
-    if (!data) return [];
-    if (Array.isArray(data)) return data;
-    if (Array.isArray((data as any).data)) return (data as any).data;
-    if (Array.isArray((data as any).items)) return (data as any).items;
-    if (Array.isArray((data as any).inventory)) return (data as any).inventory;
-    return [];
-  }, [inventoryQuery.data]);
+  const inventory = useMemo<InventoryItem[]>(
+    () => inventoryQuery.data ?? [],
+    [inventoryQuery.data],
+  );
 
   const filteredInventory = useMemo(
     () =>
@@ -58,7 +33,8 @@ export function InventoryPage() {
         const itemName = String(item.name ?? '').toLowerCase();
         const itemId = String(item.id ?? '').toLowerCase();
 
-        const matchesSearch = itemName.includes(searchTermLower) || itemId.includes(searchTermLower);
+        const matchesSearch =
+          itemName.includes(searchTermLower) || itemId.includes(searchTermLower);
         const matchesCategory = categoryFilter === 'ALL' || item.category === categoryFilter;
 
         return matchesSearch && matchesCategory;
@@ -120,6 +96,39 @@ export function InventoryPage() {
       </div>
 
       <div className="pip-frame">
+        <span className="pip-frame-title">FILTERS</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div>
+            <div className="pip-label" style={{ marginBottom: 4 }}>
+              SEARCH
+            </div>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pip-input"
+              placeholder="SEARCH INVENTORY"
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="pip-select"
+            >
+              <option value="ALL">ALL CATEGORIES</option>
+              <option value="food">FOOD</option>
+              <option value="water">WATER</option>
+              <option value="medicine">MEDICINE</option>
+              <option value="ammo">AMMO</option>
+              <option value="hygiene">HYGIENE</option>
+              <option value="defense">DEFENSE</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="pip-frame">
         <span className="pip-frame-title">SUMMARY</span>
         <div className="pip-row">
           <span className="pip-label">ACTIVE CAMP</span>
@@ -158,16 +167,20 @@ export function InventoryPage() {
             </div>
           )}
           {!selectedCampId && <div className="pip-label">SELECT A CAMP TO LOAD INVENTORY.</div>}
-          {!inventoryQuery.isLoading && !inventoryQuery.isError && selectedCampId && leftList.length === 0 && (
-            <div className="pip-label">NO MATCHES</div>
-          )}
+          {!inventoryQuery.isLoading &&
+            !inventoryQuery.isError &&
+            selectedCampId &&
+            leftList.length === 0 && <div className="pip-label">NO MATCHES</div>}
           {leftList.map((item) => {
             const isLowStock = item.quantity <= (item.minThreshold ?? 0);
             return (
               <motion.div key={item.id} variants={itemVariants}>
                 <div className="pip-row">
                   <span className="pip-label">{item.id}</span>
-                  <span className={`pip-value ${isLowStock ? 'amber' : ''}`} style={{ fontSize: 16 }}>
+                  <span
+                    className={`pip-value ${isLowStock ? 'amber' : ''}`}
+                    style={{ fontSize: 16 }}
+                  >
                     {item.quantity} {item.unit}
                   </span>
                 </div>
@@ -199,16 +212,20 @@ export function InventoryPage() {
             </div>
           )}
           {!selectedCampId && <div className="pip-label">SELECT A CAMP TO LOAD INVENTORY.</div>}
-          {!inventoryQuery.isLoading && !inventoryQuery.isError && selectedCampId && rightList.length === 0 && (
-            <div className="pip-label">NO MATCHES</div>
-          )}
+          {!inventoryQuery.isLoading &&
+            !inventoryQuery.isError &&
+            selectedCampId &&
+            rightList.length === 0 && <div className="pip-label">NO MATCHES</div>}
           {rightList.map((item) => {
             const isLowStock = item.quantity <= (item.minThreshold ?? 0);
             return (
               <motion.div key={item.id} variants={itemVariants}>
                 <div className="pip-row">
                   <span className="pip-label">{item.id}</span>
-                  <span className={`pip-value ${isLowStock ? 'amber' : ''}`} style={{ fontSize: 16 }}>
+                  <span
+                    className={`pip-value ${isLowStock ? 'amber' : ''}`}
+                    style={{ fontSize: 16 }}
+                  >
                     {item.quantity} {item.unit}
                   </span>
                 </div>

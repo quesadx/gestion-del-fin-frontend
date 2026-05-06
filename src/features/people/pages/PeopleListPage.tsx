@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { staggerContainer, staggerItem } from '@/shared/lib/motion';
+import { staggerItem } from '@/shared/lib/motion';
 import { useCampStore } from '@/features/camps/store/camp.store';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
-import type { PersonApiModel } from '@/features/people/api/people.api';
 
 const getConditionTone = (condition: string) => {
   switch (condition) {
@@ -32,7 +31,6 @@ const formatDate = (value: string) => {
 
 export function PeopleListPage() {
   const reduceMotion = useReducedMotion();
-  const listVariants = reduceMotion ? {} : staggerContainer;
   const itemVariants = reduceMotion ? {} : staggerItem;
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
@@ -44,21 +42,13 @@ export function PeopleListPage() {
   const campsQuery = useCamps();
   const peopleQuery = usePeople(activeCamp?.id);
 
-  useEffect(() => {
-    if (activeCamp && String(activeCamp.id) !== selectedCampId) {
-      setSelectedCampId(String(activeCamp.id));
-    } else if (!activeCamp && !selectedCampId && campsQuery.data?.length) {
-      setSelectedCampId(String(campsQuery.data[0].id));
-    }
-  }, [activeCamp, campsQuery.data, selectedCampId]);
-
-  const handleSelectCamp = () => {
-    const selectedCamp = campsQuery.data?.find(
-      (camp) => String(camp.id) === String(selectedCampId),
-    );
-
+  const handleSelectCamp = (campId: string) => {
+    const selectedCamp = campsQuery.data?.find((camp) => String(camp.id) === campId);
     if (selectedCamp) {
-      setActiveCamp(selectedCamp);
+      setActiveCamp({
+        id: String(selectedCamp.id),
+        name: selectedCamp.name,
+      });
     }
   };
 
@@ -71,8 +61,7 @@ export function PeopleListPage() {
       String(person.id).includes(term) ||
       person.identification_code.toLowerCase().includes(term);
     const professionName = person.professions?.name?.toUpperCase() ?? '';
-    const matchesRole =
-      roleFilter === 'ALL' || professionName === roleFilter.toUpperCase();
+    const matchesRole = roleFilter === 'ALL' || professionName === roleFilter.toUpperCase();
 
     let matchesCondition = conditionFilter === 'ALL';
     if (conditionFilter === 'HEALTHY') matchesCondition = person.status === 'HEALTHY';
@@ -86,9 +75,7 @@ export function PeopleListPage() {
 
   const totalCount = people.length;
   const healthyCount = people.filter((p) => p.status === 'HEALTHY').length;
-  const warningCount = people.filter(
-    (p) => p.status === 'INJURED' || p.status === 'SICK',
-  ).length;
+  const warningCount = people.filter((p) => p.status === 'INJURED' || p.status === 'SICK').length;
   const criticalCount = people.filter((p) => p.status === 'CRITICAL').length;
 
   return (
@@ -98,26 +85,25 @@ export function PeopleListPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <select
-              value={selectedCampId}
-              onChange={(e) => setSelectedCampId(e.target.value)}
+              value={activeCamp?.id ?? selectedCampId}
+              onChange={(e) => {
+                const campId = e.target.value;
+                setSelectedCampId(campId);
+                handleSelectCamp(campId);
+              }}
               className="pip-select"
               disabled={campsQuery.isLoading || campsQuery.isError}
               style={{ minWidth: 220 }}
             >
+              <option value="" disabled>
+                {campsQuery.isLoading ? 'LOADING CAMPS...' : 'SELECT A CAMP'}
+              </option>
               {campsQuery.data?.map((camp) => (
                 <option key={camp.id} value={camp.id}>
                   {camp.name ?? camp.id}
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              className="pip-button"
-              onClick={handleSelectCamp}
-              disabled={!selectedCampId || campsQuery.isLoading || campsQuery.isError}
-            >
-              SELECT CAMP
-            </button>
           </div>
 
           <div className="pip-row">
@@ -125,9 +111,7 @@ export function PeopleListPage() {
             <span className="pip-value">{activeCamp?.name ?? 'NONE SELECTED'}</span>
           </div>
 
-          {campsQuery.isError && (
-            <div className="pip-label red">ERROR LOADING CAMPS</div>
-          )}
+          {campsQuery.isError && <div className="pip-label red">ERROR LOADING CAMPS</div>}
         </div>
       </div>
 
