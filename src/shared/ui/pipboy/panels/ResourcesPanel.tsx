@@ -7,7 +7,7 @@ export function ResourcesPanel() {
   const activeCamp = useCampStore((state) => state.activeCamp);
   const inventoryQuery = useInventory(activeCamp?.id);
 
-  const inventory = inventoryQuery.data ?? [];
+  const inventory = useMemo(() => inventoryQuery.data ?? [], [inventoryQuery.data]);
   const maxQuantity = useMemo(() => {
     if (inventory.length === 0) return 1;
     return Math.max(...inventory.map((item) => Number(item.quantity ?? 0), 0), 1);
@@ -24,9 +24,10 @@ export function ResourcesPanel() {
         {activeCamp && inventoryQuery.isError && (
           <div className="pip-label red">ERROR LOADING RESOURCES</div>
         )}
-        {activeCamp && !inventoryQuery.isLoading && !inventoryQuery.isError && inventory.length === 0 && (
-          <div className="pip-label">NO RESOURCES FOUND</div>
-        )}
+        {activeCamp &&
+          !inventoryQuery.isLoading &&
+          !inventoryQuery.isError &&
+          inventory.length === 0 && <div className="pip-label">NO RESOURCES FOUND</div>}
         {activeCamp && inventory.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {inventory
@@ -36,11 +37,15 @@ export function ResourcesPanel() {
               .map((item) => {
                 const quantity = Number(item.quantity ?? 0);
                 const fill = maxQuantity ? Math.min(1, quantity / maxQuantity) : 0;
-                const tone = quantity <= (item.minThreshold ?? 0) ? 'warn' : 'normal';
+                const tone = quantity <= (item.minThreshold ?? 0) ? 'warn' : 'ok';
                 return (
                   <div key={item.id}>
                     <div
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'baseline',
+                      }}
                     >
                       <span className="pip-label">{item.name}</span>
                       <span
@@ -50,7 +55,7 @@ export function ResourcesPanel() {
                         {quantity} {item.unit}
                       </span>
                     </div>
-                    <SegmentBar fill={fill} tone={tone === 'warn' ? 'amber' : undefined} segments={20} />
+                    <SegmentBar fill={fill} tone={tone} segments={20} />
                   </div>
                 );
               })}
