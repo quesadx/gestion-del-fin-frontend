@@ -11,17 +11,17 @@ Rule:
 
 ## Recommended order
 
-1. `POST /auth/login` D
-2. `GET /system/time` D
-3. `GET /camps` D
-4. `GET /camps/{id}` D
-5. `GET /camps/{campId}/people` D
-6. `GET /resources`
-7. `GET /inventory/{campId}` D
-8. `GET /professions`
-9. `GET /expeditions` D
-10. `GET /admission/camps/{campId}`
-11. `GET /users`
+1. `POST /auth/login` D ✅
+2. `GET /system/time` D ✅
+3. `GET /camps` D ✅
+4. `GET /camps/{id}` D ✅
+5. `GET /camps/{campId}/people` D ✅
+6. `GET /resources` ⏳ pending
+7. `GET /inventory/{campId}` D ✅
+8. `GET /professions` ⏳ pending
+9. `GET /expeditions` D ✅
+10. `GET /admission/camps/{campId}` ⏳ pending
+11. `GET /users` ⏳ pending
 
 Then implement the corresponding create, update, delete, review, and status endpoints for the same feature before moving to another domain.
 
