@@ -1,51 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { staggerContainer, staggerItem } from '@/shared/lib/motion';
+import { useCampStore } from '@/features/camps/store/camp.store';
+import { useCamps } from '@/features/camps/hooks/useCamps';
+import { usePeople } from '@/features/people/hooks/usePeople';
+import type { PersonApiModel } from '@/features/people/api/people.api';
 
-const DUMMY_PEOPLE = [
-  {
-    id: 'SRV-0942',
-    name: 'ELIAS VANCE',
-    role: 'RESOURCE_MANAGER',
-    condition: 'HEALTHY',
-    location: 'SECTOR_B4_HYDRO',
-  },
-  {
-    id: 'SRV-1209',
-    name: 'MARCUS REED',
-    role: 'TRAVEL_LEAD',
-    condition: 'INJURED',
-    location: 'MED_BAY_01',
-  },
-  {
-    id: 'SRV-8821',
-    name: 'SARAH CONNOR',
-    role: 'SYSTEM_ADMIN',
-    condition: 'HEALTHY',
-    location: 'PERIMETER_GATE_NORTH',
-  },
-  {
-    id: 'SRV-0034',
-    name: 'ELENA MARS',
-    role: 'WORKER',
-    condition: 'CRITICAL',
-    location: 'ICU_STATION_B',
-  },
-  {
-    id: 'SRV-5421',
-    name: 'OTTO KLINE',
-    role: 'WORKER',
-    condition: 'SICK',
-    location: 'QUARANTINE_ZONE_C',
-  },
-  {
-    id: 'SRV-7704',
-    name: 'JADE WREN',
-    role: 'WORKER',
-    condition: 'HEALTHY',
-    location: 'COMMS_HUB',
-  },
-];
+const getConditionTone = (condition: string) => {
+  switch (condition) {
+    case 'INJURED':
+    case 'SICK':
+      return 'amber';
+    case 'CRITICAL':
+      return 'red';
+    default:
+      return '';
+  }
+};
 
 export function PeopleListPage() {
   const reduceMotion = useReducedMotion();
@@ -54,22 +25,36 @@ export function PeopleListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [conditionFilter, setConditionFilter] = useState('ALL');
-  const getConditionTone = (condition: string) => {
-    switch (condition) {
-      case 'INJURED':
-      case 'SICK':
-        return 'amber';
-      case 'CRITICAL':
-        return 'red';
-      default:
-        return '';
+  const [selectedCampId, setSelectedCampId] = useState('');
+
+  const activeCamp = useCampStore((state) => state.activeCamp);
+  const setActiveCamp = useCampStore((state) => state.setActiveCamp);
+  const campsQuery = useCamps();
+  const peopleQuery = usePeople(activeCamp?.id);
+
+  useEffect(() => {
+    if (!selectedCampId && campsQuery.data?.length) {
+      setSelectedCampId(String(campsQuery.data[0].id));
+    }
+  }, [selectedCampId, campsQuery.data]);
+
+  const handleSelectCamp = () => {
+    const selectedCamp = campsQuery.data?.find(
+      (camp) => String(camp.id) === String(selectedCampId),
+    );
+
+    if (selectedCamp) {
+      setActiveCamp(selectedCamp);
     }
   };
 
-  const filteredPeople = DUMMY_PEOPLE.filter((person) => {
+  const people = peopleQuery.data ?? [];
+  const filteredPeople = people.filter((person) => {
+    const term = searchTerm.trim().toLowerCase();
     const matchesSearch =
-      person.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      person.id.toLowerCase().includes(searchTerm.toLowerCase());
+      !term ||
+      person.name.toLowerCase().includes(term) ||
+      person.id.toLowerCase().includes(term);
     const matchesRole = roleFilter === 'ALL' || person.role === roleFilter;
 
     let matchesCondition = conditionFilter === 'ALL';
@@ -81,12 +66,12 @@ export function PeopleListPage() {
     return matchesSearch && matchesRole && matchesCondition;
   });
 
-  const totalCount = DUMMY_PEOPLE.length;
-  const healthyCount = DUMMY_PEOPLE.filter((p) => p.condition === 'HEALTHY').length;
-  const warningCount = DUMMY_PEOPLE.filter(
+  const totalCount = people.length;
+  const healthyCount = people.filter((p) => p.condition === 'HEALTHY').length;
+  const warningCount = people.filter(
     (p) => p.condition === 'INJURED' || p.condition === 'SICK',
   ).length;
-  const criticalCount = DUMMY_PEOPLE.filter((p) => p.condition === 'CRITICAL').length;
+  const criticalCount = people.filter((p) => p.condition === 'CRITICAL').length;
 
   const splitIndex = Math.ceil(filteredPeople.length / 2);
   const leftList = filteredPeople.slice(0, splitIndex);
@@ -95,11 +80,51 @@ export function PeopleListPage() {
   return (
     <>
       <div className="pip-frame">
+        <span className="pip-frame-title">CAMP SELECTOR</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <select
+              value={selectedCampId}
+              onChange={(e) => setSelectedCampId(e.target.value)}
+              className="pip-select"
+              disabled={campsQuery.isLoading || campsQuery.isError}
+            >
+              {campsQuery.data?.map((camp) => (
+                <option key={camp.id} value={camp.id}>
+                  {camp.name ?? camp.id}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="pip-button"
+              onClick={handleSelectCamp}
+              disabled={!selectedCampId || campsQuery.isLoading || campsQuery.isError}
+            >
+              SELECT CAMP
+            </button>
+          </div>
+          <div className="pip-row">
+            <span className="pip-label">ACTIVE CAMP</span>
+            <span className="pip-value">{activeCamp?.name ?? 'NONE SELECTED'}</span>
+          </div>
+          {campsQuery.isError && (
+            <div className="pip-label red">ERROR LOADING CAMPS</div>
+          )}
+          {peopleQuery.isError && (
+            <div className="pip-label red">
+              ERROR LOADING PEOPLE: {String(peopleQuery.error?.message ?? 'UNKNOWN')}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="pip-frame">
         <span className="pip-frame-title">FILTERS</span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div>
             <div className="pip-label" style={{ marginBottom: 4 }}>
-              QUERY
+              SEARCH
             </div>
             <input
               type="text"
@@ -167,7 +192,14 @@ export function PeopleListPage() {
           initial="initial"
           animate="animate"
         >
-          {leftList.map((person) => (
+          {peopleQuery.isLoading && <div className="pip-label">LOADING PEOPLE...</div>}
+          {!peopleQuery.isLoading && !activeCamp && (
+            <div className="pip-label">SELECT A CAMP TO LOAD PEOPLE.</div>
+          )}
+          {!peopleQuery.isLoading && activeCamp && leftList.length === 0 && (
+            <div className="pip-label">NO MATCHES</div>
+          )}
+          {leftList.map((person: PersonApiModel) => (
             <motion.div key={person.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{person.id}</span>
@@ -184,10 +216,9 @@ export function PeopleListPage() {
                 </span>
                 <span className="pip-label">{person.role}</span>
               </div>
-              <div className="pip-label">LOC {person.location}</div>
+              <div className="pip-label">LOC {person.location ?? 'UNKNOWN'}</div>
             </motion.div>
           ))}
-          {leftList.length === 0 && <div className="pip-label">NO MATCHES</div>}
         </motion.div>
       </div>
 
@@ -200,7 +231,14 @@ export function PeopleListPage() {
           initial="initial"
           animate="animate"
         >
-          {rightList.map((person) => (
+          {peopleQuery.isLoading && <div className="pip-label">LOADING PEOPLE...</div>}
+          {!peopleQuery.isLoading && !activeCamp && (
+            <div className="pip-label">SELECT A CAMP TO LOAD PEOPLE.</div>
+          )}
+          {!peopleQuery.isLoading && activeCamp && rightList.length === 0 && (
+            <div className="pip-label">NO MATCHES</div>
+          )}
+          {rightList.map((person: PersonApiModel) => (
             <motion.div key={person.id} variants={itemVariants}>
               <div className="pip-row">
                 <span className="pip-label">{person.id}</span>
@@ -217,10 +255,9 @@ export function PeopleListPage() {
                 </span>
                 <span className="pip-label">{person.role}</span>
               </div>
-              <div className="pip-label">LOC {person.location}</div>
+              <div className="pip-label">LOC {person.location ?? 'UNKNOWN'}</div>
             </motion.div>
           ))}
-          {rightList.length === 0 && <div className="pip-label">NO MATCHES</div>}
         </motion.div>
       </div>
     </>
