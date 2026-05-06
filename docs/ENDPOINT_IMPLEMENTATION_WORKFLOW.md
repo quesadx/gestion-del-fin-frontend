@@ -15,7 +15,7 @@ Rule:
 2. `GET /system/time` D
 3. `GET /camps` D
 4. `GET /camps/{id}` D
-5. `GET /camps/{campId}/people`
+5. `GET /camps/{campId}/people` D
 6. `GET /resources`
 7. `GET /inventory/{campId}` D
 8. `GET /professions`
