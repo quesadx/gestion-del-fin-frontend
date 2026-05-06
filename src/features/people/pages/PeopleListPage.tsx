@@ -18,6 +18,18 @@ const getConditionTone = (condition: string) => {
   }
 };
 
+const formatDate = (value: string) => {
+  try {
+    return new Date(value).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+    });
+  } catch {
+    return value;
+  }
+};
+
 export function PeopleListPage() {
   const reduceMotion = useReducedMotion();
   const listVariants = reduceMotion ? {} : staggerContainer;
@@ -33,10 +45,12 @@ export function PeopleListPage() {
   const peopleQuery = usePeople(activeCamp?.id);
 
   useEffect(() => {
-    if (!selectedCampId && campsQuery.data?.length) {
+    if (activeCamp && String(activeCamp.id) !== selectedCampId) {
+      setSelectedCampId(String(activeCamp.id));
+    } else if (!activeCamp && !selectedCampId && campsQuery.data?.length) {
       setSelectedCampId(String(campsQuery.data[0].id));
     }
-  }, [selectedCampId, campsQuery.data]);
+  }, [activeCamp, campsQuery.data, selectedCampId]);
 
   const handleSelectCamp = () => {
     const selectedCamp = campsQuery.data?.find(
@@ -53,41 +67,42 @@ export function PeopleListPage() {
     const term = searchTerm.trim().toLowerCase();
     const matchesSearch =
       !term ||
-      person.name.toLowerCase().includes(term) ||
-      person.id.toLowerCase().includes(term);
-    const matchesRole = roleFilter === 'ALL' || person.role === roleFilter;
+      person.full_name.toLowerCase().includes(term) ||
+      String(person.id).includes(term) ||
+      person.identification_code.toLowerCase().includes(term);
+    const professionName = person.professions?.name?.toUpperCase() ?? '';
+    const matchesRole =
+      roleFilter === 'ALL' || professionName === roleFilter.toUpperCase();
 
     let matchesCondition = conditionFilter === 'ALL';
-    if (conditionFilter === 'HEALTHY') matchesCondition = person.condition === 'HEALTHY';
+    if (conditionFilter === 'HEALTHY') matchesCondition = person.status === 'HEALTHY';
     if (conditionFilter === 'WARNING')
-      matchesCondition = person.condition === 'INJURED' || person.condition === 'SICK';
-    if (conditionFilter === 'CRITICAL') matchesCondition = person.condition === 'CRITICAL';
+      matchesCondition = person.status === 'INJURED' || person.status === 'SICK';
+    if (conditionFilter === 'CRITICAL') matchesCondition = person.status === 'CRITICAL';
+    if (conditionFilter === 'AWAY') matchesCondition = person.status === 'AWAY';
 
     return matchesSearch && matchesRole && matchesCondition;
   });
 
   const totalCount = people.length;
-  const healthyCount = people.filter((p) => p.condition === 'HEALTHY').length;
+  const healthyCount = people.filter((p) => p.status === 'HEALTHY').length;
   const warningCount = people.filter(
-    (p) => p.condition === 'INJURED' || p.condition === 'SICK',
+    (p) => p.status === 'INJURED' || p.status === 'SICK',
   ).length;
-  const criticalCount = people.filter((p) => p.condition === 'CRITICAL').length;
-
-  const splitIndex = Math.ceil(filteredPeople.length / 2);
-  const leftList = filteredPeople.slice(0, splitIndex);
-  const rightList = filteredPeople.slice(splitIndex);
+  const criticalCount = people.filter((p) => p.status === 'CRITICAL').length;
 
   return (
     <>
       <div className="pip-frame">
         <span className="pip-frame-title">CAMP SELECTOR</span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
             <select
               value={selectedCampId}
               onChange={(e) => setSelectedCampId(e.target.value)}
               className="pip-select"
               disabled={campsQuery.isLoading || campsQuery.isError}
+              style={{ minWidth: 220 }}
             >
               {campsQuery.data?.map((camp) => (
                 <option key={camp.id} value={camp.id}>
@@ -104,17 +119,14 @@ export function PeopleListPage() {
               SELECT CAMP
             </button>
           </div>
+
           <div className="pip-row">
             <span className="pip-label">ACTIVE CAMP</span>
             <span className="pip-value">{activeCamp?.name ?? 'NONE SELECTED'}</span>
           </div>
+
           {campsQuery.isError && (
             <div className="pip-label red">ERROR LOADING CAMPS</div>
-          )}
-          {peopleQuery.isError && (
-            <div className="pip-label red">
-              ERROR LOADING PEOPLE: {String(peopleQuery.error?.message ?? 'UNKNOWN')}
-            </div>
           )}
         </div>
       </div>
@@ -134,27 +146,31 @@ export function PeopleListPage() {
               className="pip-input"
             />
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
               className="pip-select"
+              style={{ minWidth: 150 }}
             >
-              <option value="ALL">ALL ROLES</option>
-              <option value="WORKER">WORKER</option>
-              <option value="RESOURCE_MANAGER">RESOURCE MGR</option>
-              <option value="TRAVEL_LEAD">TRAVEL LEAD</option>
-              <option value="SYSTEM_ADMIN">SYS ADMIN</option>
+              <option value="ALL">ALL PROFESSIONS</option>
+              <option value="ENGINEER">ENGINEER</option>
+              <option value="SCOUT">SCOUT</option>
+              <option value="OTHER">OTHER</option>
             </select>
+
             <select
               value={conditionFilter}
               onChange={(e) => setConditionFilter(e.target.value)}
               className="pip-select"
+              style={{ minWidth: 180 }}
             >
               <option value="ALL">ALL STATUS</option>
               <option value="HEALTHY">HEALTHY</option>
               <option value="WARNING">INJURED / SICK</option>
               <option value="CRITICAL">CRITICAL</option>
+              <option value="AWAY">AWAY</option>
             </select>
           </div>
         </div>
@@ -183,82 +199,81 @@ export function PeopleListPage() {
         </div>
       </div>
 
-      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
-        <span className="pip-frame-title">ROSTER A</span>
-        <motion.div
-          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
-          className="custom-scrollbar"
-          variants={listVariants}
-          initial="initial"
-          animate="animate"
+      <div className="pip-frame" style={{ minHeight: 0 }}>
+        <span className="pip-frame-title">PEOPLE ROSTER</span>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            marginTop: 24,
+          }}
         >
           {peopleQuery.isLoading && <div className="pip-label">LOADING PEOPLE...</div>}
           {!peopleQuery.isLoading && !activeCamp && (
             <div className="pip-label">SELECT A CAMP TO LOAD PEOPLE.</div>
           )}
-          {!peopleQuery.isLoading && activeCamp && leftList.length === 0 && (
+          {!peopleQuery.isLoading && activeCamp && filteredPeople.length === 0 && (
             <div className="pip-label">NO MATCHES</div>
           )}
-          {leftList.map((person: PersonApiModel) => (
-            <motion.div key={person.id} variants={itemVariants}>
+          {filteredPeople.map((person) => (
+            <motion.div
+              key={person.id}
+              className="pip-frame"
+              style={{ padding: 12, minHeight: 0 }}
+              variants={itemVariants}
+              initial="initial"
+              animate="animate"
+            >
               <div className="pip-row">
-                <span className="pip-label">{person.id}</span>
-                <span
-                  className={`pip-value ${getConditionTone(person.condition)}`}
-                  style={{ fontSize: 16 }}
-                >
-                  {person.condition}
+                <span className="pip-label">{person.identification_code}</span>
+                <span className={`pip-value ${getConditionTone(person.status)}`}>
+                  {person.status}
                 </span>
               </div>
               <div className="pip-row">
                 <span className="pip-value" style={{ fontSize: 18 }}>
-                  {person.name}
+                  {person.full_name}
                 </span>
-                <span className="pip-label">{person.role}</span>
+                <span className="pip-label">{person.professions?.name ?? 'UNKNOWN'}</span>
               </div>
-              <div className="pip-label">LOC {person.location ?? 'UNKNOWN'}</div>
+              <div className="pip-row" style={{ gap: 12 }}>
+                <div>
+                  <span className="pip-label">AGE</span>
+                  <div className="pip-value" style={{ fontSize: 16 }}>
+                    {person.age}
+                  </div>
+                </div>
+                <div>
+                  <span className="pip-label">BLOOD</span>
+                  <div className="pip-value" style={{ fontSize: 16 }}>
+                    {person.blood_type}
+                  </div>
+                </div>
+              </div>
+              <div className="pip-row" style={{ gap: 12 }}>
+                <div>
+                  <span className="pip-label">CAMP</span>
+                  <div className="pip-value" style={{ fontSize: 16 }}>
+                    {person.camps?.name ?? 'UNKNOWN'}
+                  </div>
+                </div>
+                <div>
+                  <span className="pip-label">ADMITTED</span>
+                  <div className="pip-value" style={{ fontSize: 16 }}>
+                    {formatDate(person.admitted_at)}
+                  </div>
+                </div>
+              </div>
+              <div style={{ marginTop: 10 }}>
+                <div className="pip-label">SKILLS</div>
+                <div className="pip-value" style={{ fontSize: 14, lineHeight: 1.4 }}>
+                  {person.skills_summary || 'No skills summary available.'}
+                </div>
+              </div>
             </motion.div>
           ))}
-        </motion.div>
-      </div>
-
-      <div className="pip-frame" style={{ minHeight: 0, overflow: 'hidden' }}>
-        <span className="pip-frame-title">ROSTER B</span>
-        <motion.div
-          style={{ display: 'flex', flexDirection: 'column', gap: 8, overflowY: 'auto' }}
-          className="custom-scrollbar"
-          variants={listVariants}
-          initial="initial"
-          animate="animate"
-        >
-          {peopleQuery.isLoading && <div className="pip-label">LOADING PEOPLE...</div>}
-          {!peopleQuery.isLoading && !activeCamp && (
-            <div className="pip-label">SELECT A CAMP TO LOAD PEOPLE.</div>
-          )}
-          {!peopleQuery.isLoading && activeCamp && rightList.length === 0 && (
-            <div className="pip-label">NO MATCHES</div>
-          )}
-          {rightList.map((person: PersonApiModel) => (
-            <motion.div key={person.id} variants={itemVariants}>
-              <div className="pip-row">
-                <span className="pip-label">{person.id}</span>
-                <span
-                  className={`pip-value ${getConditionTone(person.condition)}`}
-                  style={{ fontSize: 16 }}
-                >
-                  {person.condition}
-                </span>
-              </div>
-              <div className="pip-row">
-                <span className="pip-value" style={{ fontSize: 18 }}>
-                  {person.name}
-                </span>
-                <span className="pip-label">{person.role}</span>
-              </div>
-              <div className="pip-label">LOC {person.location ?? 'UNKNOWN'}</div>
-            </motion.div>
-          ))}
-        </motion.div>
+        </div>
       </div>
     </>
   );
