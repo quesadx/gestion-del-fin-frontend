@@ -451,9 +451,9 @@ Important alignment notes:
 
 | Method | Endpoint | Notes |
 |---|---|---|
-| POST | `/auth/login` | Public login, returns `{ user: { username }, token }` |
-| GET | `/system/time` | Public time snapshot |
-| GET | `/camps` | Authenticated list |
+| POST | `/auth/login` | Public login, returns `{ user: { username }, token }` | D
+| GET | `/system/time` | Public time snapshot | D
+| GET | `/camps` | Authenticated list | 
 | POST | `/camps` | Create camp |
 | GET | `/camps/{id}` | Camp detail |
 | PUT | `/camps/{id}` | Update camp |
@@ -462,7 +462,7 @@ Important alignment notes:
 | GET | `/admission/camps/{campId}` | List admissions by camp |
 | GET | `/admission/{id}` | Admission detail |
 | PATCH | `/admission/{id}/review` | Review admission |
-| GET | `/inventory/{campId}` | Inventory snapshot by camp |
+| GET | `/inventory/{campId}` | Inventory snapshot by camp | 
 | GET | `/inventory/audit/{campId}` | Inventory audit trail |
 | POST | `/inventory/adjustment` | Manual inventory adjustment |
 | GET | `/camps/{campId}/people` | List people in camp |

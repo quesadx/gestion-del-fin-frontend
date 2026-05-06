@@ -11,13 +11,13 @@ Rule:
 
 ## Recommended order
 
-1. `POST /auth/login`
-2. `GET /system/time`
-3. `GET /camps`
-4. `GET /camps/{id}`
+1. `POST /auth/login` D
+2. `GET /system/time` D
+3. `GET /camps` D
+4. `GET /camps/{id}` D
 5. `GET /camps/{campId}/people`
 6. `GET /resources`
-7. `GET /inventory/{campId}`
+7. `GET /inventory/{campId}` D
 8. `GET /professions`
 9. `GET /expeditions`
 10. `GET /admission/camps/{campId}`
