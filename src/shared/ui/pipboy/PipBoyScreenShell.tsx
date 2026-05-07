@@ -48,21 +48,25 @@ export function PipBoyScreenShell({ children }: Props) {
             </span>
           </div>
 
-          <div className="pip-h">
-            &gt;{' '}
-            {NAV_ITEMS.map((item, index) => {
-              const isActive = location.pathname.startsWith(item.path);
-              return (
-                <span key={item.path}>
-                  <Link className={`pip-tab${isActive ? ' active' : ''}`} to={item.path}>
-                    {item.label}
-                  </Link>
-                  {index < NAV_ITEMS.length - 1 ? '  /  ' : ''}
-                </span>
-              );
-            })}
-          </div>
-          <div className="pip-divider" />
+          {token && (
+            <>
+              <div className="pip-h">
+                &gt;{' '}
+                {NAV_ITEMS.map((item, index) => {
+                  const isActive = location.pathname.startsWith(item.path);
+                  return (
+                    <span key={item.path}>
+                      <Link className={`pip-tab${isActive ? ' active' : ''}`} to={item.path}>
+                        {item.label}
+                      </Link>
+                      {index < NAV_ITEMS.length - 1 ? '  /  ' : ''}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="pip-divider" />
+            </>
+          )}
 
           <div className="pip-grid">{children}</div>
 
