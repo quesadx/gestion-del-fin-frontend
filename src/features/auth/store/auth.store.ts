@@ -9,12 +9,14 @@ interface AuthState {
   role: Role | null;
   lastActivity: number;
   isLocked: boolean;
+  isHydrated: boolean;
 
   login: (token: string, user: User) => void;
   logout: () => void;
   updateActivity: () => void;
   lock: () => void;
   unlock: (password: string) => Promise<boolean>;
+  setHydrated: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,6 +27,7 @@ export const useAuthStore = create<AuthState>()(
       role: null,
       lastActivity: Date.now(),
       isLocked: false,
+      isHydrated: false,
 
       login: (token, user) =>
         set({
@@ -57,10 +60,15 @@ export const useAuthStore = create<AuthState>()(
 
         return result.valid;
       },
+
+      setHydrated: () => set({ isHydrated: true }),
     }),
     {
       name: 'auth-storage',
       partialize: (s) => ({ token: s.token, user: s.user, role: s.role }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated();
+      },
     },
   ),
 );

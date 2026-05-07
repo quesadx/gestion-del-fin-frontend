@@ -12,8 +12,14 @@ api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
   const campId = useCampStore.getState().activeCamp?.id;
 
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  // Fallback to localStorage if store token is not available
+  const tokenFromStorage =
+    token || localStorage.getItem('auth-storage')
+      ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state?.token
+      : null;
+
+  if (token || tokenFromStorage) {
+    config.headers.Authorization = `Bearer ${token || tokenFromStorage}`;
   }
 
   if (campId) {

@@ -111,7 +111,6 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
   overflow: hidden;
   font-family: 'Share Tech Mono', 'VT323', ui-monospace, monospace;
   perspective: 1400px;
@@ -145,7 +144,8 @@ textarea {
 /* ---------- Stage / shadow ---------- */
 .pip-stage {
   position: relative;
-  width: min(980px, 100%, calc((100vh - 4rem) * 16 / 12));
+  width: calc(100vw - 3rem);
+  height: calc(100vh - 4rem);
   transform-style: preserve-3d;
 }
 
@@ -174,7 +174,7 @@ textarea {
   --pip-radius: 42px;
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 12;
+  height: 100%;
   border-radius: var(--pip-radius);
   transform: rotateX(var(--pip-rot-x)) rotateY(var(--pip-rot-y));
   transform-style: preserve-3d;
@@ -1074,14 +1074,23 @@ textarea {
   background: transparent;
   border: 1px solid var(--pip-green-dim);
   color: var(--pip-green-bright);
-  padding: 6px 8px;
+  padding: 4px 8px;
   font-family: 'VT323', monospace;
-  font-size: 20px;
+  font-size: 14px;
   letter-spacing: 0.08em;
   outline: none;
 }
+.pip-input:-webkit-autofill,
+.pip-input:-webkit-autofill:hover,
+.pip-input:-webkit-autofill:focus,
+.pip-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #041004 inset !important;
+  -webkit-text-fill-color: var(--pip-green-bright) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
 .pip-input:focus {
   border-color: var(--pip-green-bright);
+  background: rgba(63, 207, 111, 0.08);
 }
 
 .pip-select {
