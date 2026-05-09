@@ -1,9 +1,10 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import { LoginPage } from '@/pages/LoginPage';
 import { AppShell } from '@/layouts/AppShell';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { navigationRef } from '@/shared/api/axiosInstance';
 
 const DashboardPage = lazy(() =>
   import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
@@ -65,9 +66,23 @@ function LazyFallback() {
   );
 }
 
+function NavigationBinder() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    navigationRef.current = navigate;
+    return () => {
+      navigationRef.current = null;
+    };
+  }, [navigate]);
+
+  return null;
+}
+
 export function AppRoutes() {
   return (
     <BrowserRouter>
+      <NavigationBinder />
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<LoginPage />} />

@@ -231,10 +231,168 @@ h1, h2, h3, h4, .font-display {
   to { opacity: 1; }
 }
 
+/* ── Scanline overlay ── */
+
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+/* ── Table styles ── */
+
+.cyber-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cyber-table th {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+  padding: 12px 12px;
+  border-bottom: 1px solid oklch(0.68 0.32 340 / 0.25);
+  text-align: left;
+}
+
+.cyber-table td {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid oklch(0.68 0.32 340 / 0.08);
+  color: var(--muted-foreground);
+}
+
+.cyber-table tr:hover td {
+  background: oklch(0.68 0.32 340 / 0.04);
+  color: var(--foreground);
+}
+
+/* ── Input styles ── */
+
+.cyber-input {
+  background: oklch(0.15 0.05 320 / 0.5);
+  border: 1px solid oklch(0.68 0.32 340 / 0.35);
+  color: var(--foreground);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+
+.cyber-input:focus {
+  border-color: var(--neon-fuchsia);
+  box-shadow: inset 0 0 12px oklch(0.68 0.32 340 / 0.08), 0 0 12px oklch(0.68 0.32 340 / 0.1);
+}
+
+.cyber-input::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.25;
+}
+
+.cyber-input.cyan:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: inset 0 0 12px oklch(0.85 0.22 200 / 0.08), 0 0 12px oklch(0.85 0.22 200 / 0.1);
+}
+
+.cyber-select {
+  background: oklch(0.15 0.05 320 / 0.5);
+  border: 1px solid oklch(0.68 0.32 340 / 0.35);
+  color: var(--foreground);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 200ms, box-shadow 200ms;
+}
+
+.cyber-select:focus {
+  border-color: var(--neon-fuchsia);
+  box-shadow: inset 0 0 12px oklch(0.68 0.32 340 / 0.08);
+}
+
+/* ── Neon divider ── */
+
+.neon-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.68 0.32 340 / 0.4),
+    oklch(0.85 0.22 200 / 0.2),
+    transparent
+  );
+}
+
+/* ── Glow ring for avatar/status circles ── */
+
+.glow-ring-fuchsia {
+  box-shadow:
+    0 0 0 2px oklch(0.1 0.03 320),
+    0 0 0 3px var(--neon-fuchsia),
+    0 0 16px var(--neon-fuchsia);
+}
+
+.glow-ring-cyan {
+  box-shadow:
+    0 0 0 2px oklch(0.1 0.03 320),
+    0 0 0 3px var(--neon-cyan),
+    0 0 16px var(--neon-cyan);
+}
+
+/* ── Card hover lift ── */
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* ── CRT curvature overlay (optional, applied via class) ── */
+
+.crt-curve {
+  position: relative;
+}
+
+.crt-curve::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+}
+
 /* ── Scrollbar ── */
 
 ::-webkit-scrollbar {
-  width: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -242,17 +400,31 @@ h1, h2, h3, h4, .font-display {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.68 0.32 340 / 0.3);
-  border-radius: 2px;
+  background: oklch(0.68 0.32 340 / 0.25);
+  border-radius: 3px;
+  transition: background 150ms;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.68 0.32 340 / 0.5);
 }
 
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* ── Selection ── */
 
 ::selection {
-  background: oklch(0.68 0.32 340 / 0.3);
+  background: oklch(0.68 0.32 340 / 0.35);
   color: var(--foreground);
+  text-shadow: 0 0 8px var(--neon-fuchsia);
+}
+
+/* ── Focus ring for accessibility ── */
+
+:focus-visible {
+  outline: 2px solid var(--neon-cyan);
+  outline-offset: 2px;
+  border-radius: 2px;
 }

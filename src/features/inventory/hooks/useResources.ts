@@ -4,10 +4,11 @@ import type { CreateResourceDto, UpdateResourceDto } from '@/features/inventory/
 
 const RESOURCES_KEY = ['resources'] as const;
 
-export function useResources() {
+export function useResources(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: RESOURCES_KEY,
     queryFn: () => resourcesApi.getAll(),
+    ...options,
   });
 }
 

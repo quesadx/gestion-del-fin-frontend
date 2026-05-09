@@ -40,8 +40,11 @@ export function AppShell() {
             onLogout={handleLogout}
             onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
           />
-          <main className="flex-1 px-4 py-6 lg:px-8">
-            <Outlet />
+          <main className="relative flex-1 px-4 py-6 lg:px-8">
+            <div className="scanlines" />
+            <div className="relative z-10">
+              <Outlet />
+            </div>
           </main>
         </div>
       </div>

@@ -8,6 +8,7 @@ interface AuthState {
   role: Role | null;
   isLocked: boolean;
   lastActivity: number;
+  _hasHydrated: boolean;
   setSession: (payload: { user: AuthUser; token: string; role?: Role | null }) => void;
   logout: () => void;
   updateActivity: () => void;
@@ -23,6 +24,7 @@ export const useAuthStore = create<AuthState>()(
       role: null,
       isLocked: false,
       lastActivity: Date.now(),
+      _hasHydrated: false,
       setSession: ({ user, token, role }) =>
         set({
           user,
@@ -50,6 +52,11 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         role: state.role,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state._hasHydrated = true;
+        }
+      },
     },
   ),
 );

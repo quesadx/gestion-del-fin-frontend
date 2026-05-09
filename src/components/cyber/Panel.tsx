@@ -7,6 +7,7 @@ interface PanelProps {
   children: ReactNode;
   className?: string;
   accent?: 'fuchsia' | 'cyan';
+  variant?: 'default' | 'elevated';
 }
 
 export function Panel({
@@ -16,17 +17,24 @@ export function Panel({
   children,
   className = '',
   accent = 'fuchsia',
+  variant = 'default',
 }: PanelProps) {
   const accentColor = accent === 'fuchsia' ? 'var(--neon-fuchsia)' : 'var(--neon-cyan)';
   const accentBg = accent === 'fuchsia' ? 'bg-[var(--neon-fuchsia)]' : 'bg-[var(--neon-cyan)]';
-  const statusColor = accent === 'fuchsia' ? 'text-[var(--neon-fuchsia)]' : 'text-[var(--neon-cyan)]';
-  const statusDot = accent === 'fuchsia'
-    ? 'bg-[var(--neon-fuchsia)] shadow-[0_0_8px_var(--neon-fuchsia)]'
-    : 'bg-[var(--neon-cyan)] shadow-[0_0_8px_var(--neon-cyan)]';
+  const statusColor =
+    accent === 'fuchsia' ? 'text-[var(--neon-fuchsia)]' : 'text-[var(--neon-cyan)]';
+  const statusDot =
+    accent === 'fuchsia'
+      ? 'bg-[var(--neon-fuchsia)] shadow-[0_0_8px_var(--neon-fuchsia)]'
+      : 'bg-[var(--neon-cyan)] shadow-[0_0_8px_var(--neon-cyan)]';
 
   return (
     <div
-      className={`relative rounded-sm border border-[oklch(0.68_0.32_340_/_0.15)] bg-[oklch(0.1_0.03_320_/_0.35)] p-5 shadow-[0_0_40px_rgba(0,0,0,0.2)] backdrop-blur-2xl ${className}`}
+      className={`relative rounded-sm border border-[oklch(0.68_0.32_340_/_0.2)] bg-[oklch(0.1_0.03_320_/_0.4)] p-5 backdrop-blur-2xl transition-all duration-300 hover:border-[oklch(0.68_0.32_340_/_0.35)] ${
+        variant === 'elevated'
+          ? 'shadow-[0_0_60px_rgba(0,0,0,0.4),_0_0_30px_rgba(0,0,0,0.3)]'
+          : 'shadow-[0_0_30px_rgba(0,0,0,0.3)]'
+      } ${className}`}
     >
       {/* Corner brackets — breathe softly */}
       <span

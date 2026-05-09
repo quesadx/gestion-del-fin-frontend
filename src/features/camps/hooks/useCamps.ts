@@ -4,10 +4,11 @@ import type { CreateCampDto, UpdateCampDto } from '@/features/camps/api/camps.ap
 
 const CAMPS_KEY = ['camps'] as const;
 
-export function useCamps() {
+export function useCamps(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: CAMPS_KEY,
     queryFn: campsApi.getAll,
+    ...options,
   });
 }
 
