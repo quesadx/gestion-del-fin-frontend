@@ -287,6 +287,43 @@ Use these classes for the ambient screen effect:
 
 ---
 
+## COMPONENT UTILITY CLASSES
+
+The implementation currently uses these reusable visual utilities.
+
+### Panel styling
+- Use the `Panel` pattern for auth cards and info surfaces.
+- Panel surfaces should be `bg-[oklch(0.1_0.03_320_/_0.5)]` with a subtle neon border and soft outer shadow.
+- Accent variants are:
+  - `fuchsia` → `border-[var(--neon-fuchsia)]`, `shadow-[0_0_8px_var(--neon-fuchsia)]`, `bg-[var(--neon-fuchsia)]` text containers
+  - `cyan` → `border-[var(--neon-cyan)]`, `shadow-[0_0_8px_var(--neon-cyan)]`, `bg-[var(--neon-cyan)]`
+- Panel titles use `font-display`, `text-sm`, `font-bold`, `tracking-widest` and glow text treatments.
+- Secondary labels use `font-mono-data`, `text-[10px]`, and uppercase/tracking styles.
+
+### Button styling
+- Use `GlitchButton` for all main call-to-actions.
+- Buttons should use `clip-corners-sm` and `rounded-2xl` for the current neon block shape.
+- Common utility classes:
+  - `font-tech`, `text-xs`, `font-bold`, `px-5`, `py-2.5`
+  - `transition-colors`, `duration-150`
+- Variant rules:
+  - `primary` → neon fuchsia filled, dark text, fuchsia glow on hover
+  - `warning` → neon yellow filled, dark text, yellow glow on hover
+  - `ghost` → transparent with cyan border, cyan text, subtle cyan hover glow
+
+### Background & overlay utilities
+- `WaveBackground` is a fixed `inset-0`, `-z-10`, `overflow-hidden`, `pointer-events-none` canvas.
+- Use `wave-blob` classes for blurred neon ambient blobs.
+- `grid-overlay` is a low-opacity grid that adds techno texture.
+- `scanlines` is applied as a translucent overlay to simulate a terminal screen effect.
+- Use `text-glow-*` utilities on important labels, status badges, and headers.
+
+### Shape utilities
+- `clip-corners` and `clip-corners-sm` define angled panel silhouettes.
+- `clip-tag` is used for compact tag containers and badges.
+
+---
+
 ## DEVICE LAYOUT HIERARCHY
 
 ```
