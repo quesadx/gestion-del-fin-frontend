@@ -1,31 +1,18 @@
-export interface LoginPayload {
-  username: string;
-  password: string;
-}
+import { authApi } from './api/auth.api';
+import { useAuthStore } from './store/auth.store';
+import type { LoginRequest } from '@/shared/api/types';
+import type { AuthUser } from './types/auth.types';
 
-export interface AuthUser {
-  username: string;
-  sessionExpires: string;
-}
-
-const sleep = (milliseconds: number) =>
-  new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+export type LoginPayload = LoginRequest;
 
 export const authService = {
-  login: async ({ username, password }: LoginPayload): Promise<AuthUser> => {
-    await sleep(900);
-
-    if (!username.trim() || !password.trim()) {
-      throw new Error('Por favor ingresa usuario y contraseña.');
-    }
-
-    return {
-      username: username.trim().toUpperCase(),
-      sessionExpires: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
-    };
+  login: async (payload: LoginPayload): Promise<AuthUser> => {
+    const { user, token } = await authApi.login(payload);
+    useAuthStore.getState().setSession({ user, token });
+    return user;
   },
 
   logout: async (): Promise<void> => {
-    await sleep(300);
+    useAuthStore.getState().logout();
   },
 };
