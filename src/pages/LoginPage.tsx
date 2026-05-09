@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -7,7 +8,7 @@ import { WaveBackground } from '@/components/cyber/WaveBackground';
 import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { Lock, User, Zap } from 'lucide-react';
-import { useAuth } from '@/features/auth/auth-context';
+import { useAuth } from '@/features/auth/useAuth';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres.'),
@@ -17,7 +18,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
 
   const mutation = useMutation({
     mutationFn: (values: LoginFormValues) => login(values),
@@ -32,10 +33,6 @@ export function LoginPage() {
     defaultValues: { username: '', password: '' },
   });
 
-  const onSubmit = async (values: LoginFormValues) => {
-    await mutation.mutateAsync(values);
-  };
-
   const isLoading = mutation.isPending;
   const status = isLoading ? 'AUTHENTICATING' : 'AWAITING';
   const submitLabel = isLoading ? 'AUTHENTICATING...' : 'JACK_IN';
@@ -44,6 +41,14 @@ export function LoginPage() {
     () => (mutation.error instanceof Error ? mutation.error.message : ''),
     [mutation.error],
   );
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const onSubmit = async (values: LoginFormValues) => {
+    await mutation.mutateAsync(values);
+  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-6 py-10 text-foreground">

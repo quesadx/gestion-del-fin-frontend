@@ -63,7 +63,8 @@
     "tener",
     "menos",
     "caracteres",
-    "GESTION"
+    "GESTION",
+    "OPERADOR"
   ],
   "ignorePaths": [
     "node_modules",

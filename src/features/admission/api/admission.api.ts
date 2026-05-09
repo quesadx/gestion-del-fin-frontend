@@ -17,8 +17,7 @@ export interface ReviewAdmissionDto {
 }
 
 export const admissionApi = {
-  getAllByCamp: (campId: number) =>
-    api.get(`/admission/camps/${campId}`).then((res) => res.data),
+  getAllByCamp: (campId: number) => api.get(`/admission/camps/${campId}`).then((res) => res.data),
   getById: (id: number) => api.get(`/admission/${id}`).then((res) => res.data),
   create: (campId: number, payload: CreateAdmissionDto) =>
     api.post(`/admission/camps/${campId}`, payload).then((res) => res.data),
