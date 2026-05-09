@@ -13,6 +13,7 @@ dist-ssr
 *.local
 
 # Environment variables (local overrides)
+.env
 .env.local
 .env.*.local
 
