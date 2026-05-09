@@ -36,7 +36,7 @@ export function LoginPage() {
     await mutation.mutateAsync(values);
   };
 
-  const isLoading = mutation.status === 'pending';
+  const isLoading = mutation.isPending;
   const status = isLoading ? 'AUTHENTICATING' : 'AWAITING';
   const submitLabel = isLoading ? 'AUTHENTICATING...' : 'JACK_IN';
   const loginSuccess = mutation.isSuccess;
@@ -50,18 +50,15 @@ export function LoginPage() {
       <WaveBackground />
 
       <div className="relative z-10 w-full max-w-md">
-        <div className="flex items-center gap-3 mb-6 justify-center">
-          <div
-            className="w-9 h-9 clip-corners-sm bg-[var(--neon-fuchsia)] flex items-center justify-center"
-            style={{ boxShadow: 'var(--glow-fuchsia)' }}
-          >
-            <Zap className="w-4 h-4 text-[var(--charcoal)]" strokeWidth={3} />
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-sm border border-[var(--neon-fuchsia)] bg-[var(--neon-fuchsia)] shadow-[0_0_18px_var(--neon-fuchsia)]">
+            <Zap className="h-4 w-4 text-[var(--charcoal)]" strokeWidth={3} />
           </div>
-          <div>
-            <h1 className="font-display text-base font-black tracking-[0.3em] text-glow-fuchsia leading-none">
+          <div className="text-center">
+            <h1 className="font-display text-base font-black tracking-[0.3em] leading-none text-glow-fuchsia">
               GESTION DEL FIN
             </h1>
-            <span className="font-mono-data text-[10px] text-[var(--neon-cyan)]/70 tracking-widest">
+            <span className="block text-[10px] tracking-widest text-[var(--neon-cyan)]/70 font-mono-data">
               v1.0.0 - GESTION DEL FIN
             </span>
           </div>
@@ -70,51 +67,55 @@ export function LoginPage() {
         <Panel title="JACK_IN" tag="AUTH.01" status={status} accent="fuchsia">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="font-mono-data text-[10px] text-[var(--neon-cyan)]/70 tracking-widest block mb-1.5">
+              <label className="block mb-1.5 text-[10px] tracking-widest text-[var(--neon-cyan)]/70 font-mono-data">
                 OPERATOR_ID //
               </label>
               <div className="relative">
-                <User className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--neon-cyan)]" />
+                <User className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]" />
                 <input
                   {...register('username')}
                   type="text"
                   autoComplete="username"
                   placeholder="V.SILVERHAND"
-                  className="w-full clip-corners-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] focus:border-[var(--neon-fuchsia)] focus:shadow-[var(--glow-fuchsia)] outline-none pl-9 pr-3 py-2.5 font-mono-data text-sm text-[var(--neon-fuchsia)] placeholder:text-muted-foreground/50 transition-all"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.5)] px-9 pr-3 py-2.5 text-sm text-[var(--neon-fuchsia)] placeholder:text-muted-foreground/50 outline-none transition-all focus:border-[var(--neon-fuchsia)] focus:shadow-[var(--glow-fuchsia)] font-mono-data"
                 />
               </div>
               {errors.username && (
-                <p className="mt-2 text-[10px] text-[var(--neon-yellow)]">{errors.username.message}</p>
+                <p className="mt-2 text-[10px] text-[var(--neon-yellow)]">
+                  {errors.username.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="font-mono-data text-[10px] text-[var(--neon-cyan)]/70 tracking-widest block mb-1.5">
+              <label className="block mb-1.5 text-[10px] tracking-widest text-[var(--neon-cyan)]/70 font-mono-data">
                 CIPHER_KEY //
               </label>
               <div className="relative">
-                <Lock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--neon-cyan)]" />
+                <Lock className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]" />
                 <input
                   {...register('password')}
                   type="password"
                   autoComplete="current-password"
                   placeholder="**********"
-                  className="w-full clip-corners-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] focus:border-[var(--neon-cyan)] focus:shadow-[var(--glow-cyan)] outline-none pl-9 pr-3 py-2.5 font-mono-data text-sm text-[var(--neon-cyan)] placeholder:text-muted-foreground/50 transition-all"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.5)] px-9 pr-3 py-2.5 text-sm text-[var(--neon-cyan)] placeholder:text-muted-foreground/50 outline-none transition-all focus:border-[var(--neon-cyan)] focus:shadow-[var(--glow-cyan)] font-mono-data"
                 />
               </div>
               {errors.password && (
-                <p className="mt-2 text-[10px] text-[var(--neon-yellow)]">{errors.password.message}</p>
+                <p className="mt-2 text-[10px] text-[var(--neon-yellow)]">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
             {authError ? (
-              <div className="rounded-xl bg-[oklch(0.08_0.05_320_/_0.7)] border border-[var(--neon-yellow)] p-3 text-[10px] text-[var(--neon-yellow)]">
+              <div className="rounded-md bg-[oklch(0.08_0.05_320_/_0.7)] border border-[var(--neon-yellow)] p-3 text-[10px] text-[var(--neon-yellow)]">
                 {authError}
               </div>
             ) : null}
 
             {loginSuccess ? (
-              <div className="rounded-xl bg-[oklch(0.08_0.05_160_/_0.7)] border border-[var(--neon-cyan)] p-3 text-[10px] text-[var(--neon-cyan)]">
+              <div className="rounded-md bg-[oklch(0.08_0.05_160_/_0.7)] border border-[var(--neon-cyan)] p-3 text-[10px] text-[var(--neon-cyan)]">
                 ACCESS GRANTED. SESSION INITIALIZED.
               </div>
             ) : null}
@@ -137,21 +138,23 @@ export function LoginPage() {
                 variant="warning"
                 type="submit"
                 disabled={isLoading}
-                className="w-full justify-center"
+                className="w-full justify-center rounded-sm border border-[var(--neon-yellow)]"
               >
                 {submitLabel}
               </GlitchButton>
-              <GlitchButton variant="ghost" type="button" className="w-full justify-center">
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                className="w-full justify-center rounded-sm border border-[var(--neon-cyan)]"
+              >
                 REQUEST_CRED
               </GlitchButton>
             </div>
-
-            <div className="pt-3 mt-2 border-t border-[oklch(0.68_0.32_340_/_0.2)] flex items-center justify-between font-mono-data text-[10px] text-muted-foreground">
+            <div className="pt-3 mt-2 flex items-center justify-between border-t border-[oklch(0.68_0.32_340_/_0.2)] font-mono-data text-[10px] text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-[var(--neon-cyan)] flicker"
-                  style={{ boxShadow: '0 0 8px var(--neon-cyan)' }}
-                />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--neon-cyan)]">
+                  <span className="absolute inset-0 rounded-full shadow-[0_0_8px_var(--neon-cyan)]" />
+                </span>
                 ENC: AES-512
               </span>
               <span className="text-[var(--neon-yellow)] text-glow-yellow">SEC_LEVEL: 02</span>

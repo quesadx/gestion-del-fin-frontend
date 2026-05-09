@@ -54,7 +54,16 @@
     "embla",
     "sublabel",
     "silverhand",
-    "vaul"
+    "vaul",
+    "ingresa",
+    "usuario",
+    "contraseña",
+    "nombre",
+    "debe",
+    "tener",
+    "menos",
+    "caracteres",
+    "GESTION"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md"]
 }

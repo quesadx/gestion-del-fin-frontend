@@ -17,29 +17,31 @@ export function Panel({
   className = '',
   accent = 'fuchsia',
 }: PanelProps) {
-  const accentColor = accent === 'fuchsia' ? 'var(--neon-fuchsia)' : 'var(--neon-cyan)';
+  const accentBorder =
+    accent === 'fuchsia'
+      ? 'border-[var(--neon-fuchsia)] shadow-[0_0_8px_var(--neon-fuchsia)]'
+      : 'border-[var(--neon-cyan)] shadow-[0_0_8px_var(--neon-cyan)]';
+  const accentBg = accent === 'fuchsia' ? 'bg-[var(--neon-fuchsia)]' : 'bg-[var(--neon-cyan)]';
+  const statusColor =
+    accent === 'fuchsia' ? 'text-[var(--neon-fuchsia)]' : 'text-[var(--neon-cyan)]';
+  const statusDot =
+    accent === 'fuchsia'
+      ? 'bg-[var(--neon-fuchsia)] shadow-[0_0_8px_var(--neon-fuchsia)]'
+      : 'bg-[var(--neon-cyan)] shadow-[0_0_8px_var(--neon-cyan)]';
+
   return (
-    <div className={`relative glass-panel clip-corners p-5 ${className}`}>
-      {/* corner brackets */}
-      <span
-        className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2"
-        style={{ borderColor: accentColor, boxShadow: `0 0 8px ${accentColor}` }}
-      />
-      <span
-        className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2"
-        style={{ borderColor: accentColor, boxShadow: `0 0 8px ${accentColor}` }}
-      />
+    <div
+      className={`relative rounded-lg border border-[oklch(0.68_0.32_340_/_0.18)] bg-[oklch(0.1_0.03_320_/_0.5)] p-5 shadow-[0_0_40px_rgba(0,0,0,0.15)] ${className}`}
+    >
+      <span className={`absolute top-0 left-0 h-3 w-3 border-t-2 border-l-2 ${accentBorder}`} />
+      <span className={`absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 ${accentBorder}`} />
 
       {(title || tag) && (
-        <div
-          className="flex items-center justify-between mb-4 pb-2 border-b"
-          style={{ borderColor: 'oklch(0.68 0.32 340 / 0.3)' }}
-        >
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3 border-b pb-4 mb-4 border-[oklch(0.68_0.32_340_/_0.3)]">
+          <div className="flex flex-wrap items-center gap-3">
             {tag && (
               <span
-                className="font-mono-data text-[10px] px-2 py-0.5 clip-tag"
-                style={{ background: accentColor, color: 'var(--charcoal)' }}
+                className={`font-mono-data text-[10px] px-2 py-0.5 clip-tag rounded-sm ${accentBg} text-[var(--charcoal)]`}
               >
                 {tag}
               </span>
@@ -52,11 +54,8 @@ export function Panel({
           </div>
           {status && (
             <div className="flex items-center gap-2">
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-[var(--neon-cyan)] flicker"
-                style={{ boxShadow: '0 0 8px var(--neon-cyan)' }}
-              />
-              <span className="font-mono-data text-[10px] text-[var(--neon-cyan)]">{status}</span>
+              <span className={`w-1.5 h-1.5 rounded-full flicker ${statusDot}`} />
+              <span className={`font-mono-data text-[10px] ${statusColor}`}>{status}</span>
             </div>
           )}
         </div>

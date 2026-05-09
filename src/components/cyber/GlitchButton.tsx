@@ -15,7 +15,7 @@ export function GlitchButton({ children, variant = 'primary', className = '', ..
   return (
     <button
       data-text={typeof children === 'string' ? children : ''}
-      className={`glitch-hover clip-corners-sm font-tech text-xs font-bold px-5 py-2.5 transition-all duration-150 ${styles[variant]} ${className}`}
+      className={`glitch-hover clip-corners-sm rounded-2xl font-tech text-xs font-bold px-5 py-2.5 transition-colors duration-150 ${styles[variant]} ${className}`}
       {...rest}
     >
       <span className="relative z-10">{children}</span>

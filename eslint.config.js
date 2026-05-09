@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'reference-frontend/**', 'neon-nova-dashboard/**']),
+  globalIgnores(['dist', 'reference-frontend/**', 'neon-nova-dashboard/**', 'temp/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
