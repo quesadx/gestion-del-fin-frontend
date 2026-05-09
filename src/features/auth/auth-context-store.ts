@@ -1,10 +1,12 @@
 import { createContext } from 'react';
-import type { AuthUser } from './types/auth.types';
+import type { AuthUser, Role } from './types/auth.types';
+import type { LoginRequest } from '@/shared/api/types';
 
 export interface AuthContextValue {
   user: AuthUser | null;
+  role: Role | null;
   isAuthenticated: boolean;
-  login: (credentials: { username: string; password: string }) => Promise<AuthUser>;
+  login: (credentials: LoginRequest) => Promise<AuthUser>;
   logout: () => Promise<void>;
 }
 

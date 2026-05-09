@@ -7,10 +7,8 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function GlitchButton({ children, variant = 'primary', className = '', ...rest }: Props) {
   const styles = {
-    primary:
-      'bg-[var(--neon-fuchsia)] text-[var(--charcoal)] hover:shadow-[var(--glow-fuchsia)]',
-    warning:
-      'bg-[var(--neon-yellow)] text-[var(--charcoal)] hover:shadow-[var(--glow-yellow)]',
+    primary: 'bg-[var(--neon-fuchsia)] text-[var(--charcoal)] hover:shadow-[var(--glow-fuchsia)]',
+    warning: 'bg-[var(--neon-yellow)] text-[var(--charcoal)] hover:shadow-[var(--glow-yellow)]',
     ghost:
       'bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] hover:shadow-[var(--glow-cyan)]',
   };

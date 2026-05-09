@@ -134,10 +134,7 @@ export function LoginPage() {
             {/* Options row */}
             <div className="flex items-center justify-between font-mono-data text-[10px]">
               <label className="flex items-center gap-2 text-muted-foreground cursor-pointer hover:text-[var(--neon-cyan)] transition-colors duration-150">
-                <input
-                  type="checkbox"
-                  className="accent-[var(--neon-fuchsia)] rounded-sm"
-                />
+                <input type="checkbox" className="accent-[var(--neon-fuchsia)] rounded-sm" />
                 PERSIST_SESSION
               </label>
               <a
@@ -158,11 +155,7 @@ export function LoginPage() {
               >
                 {submitLabel}
               </GlitchButton>
-              <GlitchButton
-                variant="ghost"
-                type="button"
-                className="w-full justify-center"
-              >
+              <GlitchButton variant="ghost" type="button" className="w-full justify-center">
                 REQUEST_CRED
               </GlitchButton>
             </div>

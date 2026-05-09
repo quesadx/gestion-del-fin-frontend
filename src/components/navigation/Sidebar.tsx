@@ -48,7 +48,11 @@ export function Sidebar({ items, isOpen, isCollapsed, onClose, onToggleCollapse 
             )}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
-            {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            {isCollapsed ? (
+              <ChevronRight className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronLeft className="h-3.5 w-3.5" />
+            )}
           </button>
           <button
             type="button"
@@ -90,7 +94,9 @@ export function Sidebar({ items, isOpen, isCollapsed, onClose, onToggleCollapse 
         </nav>
 
         {/* Footer */}
-        <div className={cn('px-4 py-3 border-t border-[var(--border)]', isCollapsed && 'lg:hidden')}>
+        <div
+          className={cn('px-4 py-3 border-t border-[var(--border)]', isCollapsed && 'lg:hidden')}
+        >
           <span className="text-[10px] font-mono-data text-muted-foreground/50">
             SYSTEM READY · v1.0.0
           </span>

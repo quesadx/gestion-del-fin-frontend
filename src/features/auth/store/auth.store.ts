@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user,
           token,
-          role: role ?? null,
+          role: role ?? user.role,
           isLocked: false,
           lastActivity: Date.now(),
         }),

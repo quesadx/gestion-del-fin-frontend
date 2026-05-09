@@ -6,6 +6,7 @@ import { AuthContext } from './auth-context-store';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
+  const role = useAuthStore((state) => state.role);
 
   const login = useCallback((credentials: LoginPayload) => authService.login(credentials), []);
   const logout = useCallback(() => authService.logout(), []);
@@ -13,11 +14,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       user,
+      role,
       isAuthenticated: Boolean(token),
       login,
       logout,
     }),
-    [user, token, login, logout],
+    [user, role, token, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

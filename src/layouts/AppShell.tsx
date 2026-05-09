@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
-import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useNavItems } from '@/hooks/useNavItems';
 import { Sidebar } from '@/components/navigation/Sidebar';
 import { Navbar } from '@/components/navigation/Navbar';
@@ -11,8 +10,7 @@ import { WaveBackground } from '@/components/cyber/WaveBackground';
 export function AppShell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user, logout } = useAuth();
-  const role = useAuthStore((state) => state.role);
+  const { user, role, logout } = useAuth();
   const items = useNavItems(role);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);

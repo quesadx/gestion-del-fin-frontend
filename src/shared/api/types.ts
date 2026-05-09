@@ -14,6 +14,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   user: {
     username: string;
+    role: 'system_admin' | 'resource_manager' | 'worker' | 'travel_lead';
   };
   token: string;
 }

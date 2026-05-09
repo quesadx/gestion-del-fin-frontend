@@ -19,10 +19,12 @@ export function Panel({
 }: PanelProps) {
   const accentColor = accent === 'fuchsia' ? 'var(--neon-fuchsia)' : 'var(--neon-cyan)';
   const accentBg = accent === 'fuchsia' ? 'bg-[var(--neon-fuchsia)]' : 'bg-[var(--neon-cyan)]';
-  const statusColor = accent === 'fuchsia' ? 'text-[var(--neon-fuchsia)]' : 'text-[var(--neon-cyan)]';
-  const statusDot = accent === 'fuchsia'
-    ? 'bg-[var(--neon-fuchsia)] shadow-[0_0_8px_var(--neon-fuchsia)]'
-    : 'bg-[var(--neon-cyan)] shadow-[0_0_8px_var(--neon-cyan)]';
+  const statusColor =
+    accent === 'fuchsia' ? 'text-[var(--neon-fuchsia)]' : 'text-[var(--neon-cyan)]';
+  const statusDot =
+    accent === 'fuchsia'
+      ? 'bg-[var(--neon-fuchsia)] shadow-[0_0_8px_var(--neon-fuchsia)]'
+      : 'bg-[var(--neon-cyan)] shadow-[0_0_8px_var(--neon-cyan)]';
 
   return (
     <div
