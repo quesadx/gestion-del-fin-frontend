@@ -1,11 +1,282 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
+import { GlitchButton } from '@/components/cyber/GlitchButton';
+import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { StatusBadge } from '@/components/cyber/StatusBadge';
+import { useCamps, useCreateCamp, useDeleteCamp } from '@/features/camps/hooks/useCamps';
+import { MapPin, Plus, Trash2, Eye } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
+
+const createCampSchema = z.object({
+  name: z.string().min(1, 'El nombre es obligatorio'),
+  location: z.string().optional(),
+  status: z.enum(['ACTIVE', 'ABANDONED']).default('ACTIVE'),
+});
+
+type CreateCampFormValues = z.infer<typeof createCampSchema>;
 
 export function CampsPage() {
+  const navigate = useNavigate();
+  const { data: camps, isLoading, isError, error, refetch } = useCamps();
+  const createCampMutation = useCreateCamp();
+  const deleteCampMutation = useDeleteCamp();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<CreateCampFormValues>({
+    resolver: zodResolver(createCampSchema),
+    defaultValues: { name: '', location: '', status: 'ACTIVE' },
+  });
+
+  const onSubmitCreate = async (values: CreateCampFormValues) => {
+    await createCampMutation.mutateAsync(values);
+    reset();
+    setCreateDialogOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteCampMutation.mutateAsync(deleteTarget.id);
+    setDeleteTarget(null);
+  };
+
+  const getStatusVariant = (status: string): 'green' | 'cyan' | 'red' => {
+    if (status === 'ACTIVE') return 'green';
+    if (status === 'ABANDONED') return 'red';
+    return 'cyan';
+  };
+
+  if (isLoading) return <ScreenLoader />;
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <Panel title="ERROR" tag="ERR.01" status="ERROR" accent="fuchsia">
+          <p className="text-sm text-red-400 font-mono-data mb-4">
+            {(error as Error)?.message || 'Error al cargar campamentos'}
+          </p>
+          <GlitchButton variant="warning" onClick={() => refetch()}>
+            REINTENTAR
+          </GlitchButton>
+        </Panel>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <Panel title="CAMP_DIRECTORY" tag="CAMP.01" status="AWAITING" accent="cyan">
-        <p className="text-sm text-muted-foreground font-mono-data">Camp list coming soon.</p>
-      </Panel>
+      <div className="flex items-center justify-between">
+        <Panel title="CAMP_DIRECTORY" tag="CAMP.01" status="ONLINE" accent="cyan">
+          {!camps || camps.length === 0 ? (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <MapPin className="h-10 w-10 text-[var(--neon-cyan)]/40" />
+              <p className="font-mono-data text-sm text-muted-foreground">
+                NO HAY CAMPAMENTOS REGISTRADOS
+              </p>
+              <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
+                NUEVO CAMPAMENTO
+              </GlitchButton>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono-data text-xs">
+                  <thead>
+                    <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                      <th className="py-3 px-2 font-semibold">NOMBRE</th>
+                      <th className="py-3 px-2 font-semibold">UBICACIÓN</th>
+                      <th className="py-3 px-2 font-semibold">ESTADO</th>
+                      <th className="py-3 px-2 font-semibold">CREADO</th>
+                      <th className="py-3 px-2 font-semibold text-right">ACCIONES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {camps.map((camp: Record<string, unknown>) => (
+                      <tr
+                        key={camp.id as number}
+                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
+                        onClick={() => navigate(`/camps/${camp.id}`)}
+                      >
+                        <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
+                          {camp.name as string}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">
+                          {(camp.location as string) || '—'}
+                        </td>
+                        <td className="py-3 px-2">
+                          <StatusBadge
+                            status={camp.status as string}
+                            variant={getStatusVariant(camp.status as string)}
+                          />
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">
+                          {camp.created_at
+                            ? format(new Date(camp.created_at as string), 'dd/MM/yyyy')
+                            : '—'}
+                        </td>
+                        <td className="py-3 px-2">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/camps/${camp.id}`);
+                              }}
+                              className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
+                              title="Ver detalle"
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteTarget({ id: camp.id as number, name: camp.name as string });
+                              }}
+                              className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                              title="Eliminar"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
+                  <span className="flex items-center gap-2">
+                    <Plus className="h-3.5 w-3.5" />
+                    NUEVO CAMPAMENTO
+                  </span>
+                </GlitchButton>
+              </div>
+            </>
+          )}
+        </Panel>
+      </div>
+
+      {/* Create Dialog */}
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <DialogHeader>
+            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+              NUEVO CAMPAMENTO
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit(onSubmitCreate)} className="space-y-4">
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                NOMBRE //
+              </label>
+              <input
+                {...register('name')}
+                type="text"
+                placeholder="CAMPAMENTO NORTE"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+              />
+              {errors.name && (
+                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                UBICACIÓN //
+              </label>
+              <input
+                {...register('location')}
+                type="text"
+                placeholder="SECTOR 7G - ZONA NORTE"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+              />
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                ESTADO //
+              </label>
+              <select
+                {...register('status')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+              >
+                <option value="ACTIVE">ACTIVO</option>
+                <option value="ABANDONED">ABANDONADO</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => { reset(); setCreateDialogOpen(false); }}
+              >
+                CANCELAR
+              </GlitchButton>
+              <GlitchButton
+                variant="primary"
+                type="submit"
+                disabled={createCampMutation.isPending}
+              >
+                {createCampMutation.isPending ? 'CREANDO...' : 'CREAR'}
+              </GlitchButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+              CONFIRMAR ELIMINACIÓN
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
+              ¿Eliminar campamento <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>?
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+              CANCELAR
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteCampMutation.isPending}
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+            >
+              {deleteCampMutation.isPending ? 'ELIMINANDO...' : 'ELIMINAR'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
