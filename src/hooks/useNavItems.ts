@@ -22,7 +22,7 @@ const NAV_ITEMS: NavItem[] = [
 export function useNavItems(role: Role | null) {
   return useMemo(() => {
     if (!role) {
-      return NAV_ITEMS;
+      return [];
     }
 
     return NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));

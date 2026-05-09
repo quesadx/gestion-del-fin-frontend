@@ -27,6 +27,11 @@ api.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+    if (error?.response?.status === 403) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/unauthorized';
+      }
+    }
     return Promise.reject(error);
   },
 );
