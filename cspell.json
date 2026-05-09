@@ -48,7 +48,30 @@
     "topbar",
     "CHRONO",
     "partialize",
-    "CAMPAMENTO"
+    "CAMPAMENTO",
+    "arasaka",
+    "cmdk",
+    "embla",
+    "sublabel",
+    "silverhand",
+    "vaul",
+    "ingresa",
+    "usuario",
+    "contraseña",
+    "nombre",
+    "debe",
+    "tener",
+    "menos",
+    "caracteres",
+    "GESTION"
   ],
-  "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md"]
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "*.lock",
+    "*.json",
+    "*.md",
+    "neon-nova-dashboard",
+    "temp"
+  ]
 }

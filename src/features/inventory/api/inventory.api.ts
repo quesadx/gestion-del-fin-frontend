@@ -1,38 +1,19 @@
 import { api } from '@/shared/api/axiosInstance';
 
-export interface InventoryItem {
-  id: string;
-  name: string;
-  category?: string;
+export type ManualAdjustmentType = 'MANUAL_IN' | 'MANUAL_OUT';
+
+export interface ManualAdjustmentDto {
+  camp_id: number;
+  resource_type_id: number;
+  type: ManualAdjustmentType;
   quantity: number;
-  unit: string;
-  minThreshold?: number;
-}
-
-function unwrapInventoryResponse(value: unknown): InventoryItem[] {
-  if (Array.isArray(value)) {
-    return value as InventoryItem[];
-  }
-
-  if (typeof value === 'object' && value !== null) {
-    const wrapper = value as Record<string, unknown>;
-    if (Array.isArray(wrapper.data)) {
-      return wrapper.data as InventoryItem[];
-    }
-    if (Array.isArray(wrapper.items)) {
-      return wrapper.items as InventoryItem[];
-    }
-    if (Array.isArray(wrapper.inventory)) {
-      return wrapper.inventory as InventoryItem[];
-    }
-  }
-
-  throw new Error('Unexpected inventory response format');
+  description?: string;
 }
 
 export const inventoryApi = {
-  getByCamp: async (campId: string) => {
-    const response = await api.get<unknown>(`/inventory/${campId}`);
-    return unwrapInventoryResponse(response.data);
-  },
+  getByCamp: (campId: number) => api.get(`/inventory/${campId}`).then((res) => res.data),
+  getAuditByCamp: (campId: number) =>
+    api.get(`/inventory/audit/${campId}`).then((res) => res.data),
+  createAdjustment: (payload: ManualAdjustmentDto) =>
+    api.post('/inventory/adjustment', payload).then((res) => res.data),
 };

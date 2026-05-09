@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { useAuthStore } from '@/features/auth/store/auth.store';
-import { useCampStore } from '@/features/camps/store/camp.store';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api',
@@ -10,33 +9,24 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token;
-  const campId = useCampStore.getState().activeCamp?.id;
 
-  // Fallback to localStorage if store token is not available
-  const tokenFromStorage =
-    token || localStorage.getItem('auth-storage')
-      ? JSON.parse(localStorage.getItem('auth-storage') || '{}').state?.token
-      : null;
-
-  if (token || tokenFromStorage) {
-    config.headers.Authorization = `Bearer ${token || tokenFromStorage}`;
-  }
-
-  if (campId) {
-    config.headers['X-Camp-Id'] = campId;
+  if (token) {
+    config.headers = config.headers ?? {};
+    config.headers.Authorization = `Bearer ${token}`;
   }
 
   return config;
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (error?.response?.status === 401) {
       useAuthStore.getState().logout();
-      window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
     }
-
     return Promise.reject(error);
   },
 );

@@ -1,15 +1,15 @@
-import { BrowserRouter } from 'react-router-dom';
-import { AppRouter } from '@/app/AppRouter';
-import { DeviceFrame, ScreenSurface } from '@/shared/ui/device';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/features/auth/auth-context';
+import { AppRoutes } from '@/routes/AppRoutes';
+
+const queryClient = new QueryClient();
 
 export function App() {
   return (
-    <BrowserRouter>
-      <DeviceFrame>
-        <ScreenSurface>
-          <AppRouter />
-        </ScreenSurface>
-      </DeviceFrame>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
