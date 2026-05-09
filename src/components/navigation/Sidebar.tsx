@@ -24,7 +24,7 @@ export function Sidebar({ items, isOpen, isCollapsed, onClose, onToggleCollapse 
       )}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-[var(--border)] bg-[var(--card)]/30 backdrop-blur-2xl transition-transform duration-300 lg:static lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-40 flex w-56 flex-col border-r border-[var(--border)] bg-[var(--card)]/15 backdrop-blur-xl transition-transform duration-300 lg:static lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full',
           isCollapsed && 'lg:w-20',
         )}

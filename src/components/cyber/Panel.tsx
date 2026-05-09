@@ -26,7 +26,7 @@ export function Panel({
 
   return (
     <div
-      className={`relative rounded-sm border border-[oklch(0.68_0.32_340_/_0.18)] bg-[oklch(0.1_0.03_320_/_0.45)] p-5 shadow-[0_0_40px_rgba(0,0,0,0.2)] backdrop-blur-xl ${className}`}
+      className={`relative rounded-sm border border-[oklch(0.68_0.32_340_/_0.15)] bg-[oklch(0.1_0.03_320_/_0.35)] p-5 shadow-[0_0_40px_rgba(0,0,0,0.2)] backdrop-blur-2xl ${className}`}
     >
       {/* Corner brackets — breathe softly */}
       <span

@@ -9,7 +9,7 @@ interface NavbarProps {
 
 export function Navbar({ userName, onLogout, onToggleSidebar }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--border)] bg-[var(--card)]/20 backdrop-blur-2xl px-4 py-3 lg:px-6">
+    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--border)] bg-[var(--card)]/10 backdrop-blur-xl px-4 py-3 lg:px-6">
       <div className="flex items-center gap-4">
         <button
           type="button"
