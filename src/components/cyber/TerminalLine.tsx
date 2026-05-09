@@ -6,14 +6,14 @@ interface TerminalLineProps {
   delay?: number;
   className?: string;
   prefix?: string;
-  accent?: 'fuchsia' | 'cyan' | 'yellow';
+  accent?: 'cyan' | 'purple' | 'green';
 }
 
 export function TerminalLine({
   text,
   delay = 0,
   className = '',
-  prefix = '>',
+  prefix = '›',
   accent = 'cyan',
 }: TerminalLineProps) {
   const [visible, setVisible] = useState(false);
@@ -21,11 +21,9 @@ export function TerminalLine({
   const [done, setDone] = useState(false);
 
   const accentColor =
-    accent === 'fuchsia'
-      ? 'var(--neon-fuchsia)'
-      : accent === 'yellow'
-        ? 'var(--neon-yellow)'
-        : 'var(--neon-cyan)';
+    accent === 'purple' ? 'text-accent-secondary' :
+    accent === 'green' ? 'text-status-green' :
+    'text-accent-primary';
 
   useEffect(() => {
     const initTimer = setTimeout(() => setVisible(true), delay);
@@ -45,28 +43,17 @@ export function TerminalLine({
           setDone(true);
         }
       },
-      15 + Math.random() * 25,
+      12 + Math.random() * 20,
     );
 
     return () => clearInterval(interval);
   }, [visible, done, text]);
 
   return (
-    <div
-      className={cn(
-        'font-mono-data text-[11px] tracking-wider transition-opacity duration-200',
-        visible ? 'opacity-100' : 'opacity-0',
-        className,
-      )}
-    >
-      <span style={{ color: accentColor, textShadow: `0 0 6px ${accentColor}` }}>{prefix} </span>
-      <span className="text-muted-foreground">{displayed}</span>
-      {!done && (
-        <span
-          className="inline-block w-1.5 h-3.5 ml-0.5 align-middle animate-pulse-soft"
-          style={{ backgroundColor: accentColor, boxShadow: `0 0 6px ${accentColor}` }}
-        />
-      )}
+    <div className={cn('font-mono text-xs transition-opacity duration-200', visible ? 'opacity-100' : 'opacity-0', className)}>
+      <span className={accentColor}>{prefix} </span>
+      <span className="text-text-secondary">{displayed}</span>
+      {!done && <span className={`inline-block w-[6px] h-[14px] ml-0.5 align-middle animate-blink ${accentColor}`}>▌</span>}
     </div>
   );
 }

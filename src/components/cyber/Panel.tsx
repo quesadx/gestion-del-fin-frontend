@@ -6,8 +6,8 @@ interface PanelProps {
   status?: string;
   children: ReactNode;
   className?: string;
-  accent?: 'fuchsia' | 'cyan';
-  variant?: 'default' | 'elevated';
+  accent?: 'cyan' | 'purple';
+  variant?: 'default' | 'elevated' | 'flat';
 }
 
 export function Panel({
@@ -16,65 +16,46 @@ export function Panel({
   status,
   children,
   className = '',
-  accent = 'fuchsia',
+  accent = 'cyan',
   variant = 'default',
 }: PanelProps) {
-  const accentColor = accent === 'fuchsia' ? 'var(--neon-fuchsia)' : 'var(--neon-cyan)';
-  const accentBg = accent === 'fuchsia' ? 'bg-[var(--neon-fuchsia)]' : 'bg-[var(--neon-cyan)]';
-  const statusColor =
-    accent === 'fuchsia' ? 'text-[var(--neon-fuchsia)]' : 'text-[var(--neon-cyan)]';
-  const statusDot =
-    accent === 'fuchsia'
-      ? 'bg-[var(--neon-fuchsia)] shadow-[0_0_8px_var(--neon-fuchsia)]'
-      : 'bg-[var(--neon-cyan)] shadow-[0_0_8px_var(--neon-cyan)]';
+  const isCyan = accent === 'cyan';
+  const accentClass = isCyan ? 'text-accent-primary' : 'text-accent-secondary';
+  const accentBg = isCyan ? 'bg-accent-primary/10' : 'bg-accent-secondary/10';
+  const accentBorder = isCyan ? 'border-accent-primary/5' : 'border-accent-secondary/5';
+  const glowClass = isCyan ? 'shadow-glow' : 'shadow-glow-purple';
+
+  const variantClass = variant === 'elevated'
+    ? 'glass-heavy shadow-glass-heavy'
+    : variant === 'flat'
+    ? 'bg-surface-deep/40 backdrop-blur-light border-border/10'
+    : 'glass';
 
   return (
-    <div
-      className={`relative rounded-sm border border-[oklch(0.68_0.32_340_/_0.2)] bg-[oklch(0.1_0.03_320_/_0.4)] p-5 backdrop-blur-2xl transition-all duration-300 hover:border-[oklch(0.68_0.32_340_/_0.35)] ${
-        variant === 'elevated'
-          ? 'shadow-[0_0_60px_rgba(0,0,0,0.4),_0_0_30px_rgba(0,0,0,0.3)]'
-          : 'shadow-[0_0_30px_rgba(0,0,0,0.3)]'
-      } ${className}`}
-    >
-      {/* Corner brackets — breathe softly */}
-      <span
-        className="absolute -top-px -left-px h-3 w-3 border-t-2 border-l-2 animate-corner-breathe"
-        style={{ borderColor: accentColor }}
-      />
-      <span
-        className="absolute -bottom-px -right-px h-3 w-3 border-b-2 border-r-2 animate-corner-breathe"
-        style={{ borderColor: accentColor, animationDelay: '2s' }}
-      />
-      <span
-        className="absolute -top-px -right-px h-2 w-2 border-t border-r opacity-20"
-        style={{ borderColor: accentColor }}
-      />
-      <span
-        className="absolute -bottom-px -left-px h-2 w-2 border-b border-l opacity-20"
-        style={{ borderColor: accentColor }}
-      />
+    <div className={`relative rounded-none ${variantClass} ${accentBorder} p-6 transition-all duration-200 ${className}`}>
+      {/* Corner brackets */}
+      <span className={`absolute top-0 left-0 w-3 h-3 border-t border-l ${isCyan ? 'border-accent-primary/60' : 'border-accent-secondary/60'}`} />
+      <span className={`absolute bottom-0 right-0 w-3 h-3 border-b border-r ${isCyan ? 'border-accent-primary/60' : 'border-accent-secondary/60'}`} />
 
       {/* Header */}
-      {(title || tag) && (
-        <div className="flex items-center justify-between gap-3 border-b pb-3 mb-4 border-[oklch(0.68_0.32_340_/_0.25)]">
-          <div className="flex flex-wrap items-center gap-3">
+      {(title || tag || status) && (
+        <div className="flex items-center justify-between gap-4 mb-5 pb-4 border-b border-border/15">
+          <div className="flex items-center gap-3">
             {tag && (
-              <span
-                className={`font-mono-data text-[10px] px-2 py-0.5 clip-tag ${accentBg} text-[var(--charcoal)]`}
-              >
+              <span className={`font-mono-sm tracking-[0.15em] px-2.5 py-1 ${accentBg} ${accentClass} border ${isCyan ? 'border-accent-primary/20' : 'border-accent-secondary/20'}`}>
                 {tag}
               </span>
             )}
             {title && (
-              <h3 className="font-display text-sm font-bold tracking-widest text-glow-fuchsia leading-none">
+              <h3 className={`font-sans text-sm font-bold tracking-tight ${accentClass}`}>
                 {title}
               </h3>
             )}
           </div>
           {status && (
-            <div className="flex items-center gap-2">
-              <span className={`w-1.5 h-1.5 rounded-full flicker ${statusDot}`} />
-              <span className={`font-mono-data text-[10px] ${statusColor}`}>{status}</span>
+            <div className={`flex items-center gap-2 font-mono-sm ${accentClass}`}>
+              <span className={`w-1.5 h-1.5 ${isCyan ? 'bg-accent-primary' : 'bg-accent-secondary'} animate-blink`} />
+              {status}
             </div>
           )}
         </div>

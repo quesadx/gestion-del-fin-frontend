@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Backpack, Cpu, Activity, Compass, ClipboardCheck } from 'lucide-react';
-import { Panel } from '@/components/cyber/Panel';
-import { StatCard } from '@/components/cyber/StatCard';
-import { TerminalLine } from '@/components/cyber/TerminalLine';
-import { CyberGrid } from '@/components/cyber/CyberGrid';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { StatusBadge } from '@/components/cyber/StatusBadge';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { Cpu, Activity, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useResources } from '@/features/inventory/hooks/useResources';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useCampStore } from '@/features/camps/store/camp.store';
 import { getServerNow } from '@/shared/hooks/useServerTime';
+import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { TerminalLine } from '@/components/cyber/TerminalLine';
+import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { format } from 'date-fns';
 import type { Role } from '@/features/auth/types/auth.types';
+
+interface ModuleCard {
+  label: string;
+  to: string;
+  metric?: string;
+  metricValue?: string | number;
+  accent: 'cyan' | 'purple' | 'green';
+}
 
 function useStats(role: Role | null) {
   const campsQuery = useCamps({
@@ -28,31 +32,13 @@ function useStats(role: Role | null) {
     (role === 'system_admin' && campsQuery.isLoading) ||
     (role === 'resource_manager' && resourcesQuery.isLoading);
 
-  const campCount = role === 'system_admin' ? (campsQuery.data?.length ?? 0) : null;
-  const activeCamps =
-    role === 'system_admin'
-      ? (campsQuery.data?.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length ?? 0)
-      : null;
-  const resourceCount = role === 'resource_manager' ? (resourcesQuery.data?.length ?? 0) : null;
-
-  const hasError =
-    (role === 'system_admin' && campsQuery.isError) ||
-    (role === 'resource_manager' && resourcesQuery.isError);
-
-  const retry = () => {
-    if (role === 'system_admin') campsQuery.refetch();
-    if (role === 'resource_manager') resourcesQuery.refetch();
-  };
-
   return {
     isLoading,
-    campCount,
-    activeCamps,
-    resourceCount,
-    hasError,
-    retry,
     camps: campsQuery.data,
     resources: resourcesQuery.data,
+    campCount: role === 'system_admin' ? (campsQuery.data?.length ?? 0) : null,
+    activeCamps: role === 'system_admin' ? (campsQuery.data?.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length ?? 0) : null,
+    resourceCount: role === 'resource_manager' ? (resourcesQuery.data?.length ?? 0) : null,
   };
 }
 
@@ -61,8 +47,7 @@ export function DashboardPage() {
   const role = useAuthStore((state) => state.role);
   const userName = useAuthStore((state) => state.user?.username);
 
-  const { isLoading, campCount, activeCamps, resourceCount, hasError, retry, camps } =
-    useStats(role);
+  const { isLoading, campCount, activeCamps, resourceCount, camps } = useStats(role);
 
   const [serverTime, setServerTime] = useState<string>('');
   const isSyncing = useCampStore((state) => state.serverTime) > 0;
@@ -77,162 +62,169 @@ export function DashboardPage() {
     return () => clearInterval(interval);
   }, [isSyncing]);
 
-  const quickActions: { label: string; to: string; icon: typeof Building2 }[] = [];
+  // Build module cards based on role
+  const modules: ModuleCard[] = [];
   if (role === 'system_admin') {
-    quickActions.push({ label: 'MANAGE_CAMPS', to: '/camps', icon: Building2 });
-    quickActions.push({ label: 'MANAGE_PEOPLE', to: '/people', icon: ClipboardCheck });
-    quickActions.push({ label: 'REVIEW_ADMISSIONS', to: '/admissions', icon: ClipboardCheck });
+    modules.push({ label: 'CAMPS', to: '/camps', metric: 'Active / Total', metricValue: `${activeCamps ?? 0} / ${campCount ?? 0}`, accent: 'cyan' });
+    modules.push({ label: 'PEOPLE', to: '/people', accent: 'purple' });
+    modules.push({ label: 'ADMISSIONS', to: '/admissions', accent: 'green' });
+    modules.push({ label: 'USERS', to: '/users', accent: 'cyan' });
+    modules.push({ label: 'PROFESSIONS', to: '/professions', accent: 'purple' });
   }
   if (role === 'resource_manager') {
-    quickActions.push({ label: 'MANAGE_RESOURCES', to: '/resources', icon: Backpack });
-    quickActions.push({ label: 'VIEW_INVENTORY', to: '/inventory', icon: Building2 });
+    modules.push({ label: 'RESOURCES', to: '/resources', metric: 'Types', metricValue: resourceCount ?? 0, accent: 'cyan' });
+    modules.push({ label: 'INVENTORY', to: '/inventory', accent: 'green' });
+    modules.push({ label: 'AUDIT', to: '/inventory/audit', accent: 'purple' });
   }
   if (role === 'worker') {
-    quickActions.push({ label: 'VIEW_INVENTORY', to: '/inventory', icon: Backpack });
+    modules.push({ label: 'INVENTORY', to: '/inventory', accent: 'cyan' });
   }
   if (role === 'travel_coordinator') {
-    quickActions.push({ label: 'MANAGE_EXPEDITIONS', to: '/explorations', icon: Compass });
+    modules.push({ label: 'EXPEDITIONS', to: '/explorations', accent: 'purple' });
   }
 
   if (isLoading) return <ScreenLoader />;
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Welcome banner */}
-      <div className="relative overflow-hidden rounded-sm border border-[var(--neon-fuchsia)]/30 bg-[oklch(0.1_0.03_320_/_0.5)] backdrop-blur-xl">
-        <CyberGrid opacity={0.04} />
-        <div className="relative z-10 flex flex-col gap-3 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
+    <div className="space-y-8 animate-fade-in">
+      {/* ── Hero section ── */}
+      <div className="relative overflow-hidden rounded-none glass-heavy border border-border/20 p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.65_0.28_210/0.08),transparent_60%)]" />
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <StatusBadge status="ONLINE" variant="green" />
-              <span className="font-mono-data text-[9px] tracking-[0.3em] text-[var(--neon-cyan)]/60">
-                PIP-BOY 3000 — SYS.OVERVIEW
+              <StatusBadge status="TERMINAL ACTIVE" variant="green" />
+              <span className="font-mono-sm tracking-[0.15em] text-text-muted">
+                GESTION DEL FIN · COMMAND INTERFACE
               </span>
             </div>
-            <h2 className="font-display text-lg font-black tracking-[0.15em] text-glow-fuchsia">
-              WELCOME BACK, {userName?.toUpperCase() ?? 'OPERATOR'}
-            </h2>
-            <p className="font-mono-data text-[11px] text-muted-foreground max-w-2xl">
-              System nominal. All subsystems operational. Select a module below or from the sidebar.
+            <h1 className="font-sans text-3xl font-extrabold tracking-tight">
+              <span className="text-accent-primary" style={{ textShadow: '0 0 24px var(--accent-primary)' }}>
+                {userName?.toUpperCase() ?? 'OPERATOR'}
+              </span>
+              <span className="text-text-muted font-normal ml-3 text-lg">· terminal ready</span>
+            </h1>
+            <p className="font-mono text-text-muted max-w-2xl leading-relaxed">
+              System operational. All subsystems nominal. Select a module to execute operations.
             </p>
           </div>
-          <div className="flex items-center gap-2 font-mono-data text-[10px] text-[var(--neon-cyan)]">
-            <Cpu className="h-3.5 w-3.5" />
-            <span>{serverTime}</span>
+          <div className="flex items-center gap-4 font-mono-sm text-text-muted">
+            <Cpu className="h-3.5 w-3.5 text-accent-primary" />
+            <span className="text-text-secondary">{serverTime}</span>
           </div>
         </div>
       </div>
 
-      {/* Error state */}
-      {hasError && (
-        <Panel title="DATA_SYNC_ERROR" tag="ERR.02" status="ERROR" accent="fuchsia">
-          <p className="font-mono-data text-xs text-red-400/80 mb-3">
-            Failed to synchronize with central server. Check network connectivity.
-          </p>
-          <GlitchButton variant="warning" onClick={retry}>
-            RETRY_SYNC
-          </GlitchButton>
-        </Panel>
-      )}
-
-      {/* Stat cards grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {campCount !== null && (
-          <StatCard
-            label="TOTAL CAMPS"
-            value={campCount}
-            icon={Building2}
-            accent="fuchsia"
-            trend={activeCamps ? { value: `${activeCamps} ACTIVE`, up: true } : null}
-          />
-        )}
-        {resourceCount !== null && (
-          <StatCard label="TOTAL RESOURCES" value={resourceCount} icon={Backpack} accent="cyan" />
-        )}
-        <StatCard
-          label="SERVER TIME"
-          value={isSyncing ? 'SYNCED' : 'LOCAL'}
-          icon={Cpu}
-          accent="green"
-          trend={{ value: 'REAL-TIME', up: true }}
-        />
-        <StatCard
-          label="SYSTEM LOAD"
-          value="NOMINAL"
-          icon={Activity}
-          accent="yellow"
-          trend={{ value: '99.97% UPTIME', up: true }}
-        />
-      </div>
-
-      {/* Main panels grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title="QUICK_ACTIONS" tag="CMD.01" status="READY" accent="cyan">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.to}
-                  type="button"
-                  onClick={() => navigate(action.to)}
-                  className="group flex items-center gap-3 rounded-sm border border-[var(--neon-cyan)]/20 bg-[oklch(0.15_0.05_320_/_0.4)] px-4 py-3 text-left transition-all duration-200 hover:border-[var(--neon-cyan)]/50 hover:bg-[oklch(0.18_0.06_325_/_0.5)] hover:shadow-[0_0_20px_var(--neon-cyan)_/_0.08)]"
-                >
-                  <Icon className="h-4 w-4 shrink-0 text-[var(--neon-cyan)]/60 transition-colors group-hover:text-[var(--neon-cyan)]" />
-                  <span className="font-mono-data text-[11px] tracking-wider text-muted-foreground transition-colors group-hover:text-[var(--neon-cyan)]">
-                    {action.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </Panel>
-
-        <Panel title="SYSLOG" tag="LOG.01" status="STREAMING" accent="cyan">
-          <div className="space-y-2 font-mono-data">
-            <TerminalLine
-              text="BOOT_SEQUENCE COMPLETE — PIP-BOY 3000 v1.0.0"
-              delay={0}
-              accent="cyan"
-            />
-            {campCount !== null && (
-              <TerminalLine
-                text={`CAMP_NETWORK: ${campCount} nodes synchronized`}
-                delay={400}
-                accent="fuchsia"
-              />
-            )}
-            {resourceCount !== null && (
-              <TerminalLine
-                text={`RESOURCE_MATRIX: ${resourceCount} types indexed`}
-                delay={800}
-                accent="cyan"
-              />
-            )}
-            <TerminalLine
-              text="SECURITY_LEVEL: ALPHA — All perimeters secured"
-              delay={1200}
-              accent="yellow"
-            />
-            <TerminalLine text="AWAITING OPERATOR INPUT..." delay={1600} accent="fuchsia" />
-          </div>
-          {camps && Array.isArray(camps) && camps.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {camps.slice(0, 4).map((camp: Record<string, unknown>) => (
-                <StatusBadge
-                  key={camp.id as number}
-                  status={(camp.name as string)?.slice(0, 18) ?? ''}
-                  variant={camp.status === 'ACTIVE' ? 'green' : 'red'}
-                />
-              ))}
-              {(camps.length as number) > 4 && (
-                <span className="font-mono-data text-[10px] text-muted-foreground/60">
-                  +{camps.length - 4} more
-                </span>
-              )}
+      {/* ── Stats row ── */}
+      {(campCount !== null || resourceCount !== null) && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {campCount !== null && (
+            <div className="glass p-5 rounded-none border border-border/20">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-mono-sm tracking-[0.12em] uppercase text-text-muted">Camps</span>
+                <span className="w-1.5 h-1.5 bg-accent-primary animate-pulse-glow" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-sans text-3xl font-bold text-accent-primary" style={{ textShadow: '0 0 16px var(--accent-primary)' }}>{campCount}</span>
+                <span className="font-mono-sm text-text-muted">total</span>
+              </div>
+              <div className="mt-2 font-mono-sm text-text-muted">
+                <span className="text-status-green">{activeCamps} ACTIVE</span>
+              </div>
             </div>
           )}
-        </Panel>
+          {resourceCount !== null && (
+            <div className="glass p-5 rounded-none border border-border/20">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-mono-sm tracking-[0.12em] uppercase text-text-muted">Resources</span>
+                <span className="w-1.5 h-1.5 bg-accent-primary animate-pulse-glow" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-sans text-3xl font-bold text-accent-primary" style={{ textShadow: '0 0 16px var(--accent-primary)' }}>{resourceCount}</span>
+                <span className="font-mono-sm text-text-muted">types</span>
+              </div>
+            </div>
+          )}
+          <div className="glass p-5 rounded-none border border-border/20">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-mono-sm tracking-[0.12em] uppercase text-text-muted">System</span>
+              <span className="w-1.5 h-1.5 bg-status-green animate-blink" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="font-sans text-3xl font-bold text-status-green" style={{ textShadow: '0 0 16px #00e676' }}>ONLINE</span>
+              <span className="font-mono-sm text-text-muted">nominal</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Module grid ── */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {modules.map((mod) => (
+          <button
+            key={mod.to}
+            type="button"
+            onClick={() => navigate(mod.to)}
+            className="group relative glass-interactive rounded-none p-5 text-left transition-all duration-200"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <span className={`font-mono-sm tracking-[0.12em] uppercase font-semibold ${mod.accent === 'cyan' ? 'text-accent-primary' : mod.accent === 'purple' ? 'text-accent-secondary' : 'text-status-green'}`}>
+                {mod.label}
+              </span>
+              <ArrowUpRight className={`h-4 w-4 transition-all duration-200 opacity-0 group-hover:opacity-100 -translate-y-1 translate-x-1 group-hover:translate-y-0 group-hover:translate-x-0 ${mod.accent === 'cyan' ? 'text-accent-primary' : mod.accent === 'purple' ? 'text-accent-secondary' : 'text-status-green'}`} strokeWidth={2} />
+            </div>
+            {mod.metric && (
+              <div className="space-y-1">
+                <span className="font-sans text-2xl font-bold tracking-tight text-text-primary">{mod.metricValue}</span>
+                <span className="block font-mono-sm text-text-muted">{mod.metric}</span>
+              </div>
+            )}
+            {!mod.metric && (
+              <span className="font-mono text-text-muted group-hover:text-text-secondary transition-colors duration-200">
+                Access module <ChevronRight className="inline h-3 w-3 ml-1" />
+              </span>
+            )}
+            {/* Hover accent line */}
+            <span className={`absolute bottom-0 left-0 right-0 h-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${mod.accent === 'cyan' ? 'bg-accent-primary' : mod.accent === 'purple' ? 'bg-accent-secondary' : 'bg-status-green'}`} />
+          </button>
+        ))}
+      </div>
+
+      {/* ── Syslog terminal ── */}
+      <div className="glass rounded-none border border-border/20 p-6">
+        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border/10">
+          <span className="w-1.5 h-1.5 bg-status-green animate-blink" />
+          <h3 className="font-sans text-xs font-bold tracking-[0.15em] uppercase text-accent-primary">SYSLOG</h3>
+          <span className="font-mono-sm text-text-muted">STREAMING</span>
+        </div>
+        <div className="space-y-2">
+          <TerminalLine text="TERMINAL BOOT SEQUENCE COMPLETE" delay={0} accent="cyan" />
+          <TerminalLine text="GLASS INTERFACE v2.0 INITIALIZED" delay={300} accent="purple" />
+          {campCount !== null && (
+            <TerminalLine text={`CAMP NETWORK: ${campCount} nodes detected`} delay={600} accent="cyan" />
+          )}
+          {resourceCount !== null && (
+            <TerminalLine text={`RESOURCE MATRIX: ${resourceCount} types registered`} delay={900} accent="green" />
+          )}
+          <TerminalLine text="SECURITY LEVEL: ALPHA — Encryption active" delay={1200} accent="cyan" />
+          <TerminalLine text="AWAITING OPERATOR INPUT" delay={1500} accent="purple" />
+        </div>
+        {camps && Array.isArray(camps) && camps.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-border/10 flex flex-wrap gap-2">
+            {camps.slice(0, 5).map((camp: Record<string, unknown>) => (
+              <StatusBadge
+                key={camp.id as number}
+                status={(camp.name as string)?.slice(0, 16) ?? ''}
+                variant={camp.status === 'ACTIVE' ? 'green' : 'red'}
+              />
+            ))}
+            {(camps.length as number) > 5 && (
+              <span className="font-mono-sm text-text-muted self-center">
+                +{camps.length - 5} more
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
