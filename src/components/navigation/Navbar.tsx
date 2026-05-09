@@ -24,7 +24,7 @@ export function Navbar({ userName, onLogout, onToggleSidebar }: NavbarProps) {
             GESTION DEL FIN
           </div>
           <div className="text-[10px] font-mono-data text-muted-foreground">
-            {userName ? `OPERADOR: ${userName}` : 'OPERADOR: N/A'}
+            {userName ? `OPERATOR: ${userName}` : 'OPERATOR: N/A'}
           </div>
         </div>
       </div>

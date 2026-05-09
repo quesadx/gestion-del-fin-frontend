@@ -64,7 +64,8 @@
     "menos",
     "caracteres",
     "GESTION",
-    "OPERADOR"
+    "OPERADOR",
+    "OPERATOR"
   ],
   "ignorePaths": [
     "node_modules",
