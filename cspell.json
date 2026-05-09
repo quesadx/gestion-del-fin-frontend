@@ -65,5 +65,13 @@
     "caracteres",
     "GESTION"
   ],
-  "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md"]
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "*.lock",
+    "*.json",
+    "*.md",
+    "neon-nova-dashboard",
+    "temp"
+  ]
 }
