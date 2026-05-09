@@ -3,7 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
   --radius: 0rem;
   --background: oklch(0.13 0.04 320);

@@ -56,11 +56,7 @@ export const peopleApi = {
   addStatusLog: (campId: number, payload: CreatePersonStatusLogDto) =>
     api.post(`/camps/${campId}/people/status-log`, payload).then((res) => res.data),
   createProfessionReassignment: (campId: number, payload: CreateProfessionReassignmentDto) =>
-    api
-      .post(`/camps/${campId}/people/profession-reassignments`, payload)
-      .then((res) => res.data),
+    api.post(`/camps/${campId}/people/profession-reassignments`, payload).then((res) => res.data),
   createContributionOverride: (campId: number, payload: CreateContributionOverrideDto) =>
-    api
-      .post(`/camps/${campId}/people/contribution-overrides`, payload)
-      .then((res) => res.data),
+    api.post(`/camps/${campId}/people/contribution-overrides`, payload).then((res) => res.data),
 };
