@@ -1,15 +1,10 @@
-import { BrowserRouter } from 'react-router-dom';
-import { AppRouter } from '@/app/AppRouter';
-import { DeviceFrame, ScreenSurface } from '@/shared/ui/device';
-
 export function App() {
   return (
-    <BrowserRouter>
-      <DeviceFrame>
-        <ScreenSurface>
-          <AppRouter />
-        </ScreenSurface>
-      </DeviceFrame>
-    </BrowserRouter>
+    <main className="app-shell">
+      <section className="container">
+        <h1>Gestión del FIN</h1>
+        <p>Interfaz limpia lista para reiniciar desde cero.</p>
+      </section>
+    </main>
   );
 }
