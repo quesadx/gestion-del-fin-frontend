@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
@@ -46,12 +46,12 @@ export function ProfessionsPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
 
   const formCreate = useForm<ProfessionFormValues>({
-    resolver: zodResolver(professionSchema),
+    resolver: resolved(professionSchema),
     defaultValues: { name: '', description: '' },
   });
 
   const formEdit = useForm<ProfessionFormValues>({
-    resolver: zodResolver(professionSchema),
+    resolver: resolved(professionSchema),
     defaultValues: { name: '', description: '' },
   });
 
@@ -83,7 +83,7 @@ export function ProfessionsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag="PRF.ERR" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" tag="PRF.ERR" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load professions'}
           </p>

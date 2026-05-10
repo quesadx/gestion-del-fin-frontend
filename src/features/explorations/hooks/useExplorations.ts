@@ -55,6 +55,7 @@ export function useUpdateExplorationStatus() {
       explorationsApi.updateStatus(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: EXPLORATIONS_KEY });
+      queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] === 'inventory' });
     },
   });
 }

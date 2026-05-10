@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
@@ -39,7 +39,7 @@ export function PersonCreatePage() {
     handleSubmit,
     formState: { errors },
   } = useForm<CreatePersonFormValues>({
-    resolver: zodResolver(createPersonSchema),
+    resolver: resolved(createPersonSchema),
     defaultValues: {
       full_name: '',
       camp_id: 0,

@@ -91,7 +91,7 @@ export function PeopleListPage() {
 
       {/* People content only when camp selected */}
       {!selectedCampId ? (
-        <Panel accent="fuchsia">
+        <Panel accent="purple">
           <div className="flex flex-col items-center gap-4 py-8">
             <Users className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground text-center">
@@ -102,7 +102,7 @@ export function PeopleListPage() {
       ) : peopleLoading ? (
         <ScreenLoader />
       ) : peopleError ? (
-        <Panel title="ERROR" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(peopleErr as Error)?.message || 'Failed to load people'}
           </p>

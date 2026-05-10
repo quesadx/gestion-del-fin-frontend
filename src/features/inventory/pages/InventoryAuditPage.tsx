@@ -68,7 +68,7 @@ export function InventoryAuditPage() {
       </Panel>
 
       {!selectedCampId ? (
-        <Panel accent="fuchsia">
+        <Panel accent="purple">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardList className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
@@ -77,7 +77,7 @@ export function InventoryAuditPage() {
       ) : auditLoading ? (
         <ScreenLoader />
       ) : auditError ? (
-        <Panel title="ERROR" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(auditErr as Error)?.message || 'Failed to load audit'}
           </p>

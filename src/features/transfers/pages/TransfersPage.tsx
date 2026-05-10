@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
@@ -79,7 +79,7 @@ export function TransfersPage() {
   const transfersArray = Array.isArray(transfers) ? transfers : ([] as Record<string, unknown>[]);
 
   const formCreate = useForm<TransferFormValues>({
-    resolver: zodResolver(createTransferSchema),
+    resolver: resolved(createTransferSchema),
     defaultValues: {
       requesting_camp: 0,
       target_camp: 0,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
@@ -45,7 +45,7 @@ export function AdmissionsPage() {
   const admArray = Array.isArray(admissions) ? admissions : [];
 
   const form = useForm<CreateFormValues>({
-    resolver: zodResolver(createAdmissionSchema),
+    resolver: resolved(createAdmissionSchema),
     defaultValues: {
       applicant_name: '',
       applicant_age: undefined,
@@ -112,7 +112,7 @@ export function AdmissionsPage() {
       </Panel>
 
       {!selectedCampId ? (
-        <Panel accent="fuchsia">
+        <Panel accent="purple">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardCheck className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
@@ -121,7 +121,7 @@ export function AdmissionsPage() {
       ) : admLoading ? (
         <ScreenLoader />
       ) : admError ? (
-        <Panel title="ERROR" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(admErr as Error)?.message || 'Failed to load requests'}
           </p>

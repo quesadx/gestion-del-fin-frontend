@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
@@ -36,7 +36,7 @@ export function CampDetailPage() {
     reset,
     formState: { errors },
   } = useForm<UpdateCampFormValues>({
-    resolver: zodResolver(updateCampSchema),
+    resolver: resolved(updateCampSchema),
     defaultValues: { name: '', location: '', status: 'ACTIVE' },
   });
 
@@ -61,7 +61,7 @@ export function CampDetailPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag={`CAMP.${campId}`} status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" tag={`CAMP.${campId}`} status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load camp'}
           </p>
@@ -76,7 +76,7 @@ export function CampDetailPage() {
   if (!camp) {
     return (
       <div className="space-y-6">
-        <Panel title="CAMP NOT FOUND" tag={`CAMP.${campId}`} status="OFFLINE" accent="fuchsia">
+        <Panel title="CAMP NOT FOUND" tag={`CAMP.${campId}`} status="OFFLINE" accent="purple">
           <p className="text-sm text-muted-foreground font-mono-data">
             Requested camp does not exist.
           </p>
@@ -103,7 +103,7 @@ export function CampDetailPage() {
         title={camp.name as string}
         tag={`CAMP.${campId}`}
         status={camp.status as string}
-        accent={statusVariant === 'green' ? 'cyan' : 'fuchsia'}
+        accent={statusVariant === 'green' ? 'cyan' : 'purple'}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">

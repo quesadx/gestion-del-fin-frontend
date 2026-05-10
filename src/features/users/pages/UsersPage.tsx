@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
@@ -62,12 +62,12 @@ export function UsersPage() {
   campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
 
   const createForm = useForm<CreateFormValues>({
-    resolver: zodResolver(createUserSchema),
+    resolver: resolved(createUserSchema),
     defaultValues: { username: '', password: '', camp_id: 0, role_id: 0 },
   });
 
   const editForm = useForm<UpdateFormValues>({
-    resolver: zodResolver(updateUserSchema),
+    resolver: resolved(updateUserSchema),
     defaultValues: { username: '', password: '', camp_id: 0, role_id: 0, is_active: true },
   });
 
@@ -127,7 +127,7 @@ export function UsersPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag="USR.01" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" tag="USR.01" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load users'}
           </p>
@@ -195,7 +195,7 @@ export function UsersPage() {
                         {campMap.get(u.camp_id as number) || (u.camp_id as string)}
                       </td>
                       <td className="py-3 px-2">
-                        <StatusBadge status={roleLabel(u.role_id as number)} variant="fuchsia" />
+                        <StatusBadge status={roleLabel(u.role_id as number)} variant="purple" />
                       </td>
                       <td className="py-3 px-2">
                         <StatusBadge

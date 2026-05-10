@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
@@ -82,11 +82,11 @@ export function PersonDetailPage() {
   const [statusLogOpen, setStatusLogOpen] = useState(false);
 
   const editForm = useForm<UpdatePersonFormValues>({
-    resolver: zodResolver(updatePersonSchema),
+    resolver: resolved(updatePersonSchema),
   });
 
   const statusLogForm = useForm<StatusLogFormValues>({
-    resolver: zodResolver(statusLogSchema),
+    resolver: resolved(statusLogSchema),
     defaultValues: { new_status: 'HEALTHY', reason: '' },
   });
 
@@ -115,7 +115,7 @@ export function PersonDetailPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag={`PPL.${personId}`} status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" tag={`PPL.${personId}`} status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load person'}
           </p>
@@ -130,7 +130,7 @@ export function PersonDetailPage() {
   if (!person) {
     return (
       <div className="space-y-6">
-        <Panel title="PERSON NOT FOUND" tag={`PPL.${personId}`} status="OFFLINE" accent="fuchsia">
+        <Panel title="PERSON NOT FOUND" tag={`PPL.${personId}`} status="OFFLINE" accent="purple">
           <p className="text-sm text-muted-foreground font-mono-data">
             Requested person does not exist.
           </p>
@@ -222,7 +222,7 @@ export function PersonDetailPage() {
             </div>
           </div>
         </div>
-        {p.skills_summary && (
+        {(p.skills_summary as string) && (
           <div className="font-mono-data text-xs">
             <span className="text-muted-foreground">SKILLS: </span>
             {p.skills_summary as string}

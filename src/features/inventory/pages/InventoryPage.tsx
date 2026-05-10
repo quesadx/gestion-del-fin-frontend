@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
@@ -42,7 +42,7 @@ export function InventoryPage() {
   const invArray = Array.isArray(inventory) ? inventory : [];
 
   const adjForm = useForm<AdjustmentFormValues>({
-    resolver: zodResolver(adjustmentSchema),
+    resolver: resolved(adjustmentSchema),
     defaultValues: { resource_type_id: 0, type: 'MANUAL_IN', quantity: 1, description: '' },
   });
 
@@ -96,7 +96,7 @@ export function InventoryPage() {
 
       {/* Inventory content */}
       {!selectedCampId ? (
-        <Panel accent="fuchsia">
+        <Panel accent="purple">
           <div className="flex flex-col items-center gap-4 py-8">
             <Warehouse className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
@@ -105,7 +105,7 @@ export function InventoryPage() {
       ) : invLoading ? (
         <ScreenLoader />
       ) : invError ? (
-        <Panel title="ERROR" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(invErr as Error)?.message || 'Failed to load inventory'}
           </p>

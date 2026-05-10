@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
@@ -50,12 +50,12 @@ export function ResourcesPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
 
   const formCreate = useForm<ResourceFormValues>({
-    resolver: zodResolver(resourceSchema),
+    resolver: resolved(resourceSchema),
     defaultValues: { name: '', unit: '', daily_ration: 0, minimum_stock: 0 },
   });
 
   const formEdit = useForm<ResourceFormValues>({
-    resolver: zodResolver(resourceSchema),
+    resolver: resolved(resourceSchema),
     defaultValues: { name: '', unit: '', daily_ration: 0, minimum_stock: 0 },
   });
 
