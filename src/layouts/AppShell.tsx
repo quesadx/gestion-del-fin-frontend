@@ -23,14 +23,16 @@ export function AppShell() {
     <div className="relative min-h-screen bg-surface-base text-text-primary">
       {/* Ambient background blobs */}
       <div className="fixed inset-0 -z-20 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] rounded-none opacity-25"
+        <div
+          className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] rounded-none opacity-25"
           style={{
             background: 'radial-gradient(circle, oklch(0.65 0.28 210 / 0.3), transparent 60%)',
             filter: 'blur(120px)',
             animation: 'drift 25s ease-in-out infinite alternate',
           }}
         />
-        <div className="absolute -bottom-[20%] -right-[10%] w-[55vw] h-[55vw] rounded-none opacity-20"
+        <div
+          className="absolute -bottom-[20%] -right-[10%] w-[55vw] h-[55vw] rounded-none opacity-20"
           style={{
             background: 'radial-gradient(circle, oklch(0.55 0.25 280 / 0.3), transparent 60%)',
             filter: 'blur(130px)',
@@ -58,7 +60,9 @@ export function AppShell() {
             {user?.username && (
               <span className="flex items-center gap-2">
                 <span className="text-border/40">OP:</span>
-                <span className="text-text-secondary tracking-wide">{user.username.toUpperCase()}</span>
+                <span className="text-text-secondary tracking-wide">
+                  {user.username.toUpperCase()}
+                </span>
               </span>
             )}
             <span className="text-border/40">|</span>

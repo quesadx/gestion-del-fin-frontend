@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -70,32 +69,48 @@ export function PersonCreatePage() {
   return (
     <div className="space-y-6">
       <GlitchButton variant="ghost" onClick={() => navigate('/people')}>
-        <span className="flex items-center gap-2"><ArrowLeft className="h-3.5 w-3.5" />VOLVER</span>
+        <span className="flex items-center gap-2">
+          <ArrowLeft className="h-3.5 w-3.5" />
+          VOLVER
+        </span>
       </GlitchButton>
 
       <Panel title="REGISTRAR PERSONA" tag="PPL.NEW" status="INPUT" accent="cyan">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Name */}
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">NOMBRE COMPLETO //</label>
+            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              NOMBRE COMPLETO //
+            </label>
             <input
               {...register('full_name')}
               placeholder="JUAN PEREZ"
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
             />
-            {errors.full_name && <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">{errors.full_name.message}</p>}
+            {errors.full_name && (
+              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                {errors.full_name.message}
+              </p>
+            )}
           </div>
 
           {/* Row: Camp + Profession */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">CAMPAMENTO //</label>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CAMPAMENTO //
+              </label>
               {campsLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs"><ScreenLoader /></div>
+                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                  <ScreenLoader />
+                </div>
               ) : campsError ? (
                 <p className="text-red-400 font-mono-data text-xs">Error al cargar campamentos</p>
               ) : campsArray.length === 0 ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs"><Building2 className="h-3.5 w-3.5" />NO HAY CAMPAMENTOS DISPONIBLES</div>
+                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                  <Building2 className="h-3.5 w-3.5" />
+                  NO HAY CAMPAMENTOS DISPONIBLES
+                </div>
               ) : (
                 <select
                   {...register('camp_id')}
@@ -103,21 +118,34 @@ export function PersonCreatePage() {
                 >
                   <option value="">SELECCIONE...</option>
                   {campsArray.map((c: Record<string, unknown>) => (
-                    <option key={c.id as number} value={c.id as number}>{c.name as string}</option>
+                    <option key={c.id as number} value={c.id as number}>
+                      {c.name as string}
+                    </option>
                   ))}
                 </select>
               )}
-              {errors.camp_id && <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">{errors.camp_id.message}</p>}
+              {errors.camp_id && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {errors.camp_id.message}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">PROFESIÓN //</label>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                PROFESIÓN //
+              </label>
               {profsLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs"><ScreenLoader /></div>
+                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                  <ScreenLoader />
+                </div>
               ) : profsError ? (
                 <p className="text-red-400 font-mono-data text-xs">Error al cargar profesiones</p>
               ) : professionsArray.length === 0 ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs"><Wrench className="h-3.5 w-3.5" />NO HAY PROFESIONES DISPONIBLES</div>
+                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                  <Wrench className="h-3.5 w-3.5" />
+                  NO HAY PROFESIONES DISPONIBLES
+                </div>
               ) : (
                 <select
                   {...register('profession_id')}
@@ -125,19 +153,30 @@ export function PersonCreatePage() {
                 >
                   <option value="">SELECCIONE...</option>
                   {professionsArray.map((p: Record<string, unknown>) => (
-                    <option key={p.id as number} value={p.id as number}>{p.name as string}</option>
+                    <option key={p.id as number} value={p.id as number}>
+                      {p.name as string}
+                    </option>
                   ))}
                 </select>
               )}
-              {errors.profession_id && <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">{errors.profession_id.message}</p>}
+              {errors.profession_id && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {errors.profession_id.message}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Row: Status + Age */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">ESTADO //</label>
-              <select {...register('status')} className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                ESTADO //
+              </label>
+              <select
+                {...register('status')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              >
                 <option value="HEALTHY">SANO</option>
                 <option value="SICK">ENFERMO</option>
                 <option value="INJURED">LESIONADO</option>
@@ -146,41 +185,86 @@ export function PersonCreatePage() {
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">EDAD //</label>
-              <input {...register('age')} type="number" placeholder="30" className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                EDAD //
+              </label>
+              <input
+                {...register('age')}
+                type="number"
+                placeholder="30"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
             </div>
           </div>
 
           {/* Admitted at */}
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">FECHA DE INGRESO //</label>
-            <input {...register('admitted_at')} type="datetime-local" className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
-            {errors.admitted_at && <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">{errors.admitted_at.message}</p>}
+            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              FECHA DE INGRESO //
+            </label>
+            <input
+              {...register('admitted_at')}
+              type="datetime-local"
+              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+            />
+            {errors.admitted_at && (
+              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                {errors.admitted_at.message}
+              </p>
+            )}
           </div>
 
           {/* Row: Code + Blood */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">CÓDIGO IDENTIFICACIÓN //</label>
-              <input {...register('identification_code')} placeholder="ID-XXX-###" className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CÓDIGO IDENTIFICACIÓN //
+              </label>
+              <input
+                {...register('identification_code')}
+                placeholder="ID-XXX-###"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">TIPO SANGRE //</label>
-              <input {...register('blood_type')} placeholder="O+" className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                TIPO SANGRE //
+              </label>
+              <input
+                {...register('blood_type')}
+                placeholder="O+"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
             </div>
           </div>
 
           {/* Skills */}
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">HABILIDADES //</label>
-            <textarea {...register('skills_summary')} rows={3} placeholder="Primeros auxilios, mecánica básica..." className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
+            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              HABILIDADES //
+            </label>
+            <textarea
+              {...register('skills_summary')}
+              rows={3}
+              placeholder="Primeros auxilios, mecánica básica..."
+              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+            />
           </div>
 
           {/* Submit */}
           <div className="flex justify-end gap-3 pt-4 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
-            <GlitchButton variant="ghost" type="button" onClick={() => navigate('/people')}>CANCELAR</GlitchButton>
+            <GlitchButton variant="ghost" type="button" onClick={() => navigate('/people')}>
+              CANCELAR
+            </GlitchButton>
             <GlitchButton variant="primary" type="submit" disabled={isPending}>
-              {isPending ? 'REGISTRANDO...' : <span className="flex items-center gap-2"><UserPlus className="h-3.5 w-3.5" />REGISTRAR</span>}
+              {isPending ? (
+                'REGISTRANDO...'
+              ) : (
+                <span className="flex items-center gap-2">
+                  <UserPlus className="h-3.5 w-3.5" />
+                  REGISTRAR
+                </span>
+              )}
             </GlitchButton>
           </div>
         </form>

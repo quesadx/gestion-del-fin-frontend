@@ -8,14 +8,14 @@ import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps } from '@/features/camps/hooks/useCamps';
-import { useUsers, useCreateUser, useUpdateUser, useDeleteUser } from '@/features/users/hooks/useUsers';
-import { Shield, Plus, Edit3, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  useUsers,
+  useCreateUser,
+  useUpdateUser,
+  useDeleteUser,
+} from '@/features/users/hooks/useUsers';
+import { Shield, Plus, Edit3, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -128,31 +128,48 @@ export function UsersPage() {
     return (
       <div className="space-y-6">
         <Panel title="ERROR" tag="USR.01" status="ERROR" accent="fuchsia">
-          <p className="text-sm text-red-400 font-mono-data mb-4">{(error as Error)?.message || 'Error al cargar usuarios'}</p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>REINTENTAR</GlitchButton>
+          <p className="text-sm text-red-400 font-mono-data mb-4">
+            {(error as Error)?.message || 'Error al cargar usuarios'}
+          </p>
+          <GlitchButton variant="warning" onClick={() => refetch()}>
+            REINTENTAR
+          </GlitchButton>
         </Panel>
       </div>
     );
   }
 
-  const getBadgeVariant = (isActive: boolean): 'green' | 'red' => isActive ? 'green' : 'red';
+  const getBadgeVariant = (isActive: boolean): 'green' | 'red' => (isActive ? 'green' : 'red');
 
   return (
     <div className="space-y-6">
-      <Panel title="GESTIÓN DE USUARIOS" tag="USR.01" status={isLoading ? 'LOADING' : usersArray.length.toString()} accent="cyan">
+      <Panel
+        title="GESTIÓN DE USUARIOS"
+        tag="USR.01"
+        status={isLoading ? 'LOADING' : usersArray.length.toString()}
+        accent="cyan"
+      >
         {usersArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <Shield className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO HAY USUARIOS REGISTRADOS</p>
+            <p className="font-mono-data text-sm text-muted-foreground">
+              NO HAY USUARIOS REGISTRADOS
+            </p>
             <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
-              <span className="flex items-center gap-2"><Plus className="h-3.5 w-3.5" />NUEVO USUARIO</span>
+              <span className="flex items-center gap-2">
+                <Plus className="h-3.5 w-3.5" />
+                NUEVO USUARIO
+              </span>
             </GlitchButton>
           </div>
         ) : (
           <>
             <div className="mb-4 flex justify-end">
               <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
-                <span className="flex items-center gap-2"><Plus className="h-3.5 w-3.5" />NUEVO USUARIO</span>
+                <span className="flex items-center gap-2">
+                  <Plus className="h-3.5 w-3.5" />
+                  NUEVO USUARIO
+                </span>
               </GlitchButton>
             </div>
             <div className="overflow-x-auto">
@@ -169,10 +186,19 @@ export function UsersPage() {
                 </thead>
                 <tbody>
                   {usersArray.map((u: Record<string, unknown>) => (
-                    <tr key={u.id as number} className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors">
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{u.username as string}</td>
-                      <td className="py-3 px-2 text-muted-foreground">{campMap.get(u.camp_id as number) || u.camp_id as string}</td>
-                      <td className="py-3 px-2"><StatusBadge status={roleLabel(u.role_id as number)} variant="fuchsia" /></td>
+                    <tr
+                      key={u.id as number}
+                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                    >
+                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                        {u.username as string}
+                      </td>
+                      <td className="py-3 px-2 text-muted-foreground">
+                        {campMap.get(u.camp_id as number) || (u.camp_id as string)}
+                      </td>
+                      <td className="py-3 px-2">
+                        <StatusBadge status={roleLabel(u.role_id as number)} variant="fuchsia" />
+                      </td>
                       <td className="py-3 px-2">
                         <StatusBadge
                           status={u.is_active ? 'ACTIVO' : 'INACTIVO'}
@@ -180,7 +206,9 @@ export function UsersPage() {
                         />
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
-                        {u.last_activity ? format(new Date(u.last_activity as string), 'dd/MM/yyyy HH:mm') : '—'}
+                        {u.last_activity
+                          ? format(new Date(u.last_activity as string), 'dd/MM/yyyy HH:mm')
+                          : '—'}
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex justify-end gap-1">
@@ -190,7 +218,11 @@ export function UsersPage() {
                             className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                             title={u.is_active ? 'Desactivar' : 'Activar'}
                           >
-                            {u.is_active ? <ToggleRight className="h-3.5 w-3.5" /> : <ToggleLeft className="h-3.5 w-3.5" />}
+                            {u.is_active ? (
+                              <ToggleRight className="h-3.5 w-3.5" />
+                            ) : (
+                              <ToggleLeft className="h-3.5 w-3.5" />
+                            )}
                           </button>
                           <button
                             type="button"
@@ -201,7 +233,12 @@ export function UsersPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDeleteTarget({ id: u.id as number, username: u.username as string })}
+                            onClick={() =>
+                              setDeleteTarget({
+                                id: u.id as number,
+                                username: u.username as string,
+                              })
+                            }
                             className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -221,31 +258,64 @@ export function UsersPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">NUEVO USUARIO</DialogTitle>
+            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+              NUEVO USUARIO
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={createForm.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">USUARIO //</label>
-              <input {...createForm.register('username')} className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data" />
-              {createForm.formState.errors.username && <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">{createForm.formState.errors.username.message}</p>}
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                USUARIO //
+              </label>
+              <input
+                {...createForm.register('username')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              />
+              {createForm.formState.errors.username && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {createForm.formState.errors.username.message}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">CONTRASEÑA //</label>
-              <input {...createForm.register('password')} type="password" className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
-              {createForm.formState.errors.password && <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">{createForm.formState.errors.password.message}</p>}
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CONTRASEÑA //
+              </label>
+              <input
+                {...createForm.register('password')}
+                type="password"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
+              {createForm.formState.errors.password && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {createForm.formState.errors.password.message}
+                </p>
+              )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">CAMPAMENTO //</label>
-              <select {...createForm.register('camp_id')} className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CAMPAMENTO //
+              </label>
+              <select
+                {...createForm.register('camp_id')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              >
                 <option value="">SELECCIONE...</option>
                 {campsArray.map((c: Record<string, unknown>) => (
-                  <option key={c.id as number} value={c.id as number}>{c.name as string}</option>
+                  <option key={c.id as number} value={c.id as number}>
+                    {c.name as string}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">ROL //</label>
-              <select {...createForm.register('role_id')} className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                ROL //
+              </label>
+              <select
+                {...createForm.register('role_id')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              >
                 <option value="">SELECCIONE...</option>
                 <option value="1">ADMIN</option>
                 <option value="2">MANAGER</option>
@@ -254,7 +324,16 @@ export function UsersPage() {
               </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton variant="ghost" type="button" onClick={() => { setCreateOpen(false); createForm.reset(); }}>CANCELAR</GlitchButton>
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setCreateOpen(false);
+                  createForm.reset();
+                }}
+              >
+                CANCELAR
+              </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'CREANDO...' : 'CREAR'}
               </GlitchButton>
@@ -267,29 +346,54 @@ export function UsersPage() {
       <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-cyan">EDITAR USUARIO</DialogTitle>
+            <DialogTitle className="font-display text-sm tracking-widest text-glow-cyan">
+              EDITAR USUARIO
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">USUARIO //</label>
-              <input {...editForm.register('username')} className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                USUARIO //
+              </label>
+              <input
+                {...editForm.register('username')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">NUEVA CONTRASEÑA (OPCIONAL) //</label>
-              <input {...editForm.register('password')} type="password" className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data" />
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                NUEVA CONTRASEÑA (OPCIONAL) //
+              </label>
+              <input
+                {...editForm.register('password')}
+                type="password"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">CAMPAMENTO //</label>
-              <select {...editForm.register('camp_id')} className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CAMPAMENTO //
+              </label>
+              <select
+                {...editForm.register('camp_id')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              >
                 <option value="">SELECCIONE...</option>
                 {campsArray.map((c: Record<string, unknown>) => (
-                  <option key={c.id as number} value={c.id as number}>{c.name as string}</option>
+                  <option key={c.id as number} value={c.id as number}>
+                    {c.name as string}
+                  </option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">ROL //</label>
-              <select {...editForm.register('role_id')} className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                ROL //
+              </label>
+              <select
+                {...editForm.register('role_id')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              >
                 <option value="1">ADMIN</option>
                 <option value="2">MANAGER</option>
                 <option value="3">WORKER</option>
@@ -297,7 +401,9 @@ export function UsersPage() {
               </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>CANCELAR</GlitchButton>
+              <GlitchButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>
+                CANCELAR
+              </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? 'GUARDANDO...' : 'GUARDAR'}
               </GlitchButton>
@@ -310,14 +416,24 @@ export function UsersPage() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">CONFIRMAR ELIMINACIÓN</AlertDialogTitle>
+            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+              CONFIRMAR ELIMINACIÓN
+            </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              ¿Eliminar usuario <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.username}</span>? Esta acción no se puede deshacer.
+              ¿Eliminar usuario{' '}
+              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.username}</span>? Esta
+              acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">CANCELAR</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleteMutation.isPending} className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs">
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+              CANCELAR
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs"
+            >
               {deleteMutation.isPending ? 'ELIMINANDO...' : 'ELIMINAR'}
             </AlertDialogAction>
           </AlertDialogFooter>

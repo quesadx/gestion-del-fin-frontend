@@ -6,12 +6,12 @@ import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import {
-  useProfessions,
-  useCreateProfession,
-  useUpdateProfession,
-  useDeleteProfession,
-} from '@/features/people/hooks/useProfessions';
-import { Plus, Edit3, Trash2, Wrench } from 'lucide-react';
+  useResources,
+  useCreateResource,
+  useUpdateResource,
+  useDeleteResource,
+} from '@/features/resources/hooks/useResources';
+import { Plus, Edit3, Trash2, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -24,49 +24,64 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-const professionSchema = z.object({
+const resourceSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
-  description: z.string().optional(),
+  unit: z.string().min(1, 'La unidad es obligatoria'),
+  daily_ration: z.coerce.number().min(0, 'No puede ser negativo'),
+  minimum_stock: z.coerce.number().min(0, 'No puede ser negativo'),
 });
 
-type ProfessionFormValues = z.infer<typeof professionSchema>;
+type ResourceFormValues = z.infer<typeof resourceSchema>;
 
-export function ProfessionsPage() {
-  const { data: professions, isLoading, isError, error, refetch } = useProfessions();
-  const createMutation = useCreateProfession();
-  const updateMutation = useUpdateProfession();
-  const deleteMutation = useDeleteProfession();
+export function ResourcesPage() {
+  const { data: resources, isLoading, isError, error, refetch } = useResources();
+  const createMutation = useCreateResource();
+  const updateMutation = useUpdateResource();
+  const deleteMutation = useDeleteResource();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<{
     id: number;
     name: string;
-    description?: string;
+    unit: string;
+    daily_ration: number;
+    minimum_stock: number;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
 
-  const formCreate = useForm<ProfessionFormValues>({
-    resolver: zodResolver(professionSchema),
-    defaultValues: { name: '', description: '' },
+  const formCreate = useForm<ResourceFormValues>({
+    resolver: zodResolver(resourceSchema),
+    defaultValues: { name: '', unit: '', daily_ration: 0, minimum_stock: 0 },
   });
 
-  const formEdit = useForm<ProfessionFormValues>({
-    resolver: zodResolver(professionSchema),
-    defaultValues: { name: '', description: '' },
+  const formEdit = useForm<ResourceFormValues>({
+    resolver: zodResolver(resourceSchema),
+    defaultValues: { name: '', unit: '', daily_ration: 0, minimum_stock: 0 },
   });
 
-  const openEdit = (item: { id: number; name: string; description?: string }) => {
-    formEdit.reset({ name: item.name, description: item.description || '' });
+  const openEdit = (item: {
+    id: number;
+    name: string;
+    unit: string;
+    daily_ration: number;
+    minimum_stock: number;
+  }) => {
+    formEdit.reset({
+      name: item.name,
+      unit: item.unit,
+      daily_ration: item.daily_ration,
+      minimum_stock: item.minimum_stock,
+    });
     setEditTarget(item);
   };
 
-  const onSubmitCreate = async (values: ProfessionFormValues) => {
+  const onSubmitCreate = async (values: ResourceFormValues) => {
     await createMutation.mutateAsync(values);
     formCreate.reset();
     setCreateDialogOpen(false);
   };
 
-  const onSubmitEdit = async (values: ProfessionFormValues) => {
+  const onSubmitEdit = async (values: ResourceFormValues) => {
     if (!editTarget) return;
     await updateMutation.mutateAsync({ id: editTarget.id, payload: values });
     setEditTarget(null);
@@ -83,9 +98,9 @@ export function ProfessionsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag="PRF.ERR" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" tag="RSC.ERR" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(error as Error)?.message || 'Error al cargar profesiones'}
+            {(error as Error)?.message || 'Error al cargar recursos'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
             REINTENTAR
@@ -95,19 +110,19 @@ export function ProfessionsPage() {
     );
   }
 
-  const items = Array.isArray(professions) ? professions : [];
+  const items = Array.isArray(resources) ? resources : [];
 
   return (
     <div className="space-y-6">
-      <Panel title="PROFESSION_CATALOG" tag="PRF.01" status="ONLINE" accent="cyan">
+      <Panel title="RESOURCE_CATALOG" tag="RSC.01" status="ONLINE" accent="cyan">
         {items.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Wrench className="h-10 w-10 text-[var(--neon-cyan)]/40" />
+            <Package className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY PROFESIONES REGISTRADAS
+              NO HAY RECURSOS REGISTRADOS
             </p>
             <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
-              NUEVA PROFESIÓN
+              NUEVO RECURSO
             </GlitchButton>
           </div>
         ) : (
@@ -117,7 +132,9 @@ export function ProfessionsPage() {
                 <thead>
                   <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
                     <th className="py-3 px-2 font-semibold">NOMBRE</th>
-                    <th className="py-3 px-2 font-semibold">DESCRIPCIÓN</th>
+                    <th className="py-3 px-2 font-semibold">UNIDAD</th>
+                    <th className="py-3 px-2 font-semibold text-right">RACIÓN DIARIA</th>
+                    <th className="py-3 px-2 font-semibold text-right">STOCK MÍNIMO</th>
                     <th className="py-3 px-2 font-semibold text-right">ACCIONES</th>
                   </tr>
                 </thead>
@@ -130,8 +147,12 @@ export function ProfessionsPage() {
                       <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
                         {item.name as string}
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        {(item.description as string) || '—'}
+                      <td className="py-3 px-2 text-muted-foreground">{item.unit as string}</td>
+                      <td className="py-3 px-2 text-right text-muted-foreground">
+                        {item.daily_ration as number}
+                      </td>
+                      <td className="py-3 px-2 text-right text-muted-foreground">
+                        {item.minimum_stock as number}
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex justify-end gap-2">
@@ -141,7 +162,9 @@ export function ProfessionsPage() {
                               openEdit({
                                 id: item.id as number,
                                 name: item.name as string,
-                                description: item.description as string | undefined,
+                                unit: item.unit as string,
+                                daily_ration: item.daily_ration as number,
+                                minimum_stock: item.minimum_stock as number,
                               })
                             }
                             className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
@@ -170,7 +193,7 @@ export function ProfessionsPage() {
               <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
-                  NUEVA PROFESIÓN
+                  NUEVO RECURSO
                 </span>
               </GlitchButton>
             </div>
@@ -178,12 +201,11 @@ export function ProfessionsPage() {
         )}
       </Panel>
 
-      {/* Create Dialog */}
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              NUEVA PROFESIÓN
+              NUEVO RECURSO
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
@@ -194,7 +216,7 @@ export function ProfessionsPage() {
               <input
                 {...formCreate.register('name')}
                 type="text"
-                placeholder="INGENIERO"
+                placeholder="AGUA"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {formCreate.formState.errors.name && (
@@ -205,14 +227,57 @@ export function ProfessionsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                DESCRIPCIÓN //
+                UNIDAD //
               </label>
-              <textarea
-                {...formCreate.register('description')}
-                placeholder="DESCRIPCIÓN DE LA PROFESIÓN"
-                rows={3}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+              <input
+                {...formCreate.register('unit')}
+                type="text"
+                placeholder="LITROS"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               />
+              {formCreate.formState.errors.unit && (
+                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {formCreate.formState.errors.unit.message}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  RACIÓN DIARIA //
+                </label>
+                <input
+                  {...formCreate.register('daily_ration')}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="2"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                />
+                {formCreate.formState.errors.daily_ration && (
+                  <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                    {formCreate.formState.errors.daily_ration.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  STOCK MÍNIMO //
+                </label>
+                <input
+                  {...formCreate.register('minimum_stock')}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  placeholder="100"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                />
+                {formCreate.formState.errors.minimum_stock && (
+                  <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                    {formCreate.formState.errors.minimum_stock.message}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton
@@ -233,7 +298,6 @@ export function ProfessionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
       <Dialog
         open={!!editTarget}
         onOpenChange={(open) => {
@@ -243,7 +307,7 @@ export function ProfessionsPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              EDITAR PROFESIÓN
+              EDITAR RECURSO
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formEdit.handleSubmit(onSubmitEdit)} className="space-y-4">
@@ -264,13 +328,44 @@ export function ProfessionsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                DESCRIPCIÓN //
+                UNIDAD //
               </label>
-              <textarea
-                {...formEdit.register('description')}
-                rows={3}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+              <input
+                {...formEdit.register('unit')}
+                type="text"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               />
+              {formEdit.formState.errors.unit && (
+                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {formEdit.formState.errors.unit.message}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  RACIÓN DIARIA //
+                </label>
+                <input
+                  {...formEdit.register('daily_ration')}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                />
+              </div>
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  STOCK MÍNIMO //
+                </label>
+                <input
+                  {...formEdit.register('minimum_stock')}
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                />
+              </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>
@@ -284,7 +379,6 @@ export function ProfessionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
@@ -292,7 +386,7 @@ export function ProfessionsPage() {
               CONFIRMAR ELIMINACIÓN
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              ¿Eliminar profesión{' '}
+              ¿Eliminar recurso{' '}
               <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>? Esta acción
               no se puede deshacer.
             </AlertDialogDescription>

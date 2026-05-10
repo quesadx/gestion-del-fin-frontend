@@ -11,12 +11,7 @@ import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamp, useUpdateCamp } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
 import { ArrowLeft, Users, Edit3, MapPin, Calendar } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const updateCampSchema = z.object({
   name: z.string().min(1, 'El nombre es obligatorio'),
@@ -49,7 +44,7 @@ export function CampDetailPage() {
     if (camp) {
       reset({
         name: camp.name as string,
-        location: camp.location as string || '',
+        location: (camp.location as string) || '',
         status: camp.status as 'ACTIVE' | 'ABANDONED',
       });
       setEditDialogOpen(true);
@@ -81,7 +76,12 @@ export function CampDetailPage() {
   if (!camp) {
     return (
       <div className="space-y-6">
-        <Panel title="CAMPAMENTO NO ENCONTRADO" tag={`CAMP.${campId}`} status="OFFLINE" accent="fuchsia">
+        <Panel
+          title="CAMPAMENTO NO ENCONTRADO"
+          tag={`CAMP.${campId}`}
+          status="OFFLINE"
+          accent="fuchsia"
+        >
           <p className="text-sm text-muted-foreground font-mono-data">
             El campamento solicitado no existe.
           </p>
@@ -104,19 +104,28 @@ export function CampDetailPage() {
       </GlitchButton>
 
       {/* Camp Info */}
-      <Panel title={camp.name as string} tag={`CAMP.${campId}`} status={camp.status as string} accent={statusVariant === 'green' ? 'cyan' : 'fuchsia'}>
+      <Panel
+        title={camp.name as string}
+        tag={`CAMP.${campId}`}
+        status={camp.status as string}
+        accent={statusVariant === 'green' ? 'cyan' : 'fuchsia'}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2 font-mono-data text-xs">
               <MapPin className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
               <span className="text-muted-foreground">UBICACIÓN:</span>
-              <span className="text-foreground">{(camp.location as string) || 'NO ESPECIFICADA'}</span>
+              <span className="text-foreground">
+                {(camp.location as string) || 'NO ESPECIFICADA'}
+              </span>
             </div>
             <div className="flex items-center gap-2 font-mono-data text-xs">
               <Calendar className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
               <span className="text-muted-foreground">CREADO:</span>
               <span className="text-foreground">
-                {camp.created_at ? format(new Date(camp.created_at as string), 'dd/MM/yyyy HH:mm') : '—'}
+                {camp.created_at
+                  ? format(new Date(camp.created_at as string), 'dd/MM/yyyy HH:mm')
+                  : '—'}
               </span>
             </div>
             <div className="flex items-center gap-2 font-mono-data text-xs">
@@ -148,7 +157,12 @@ export function CampDetailPage() {
       </div>
 
       {/* People list */}
-      <Panel title="PERSONAS EN EL CAMPAMENTO" tag={`CAMP.${campId}.PEOPLE`} status={peopleLoading ? 'LOADING' : 'ONLINE'} accent="cyan">
+      <Panel
+        title="PERSONAS EN EL CAMPAMENTO"
+        tag={`CAMP.${campId}.PEOPLE`}
+        status={peopleLoading ? 'LOADING' : 'ONLINE'}
+        accent="cyan"
+      >
         {peopleLoading ? (
           <p className="text-sm text-muted-foreground font-mono-data">Cargando personas...</p>
         ) : peopleArray.length === 0 ? (
@@ -175,15 +189,29 @@ export function CampDetailPage() {
                     className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
                     onClick={() => navigate(`/people/${person.id}`)}
                   >
-                    <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{person.full_name as string}</td>
+                    <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                      {person.full_name as string}
+                    </td>
                     <td className="py-3 px-2">
                       <StatusBadge
                         status={person.status as string}
-                        variant={person.status === 'HEALTHY' ? 'green' : person.status === 'SICK' ? 'yellow' : person.status === 'INJURED' ? 'yellow' : person.status === 'DEAD' ? 'red' : 'cyan'}
+                        variant={
+                          person.status === 'HEALTHY'
+                            ? 'green'
+                            : person.status === 'SICK'
+                              ? 'yellow'
+                              : person.status === 'INJURED'
+                                ? 'yellow'
+                                : person.status === 'DEAD'
+                                  ? 'red'
+                                  : 'cyan'
+                        }
                       />
                     </td>
                     <td className="py-3 px-2 text-muted-foreground">
-                      {person.admitted_at ? format(new Date(person.admitted_at as string), 'dd/MM/yyyy') : '—'}
+                      {person.admitted_at
+                        ? format(new Date(person.admitted_at as string), 'dd/MM/yyyy')
+                        : '—'}
                     </td>
                   </tr>
                 ))}

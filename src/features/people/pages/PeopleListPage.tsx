@@ -13,11 +13,16 @@ const PAGE_SIZE = 20;
 
 function getPersonStatusVariant(status: string): 'green' | 'yellow' | 'red' | 'cyan' {
   switch (status) {
-    case 'HEALTHY': return 'green';
-    case 'SICK': return 'yellow';
-    case 'INJURED': return 'yellow';
-    case 'DEAD': return 'red';
-    default: return 'cyan';
+    case 'HEALTHY':
+      return 'green';
+    case 'SICK':
+      return 'yellow';
+    case 'INJURED':
+      return 'yellow';
+    case 'DEAD':
+      return 'red';
+    default:
+      return 'cyan';
   }
 }
 
@@ -28,10 +33,13 @@ export function PeopleListPage() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: people, isLoading: peopleLoading, isError: peopleError, error: peopleErr, refetch: refetchPeople } = usePeople(
-    selectedCampId ?? 0,
-    { page, limit: PAGE_SIZE },
-  );
+  const {
+    data: people,
+    isLoading: peopleLoading,
+    isError: peopleError,
+    error: peopleErr,
+    refetch: refetchPeople,
+  } = usePeople(selectedCampId ?? 0, { page, limit: PAGE_SIZE });
 
   const peopleArray = Array.isArray(people) ? people : [];
   const campsArray = Array.isArray(camps) ? camps : [];
@@ -119,7 +127,12 @@ export function PeopleListPage() {
           </div>
         </Panel>
       ) : (
-        <Panel title="LISTADO DE PERSONAS" tag={`PPL.${selectedCampId}`} status="ONLINE" accent="cyan">
+        <Panel
+          title="LISTADO DE PERSONAS"
+          tag={`PPL.${selectedCampId}`}
+          status="ONLINE"
+          accent="cyan"
+        >
           {/* Search and New */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
@@ -168,7 +181,7 @@ export function PeopleListPage() {
                       />
                     </td>
                     <td className="py-3 px-2 text-muted-foreground">
-                      {(person.profession as Record<string, unknown>)?.name as string || '—'}
+                      {((person.profession as Record<string, unknown>)?.name as string) || '—'}
                     </td>
                     <td className="py-3 px-2 text-muted-foreground">
                       {person.admitted_at

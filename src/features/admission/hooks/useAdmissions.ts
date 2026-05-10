@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { admissionApi } from '@/features/admission/api/admission.api';
-import type { CreateAdmissionDto, ReviewAdmissionDto } from '@/features/admission/api/admission.api';
+import type {
+  CreateAdmissionDto,
+  ReviewAdmissionDto,
+} from '@/features/admission/api/admission.api';
 
 export function useAdmissions(campId: number) {
   return useQuery({

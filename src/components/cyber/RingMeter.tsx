@@ -12,13 +12,7 @@ const colorMap = {
   yellow: '#ffab00',
 };
 
-export function RingMeter({
-  value,
-  label,
-  sublabel,
-  color = 'cyan',
-  size = 140,
-}: RingMeterProps) {
+export function RingMeter({ value, label, sublabel, color = 'cyan', size = 140 }: RingMeterProps) {
   const stroke = 6;
   const radius = (size - stroke) / 2;
   const circ = 2 * Math.PI * radius;

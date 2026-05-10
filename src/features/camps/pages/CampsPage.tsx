@@ -10,12 +10,7 @@ import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps, useCreateCamp, useDeleteCamp } from '@/features/camps/hooks/useCamps';
 import { MapPin, Plus, Trash2, Eye } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -156,7 +151,10 @@ export function CampsPage() {
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setDeleteTarget({ id: camp.id as number, name: camp.name as string });
+                                setDeleteTarget({
+                                  id: camp.id as number,
+                                  name: camp.name as string,
+                                });
                               }}
                               className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
                               title="Eliminar"
@@ -235,15 +233,14 @@ export function CampsPage() {
               <GlitchButton
                 variant="ghost"
                 type="button"
-                onClick={() => { reset(); setCreateDialogOpen(false); }}
+                onClick={() => {
+                  reset();
+                  setCreateDialogOpen(false);
+                }}
               >
                 CANCELAR
               </GlitchButton>
-              <GlitchButton
-                variant="primary"
-                type="submit"
-                disabled={createCampMutation.isPending}
-              >
+              <GlitchButton variant="primary" type="submit" disabled={createCampMutation.isPending}>
                 {createCampMutation.isPending ? 'CREANDO...' : 'CREAR'}
               </GlitchButton>
             </div>
@@ -259,8 +256,9 @@ export function CampsPage() {
               CONFIRMAR ELIMINACIÓN
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              ¿Eliminar campamento <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>?
-              Esta acción no se puede deshacer.
+              ¿Eliminar campamento{' '}
+              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>? Esta acción
+              no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

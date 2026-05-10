@@ -21,9 +21,11 @@ export function TerminalLine({
   const [done, setDone] = useState(false);
 
   const accentColor =
-    accent === 'purple' ? 'text-accent-secondary' :
-    accent === 'green' ? 'text-status-green' :
-    'text-accent-primary';
+    accent === 'purple'
+      ? 'text-accent-secondary'
+      : accent === 'green'
+        ? 'text-status-green'
+        : 'text-accent-primary';
 
   useEffect(() => {
     const initTimer = setTimeout(() => setVisible(true), delay);
@@ -50,10 +52,22 @@ export function TerminalLine({
   }, [visible, done, text]);
 
   return (
-    <div className={cn('font-mono text-xs transition-opacity duration-200', visible ? 'opacity-100' : 'opacity-0', className)}>
+    <div
+      className={cn(
+        'font-mono text-xs transition-opacity duration-200',
+        visible ? 'opacity-100' : 'opacity-0',
+        className,
+      )}
+    >
       <span className={accentColor}>{prefix} </span>
       <span className="text-text-secondary">{displayed}</span>
-      {!done && <span className={`inline-block w-[6px] h-[14px] ml-0.5 align-middle animate-blink ${accentColor}`}>▌</span>}
+      {!done && (
+        <span
+          className={`inline-block w-[6px] h-[14px] ml-0.5 align-middle animate-blink ${accentColor}`}
+        >
+          ▌
+        </span>
+      )}
     </div>
   );
 }

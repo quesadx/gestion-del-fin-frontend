@@ -35,15 +35,23 @@ const InventoryPage = lazy(() =>
 );
 
 const InventoryAuditPage = lazy(() =>
-  import('@/features/inventory/pages/InventoryAuditPage').then((m) => ({ default: m.InventoryAuditPage })),
+  import('@/features/inventory/pages/InventoryAuditPage').then((m) => ({
+    default: m.InventoryAuditPage,
+  })),
 );
 
 const ResourcesPage = lazy(() =>
-  import('@/features/inventory/pages/ResourcesPage').then((m) => ({ default: m.ResourcesPage })),
+  import('@/features/resources/pages/ResourcesPage').then((m) => ({ default: m.ResourcesPage })),
+);
+
+const TransfersPage = lazy(() =>
+  import('@/features/transfers/pages/TransfersPage').then((m) => ({ default: m.TransfersPage })),
 );
 
 const ExplorationsPage = lazy(() =>
-  import('@/features/explorations/pages/ExplorationsPage').then((m) => ({ default: m.ExplorationsPage })),
+  import('@/features/explorations/pages/ExplorationsPage').then((m) => ({
+    default: m.ExplorationsPage,
+  })),
 );
 
 const AdmissionsPage = lazy(() =>
@@ -55,7 +63,9 @@ const UsersPage = lazy(() =>
 );
 
 const ProfessionsPage = lazy(() =>
-  import('@/features/professions/pages/ProfessionsPage').then((m) => ({ default: m.ProfessionsPage })),
+  import('@/features/professions/pages/ProfessionsPage').then((m) => ({
+    default: m.ProfessionsPage,
+  })),
 );
 
 function LazyFallback() {
@@ -192,6 +202,14 @@ export function AppRoutes() {
               element={
                 <Suspense fallback={<LazyFallback />}>
                   <ProfessionsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/transfers"
+              element={
+                <Suspense fallback={<LazyFallback />}>
+                  <TransfersPage />
                 </Suspense>
               }
             />

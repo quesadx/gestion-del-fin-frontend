@@ -47,23 +47,27 @@ export function LoginPage() {
     <div className="relative min-h-screen flex items-center justify-center bg-surface-base">
       {/* Ambient background */}
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[15%] w-[70vw] h-[70vw] opacity-20"
+        <div
+          className="absolute -top-[20%] -left-[15%] w-[70vw] h-[70vw] opacity-20"
           style={{
             background: 'radial-gradient(circle, oklch(0.65 0.28 210 / 0.3), transparent 60%)',
             filter: 'blur(100px)',
             animation: 'drift 20s ease-in-out infinite alternate',
           }}
         />
-        <div className="absolute -bottom-[25%] -right-[12%] w-[65vw] h-[65vw] opacity-15"
+        <div
+          className="absolute -bottom-[25%] -right-[12%] w-[65vw] h-[65vw] opacity-15"
           style={{
             background: 'radial-gradient(circle, oklch(0.55 0.25 280 / 0.3), transparent 60%)',
             filter: 'blur(110px)',
             animation: 'drift 25s ease-in-out infinite alternate-reverse',
           }}
         />
-        <div className="absolute inset-0"
+        <div
+          className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at center, transparent 20%, oklch(0.05 0.01 255 / 0.6) 100%)',
+            background:
+              'radial-gradient(ellipse at center, transparent 20%, oklch(0.05 0.01 255 / 0.6) 100%)',
           }}
         />
       </div>
@@ -76,10 +80,15 @@ export function LoginPage() {
           {/* Header */}
           <div className="text-center mb-8 space-y-2">
             <div className="inline-flex items-center justify-center w-12 h-12 glass-light border border-border/30 mb-2">
-              <span className="w-2 h-2 bg-accent-primary animate-pulse-glow" style={{ boxShadow: '0 0 10px var(--accent-primary)' }} />
+              <span
+                className="w-2 h-2 bg-accent-primary animate-pulse-glow"
+                style={{ boxShadow: '0 0 10px var(--accent-primary)' }}
+              />
             </div>
-            <h1 className="font-sans text-sm font-extrabold tracking-[0.25em] text-accent-primary"
-              style={{ textShadow: '0 0 16px var(--accent-primary)' }}>
+            <h1
+              className="font-sans text-sm font-extrabold tracking-[0.25em] text-accent-primary"
+              style={{ textShadow: '0 0 16px var(--accent-primary)' }}
+            >
               GESTION DEL FIN
             </h1>
             <span className="block font-mono-sm text-text-muted">

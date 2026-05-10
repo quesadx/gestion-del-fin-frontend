@@ -1,19 +1,22 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
-import { useExplorations, useCreateExploration, useUpdateExplorationStatus, useDeleteExploration } from '@/features/explorations/hooks/useExplorations';
+import {
+  useExplorations,
+  useCreateExploration,
+  useUpdateExplorationStatus,
+  useDeleteExploration,
+} from '@/features/explorations/hooks/useExplorations';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { Compass, Plus, Trash2 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -24,6 +27,17 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
+
+const createExplorationSchema = z.object({
+  destination: z.string().min(1, 'El destino es obligatorio'),
+  camp_id: z.coerce.number().min(1, 'Seleccione un campamento'),
+  departure_date: z.string().min(1, 'Fecha de salida obligatoria'),
+  expected_return_date: z.string().min(1, 'Fecha esperada de retorno obligatoria'),
+  max_return_date: z.string().min(1, 'Fecha máxima de retorno obligatoria'),
+  notes: z.string().optional(),
+});
+
+type CreateExplorationFormValues = z.infer<typeof createExplorationSchema>;
 
 const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
   PLANNED: 'cyan',
@@ -47,6 +61,32 @@ export function ExplorationsPage() {
 
   const campMap = new Map<number, string>();
   campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
+
+  const formCreate = useForm<CreateExplorationFormValues>({
+    resolver: zodResolver(createExplorationSchema),
+    defaultValues: {
+      destination: '',
+      camp_id: 0,
+      departure_date: '',
+      expected_return_date: '',
+      max_return_date: '',
+      notes: '',
+    },
+  });
+
+  const onSubmitCreate = async (values: CreateExplorationFormValues) => {
+    await createMutation.mutateAsync({
+      camp_id: values.camp_id,
+      created_by: user?.sub ? Number(user.sub) : 1,
+      destination: values.destination,
+      departure_date: values.departure_date,
+      expected_return_date: values.expected_return_date,
+      max_return_date: values.max_return_date,
+      notes: values.notes || undefined,
+    });
+    formCreate.reset();
+    setCreateOpen(false);
+  };
 
   const handleStatusChange = async (id: number, status: string) => {
     await updateStatusMutation.mutateAsync({
@@ -73,8 +113,12 @@ export function ExplorationsPage() {
     return (
       <div className="space-y-6">
         <Panel title="ERROR" tag="EXP.01" status="ERROR" accent="fuchsia">
-          <p className="text-sm text-red-400 font-mono-data mb-4">{(error as Error)?.message || 'Error al cargar expediciones'}</p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>REINTENTAR</GlitchButton>
+          <p className="text-sm text-red-400 font-mono-data mb-4">
+            {(error as Error)?.message || 'Error al cargar expediciones'}
+          </p>
+          <GlitchButton variant="warning" onClick={() => refetch()}>
+            REINTENTAR
+          </GlitchButton>
         </Panel>
       </div>
     );
@@ -82,20 +126,33 @@ export function ExplorationsPage() {
 
   return (
     <div className="space-y-6">
-      <Panel title="REGISTRO DE EXPEDICIONES" tag="EXP.01" status={isLoading ? 'LOADING' : expArray.length.toString()} accent="cyan">
+      <Panel
+        title="REGISTRO DE EXPEDICIONES"
+        tag="EXP.01"
+        status={isLoading ? 'LOADING' : expArray.length.toString()}
+        accent="cyan"
+      >
         {expArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <Compass className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO HAY EXPEDICIONES REGISTRADAS</p>
+            <p className="font-mono-data text-sm text-muted-foreground">
+              NO HAY EXPEDICIONES REGISTRADAS
+            </p>
             <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
-              <span className="flex items-center gap-2"><Plus className="h-3.5 w-3.5" />NUEVA EXPEDICIÓN</span>
+              <span className="flex items-center gap-2">
+                <Plus className="h-3.5 w-3.5" />
+                NUEVA EXPEDICIÓN
+              </span>
             </GlitchButton>
           </div>
         ) : (
           <>
             <div className="mb-4 flex justify-end">
               <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
-                <span className="flex items-center gap-2"><Plus className="h-3.5 w-3.5" />NUEVA EXPEDICIÓN</span>
+                <span className="flex items-center gap-2">
+                  <Plus className="h-3.5 w-3.5" />
+                  NUEVA EXPEDICIÓN
+                </span>
               </GlitchButton>
             </div>
             <div className="overflow-x-auto">
@@ -113,19 +170,31 @@ export function ExplorationsPage() {
                 </thead>
                 <tbody>
                   {expArray.map((exp: Record<string, unknown>) => (
-                    <tr key={exp.id as number} className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors">
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{exp.destination as string}</td>
+                    <tr
+                      key={exp.id as number}
+                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                    >
+                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                        {exp.destination as string}
+                      </td>
                       <td className="py-3 px-2">
-                        <StatusBadge status={exp.status as string} variant={STATUS_MAP[exp.status as string] || 'cyan'} />
+                        <StatusBadge
+                          status={exp.status as string}
+                          variant={STATUS_MAP[exp.status as string] || 'cyan'}
+                        />
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
-                        {exp.departure_date ? format(new Date(exp.departure_date as string), 'dd/MM/yyyy') : '—'}
+                        {exp.departure_date
+                          ? format(new Date(exp.departure_date as string), 'dd/MM/yyyy')
+                          : '—'}
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
-                        {exp.expected_return_date ? format(new Date(exp.expected_return_date as string), 'dd/MM/yyyy') : '—'}
+                        {exp.expected_return_date
+                          ? format(new Date(exp.expected_return_date as string), 'dd/MM/yyyy')
+                          : '—'}
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
-                        {campMap.get(exp.camp_id as number) || exp.camp_id as string}
+                        {campMap.get(exp.camp_id as number) || (exp.camp_id as string)}
                       </td>
                       <td className="py-3 px-2">
                         <select
@@ -157,16 +226,128 @@ export function ExplorationsPage() {
         )}
       </Panel>
 
+      {/* Create Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <DialogHeader>
+            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+              NUEVA EXPEDICIÓN
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                DESTINO //
+              </label>
+              <input
+                {...formCreate.register('destination')}
+                type="text"
+                placeholder="ZONA 7G"
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              />
+              {formCreate.formState.errors.destination && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {formCreate.formState.errors.destination.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CAMPAMENTO //
+              </label>
+              <select
+                {...formCreate.register('camp_id')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              >
+                <option value="0">SELECCIONE...</option>
+                {campsArray.map((c: Record<string, unknown>) => (
+                  <option key={c.id as number} value={c.id as number}>
+                    {c.name as string}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  SALIDA //
+                </label>
+                <input
+                  {...formCreate.register('departure_date')}
+                  type="datetime-local"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                />
+              </div>
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  RETORNO ESP. //
+                </label>
+                <input
+                  {...formCreate.register('expected_return_date')}
+                  type="datetime-local"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                />
+              </div>
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  RETORNO MAX //
+                </label>
+                <input
+                  {...formCreate.register('max_return_date')}
+                  type="datetime-local"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                NOTAS //
+              </label>
+              <textarea
+                {...formCreate.register('notes')}
+                rows={2}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  formCreate.reset();
+                  setCreateOpen(false);
+                }}
+              >
+                CANCELAR
+              </GlitchButton>
+              <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? 'CREANDO...' : 'CREAR'}
+              </GlitchButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">CONFIRMAR ELIMINACIÓN</AlertDialogTitle>
-            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">Esta acción no se puede deshacer.</AlertDialogDescription>
+            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+              CONFIRMAR ELIMINACIÓN
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">CANCELAR</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleteMutation.isPending} className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs">
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+              CANCELAR
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs"
+            >
               {deleteMutation.isPending ? 'ELIMINANDO...' : 'ELIMINAR'}
             </AlertDialogAction>
           </AlertDialogFooter>

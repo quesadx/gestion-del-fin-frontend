@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { professionsApi } from '@/features/people/api/professions.api';
-import type { CreateProfessionDto, UpdateProfessionDto } from '@/features/people/api/professions.api';
+import type {
+  CreateProfessionDto,
+  UpdateProfessionDto,
+} from '@/features/people/api/professions.api';
 
 const PROFESSIONS_KEY = ['professions'] as const;
 

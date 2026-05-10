@@ -13,7 +13,13 @@ export function InventoryAuditPage() {
   const navigate = useNavigate();
   const { data: camps, isLoading: campsLoading } = useCamps();
   const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
-  const { data: audit, isLoading: auditLoading, isError: auditError, error: auditErr, refetch } = useInventoryAudit(selectedCampId ?? 0);
+  const {
+    data: audit,
+    isLoading: auditLoading,
+    isError: auditError,
+    error: auditErr,
+    refetch,
+  } = useInventoryAudit(selectedCampId ?? 0);
 
   const campsArray = Array.isArray(camps) ? camps : [];
   const auditArray = Array.isArray(audit) ? audit : [];
@@ -21,20 +27,32 @@ export function InventoryAuditPage() {
   return (
     <div className="space-y-6">
       <GlitchButton variant="ghost" onClick={() => navigate('/inventory')}>
-        <span className="flex items-center gap-2"><ArrowLeft className="h-3.5 w-3.5" />VOLVER AL INVENTARIO</span>
+        <span className="flex items-center gap-2">
+          <ArrowLeft className="h-3.5 w-3.5" />
+          VOLVER AL INVENTARIO
+        </span>
       </GlitchButton>
 
-      <Panel title="AUDITORÍA DE INVENTARIO" tag="INV.AUDIT" status={selectedCampId ? 'ONLINE' : 'AWAITING'} accent="cyan">
+      <Panel
+        title="AUDITORÍA DE INVENTARIO"
+        tag="INV.AUDIT"
+        status={selectedCampId ? 'ONLINE' : 'AWAITING'}
+        accent="cyan"
+      >
         {campsLoading ? (
           <ScreenLoader />
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <Warehouse className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO HAY CAMPAMENTOS DISPONIBLES</p>
+            <p className="font-mono-data text-sm text-muted-foreground">
+              NO HAY CAMPAMENTOS DISPONIBLES
+            </p>
           </div>
         ) : (
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">CAMPAMENTO //</label>
+            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              CAMPAMENTO //
+            </label>
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
@@ -42,7 +60,9 @@ export function InventoryAuditPage() {
             >
               <option value="">SELECCIONE UN CAMPAMENTO</option>
               {campsArray.map((c: Record<string, unknown>) => (
-                <option key={c.id as number} value={c.id as number}>{c.name as string}</option>
+                <option key={c.id as number} value={c.id as number}>
+                  {c.name as string}
+                </option>
               ))}
             </select>
           </div>
@@ -60,18 +80,29 @@ export function InventoryAuditPage() {
         <ScreenLoader />
       ) : auditError ? (
         <Panel title="ERROR" status="ERROR" accent="fuchsia">
-          <p className="text-sm text-red-400 font-mono-data mb-4">{(auditErr as Error)?.message || 'Error al cargar auditoría'}</p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>REINTENTAR</GlitchButton>
+          <p className="text-sm text-red-400 font-mono-data mb-4">
+            {(auditErr as Error)?.message || 'Error al cargar auditoría'}
+          </p>
+          <GlitchButton variant="warning" onClick={() => refetch()}>
+            REINTENTAR
+          </GlitchButton>
         </Panel>
       ) : auditArray.length === 0 ? (
         <Panel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardList className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO HAY REGISTROS DE AUDITORÍA</p>
+            <p className="font-mono-data text-sm text-muted-foreground">
+              NO HAY REGISTROS DE AUDITORÍA
+            </p>
           </div>
         </Panel>
       ) : (
-        <Panel title="REGISTRO DE AUDITORÍA" tag={`INV.AUDIT.${selectedCampId}`} status={`${auditArray.length} REGISTROS`} accent="cyan">
+        <Panel
+          title="REGISTRO DE AUDITORÍA"
+          tag={`INV.AUDIT.${selectedCampId}`}
+          status={`${auditArray.length} REGISTROS`}
+          accent="cyan"
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
@@ -85,19 +116,32 @@ export function InventoryAuditPage() {
               </thead>
               <tbody>
                 {auditArray.map((entry: Record<string, unknown>) => {
-                  const resourceName = (entry.resource as Record<string, unknown>)?.name || entry.resource_type_id as string;
+                  const resourceName =
+                    (entry.resource as Record<string, unknown>)?.name ||
+                    (entry.resource_type_id as string);
                   const typeVariant = entry.type === 'MANUAL_IN' ? 'green' : 'red';
                   const typeLabel = entry.type === 'MANUAL_IN' ? 'ENTRADA' : 'SALIDA';
                   return (
-                    <tr key={entry.id as number} className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors">
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{resourceName as string}</td>
+                    <tr
+                      key={entry.id as number}
+                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                    >
+                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                        {resourceName as string}
+                      </td>
                       <td className="py-3 px-2">
                         <StatusBadge status={typeLabel} variant={typeVariant} />
                       </td>
-                      <td className="py-3 px-2 text-foreground font-bold">{entry.quantity as string}</td>
-                      <td className="py-3 px-2 text-muted-foreground max-w-[200px] truncate">{(entry.description as string) || '—'}</td>
+                      <td className="py-3 px-2 text-foreground font-bold">
+                        {entry.quantity as string}
+                      </td>
+                      <td className="py-3 px-2 text-muted-foreground max-w-[200px] truncate">
+                        {(entry.description as string) || '—'}
+                      </td>
                       <td className="py-3 px-2 text-muted-foreground">
-                        {entry.created_at ? format(new Date(entry.created_at as string), 'dd/MM/yyyy HH:mm') : '—'}
+                        {entry.created_at
+                          ? format(new Date(entry.created_at as string), 'dd/MM/yyyy HH:mm')
+                          : '—'}
                       </td>
                     </tr>
                   );

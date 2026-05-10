@@ -12,12 +12,7 @@ import {
   useDeleteResource,
 } from '@/features/inventory/hooks/useResources';
 import { Plus, Edit3, Trash2, Package } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -152,9 +147,7 @@ export function ResourcesPage() {
                       <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
                         {item.name as string}
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        {item.unit as string}
-                      </td>
+                      <td className="py-3 px-2 text-muted-foreground">{item.unit as string}</td>
                       <td className="py-3 px-2 text-right text-muted-foreground">
                         {item.daily_ration as number}
                       </td>
@@ -165,13 +158,15 @@ export function ResourcesPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() => openEdit({
-                              id: item.id as number,
-                              name: item.name as string,
-                              unit: item.unit as string,
-                              daily_ration: item.daily_ration as number,
-                              minimum_stock: item.minimum_stock as number,
-                            })}
+                            onClick={() =>
+                              openEdit({
+                                id: item.id as number,
+                                name: item.name as string,
+                                unit: item.unit as string,
+                                daily_ration: item.daily_ration as number,
+                                minimum_stock: item.minimum_stock as number,
+                              })
+                            }
                             className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                             title="Editar"
                           >
@@ -179,7 +174,9 @@ export function ResourcesPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => setDeleteTarget({ id: item.id as number, name: item.name as string })}
+                            onClick={() =>
+                              setDeleteTarget({ id: item.id as number, name: item.name as string })
+                            }
                             className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
                             title="Eliminar"
                           >
@@ -284,7 +281,14 @@ export function ResourcesPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton variant="ghost" type="button" onClick={() => { formCreate.reset(); setCreateDialogOpen(false); }}>
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  formCreate.reset();
+                  setCreateDialogOpen(false);
+                }}
+              >
                 CANCELAR
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
@@ -296,7 +300,12 @@ export function ResourcesPage() {
       </Dialog>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
+      <Dialog
+        open={!!editTarget}
+        onOpenChange={(open) => {
+          if (!open) setEditTarget(null);
+        }}
+      >
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
@@ -380,8 +389,9 @@ export function ResourcesPage() {
               CONFIRMAR ELIMINACIÓN
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              ¿Eliminar recurso <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>?
-              Esta acción no se puede deshacer.
+              ¿Eliminar recurso{' '}
+              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>? Esta acción
+              no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

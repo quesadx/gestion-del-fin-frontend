@@ -44,17 +44,21 @@ export function StatCard({
   const colors = accentMap[accent];
 
   return (
-    <div className={cn(
-      'relative rounded-none glass p-5 transition-all duration-200 hover:border-border/40 hover:shadow-glass-heavy group',
-      className,
-    )}>
+    <div
+      className={cn(
+        'relative rounded-none glass p-5 transition-all duration-200 hover:border-border/40 hover:shadow-glass-heavy group',
+        className,
+      )}
+    >
       <div className="flex items-start justify-between">
         <div className="space-y-1.5">
           <span className="block font-mono-sm tracking-[0.12em] text-text-muted uppercase">
             {label}
           </span>
-          <span className={cn('block font-sans text-2xl font-bold tracking-tight', colors.text)}
-            style={{ textShadow: `0 0 16px currentColor` }}>
+          <span
+            className={cn('block font-sans text-2xl font-bold tracking-tight', colors.text)}
+            style={{ textShadow: `0 0 16px currentColor` }}
+          >
             {value}
           </span>
           {trend && (
@@ -74,7 +78,9 @@ export function StatCard({
       </div>
 
       {/* Right corner accent */}
-      <span className={`absolute bottom-0 right-0 w-6 h-[1px] ${colors.text.replace('text', 'bg')}/30`} />
+      <span
+        className={`absolute bottom-0 right-0 w-6 h-[1px] ${colors.text.replace('text', 'bg')}/30`}
+      />
     </div>
   );
 }

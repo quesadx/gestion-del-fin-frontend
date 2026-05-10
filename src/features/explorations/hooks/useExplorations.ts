@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { explorationsApi } from '@/features/explorations/api/explorations.api';
-import type { CreateExplorationDto, UpdateExplorationDto, UpdateExplorationStatusDto, DeleteExplorationDto } from '@/features/explorations/api/explorations.api';
+import type {
+  CreateExplorationDto,
+  UpdateExplorationDto,
+  UpdateExplorationStatusDto,
+  DeleteExplorationDto,
+} from '@/features/explorations/api/explorations.api';
 
 const EXPLORATIONS_KEY = ['explorations'] as const;
 
