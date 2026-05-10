@@ -1,10 +1,10 @@
-import { Suspense, lazy, useState, useEffect } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { AppRoutes } from '@/routes/AppRoutes';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
-
-const queryClient = new QueryClient();
+import { queryClient } from '@/shared/lib/queryClient';
 
 export function App() {
   const [ready, setReady] = useState(false);
@@ -24,6 +24,7 @@ export function App() {
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }

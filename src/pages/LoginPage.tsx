@@ -4,15 +4,11 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { WaveBackground } from '@/components/cyber/WaveBackground';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { Lock, User, Zap } from 'lucide-react';
 import { useAuth } from '@/features/auth/useAuth';
 
 const loginSchema = z.object({
-  username: z.string().min(3, 'El nombre de usuario debe tener al menos 3 caracteres.'),
-  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres.'),
+  username: z.string().min(3, 'Minimum 3 characters required'),
+  password: z.string().min(8, 'Minimum 8 characters required'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -34,9 +30,6 @@ export function LoginPage() {
   });
 
   const isLoading = mutation.isPending;
-  const status = isLoading ? 'AUTHENTICATING' : 'AWAITING';
-  const submitLabel = isLoading ? 'AUTHENTICATING...' : 'JACK_IN';
-  const loginSuccess = mutation.isSuccess;
   const authError = useMemo(
     () => (mutation.error instanceof Error ? mutation.error.message : ''),
     [mutation.error],
@@ -51,46 +44,73 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-6 py-10 text-foreground">
-      <WaveBackground />
+    <div className="relative min-h-screen flex items-center justify-center bg-surface-base">
+      {/* Ambient background */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div
+          className="absolute -top-[20%] -left-[15%] w-[70vw] h-[70vw] opacity-20"
+          style={{
+            background: 'radial-gradient(circle, oklch(0.65 0.28 210 / 0.3), transparent 60%)',
+            filter: 'blur(100px)',
+            animation: 'drift 20s ease-in-out infinite alternate',
+          }}
+        />
+        <div
+          className="absolute -bottom-[25%] -right-[12%] w-[65vw] h-[65vw] opacity-15"
+          style={{
+            background: 'radial-gradient(circle, oklch(0.55 0.25 280 / 0.3), transparent 60%)',
+            filter: 'blur(110px)',
+            animation: 'drift 25s ease-in-out infinite alternate-reverse',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, transparent 20%, oklch(0.05 0.01 255 / 0.6) 100%)',
+          }}
+        />
+      </div>
 
-      {/* Decorative scanline — full screen overlay from canvas handles this */}
+      <div className="grid-overlay" />
 
-      <div className="relative z-10 w-full max-w-sm animate-fade-in">
-        {/* Header */}
-        <div className="flex flex-col items-center gap-3 mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-sm border border-[var(--neon-fuchsia)] bg-[var(--neon-fuchsia)] shadow-[0_0_12px_var(--neon-fuchsia)]">
-            <Zap className="h-5 w-5 text-[var(--charcoal)]" strokeWidth={3} />
-          </div>
-          <div className="text-center space-y-1">
-            <h1 className="font-display text-sm font-black tracking-[0.35em] text-glow-fuchsia leading-none">
-              GESTION DEL FIN
+      {/* Card */}
+      <div className="relative z-10 w-full max-w-md animate-fade-in">
+        <div className="glass-heavy rounded-none border border-border/25 p-8">
+          {/* Header */}
+          <div className="text-center mb-8 space-y-2">
+            <div className="inline-flex items-center justify-center w-12 h-12 glass-light border border-border/30 mb-2">
+              <span
+                className="w-2 h-2 bg-accent-primary animate-pulse-glow"
+                style={{ boxShadow: '0 0 10px var(--accent-primary)' }}
+              />
+            </div>
+            <h1
+              className="font-sans text-sm font-extrabold tracking-[0.25em] text-accent-primary"
+              style={{ textShadow: '0 0 16px var(--accent-primary)' }}
+            >
+              END MANAGEMENT
             </h1>
-            <span className="block text-[10px] tracking-[0.25em] text-[var(--neon-cyan)]/60 font-mono-data">
-              v1.0.0 · SURVIVAL TERMINAL
+            <span className="block font-mono-sm text-text-muted">
+              TERMINAL v2.0 · AUTHENTICATION REQUIRED
             </span>
           </div>
-        </div>
 
-        <Panel title="JACK_IN" tag="AUTH.01" status={status} accent="fuchsia">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Username */}
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                OPERATOR_ID //
+              <label className="block mb-2 font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+                Operator ID
               </label>
-              <div className="relative group">
-                <User className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]/50 group-focus-within:text-[var(--neon-cyan)] transition-colors duration-200" />
-                <input
-                  {...register('username')}
-                  type="text"
-                  autoComplete="username"
-                  placeholder="V.SILVERHAND"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] pl-9 pr-3 py-2.5 text-sm text-[var(--neon-fuchsia)] placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data focus:shadow-[inset_0_0_12px_oklch(0.68_0.32_340_/_0.06)]"
-                />
-              </div>
+              <input
+                {...register('username')}
+                type="text"
+                autoComplete="username"
+                placeholder="Enter your operator ID"
+                className="terminal-input"
+              />
               {errors.username && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data animate-slide-up">
+                <p className="mt-1.5 font-mono-sm text-status-red animate-slide-up">
                   {errors.username.message}
                 </p>
               )}
@@ -98,88 +118,52 @@ export function LoginPage() {
 
             {/* Password */}
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                CIPHER_KEY //
+              <label className="block mb-2 font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+                Cipher Key
               </label>
-              <div className="relative group">
-                <Lock className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]/50 group-focus-within:text-[var(--neon-cyan)] transition-colors duration-200" />
-                <input
-                  {...register('password')}
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder="**********"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] pl-9 pr-3 py-2.5 text-sm text-[var(--neon-cyan)] placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data focus:shadow-[inset_0_0_12px_oklch(0.85_0.22_200_/_0.06)]"
-                />
-              </div>
+              <input
+                {...register('password')}
+                type="password"
+                autoComplete="current-password"
+                placeholder="Enter your cipher key"
+                className="terminal-input"
+              />
               {errors.password && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data animate-slide-up">
+                <p className="mt-1.5 font-mono-sm text-status-red animate-slide-up">
                   {errors.password.message}
                 </p>
               )}
             </div>
 
-            {/* Error / success */}
-            {authError ? (
-              <div className="rounded-sm bg-[oklch(0.08_0.05_320_/_0.7)] border border-[var(--neon-yellow)]/50 p-3 text-[10px] text-[var(--neon-yellow)] font-mono-data animate-slide-up">
-                ⚠ {authError}
+            {/* Error */}
+            {authError && (
+              <div className="rounded-none border border-status-red/25 bg-status-red/5 p-3 font-mono-sm text-status-red animate-slide-up">
+                AUTH_FAILURE: {authError}
               </div>
-            ) : null}
+            )}
 
-            {loginSuccess ? (
-              <div className="rounded-sm bg-[oklch(0.08_0.05_160_/_0.7)] border border-[var(--neon-cyan)]/50 p-3 text-[10px] text-[var(--neon-cyan)] font-mono-data animate-slide-up">
-                ✓ ACCESS GRANTED. SESSION INITIALIZED.
-              </div>
-            ) : null}
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full rounded-none font-mono text-xs tracking-[0.15em] uppercase font-bold px-5 py-3 bg-accent-primary text-surface-base border border-accent-primary/30 hover:shadow-glow active:opacity-80 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? 'AUTHENTICATING...' : 'AUTHORIZE'}
+            </button>
 
-            {/* Options row */}
-            <div className="flex items-center justify-between font-mono-data text-[10px]">
-              <label className="flex items-center gap-2 text-muted-foreground cursor-pointer hover:text-[var(--neon-cyan)] transition-colors duration-150">
-                <input
-                  type="checkbox"
-                  className="accent-[var(--neon-fuchsia)] rounded-sm"
-                />
-                PERSIST_SESSION
-              </label>
-              <a
-                href="#"
-                className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors duration-150 tracking-widest"
-              >
-                RESET_KEY?
-              </a>
-            </div>
-
-            {/* Buttons */}
-            <div className="pt-1 flex flex-col gap-2.5">
-              <GlitchButton
-                variant="warning"
-                type="submit"
-                disabled={isLoading}
-                className="w-full justify-center"
-              >
-                {submitLabel}
-              </GlitchButton>
-              <GlitchButton
-                variant="ghost"
-                type="button"
-                className="w-full justify-center"
-              >
-                REQUEST_CRED
-              </GlitchButton>
-            </div>
-
-            {/* Footer bar */}
-            <div className="pt-2 flex items-center justify-between border-t border-[oklch(0.68_0.32_340_/_0.2)] font-mono-data text-[9px] text-muted-foreground/60">
+            {/* Footer */}
+            <div className="pt-4 border-t border-border/10 flex items-center justify-between font-mono-sm text-text-muted">
               <span className="flex items-center gap-1.5">
-                <span className="inline-block h-1 w-1 rounded-full bg-[var(--neon-cyan)] animate-pulse-soft" />
-                ENC: AES-512
+                <span className="w-1 h-1 bg-status-green animate-blink" />
+                ENC: AES-256
               </span>
-              <span className="text-[var(--neon-yellow)]/60">SEC_LEVEL: 02</span>
+              <span>SEC_LEVEL: 02</span>
             </div>
           </form>
-        </Panel>
+        </div>
 
-        <p className="mt-5 text-center font-mono-data text-[9px] text-muted-foreground/40 tracking-[0.2em] animate-fade-in">
-          (c) 2077 ARASAKA//SUBSIDIARY · UNAUTHORIZED ACCESS = LETHAL_RESPONSE
+        <p className="mt-6 text-center font-mono-sm text-text-muted/40 tracking-[0.1em]">
+          UNAUTHORIZED ACCESS WILL BE PROSECUTED
         </p>
       </div>
     </div>

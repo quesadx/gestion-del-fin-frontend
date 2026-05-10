@@ -2,23 +2,17 @@ interface RingMeterProps {
   value: number; // 0-100
   label: string;
   sublabel?: string;
-  color?: 'fuchsia' | 'cyan' | 'yellow';
+  color?: 'cyan' | 'purple' | 'yellow';
   size?: number;
 }
 
 const colorMap = {
-  fuchsia: 'var(--neon-fuchsia)',
-  cyan: 'var(--neon-cyan)',
-  yellow: 'var(--neon-yellow)',
+  cyan: 'var(--accent-primary)',
+  purple: 'var(--accent-secondary)',
+  yellow: '#ffab00',
 };
 
-export function RingMeter({
-  value,
-  label,
-  sublabel,
-  color = 'fuchsia',
-  size = 140,
-}: RingMeterProps) {
+export function RingMeter({ value, label, sublabel, color = 'cyan', size = 140 }: RingMeterProps) {
   const stroke = 6;
   const radius = (size - stroke) / 2;
   const circ = 2 * Math.PI * radius;
@@ -43,7 +37,7 @@ export function RingMeter({
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="oklch(0.3 0.05 320 / 0.5)"
+            stroke="oklch(0.2 0.02 240 / 0.4)"
             strokeWidth={stroke}
             fill="none"
           />
@@ -57,7 +51,7 @@ export function RingMeter({
                 y1={4}
                 x2={size / 2}
                 y2={10}
-                stroke="oklch(0.5 0.1 320 / 0.4)"
+                stroke="oklch(0.4 0.05 240 / 0.3)"
                 strokeWidth="1"
                 transform={`rotate(${angle} ${size / 2} ${size / 2})`}
               />
