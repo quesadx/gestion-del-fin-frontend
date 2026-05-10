@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
@@ -66,12 +66,13 @@ function getStatusVariant(status: string): 'green' | 'yellow' | 'red' | 'cyan' {
 
 export function PersonDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const personId = Number(id);
+  const campIdFromQuery = Number(searchParams.get('campId')) || 0;
 
-  const { data: person, isLoading, isError, error, refetch } = usePerson(0, personId);
-  const campId = (person as Record<string, unknown>)?.camp_id as number | undefined;
-  const { data: camp } = useCamp(campId ?? 0);
+  const { data: person, isLoading, isError, error, refetch } = usePerson(campIdFromQuery, personId);
+  const { data: camp } = useCamp(campIdFromQuery);
   const { data: professions } = useProfessions();
   const updateMutation = useUpdatePerson();
   const deleteMutation = useDeletePerson();

@@ -160,7 +160,7 @@ export function PeopleListPage() {
                   <tr
                     key={person.id as number}
                     className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
-                    onClick={() => navigate(`/people/${person.id}`)}
+                    onClick={() => navigate(`/people/${person.id}?campId=${selectedCampId}`)}
                   >
                     <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
                       {person.full_name as string}
