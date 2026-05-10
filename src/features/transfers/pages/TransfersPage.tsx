@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
@@ -17,7 +17,7 @@ import {
   useRejectTransfer,
 } from '@/features/transfers/hooks/useTransfers';
 import { useCamps } from '@/features/camps/hooks/useCamps';
-import { ArrowRightLeft, Plus, Truck, Check, X } from 'lucide-react';
+import { ArrowRightLeft, Plus, Truck, Check, X, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
@@ -75,8 +75,14 @@ export function TransfersPage() {
   const [rejectTarget, setRejectTarget] = useState<{ id: number; reason: string } | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
 
-  const campsArray = Array.isArray(camps) ? camps : ([] as Record<string, unknown>[]);
-  const transfersArray = Array.isArray(transfers) ? transfers : ([] as Record<string, unknown>[]);
+  const campsArray = useMemo(
+    () => (Array.isArray(camps) ? camps : ([] as Record<string, unknown>[])),
+    [camps],
+  );
+  const transfersArray = useMemo(
+    () => (Array.isArray(transfers) ? transfers : ([] as Record<string, unknown>[])),
+    [transfers],
+  );
 
   const formCreate = useForm<TransferFormValues>({
     resolver: resolved(createTransferSchema),
@@ -175,6 +181,22 @@ export function TransfersPage() {
     setRejectTarget(null);
   };
 
+  const campMap = new Map<number, string>();
+  campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
+
+  const historyTransfers = useMemo(() => {
+    return transfersArray
+      .filter((t: Record<string, unknown>) => {
+        const status = t.status as string;
+        return status === 'COMPLETED' || status === 'REJECTED';
+      })
+      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
+        const aTime = new Date((a.updated_at ?? a.created_at) as string).getTime();
+        const bTime = new Date((b.updated_at ?? b.created_at) as string).getTime();
+        return bTime - aTime;
+      });
+  }, [transfersArray]);
+
   if (isLoading) return <ScreenLoader />;
 
   if (isError) {
@@ -191,9 +213,6 @@ export function TransfersPage() {
       </div>
     );
   }
-
-  const campMap = new Map<number, string>();
-  campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
 
   return (
     <div className="space-y-6">
@@ -341,6 +360,176 @@ export function TransfersPage() {
           </>
         )}
       </Panel>
+
+      {/* Transfer History / Audit Log */}
+      {historyTransfers.length > 0 && (
+        <Panel
+          title="TRANSFER LOG"
+          tag="TRN.HIST"
+          status={`${historyTransfers.length} RECORDS`}
+          accent="purple"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 font-mono-data text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
+              <span>Completed and rejected transfers</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-mono-data text-xs">
+                <thead>
+                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.15)] text-muted-foreground">
+                    <th className="py-2 px-2">TYPE</th>
+                    <th className="py-2 px-2">SOURCE → DESTINATION</th>
+                    <th className="py-2 px-2">RESULT</th>
+                    <th className="py-2 px-2">ITEMS</th>
+                    <th className="py-2 px-2">TIMELINE</th>
+                    <th className="py-2 px-2">DURATION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historyTransfers.map((t: Record<string, unknown>) => {
+                    const requesting =
+                      campMap.get(t.requesting_camp as number) || `CAMP-${t.requesting_camp}`;
+                    const target = campMap.get(t.target_camp as number) || `CAMP-${t.target_camp}`;
+                    const status = t.status as string;
+                    const items = t.items as Record<string, unknown>[] | undefined;
+                    const itemCount = items?.length ?? 0;
+
+                    const events: Array<{
+                      label: string;
+                      date: string | null;
+                      accent: 'cyan' | 'purple' | 'green' | 'red';
+                    }> = [];
+                    if (t.created_at) {
+                      events.push({
+                        label: 'CREATED',
+                        date: t.created_at as string,
+                        accent: 'cyan',
+                      });
+                    }
+                    if (t.scheduled_delivery_date) {
+                      events.push({
+                        label: 'SCHEDULED',
+                        date: t.scheduled_delivery_date as string,
+                        accent: 'purple',
+                      });
+                    }
+                    if (t.approved_source_at) {
+                      events.push({
+                        label: 'SRC APPROVED',
+                        date: t.approved_source_at as string,
+                        accent: 'green',
+                      });
+                    }
+                    if (t.approved_target_at) {
+                      events.push({
+                        label: 'DST APPROVED',
+                        date: t.approved_target_at as string,
+                        accent: 'green',
+                      });
+                    }
+                    if (status === 'COMPLETED') {
+                      events.push({
+                        label: 'COMPLETED',
+                        date: (t.updated_at ?? t.created_at) as string,
+                        accent: 'green',
+                      });
+                    } else if (status === 'REJECTED') {
+                      events.push({
+                        label: 'REJECTED',
+                        date: (t.updated_at ?? t.created_at) as string,
+                        accent: 'red',
+                      });
+                    }
+
+                    const startDate = t.created_at ? new Date(t.created_at as string) : null;
+                    const endDate =
+                      (status === 'COMPLETED' || status === 'REJECTED') && t.updated_at
+                        ? new Date(t.updated_at as string)
+                        : null;
+                    const durationDays =
+                      startDate && endDate
+                        ? Math.round(
+                            (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+                          )
+                        : null;
+
+                    return (
+                      <tr
+                        key={t.id as number}
+                        className="border-b border-[oklch(0.68_0.32_340_/_0.08)] hover:bg-[oklch(0.68_0.32_340_/_0.05)]"
+                      >
+                        <td className="py-2 px-2">
+                          <StatusBadge
+                            status={TYPE_LABELS[t.type as string] || (t.type as string)}
+                            variant="purple"
+                          />
+                        </td>
+                        <td className="py-2 px-2">
+                          <span className="text-[var(--neon-fuchsia)]">{requesting}</span>
+                          <span className="text-muted-foreground mx-1">→</span>
+                          <span className="text-[var(--neon-cyan)]">{target}</span>
+                        </td>
+                        <td className="py-2 px-2">
+                          <StatusBadge
+                            status={STATUS_LABELS[status]}
+                            variant={STATUS_MAP[status] || 'cyan'}
+                          />
+                        </td>
+                        <td className="py-2 px-2 text-muted-foreground text-center">{itemCount}</td>
+                        <td className="py-2 px-2">
+                          <div className="flex flex-wrap gap-1 items-center">
+                            {events.map((ev, i) => (
+                              <span key={i} className="inline-flex items-center gap-0.5">
+                                {i > 0 && (
+                                  <span className="text-muted-foreground/50 mx-0.5">→</span>
+                                )}
+                                <StatusBadge
+                                  status={ev.label}
+                                  variant={ev.accent}
+                                  className="text-[9px] py-0 px-1.5"
+                                />
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="py-2 px-2 text-muted-foreground text-center">
+                          {durationDays !== null ? `${durationDays}d` : '—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {historyTransfers.some(
+              (t: Record<string, unknown>) => t.status === 'REJECTED' && t.notes,
+            ) && (
+              <details className="mt-3">
+                <summary className="font-mono-data text-[10px] text-muted-foreground cursor-pointer hover:text-[var(--neon-yellow)]">
+                  SHOW REJECTION NOTES
+                </summary>
+                <div className="mt-2 space-y-1">
+                  {historyTransfers
+                    .filter((t: Record<string, unknown>) => t.status === 'REJECTED' && t.notes)
+                    .map((t: Record<string, unknown>) => {
+                      const tid = t.id as number;
+                      const tnotes = t.notes as string;
+                      return (
+                        <div
+                          key={tid}
+                          className="font-mono-data text-xs text-red-400/80 pl-4 border-l border-red-400/20"
+                        >
+                          #{tid}: {tnotes}
+                        </div>
+                      );
+                    })}
+                </div>
+              </details>
+            )}
+          </div>
+        </Panel>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
