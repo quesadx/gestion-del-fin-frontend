@@ -51,7 +51,7 @@ export interface RejectTransferDto {
 }
 
 export const transfersApi = {
-  getAll: () => api.get('/transfers').then((res) => res.data),
+  getAll: () => api.get('/transfers').then((res) => res.data.data),
   getById: (id: number) => api.get(`/transfers/${id}`).then((res) => res.data),
   create: (payload: CreateTransferDto) => api.post('/transfers', payload).then((res) => res.data),
   scheduleDelivery: (id: number, payload: ScheduleTransferDeliveryDto) =>

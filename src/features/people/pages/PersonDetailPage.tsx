@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
@@ -66,12 +66,13 @@ function getStatusVariant(status: string): 'green' | 'yellow' | 'red' | 'cyan' {
 
 export function PersonDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const personId = Number(id);
+  const campIdFromQuery = Number(searchParams.get('campId')) || 0;
 
-  const { data: person, isLoading, isError, error, refetch } = usePerson(0, personId);
-  const campId = (person as Record<string, unknown>)?.camp_id as number | undefined;
-  const { data: camp } = useCamp(campId ?? 0);
+  const { data: person, isLoading, isError, error, refetch } = usePerson(campIdFromQuery, personId);
+  const { data: camp } = useCamp(campIdFromQuery);
   const { data: professions } = useProfessions();
   const updateMutation = useUpdatePerson();
   const deleteMutation = useDeletePerson();
@@ -141,13 +142,18 @@ export function PersonDetailPage() {
 
   const p = person as Record<string, unknown>;
   const profObj = p.profession as Record<string, unknown> | undefined;
-  const statusLogs = p.status_logs as Array<Record<string, unknown>> | undefined;
+  const statusLogs: Array<Record<string, unknown>> | undefined = Array.isArray(p.status_logs)
+    ? (p.status_logs as Array<Record<string, unknown>>)
+    : undefined;
 
   const onSubmitEdit = async (values: UpdatePersonFormValues) => {
     await updateMutation.mutateAsync({
       campId: p.camp_id as number,
       id: personId,
-      payload: values,
+      payload: {
+        ...values,
+        admitted_at: new Date(values.admitted_at).toISOString(),
+      },
     });
     setEditOpen(false);
   };

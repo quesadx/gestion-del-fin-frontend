@@ -38,9 +38,8 @@ function useStats(role: Role | null) {
     resources: resourcesQuery.data,
     campCount: role === 'system_admin' ? (campsQuery.data?.length ?? 0) : null,
     activeCamps:
-      role === 'system_admin'
-        ? (campsQuery.data?.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length ??
-          0)
+      role === 'system_admin' && Array.isArray(campsQuery.data)
+        ? campsQuery.data.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
         : null,
     resourceCount: role === 'resource_manager' ? (resourcesQuery.data?.length ?? 0) : null,
   };
@@ -80,6 +79,7 @@ export function DashboardPage() {
     modules.push({ label: 'ADMISSIONS', to: '/admissions', accent: 'green' });
     modules.push({ label: 'USERS', to: '/users', accent: 'cyan' });
     modules.push({ label: 'PROFESSIONS', to: '/professions', accent: 'purple' });
+    modules.push({ label: 'EXPLORATIONS', to: '/explorations', accent: 'green' });
   }
   if (role === 'resource_manager') {
     modules.push({

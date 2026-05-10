@@ -44,7 +44,7 @@ export interface DeleteExplorationDto {
 }
 
 export const explorationsApi = {
-  getAll: () => api.get('/expeditions').then((res) => res.data),
+  getAll: () => api.get('/expeditions').then((res) => res.data.data),
   getById: (id: number) => api.get(`/expeditions/${id}`).then((res) => res.data),
   create: (payload: CreateExplorationDto) =>
     api.post('/expeditions', payload).then((res) => res.data),

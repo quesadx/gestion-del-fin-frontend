@@ -8,7 +8,7 @@ export interface CreateProfessionDto {
 export type UpdateProfessionDto = Partial<CreateProfessionDto>;
 
 export const professionsApi = {
-  getAll: () => api.get('/professions').then((res) => res.data),
+  getAll: () => api.get('/professions').then((res) => res.data.data),
   getById: (id: number) => api.get(`/professions/${id}`).then((res) => res.data),
   create: (payload: CreateProfessionDto) =>
     api.post('/professions', payload).then((res) => res.data),
