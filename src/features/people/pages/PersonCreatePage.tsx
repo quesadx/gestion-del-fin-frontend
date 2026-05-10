@@ -54,6 +54,7 @@ export function PersonCreatePage() {
       campId: values.camp_id,
       payload: {
         ...values,
+        admitted_at: new Date(values.admitted_at).toISOString(),
         age: values.age || undefined,
         identification_code: values.identification_code || undefined,
         blood_type: values.blood_type || undefined,

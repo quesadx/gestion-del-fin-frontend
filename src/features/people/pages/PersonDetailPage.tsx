@@ -150,7 +150,10 @@ export function PersonDetailPage() {
     await updateMutation.mutateAsync({
       campId: p.camp_id as number,
       id: personId,
-      payload: values,
+      payload: {
+        ...values,
+        admitted_at: new Date(values.admitted_at).toISOString(),
+      },
     });
     setEditOpen(false);
   };

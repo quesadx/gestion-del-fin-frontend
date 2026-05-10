@@ -95,9 +95,9 @@ export function ExplorationsPage() {
       camp_id: values.camp_id,
       created_by: 0,
       destination: values.destination,
-      departure_date: values.departure_date,
-      expected_return_date: values.expected_return_date,
-      max_return_date: values.max_return_date,
+      departure_date: new Date(values.departure_date).toISOString(),
+      expected_return_date: new Date(values.expected_return_date).toISOString(),
+      max_return_date: new Date(values.max_return_date).toISOString(),
       notes: values.notes || undefined,
     });
     formCreate.reset();
@@ -154,7 +154,7 @@ export function ExplorationsPage() {
 
     const payload = {
       status: 'RETURNED' as const,
-      actual_return_date: values.actual_return_date,
+      actual_return_date: new Date(values.actual_return_date).toISOString(),
       changed_by: 0,
       resources_to_return: values.resources
         .filter((r) => r.resource_type_id > 0 && r.amount > 0)
