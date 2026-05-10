@@ -1,22 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-import type { Role, User } from '../types/auth.types';
+import type { AuthUser, Role } from '@/features/auth/types/auth.types';
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
   role: Role | null;
-  lastActivity: number;
   isLocked: boolean;
-  isHydrated: boolean;
-
-  login: (token: string, user: User) => void;
+  lastActivity: number;
+  _hasHydrated: boolean;
+  setSession: (payload: { user: AuthUser; token: string; role?: Role | null }) => void;
   logout: () => void;
   updateActivity: () => void;
   lock: () => void;
-  unlock: (password: string) => Promise<boolean>;
-  setHydrated: () => void;
+  unlock: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,49 +22,40 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       role: null,
-      lastActivity: Date.now(),
       isLocked: false,
-      isHydrated: false,
-
-      login: (token, user) =>
+      lastActivity: Date.now(),
+      _hasHydrated: false,
+      setSession: ({ user, token, role }) =>
         set({
-          token,
           user,
-          role: user.role,
-          lastActivity: Date.now(),
+          token,
+          role: role ?? null,
           isLocked: false,
+          lastActivity: Date.now(),
         }),
-
       logout: () =>
         set({
           user: null,
           token: null,
           role: null,
           isLocked: false,
+          lastActivity: Date.now(),
         }),
-
       updateActivity: () => set({ lastActivity: Date.now() }),
-
       lock: () => set({ isLocked: true }),
-
-      unlock: async (password) => {
-        const { authApi } = await import('../api/auth.api');
-        const result = await authApi.verifySession(password);
-
-        if (result.valid) {
-          set({ isLocked: false, lastActivity: Date.now() });
-        }
-
-        return result.valid;
-      },
-
-      setHydrated: () => set({ isHydrated: true }),
+      unlock: () => set({ isLocked: false, lastActivity: Date.now() }),
     }),
     {
-      name: 'auth-storage',
-      partialize: (s) => ({ token: s.token, user: s.user, role: s.role }),
+      name: 'gdf.auth',
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        role: state.role,
+      }),
       onRehydrateStorage: () => (state) => {
-        state?.setHydrated();
+        if (state) {
+          state._hasHydrated = true;
+        }
       },
     },
   ),

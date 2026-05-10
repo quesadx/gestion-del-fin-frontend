@@ -1,264 +1,214 @@
 import { useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { staggerItem } from '@/shared/lib/motion';
-import { useCampStore } from '@/features/camps/store/camp.store';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { Panel } from '@/components/cyber/Panel';
+import { GlitchButton } from '@/components/cyber/GlitchButton';
+import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
+import { Users, UserPlus, Search } from 'lucide-react';
 
-const getConditionTone = (condition: string) => {
-  switch (condition) {
-    case 'INJURED':
+const PAGE_SIZE = 20;
+
+function getPersonStatusVariant(status: string): 'green' | 'yellow' | 'red' | 'cyan' {
+  switch (status) {
+    case 'HEALTHY':
+      return 'green';
     case 'SICK':
-      return 'amber';
-    case 'CRITICAL':
+      return 'yellow';
+    case 'INJURED':
+      return 'yellow';
+    case 'DEAD':
       return 'red';
     default:
-      return '';
+      return 'cyan';
   }
-};
-
-const formatDate = (value: string) => {
-  try {
-    return new Date(value).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-    });
-  } catch {
-    return value;
-  }
-};
+}
 
 export function PeopleListPage() {
-  const reduceMotion = useReducedMotion();
-  const itemVariants = reduceMotion ? {} : staggerItem;
+  const navigate = useNavigate();
+  const { data: camps, isLoading: campsLoading, isError: campsError } = useCamps();
+  const [selectedCampId, setSelectedCampId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('ALL');
-  const [conditionFilter, setConditionFilter] = useState('ALL');
-  const [selectedCampId, setSelectedCampId] = useState('');
 
-  const activeCamp = useCampStore((state) => state.activeCamp);
-  const setActiveCamp = useCampStore((state) => state.setActiveCamp);
-  const campsQuery = useCamps();
-  const peopleQuery = usePeople(activeCamp?.id);
+  const {
+    data: people,
+    isLoading: peopleLoading,
+    isError: peopleError,
+    error: peopleErr,
+    refetch: refetchPeople,
+  } = usePeople(selectedCampId ?? 0, { page, limit: PAGE_SIZE });
 
-  const handleSelectCamp = (campId: string) => {
-    const selectedCamp = campsQuery.data?.find((camp) => String(camp.id) === campId);
-    if (selectedCamp) {
-      setActiveCamp({
-        id: String(selectedCamp.id),
-        name: selectedCamp.name,
-      });
-    }
-  };
+  const peopleArray = Array.isArray(people) ? people : [];
+  const campsArray = Array.isArray(camps) ? camps : [];
 
-  const people = peopleQuery.data ?? [];
-  const filteredPeople = people.filter((person) => {
-    const term = searchTerm.trim().toLowerCase();
-    const matchesSearch =
-      !term ||
-      person.full_name.toLowerCase().includes(term) ||
-      String(person.id).includes(term) ||
-      person.identification_code.toLowerCase().includes(term);
-    const professionName = person.professions?.name?.toUpperCase() ?? '';
-    const matchesRole = roleFilter === 'ALL' || professionName === roleFilter.toUpperCase();
-
-    let matchesCondition = conditionFilter === 'ALL';
-    if (conditionFilter === 'HEALTHY') matchesCondition = person.status === 'HEALTHY';
-    if (conditionFilter === 'WARNING')
-      matchesCondition = person.status === 'INJURED' || person.status === 'SICK';
-    if (conditionFilter === 'CRITICAL') matchesCondition = person.status === 'CRITICAL';
-    if (conditionFilter === 'AWAY') matchesCondition = person.status === 'AWAY';
-
-    return matchesSearch && matchesRole && matchesCondition;
+  const filteredPeople = peopleArray.filter((p: Record<string, unknown>) => {
+    if (!searchTerm) return true;
+    const name = (p.full_name as string) || '';
+    return name.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  const totalCount = people.length;
-  const healthyCount = people.filter((p) => p.status === 'HEALTHY').length;
-  const warningCount = people.filter((p) => p.status === 'INJURED' || p.status === 'SICK').length;
-  const criticalCount = people.filter((p) => p.status === 'CRITICAL').length;
-
   return (
-    <>
-      <div className="pip-frame">
-        <span className="pip-frame-title">CAMP SELECTOR</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <select
-              value={activeCamp?.id ?? selectedCampId}
-              onChange={(e) => {
-                const campId = e.target.value;
-                setSelectedCampId(campId);
-                handleSelectCamp(campId);
-              }}
-              className="pip-select"
-              disabled={campsQuery.isLoading || campsQuery.isError}
-              style={{ minWidth: 220 }}
-            >
-              <option value="" disabled>
-                {campsQuery.isLoading ? 'LOADING CAMPS...' : 'SELECT A CAMP'}
-              </option>
-              {campsQuery.data?.map((camp) => (
-                <option key={camp.id} value={camp.id}>
-                  {camp.name ?? camp.id}
-                </option>
-              ))}
-            </select>
+    <div className="space-y-6">
+      <Panel title="PEOPLE_DIRECTORY" tag="PPL.01" status="ONLINE" accent="cyan">
+        {/* Camp selector */}
+        {campsLoading ? (
+          <ScreenLoader />
+        ) : campsError ? (
+          <p className="text-sm text-red-400 font-mono-data">Failed to load camps.</p>
+        ) : campsArray.length === 0 ? (
+          <div className="flex flex-col items-center gap-4 py-6">
+            <Users className="h-8 w-8 text-[var(--neon-cyan)]/40" />
+            <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
           </div>
-
-          <div className="pip-row">
-            <span className="pip-label">ACTIVE CAMP</span>
-            <span className="pip-value">{activeCamp?.name ?? 'NONE SELECTED'}</span>
-          </div>
-
-          {campsQuery.isError && <div className="pip-label red">ERROR LOADING CAMPS</div>}
-        </div>
-      </div>
-
-      <div className="pip-frame">
-        <span className="pip-frame-title">FILTERS</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div>
-            <div className="pip-label" style={{ marginBottom: 4 }}>
-              SEARCH
+        ) : (
+          <>
+            <div className="mb-4">
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CAMP //
+              </label>
+              <select
+                value={selectedCampId ?? ''}
+                onChange={(e) => {
+                  setSelectedCampId(e.target.value ? Number(e.target.value) : null);
+                  setPage(1);
+                }}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+              >
+                <option value="">SELECT A CAMP</option>
+                {campsArray.map((camp: Record<string, unknown>) => (
+                  <option key={camp.id as number} value={camp.id as number}>
+                    {camp.name as string}
+                  </option>
+                ))}
+              </select>
             </div>
-            <input
-              type="text"
-              placeholder="SEARCH ROSTER"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pip-input"
-            />
+          </>
+        )}
+      </Panel>
+
+      {/* People content only when camp selected */}
+      {!selectedCampId ? (
+        <Panel accent="purple">
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Users className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
+            <p className="font-mono-data text-sm text-muted-foreground text-center">
+              SELECT A CAMP
+            </p>
+          </div>
+        </Panel>
+      ) : peopleLoading ? (
+        <ScreenLoader />
+      ) : peopleError ? (
+        <Panel title="ERROR" status="ERROR" accent="purple">
+          <p className="text-sm text-red-400 font-mono-data mb-4">
+            {(peopleErr as Error)?.message || 'Failed to load people'}
+          </p>
+          <GlitchButton variant="warning" onClick={() => refetchPeople()}>
+            RETRY
+          </GlitchButton>
+        </Panel>
+      ) : filteredPeople.length === 0 ? (
+        <Panel accent="cyan">
+          <div className="flex flex-col items-center gap-4 py-8">
+            <Users className="h-10 w-10 text-[var(--neon-cyan)]/40" />
+            <p className="font-mono-data text-sm text-muted-foreground">
+              {searchTerm ? 'NO PEOPLE FOUND WITH THAT NAME' : 'NO PEOPLE REGISTERED IN THIS CAMP'}
+            </p>
+            <GlitchButton variant="primary" onClick={() => navigate('/people/new')}>
+              REGISTER PERSON
+            </GlitchButton>
+          </div>
+        </Panel>
+      ) : (
+        <Panel title="PEOPLE LIST" tag={`PPL.${selectedCampId}`} status="ONLINE" accent="cyan">
+          {/* Search and New */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]/50" />
+              <input
+                type="text"
+                placeholder="SEARCH BY NAME..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+              />
+            </div>
+            <GlitchButton variant="primary" onClick={() => navigate('/people/new')}>
+              <span className="flex items-center gap-2">
+                <UserPlus className="h-3.5 w-3.5" />
+                REGISTER PERSON
+              </span>
+            </GlitchButton>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="pip-select"
-              style={{ minWidth: 150 }}
-            >
-              <option value="ALL">ALL PROFESSIONS</option>
-              <option value="ENGINEER">ENGINEER</option>
-              <option value="SCOUT">SCOUT</option>
-              <option value="OTHER">OTHER</option>
-            </select>
-
-            <select
-              value={conditionFilter}
-              onChange={(e) => setConditionFilter(e.target.value)}
-              className="pip-select"
-              style={{ minWidth: 180 }}
-            >
-              <option value="ALL">ALL STATUS</option>
-              <option value="HEALTHY">HEALTHY</option>
-              <option value="WARNING">INJURED / SICK</option>
-              <option value="CRITICAL">CRITICAL</option>
-              <option value="AWAY">AWAY</option>
-            </select>
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-mono-data text-xs">
+              <thead>
+                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                  <th className="py-3 px-2 font-semibold">NAME</th>
+                  <th className="py-3 px-2 font-semibold">STATUS</th>
+                  <th className="py-3 px-2 font-semibold">PROFESSION</th>
+                  <th className="py-3 px-2 font-semibold">ADMITTED</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPeople.map((person: Record<string, unknown>) => (
+                  <tr
+                    key={person.id as number}
+                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
+                    onClick={() => navigate(`/people/${person.id}`)}
+                  >
+                    <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
+                      {person.full_name as string}
+                    </td>
+                    <td className="py-3 px-2">
+                      <StatusBadge
+                        status={person.status as string}
+                        variant={getPersonStatusVariant(person.status as string)}
+                      />
+                    </td>
+                    <td className="py-3 px-2 text-muted-foreground">
+                      {((person.profession as Record<string, unknown>)?.name as string) || '—'}
+                    </td>
+                    <td className="py-3 px-2 text-muted-foreground">
+                      {person.admitted_at
+                        ? format(new Date(person.admitted_at as string), 'dd/MM/yyyy')
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      </div>
 
-      <div className="pip-frame">
-        <span className="pip-frame-title">SUMMARY</span>
-        <div className="pip-row">
-          <span className="pip-label">TOTAL</span>
-          <span className="pip-value">{String(totalCount).padStart(3, '0')}</span>
-        </div>
-        <div style={{ height: 6 }} />
-        <div className="pip-row">
-          <span className="pip-label">HEALTHY</span>
-          <span className="pip-value">{String(healthyCount).padStart(3, '0')}</span>
-        </div>
-        <div style={{ height: 6 }} />
-        <div className="pip-row">
-          <span className="pip-label">WARNING</span>
-          <span className="pip-value amber">{String(warningCount).padStart(3, '0')}</span>
-        </div>
-        <div style={{ height: 6 }} />
-        <div className="pip-row">
-          <span className="pip-label">CRITICAL</span>
-          <span className="pip-value red">{String(criticalCount).padStart(3, '0')}</span>
-        </div>
-      </div>
-
-      <div className="pip-frame" style={{ minHeight: 0 }}>
-        <span className="pip-frame-title">PEOPLE ROSTER</span>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            marginTop: 24,
-          }}
-        >
-          {peopleQuery.isLoading && <div className="pip-label">LOADING PEOPLE...</div>}
-          {!peopleQuery.isLoading && !activeCamp && (
-            <div className="pip-label">SELECT A CAMP TO LOAD PEOPLE.</div>
+          {/* Pagination */}
+          {filteredPeople.length === PAGE_SIZE && (
+            <div className="flex justify-center gap-3 mt-4">
+              <GlitchButton
+                variant="ghost"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                PREVIOUS
+              </GlitchButton>
+              <span className="flex items-center font-mono-data text-xs text-muted-foreground">
+                PAGE {page}
+              </span>
+              <GlitchButton
+                variant="ghost"
+                disabled={filteredPeople.length < PAGE_SIZE}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                NEXT
+              </GlitchButton>
+            </div>
           )}
-          {!peopleQuery.isLoading && activeCamp && filteredPeople.length === 0 && (
-            <div className="pip-label">NO MATCHES</div>
-          )}
-          {filteredPeople.map((person) => (
-            <motion.div
-              key={person.id}
-              className="pip-frame"
-              style={{ padding: 12, minHeight: 0 }}
-              variants={itemVariants}
-              initial="initial"
-              animate="animate"
-            >
-              <div className="pip-row">
-                <span className="pip-label">{person.identification_code}</span>
-                <span className={`pip-value ${getConditionTone(person.status)}`}>
-                  {person.status}
-                </span>
-              </div>
-              <div className="pip-row">
-                <span className="pip-value" style={{ fontSize: 18 }}>
-                  {person.full_name}
-                </span>
-                <span className="pip-label">{person.professions?.name ?? 'UNKNOWN'}</span>
-              </div>
-              <div className="pip-row" style={{ gap: 12 }}>
-                <div>
-                  <span className="pip-label">AGE</span>
-                  <div className="pip-value" style={{ fontSize: 16 }}>
-                    {person.age}
-                  </div>
-                </div>
-                <div>
-                  <span className="pip-label">BLOOD</span>
-                  <div className="pip-value" style={{ fontSize: 16 }}>
-                    {person.blood_type}
-                  </div>
-                </div>
-              </div>
-              <div className="pip-row" style={{ gap: 12 }}>
-                <div>
-                  <span className="pip-label">CAMP</span>
-                  <div className="pip-value" style={{ fontSize: 16 }}>
-                    {person.camps?.name ?? 'UNKNOWN'}
-                  </div>
-                </div>
-                <div>
-                  <span className="pip-label">ADMITTED</span>
-                  <div className="pip-value" style={{ fontSize: 16 }}>
-                    {formatDate(person.admitted_at)}
-                  </div>
-                </div>
-              </div>
-              <div style={{ marginTop: 10 }}>
-                <div className="pip-label">SKILLS</div>
-                <div className="pip-value" style={{ fontSize: 14, lineHeight: 1.4 }}>
-                  {person.skills_summary || 'No skills summary available.'}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </>
+        </Panel>
+      )}
+    </div>
   );
 }

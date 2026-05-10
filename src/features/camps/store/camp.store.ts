@@ -1,20 +1,15 @@
 import { create } from 'zustand';
 
-interface Camp {
-  id: string;
-  name: string;
-}
-
 interface CampState {
-  activeCamp: Camp | null;
-  availableCamps: Camp[];
+  activeCamp: { id: number; name?: string } | null;
+  availableCamps: { id: number; name?: string }[];
   serverTime: number;
   lastSyncLocal: number;
 
-  setActiveCamp: (camp: Camp) => void;
-  setAvailableCamps: (camps: Camp[]) => void;
+  setActiveCamp: (camp: { id: number; name?: string } | null) => void;
+  setAvailableCamps: (camps: { id: number; name?: string }[]) => void;
   resetCamp: () => void;
-  setServerTime: (serverTime: number) => void;
+  syncServerTime: (serverTime: number) => void;
 }
 
 export const useCampStore = create<CampState>()((set) => ({
@@ -25,6 +20,6 @@ export const useCampStore = create<CampState>()((set) => ({
 
   setActiveCamp: (camp) => set({ activeCamp: camp }),
   setAvailableCamps: (camps) => set({ availableCamps: camps }),
-  resetCamp: () => set({ activeCamp: null, serverTime: 0 }),
-  setServerTime: (serverTime) => set({ serverTime, lastSyncLocal: Date.now() }),
+  resetCamp: () => set({ activeCamp: null, serverTime: 0, lastSyncLocal: 0 }),
+  syncServerTime: (serverTime) => set({ serverTime, lastSyncLocal: Date.now() }),
 }));

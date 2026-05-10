@@ -1,7 +1,7 @@
 {
   "version": "0.2",
-  "language": "en,es",
-  "dictionaries": ["es-es", "typescript", "node", "css"],
+  "language": "en",
+  "dictionaries": ["typescript", "node", "css"],
   "words": [
     "Zustand",
     "tanstack",
@@ -25,12 +25,6 @@
     "staggerItem",
     "staggerContainer",
     "scanlines",
-    "campamento",
-    "bodega",
-    "superviviente",
-    "zombi",
-    "municion",
-    "higiene",
     "PipelineFlow",
     "DeviceFrame",
     "ScreenSurface",
@@ -40,15 +34,27 @@
     "IngressEval",
     "AIAnalysis",
     "AIDecision",
-    "contenido",
-    "prueba",
     "scanline",
     "scanlines",
     "pipboy",
     "topbar",
     "CHRONO",
     "partialize",
-    "CAMPAMENTO"
+    "arasaka",
+    "cmdk",
+    "embla",
+    "sublabel",
+    "silverhand",
+    "vaul",
+    "OPERATOR"
   ],
-  "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md"]
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "*.lock",
+    "*.json",
+    "*.md",
+    "neon-nova-dashboard",
+    "temp"
+  ]
 }
