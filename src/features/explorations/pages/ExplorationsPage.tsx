@@ -30,7 +30,7 @@ import {
 
 const createExplorationSchema = z.object({
   destination: z.string().min(1, 'Destination is required'),
-  camp_id: z.coerce.number().min(1, 'Select a camp'),
+  camp_id: z.number().min(1, 'Select a camp'),
   departure_date: z.string().min(1, 'Departure date is required'),
   expected_return_date: z.string().min(1, 'Expected return date is required'),
   max_return_date: z.string().min(1, 'Latest return date is required'),
@@ -77,7 +77,7 @@ export function ExplorationsPage() {
   const onSubmitCreate = async (values: CreateExplorationFormValues) => {
     await createMutation.mutateAsync({
       camp_id: values.camp_id,
-      created_by: user?.sub ? Number(user.sub) : 1,
+      created_by: (user as any)?.sub ? Number((user as any).sub) : 1,
       destination: values.destination,
       departure_date: values.departure_date,
       expected_return_date: values.expected_return_date,
@@ -112,7 +112,7 @@ export function ExplorationsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag="EXP.01" status="ERROR" accent="fuchsia">
+        <Panel title="ERROR" tag="EXP.01" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load explorations'}
           </p>
@@ -256,7 +256,7 @@ export function ExplorationsPage() {
                 CAMP //
               </label>
               <select
-                {...formCreate.register('camp_id')}
+                {...formCreate.register('camp_id', { valueAsNumber: true })}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="0">SELECT...</option>
