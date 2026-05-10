@@ -38,9 +38,8 @@ function useStats(role: Role | null) {
     resources: resourcesQuery.data,
     campCount: role === 'system_admin' ? (campsQuery.data?.length ?? 0) : null,
     activeCamps:
-      role === 'system_admin'
-        ? (campsQuery.data?.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length ??
-          0)
+      role === 'system_admin' && Array.isArray(campsQuery.data)
+        ? campsQuery.data.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
         : null,
     resourceCount: role === 'resource_manager' ? (resourcesQuery.data?.length ?? 0) : null,
   };

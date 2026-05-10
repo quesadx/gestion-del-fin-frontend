@@ -12,7 +12,7 @@ export interface CreateCampDto {
 export type UpdateCampDto = Partial<CreateCampDto>;
 
 export const campsApi = {
-  getAll: () => api.get('/camps').then((res) => res.data),
+  getAll: () => api.get('/camps').then((res) => res.data.data),
   getById: (id: number) => api.get(`/camps/${id}`).then((res) => res.data),
   create: (payload: CreateCampDto) => api.post('/camps', payload).then((res) => res.data),
   update: (id: number, payload: UpdateCampDto) =>

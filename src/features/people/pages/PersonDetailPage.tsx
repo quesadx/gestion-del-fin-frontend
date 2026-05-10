@@ -141,7 +141,9 @@ export function PersonDetailPage() {
 
   const p = person as Record<string, unknown>;
   const profObj = p.profession as Record<string, unknown> | undefined;
-  const statusLogs = p.status_logs as Array<Record<string, unknown>> | undefined;
+  const statusLogs: Array<Record<string, unknown>> | undefined = Array.isArray(p.status_logs)
+    ? (p.status_logs as Array<Record<string, unknown>>)
+    : undefined;
 
   const onSubmitEdit = async (values: UpdatePersonFormValues) => {
     await updateMutation.mutateAsync({

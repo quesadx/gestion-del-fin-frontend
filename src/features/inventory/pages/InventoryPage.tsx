@@ -12,6 +12,8 @@ import {
   useInventory,
   useCreateInventoryAdjustment,
 } from '@/features/inventory/hooks/useInventory';
+import { useStockAlerts } from '@/features/inventory/hooks/useStockAlerts';
+import { StockAlertBanner } from '@/features/inventory/components/StockAlertBanner';
 import { Warehouse, ClipboardList, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -37,6 +39,7 @@ export function InventoryPage() {
   } = useInventory(selectedCampId ?? 0);
   const createAdjustment = useCreateInventoryAdjustment();
   const [adjustOpen, setAdjustOpen] = useState(false);
+  const stockAlerts = useStockAlerts(selectedCampId ?? 0);
 
   const campsArray = Array.isArray(camps) ? camps : [];
   const invArray = Array.isArray(inventory) ? inventory : [];
@@ -124,10 +127,16 @@ export function InventoryPage() {
         <Panel
           title="CURRENT STOCK"
           tag={`INV.${selectedCampId}`}
-          status={`${invArray.length} ITEMS`}
+          status={
+            stockAlerts.hasAlerts
+              ? `${invArray.length} ITEMS / ${stockAlerts.totalCritical} CRITICAL`
+              : `${invArray.length} ITEMS`
+          }
           accent="cyan"
         >
-          <div className="flex flex-wrap gap-3 mb-4">
+          <StockAlertBanner alerts={stockAlerts} />
+
+          <div className="flex flex-wrap gap-3 mb-4 mt-4">
             <GlitchButton variant="primary" onClick={() => setAdjustOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
@@ -162,7 +171,7 @@ export function InventoryPage() {
                   return (
                     <tr
                       key={item.id as number}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                      className={`border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors ${!aboveMin ? 'bg-red-400/5' : ''}`}
                     >
                       <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
                         {resourceName as string}

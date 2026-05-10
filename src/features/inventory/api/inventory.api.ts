@@ -11,8 +11,9 @@ export interface ManualAdjustmentDto {
 }
 
 export const inventoryApi = {
-  getByCamp: (campId: number) => api.get(`/inventory/${campId}`).then((res) => res.data),
-  getAuditByCamp: (campId: number) => api.get(`/inventory/audit/${campId}`).then((res) => res.data),
+  getByCamp: (campId: number) => api.get(`/inventory/${campId}`).then((res) => res.data.data),
+  getAuditByCamp: (campId: number) =>
+    api.get(`/inventory/audit/${campId}`).then((res) => res.data.data),
   createAdjustment: (payload: ManualAdjustmentDto) =>
     api.post('/inventory/adjustment', payload).then((res) => res.data),
 };

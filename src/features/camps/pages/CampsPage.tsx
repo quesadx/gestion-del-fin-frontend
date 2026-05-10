@@ -87,7 +87,7 @@ export function CampsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Panel title="CAMP_DIRECTORY" tag="CAMP.01" status="ONLINE" accent="cyan">
-          {!camps || camps.length === 0 ? (
+          {!camps || !Array.isArray(camps) || camps.length === 0 ? (
             <div className="flex flex-col items-center gap-4 py-8">
               <MapPin className="h-10 w-10 text-[var(--neon-cyan)]/40" />
               <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS REGISTERED</p>
