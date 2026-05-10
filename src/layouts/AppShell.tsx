@@ -50,7 +50,7 @@ export function AppShell() {
           <div className="flex items-center gap-3 font-mono-sm text-text-muted">
             <span className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 bg-status-green shadow-[0_0_6px_#00e676] animate-pulse-glow" />
-              <span className="tracking-[0.15em] text-text-secondary">GESTION DEL FIN</span>
+              <span className="tracking-[0.15em] text-text-secondary">END MANAGEMENT</span>
             </span>
             <span className="text-border/40">|</span>
             <span className="tracking-wider">TERMINAL v2.0</span>

@@ -14,7 +14,7 @@ import { ArrowLeft, Users, Edit3, MapPin, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const updateCampSchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio'),
+  name: z.string().min(1, 'Name is required'),
   location: z.string().optional(),
   status: z.enum(['ACTIVE', 'ABANDONED']),
 });
@@ -63,10 +63,10 @@ export function CampDetailPage() {
       <div className="space-y-6">
         <Panel title="ERROR" tag={`CAMP.${campId}`} status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(error as Error)?.message || 'Error al cargar campamento'}
+            {(error as Error)?.message || 'Failed to load camp'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       </div>
@@ -76,14 +76,9 @@ export function CampDetailPage() {
   if (!camp) {
     return (
       <div className="space-y-6">
-        <Panel
-          title="CAMPAMENTO NO ENCONTRADO"
-          tag={`CAMP.${campId}`}
-          status="OFFLINE"
-          accent="fuchsia"
-        >
+        <Panel title="CAMP NOT FOUND" tag={`CAMP.${campId}`} status="OFFLINE" accent="fuchsia">
           <p className="text-sm text-muted-foreground font-mono-data">
-            El campamento solicitado no existe.
+            Requested camp does not exist.
           </p>
         </Panel>
       </div>
@@ -99,7 +94,7 @@ export function CampDetailPage() {
       <GlitchButton variant="ghost" onClick={() => navigate('/camps')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
-          VOLVER
+          BACK
         </span>
       </GlitchButton>
 
@@ -114,14 +109,14 @@ export function CampDetailPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2 font-mono-data text-xs">
               <MapPin className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
-              <span className="text-muted-foreground">UBICACIÓN:</span>
+              <span className="text-muted-foreground">LOCATION:</span>
               <span className="text-foreground">
-                {(camp.location as string) || 'NO ESPECIFICADA'}
+                {(camp.location as string) || 'NOT SPECIFIED'}
               </span>
             </div>
             <div className="flex items-center gap-2 font-mono-data text-xs">
               <Calendar className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
-              <span className="text-muted-foreground">CREADO:</span>
+              <span className="text-muted-foreground">CREATED:</span>
               <span className="text-foreground">
                 {camp.created_at
                   ? format(new Date(camp.created_at as string), 'dd/MM/yyyy HH:mm')
@@ -136,7 +131,7 @@ export function CampDetailPage() {
             <GlitchButton variant="ghost" onClick={openEdit}>
               <span className="flex items-center gap-2">
                 <Edit3 className="h-3.5 w-3.5" />
-                EDITAR
+                EDIT
               </span>
             </GlitchButton>
           </div>
@@ -149,7 +144,7 @@ export function CampDetailPage() {
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-[var(--neon-cyan)]" />
             <div>
-              <p className="font-mono-data text-[10px] text-muted-foreground">PERSONAS</p>
+              <p className="font-mono-data text-[10px] text-muted-foreground">PEOPLE</p>
               <p className="font-display text-lg text-glow-cyan">{peopleArray.length}</p>
             </div>
           </div>
@@ -158,28 +153,26 @@ export function CampDetailPage() {
 
       {/* People list */}
       <Panel
-        title="PERSONAS EN EL CAMPAMENTO"
+        title="PEOPLE IN CAMP"
         tag={`CAMP.${campId}.PEOPLE`}
         status={peopleLoading ? 'LOADING' : 'ONLINE'}
         accent="cyan"
       >
         {peopleLoading ? (
-          <p className="text-sm text-muted-foreground font-mono-data">Cargando personas...</p>
+          <p className="text-sm text-muted-foreground font-mono-data">Loading people...</p>
         ) : peopleArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <Users className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY PERSONAS EN ESTE CAMPAMENTO
-            </p>
+            <p className="font-mono-data text-sm text-muted-foreground">NO PEOPLE IN THIS CAMP</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
                 <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-3 px-2 font-semibold">NOMBRE</th>
-                  <th className="py-3 px-2 font-semibold">ESTADO</th>
-                  <th className="py-3 px-2 font-semibold">INGRESO</th>
+                  <th className="py-3 px-2 font-semibold">NAME</th>
+                  <th className="py-3 px-2 font-semibold">STATUS</th>
+                  <th className="py-3 px-2 font-semibold">ADMITTED</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,13 +219,13 @@ export function CampDetailPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              EDITAR CAMPAMENTO
+              EDIT CAMP
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOMBRE //
+                NAME //
               </label>
               <input
                 {...register('name')}
@@ -247,7 +240,7 @@ export function CampDetailPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                UBICACIÓN //
+                LOCATION //
               </label>
               <input
                 {...register('location')}
@@ -257,22 +250,22 @@ export function CampDetailPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                ESTADO //
+                STATUS //
               </label>
               <select
                 {...register('status')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
-                <option value="ACTIVE">ACTIVO</option>
-                <option value="ABANDONED">ABANDONADO</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="ABANDONED">ABANDONED</option>
               </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton variant="ghost" type="button" onClick={() => setEditDialogOpen(false)}>
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={updateCampMutation.isPending}>
-                {updateCampMutation.isPending ? 'GUARDANDO...' : 'GUARDAR'}
+                {updateCampMutation.isPending ? 'SAVING...' : 'SAVE'}
               </GlitchButton>
             </div>
           </form>

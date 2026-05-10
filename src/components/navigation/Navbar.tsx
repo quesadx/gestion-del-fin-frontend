@@ -23,7 +23,7 @@ export function Navbar({ userName, onLogout, onToggleSidebar }: NavbarProps) {
         <div className="hidden items-center gap-2 sm:flex">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--neon-fuchsia)] shadow-[0_0_6px_var(--neon-fuchsia)] animate-pulse-soft" />
           <span className="text-xs tracking-[0.3em] font-display text-glow-fuchsia">
-            GESTION DEL FIN
+            END MANAGEMENT
           </span>
         </div>
         <div className="flex items-center sm:hidden">

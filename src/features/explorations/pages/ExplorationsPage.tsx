@@ -29,11 +29,11 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const createExplorationSchema = z.object({
-  destination: z.string().min(1, 'El destino es obligatorio'),
-  camp_id: z.coerce.number().min(1, 'Seleccione un campamento'),
-  departure_date: z.string().min(1, 'Fecha de salida obligatoria'),
-  expected_return_date: z.string().min(1, 'Fecha esperada de retorno obligatoria'),
-  max_return_date: z.string().min(1, 'Fecha máxima de retorno obligatoria'),
+  destination: z.string().min(1, 'Destination is required'),
+  camp_id: z.coerce.number().min(1, 'Select a camp'),
+  departure_date: z.string().min(1, 'Departure date is required'),
+  expected_return_date: z.string().min(1, 'Expected return date is required'),
+  max_return_date: z.string().min(1, 'Latest return date is required'),
   notes: z.string().optional(),
 });
 
@@ -114,10 +114,10 @@ export function ExplorationsPage() {
       <div className="space-y-6">
         <Panel title="ERROR" tag="EXP.01" status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(error as Error)?.message || 'Error al cargar expediciones'}
+            {(error as Error)?.message || 'Failed to load explorations'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       </div>
@@ -127,7 +127,7 @@ export function ExplorationsPage() {
   return (
     <div className="space-y-6">
       <Panel
-        title="REGISTRO DE EXPEDICIONES"
+        title="EXPLORATION LOG"
         tag="EXP.01"
         status={isLoading ? 'LOADING' : expArray.length.toString()}
         accent="cyan"
@@ -136,12 +136,12 @@ export function ExplorationsPage() {
           <div className="flex flex-col items-center gap-4 py-8">
             <Compass className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY EXPEDICIONES REGISTRADAS
+              NO EXPLORATIONS REGISTERED
             </p>
             <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
-                NUEVA EXPEDICIÓN
+                NEW EXPLORATION
               </span>
             </GlitchButton>
           </div>
@@ -151,7 +151,7 @@ export function ExplorationsPage() {
               <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
-                  NUEVA EXPEDICIÓN
+                  NEW EXPLORATION
                 </span>
               </GlitchButton>
             </div>
@@ -159,13 +159,13 @@ export function ExplorationsPage() {
               <table className="w-full text-left font-mono-data text-xs">
                 <thead>
                   <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                    <th className="py-3 px-2">DESTINO</th>
-                    <th className="py-3 px-2">ESTADO</th>
-                    <th className="py-3 px-2">SALIDA</th>
-                    <th className="py-3 px-2">RETORNO ESPERADO</th>
-                    <th className="py-3 px-2">CAMPAMENTO</th>
-                    <th className="py-3 px-2">CAMBIAR ESTADO</th>
-                    <th className="py-3 px-2 text-right">ACCIONES</th>
+                    <th className="py-3 px-2">DESTINATION</th>
+                    <th className="py-3 px-2">STATUS</th>
+                    <th className="py-3 px-2">DEPARTURE</th>
+                    <th className="py-3 px-2">EXPECTED RETURN</th>
+                    <th className="py-3 px-2">CAMP</th>
+                    <th className="py-3 px-2">CHANGE STATUS</th>
+                    <th className="py-3 px-2 text-right">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -202,10 +202,10 @@ export function ExplorationsPage() {
                           onChange={(e) => handleStatusChange(exp.id as number, e.target.value)}
                           className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-1 text-[10px] text-foreground outline-none font-mono-data"
                         >
-                          <option value="PLANNED">PLANEADA</option>
-                          <option value="ONGOING">EN CURSO</option>
-                          <option value="RETURNED">RETORNADA</option>
-                          <option value="CANCELLED">CANCELADA</option>
+                          <option value="PLANNED">PLANNED</option>
+                          <option value="ONGOING">ONGOING</option>
+                          <option value="RETURNED">RETURNED</option>
+                          <option value="CANCELLED">CANCELLED</option>
                         </select>
                       </td>
                       <td className="py-3 px-2 text-right">
@@ -231,18 +231,18 @@ export function ExplorationsPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              NUEVA EXPEDICIÓN
+              NEW EXPLORATION
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                DESTINO //
+                DESTINATION //
               </label>
               <input
                 {...formCreate.register('destination')}
                 type="text"
-                placeholder="ZONA 7G"
+                placeholder="AREA 7G"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {formCreate.formState.errors.destination && (
@@ -253,13 +253,13 @@ export function ExplorationsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                CAMPAMENTO //
+                CAMP //
               </label>
               <select
                 {...formCreate.register('camp_id')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
-                <option value="0">SELECCIONE...</option>
+                <option value="0">SELECT...</option>
                 {campsArray.map((c: Record<string, unknown>) => (
                   <option key={c.id as number} value={c.id as number}>
                     {c.name as string}
@@ -270,7 +270,7 @@ export function ExplorationsPage() {
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  SALIDA //
+                  DEPARTURE //
                 </label>
                 <input
                   {...formCreate.register('departure_date')}
@@ -280,7 +280,7 @@ export function ExplorationsPage() {
               </div>
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  RETORNO ESP. //
+                  EXPECTED RETURN //
                 </label>
                 <input
                   {...formCreate.register('expected_return_date')}
@@ -290,7 +290,7 @@ export function ExplorationsPage() {
               </div>
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  RETORNO MAX //
+                  LATEST RETURN //
                 </label>
                 <input
                   {...formCreate.register('max_return_date')}
@@ -301,7 +301,7 @@ export function ExplorationsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOTAS //
+                NOTES //
               </label>
               <textarea
                 {...formCreate.register('notes')}
@@ -318,10 +318,10 @@ export function ExplorationsPage() {
                   setCreateOpen(false);
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'CREANDO...' : 'CREAR'}
+                {createMutation.isPending ? 'CREATING...' : 'CREATE'}
               </GlitchButton>
             </div>
           </form>
@@ -333,22 +333,22 @@ export function ExplorationsPage() {
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
-              CONFIRMAR ELIMINACIÓN
+              CONFIRM DELETE
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              Esta acción no se puede deshacer.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
-              CANCELAR
+              CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
               className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs"
             >
-              {deleteMutation.isPending ? 'ELIMINANDO...' : 'ELIMINAR'}
+              {deleteMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

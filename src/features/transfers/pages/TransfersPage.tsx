@@ -29,17 +29,17 @@ const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'PENDIENTE',
-  APPROVED_SOURCE: 'FUENTE APROBADA',
-  APPROVED_TARGET: 'DESTINO APROBADO',
-  COMPLETED: 'COMPLETADO',
-  REJECTED: 'RECHAZADO',
+  PENDING: 'PENDING',
+  APPROVED_SOURCE: 'SOURCE APPROVED',
+  APPROVED_TARGET: 'DESTINATION APPROVED',
+  COMPLETED: 'COMPLETED',
+  REJECTED: 'REJECTED',
 };
 
 const TYPE_LABELS: Record<string, string> = {
-  RESOURCE: 'RECURSO',
-  PERSON: 'PERSONA',
-  MIXED: 'MIXTO',
+  RESOURCE: 'RESOURCE',
+  PERSON: 'PERSON',
+  MIXED: 'MIXED',
 };
 
 const transferItemSchema = z.object({
@@ -50,13 +50,13 @@ const transferItemSchema = z.object({
 });
 
 const createTransferSchema = z.object({
-  requesting_camp: z.coerce.number().min(1, 'Seleccione campamento origen'),
-  target_camp: z.coerce.number().min(1, 'Seleccione campamento destino'),
+  requesting_camp: z.coerce.number().min(1, 'Select source camp'),
+  target_camp: z.coerce.number().min(1, 'Select destination camp'),
   type: z.enum(['RESOURCE', 'PERSON', 'MIXED']),
   notes: z.string().optional(),
   leader_person_id: z.coerce.number().optional(),
   scheduled_delivery_date: z.string().optional(),
-  items: z.array(transferItemSchema).min(1, 'Al menos un item es requerido'),
+  items: z.array(transferItemSchema).min(1, 'At least one item is required'),
 });
 
 type TransferFormValues = z.infer<typeof createTransferSchema>;
@@ -160,7 +160,7 @@ export function TransfersPage() {
   };
 
   const handleSchedule = async (id: number) => {
-    const date = prompt('Fecha de entrega (YYYY-MM-DDTHH:mm):');
+    const date = prompt('Delivery date (YYYY-MM-DDTHH:mm):');
     if (!date) return;
     await scheduleMutation.mutateAsync({ id, payload: { scheduled_delivery_date: date } });
   };
@@ -182,10 +182,10 @@ export function TransfersPage() {
       <div className="space-y-6">
         <Panel title="ERROR" tag="TRN.ERR" status="ERROR" accent="purple">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(error as Error)?.message || 'Error al cargar transferencias'}
+            {(error as Error)?.message || 'Failed to load transfers'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       </div>
@@ -198,7 +198,7 @@ export function TransfersPage() {
   return (
     <div className="space-y-6">
       <Panel
-        title="TRANSFERENCIAS ENTRE CAMPAMENTOS"
+        title="CAMP-TO-CAMP TRANSFERS"
         tag="TRN.01"
         status={transfersArray.length.toString()}
         accent="cyan"
@@ -206,13 +206,11 @@ export function TransfersPage() {
         {transfersArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <ArrowRightLeft className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY TRANSFERENCIAS REGISTRADAS
-            </p>
+            <p className="font-mono-data text-sm text-muted-foreground">NO TRANSFERS REGISTERED</p>
             <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
-                NUEVA TRANSFERENCIA
+                NEW TRANSFER
               </span>
             </GlitchButton>
           </div>
@@ -222,7 +220,7 @@ export function TransfersPage() {
               <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
-                  NUEVA TRANSFERENCIA
+                  NEW TRANSFER
                 </span>
               </GlitchButton>
             </div>
@@ -230,12 +228,12 @@ export function TransfersPage() {
               <table className="w-full text-left font-mono-data text-xs">
                 <thead>
                   <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                    <th className="py-3 px-2">TIPO</th>
-                    <th className="py-3 px-2">ORIGEN → DESTINO</th>
-                    <th className="py-3 px-2">ESTADO</th>
+                    <th className="py-3 px-2">TYPE</th>
+                    <th className="py-3 px-2">SOURCE → DESTINATION</th>
+                    <th className="py-3 px-2">STATUS</th>
                     <th className="py-3 px-2">ITEMS</th>
-                    <th className="py-3 px-2">CREADO</th>
-                    <th className="py-3 px-2">ACCIONES WORKFLOW</th>
+                    <th className="py-3 px-2">CREATED</th>
+                    <th className="py-3 px-2">WORKFLOW ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -283,7 +281,7 @@ export function TransfersPage() {
                                   type="button"
                                   onClick={() => handleSchedule(t.id as number)}
                                   className="p-1 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] text-[10px]"
-                                  title="Programar entrega"
+                                  title="Schedule delivery"
                                 >
                                   <Truck className="h-3 w-3" />
                                 </button>
@@ -291,7 +289,7 @@ export function TransfersPage() {
                                   type="button"
                                   onClick={() => handleApproveSource(t.id as number)}
                                   className="p-1 rounded-sm text-green-400 hover:bg-green-400/10 text-[10px]"
-                                  title="Aprobar origen"
+                                  title="Approve source"
                                 >
                                   <Check className="h-3 w-3" />
                                 </button>
@@ -302,7 +300,7 @@ export function TransfersPage() {
                                     setRejectDialogOpen(true);
                                   }}
                                   className="p-1 rounded-sm text-red-400 hover:bg-red-400/10 text-[10px]"
-                                  title="Rechazar"
+                                  title="Reject"
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
@@ -314,7 +312,7 @@ export function TransfersPage() {
                                 onClick={() => handleApproveTarget(t.id as number)}
                                 className="p-1 rounded-sm bg-green-400/10 text-green-400 hover:bg-green-400/20 text-[10px] px-2"
                               >
-                                APROBAR DESTINO
+                                APPROVE DESTINATION
                               </button>
                             )}
                             {status === 'APPROVED_TARGET' && (
@@ -323,14 +321,14 @@ export function TransfersPage() {
                                 onClick={() => handleComplete(t.id as number)}
                                 className="p-1 rounded-sm bg-[var(--neon-fuchsia)]/10 text-[var(--neon-fuchsia)] hover:bg-[var(--neon-fuchsia)]/20 text-[10px] px-2"
                               >
-                                COMPLETAR
+                                COMPLETE
                               </button>
                             )}
                             {status === 'COMPLETED' && (
-                              <span className="text-[10px] text-muted-foreground">COMPLETADO</span>
+                              <span className="text-[10px] text-muted-foreground">COMPLETED</span>
                             )}
                             {status === 'REJECTED' && (
-                              <span className="text-[10px] text-red-400">RECHAZADO</span>
+                              <span className="text-[10px] text-red-400">REJECTED</span>
                             )}
                           </div>
                         </td>
@@ -349,20 +347,20 @@ export function TransfersPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-cyan">
-              NUEVA TRANSFERENCIA
+              NEW TRANSFER
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  CAMPAMENTO ORIGEN //
+                  SOURCE CAMP //
                 </label>
                 <select
                   {...formCreate.register('requesting_camp')}
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 >
-                  <option value="0">SELECCIONE...</option>
+                  <option value="0">SELECT...</option>
                   {campsArray.map((c: Record<string, unknown>) => (
                     <option key={c.id as number} value={c.id as number}>
                       {c.name as string}
@@ -372,13 +370,13 @@ export function TransfersPage() {
               </div>
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  CAMPAMENTO DESTINO //
+                  DESTINATION CAMP //
                 </label>
                 <select
                   {...formCreate.register('target_camp')}
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
-                  <option value="0">SELECCIONE...</option>
+                  <option value="0">SELECT...</option>
                   {campsArray.map((c: Record<string, unknown>) => (
                     <option key={c.id as number} value={c.id as number}>
                       {c.name as string}
@@ -389,15 +387,15 @@ export function TransfersPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                TIPO //
+                TYPE //
               </label>
               <select
                 {...formCreate.register('type')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
-                <option value="RESOURCE">RECURSOS</option>
-                <option value="PERSON">PERSONAS</option>
-                <option value="MIXED">MIXTO</option>
+                <option value="RESOURCE">RESOURCES</option>
+                <option value="PERSON">PEOPLE</option>
+                <option value="MIXED">MIXED</option>
               </select>
             </div>
             <div>
@@ -412,19 +410,19 @@ export function TransfersPage() {
                   >
                     <div className="flex-1 grid grid-cols-2 gap-2">
                       <div>
-                        <label className="text-[9px] text-muted-foreground">TIPO</label>
+                        <label className="text-[9px] text-muted-foreground">TYPE</label>
                         <select
                           {...formCreate.register(`items.${index}.item_type`)}
                           className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                         >
-                          <option value="RESOURCE">RECURSO</option>
-                          <option value="PERSON">PERSONA</option>
+                          <option value="RESOURCE">RESOURCE</option>
+                          <option value="PERSON">PERSON</option>
                         </select>
                       </div>
                       {watchItems?.[index]?.item_type === 'RESOURCE' ? (
                         <>
                           <div>
-                            <label className="text-[9px] text-muted-foreground">RECURSO ID</label>
+                            <label className="text-[9px] text-muted-foreground">RESOURCE ID</label>
                             <input
                               {...formCreate.register(`items.${index}.resource_type_id`)}
                               type="number"
@@ -433,7 +431,7 @@ export function TransfersPage() {
                             />
                           </div>
                           <div>
-                            <label className="text-[9px] text-muted-foreground">CANTIDAD</label>
+                            <label className="text-[9px] text-muted-foreground">QUANTITY</label>
                             <input
                               {...formCreate.register(`items.${index}.quantity`)}
                               type="number"
@@ -445,7 +443,7 @@ export function TransfersPage() {
                         </>
                       ) : (
                         <div>
-                          <label className="text-[9px] text-muted-foreground">PERSONA ID</label>
+                          <label className="text-[9px] text-muted-foreground">PERSON ID</label>
                           <input
                             {...formCreate.register(`items.${index}.person_id`)}
                             type="number"
@@ -472,12 +470,12 @@ export function TransfersPage() {
                 onClick={addItem}
                 className="mt-2 text-[10px] text-[var(--neon-cyan)] hover:text-[var(--neon-fuchsia)] font-mono-data"
               >
-                + AGREGAR ITEM
+                + ADD ITEM
               </button>
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOTAS //
+                NOTES //
               </label>
               <textarea
                 {...formCreate.register('notes')}
@@ -494,10 +492,10 @@ export function TransfersPage() {
                   setCreateOpen(false);
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'CREANDO...' : 'CREAR'}
+                {createMutation.isPending ? 'CREATING...' : 'CREATE'}
               </GlitchButton>
             </div>
           </form>
@@ -509,13 +507,13 @@ export function TransfersPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
-              RECHAZAR TRANSFERENCIA
+              REJECT TRANSFER
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                MOTIVO //
+                REASON //
               </label>
               <textarea
                 value={rejectTarget?.reason ?? ''}
@@ -535,7 +533,7 @@ export function TransfersPage() {
                   setRejectTarget(null);
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton
                 variant="danger"
@@ -543,7 +541,7 @@ export function TransfersPage() {
                 onClick={handleReject}
                 disabled={!rejectTarget?.reason || rejectMutation.isPending}
               >
-                {rejectMutation.isPending ? 'RECHAZANDO...' : 'RECHAZAR'}
+                {rejectMutation.isPending ? 'REJECTING...' : 'REJECT'}
               </GlitchButton>
             </div>
           </div>

@@ -11,16 +11,16 @@ import { useCreatePerson } from '@/features/people/hooks/usePeople';
 import { ArrowLeft, UserPlus, Building2, Wrench } from 'lucide-react';
 
 const createPersonSchema = z.object({
-  full_name: z.string().min(1, 'El nombre es obligatorio'),
-  camp_id: z.coerce.number().min(1, 'Seleccione un campamento'),
-  profession_id: z.coerce.number().min(1, 'Seleccione una profesión'),
+  full_name: z.string().min(1, 'Name is required'),
+  camp_id: z.coerce.number().min(1, 'Select a camp'),
+  profession_id: z.coerce.number().min(1, 'Select a profession'),
   status: z.enum(['HEALTHY', 'SICK', 'INJURED', 'AWAY', 'DEAD']).default('HEALTHY'),
   age: z.coerce.number().min(0).optional(),
   identification_code: z.string().optional(),
   blood_type: z.string().optional(),
   skills_summary: z.string().optional(),
   photo_url: z.string().optional(),
-  admitted_at: z.string().min(1, 'La fecha de ingreso es obligatoria'),
+  admitted_at: z.string().min(1, 'Admission date is required'),
 });
 
 type CreatePersonFormValues = z.infer<typeof createPersonSchema>;
@@ -71,20 +71,20 @@ export function PersonCreatePage() {
       <GlitchButton variant="ghost" onClick={() => navigate('/people')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
-          VOLVER
+          BACK
         </span>
       </GlitchButton>
 
-      <Panel title="REGISTRAR PERSONA" tag="PPL.NEW" status="INPUT" accent="cyan">
+      <Panel title="REGISTER PERSON" tag="PPL.NEW" status="INPUT" accent="cyan">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Name */}
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-              NOMBRE COMPLETO //
+              FULL NAME //
             </label>
             <input
               {...register('full_name')}
-              placeholder="JUAN PEREZ"
+              placeholder="JOHN DOE"
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
             />
             {errors.full_name && (
@@ -98,25 +98,25 @@ export function PersonCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                CAMPAMENTO //
+                CAMP //
               </label>
               {campsLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
                   <ScreenLoader />
                 </div>
               ) : campsError ? (
-                <p className="text-red-400 font-mono-data text-xs">Error al cargar campamentos</p>
+                <p className="text-red-400 font-mono-data text-xs">Failed to load camps</p>
               ) : campsArray.length === 0 ? (
                 <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
                   <Building2 className="h-3.5 w-3.5" />
-                  NO HAY CAMPAMENTOS DISPONIBLES
+                  NO CAMPS AVAILABLE
                 </div>
               ) : (
                 <select
                   {...register('camp_id')}
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 >
-                  <option value="">SELECCIONE...</option>
+                  <option value="">SELECT...</option>
                   {campsArray.map((c: Record<string, unknown>) => (
                     <option key={c.id as number} value={c.id as number}>
                       {c.name as string}
@@ -133,25 +133,25 @@ export function PersonCreatePage() {
 
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                PROFESIÓN //
+                PROFESSION //
               </label>
               {profsLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
                   <ScreenLoader />
                 </div>
               ) : profsError ? (
-                <p className="text-red-400 font-mono-data text-xs">Error al cargar profesiones</p>
+                <p className="text-red-400 font-mono-data text-xs">Failed to load professions</p>
               ) : professionsArray.length === 0 ? (
                 <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
                   <Wrench className="h-3.5 w-3.5" />
-                  NO HAY PROFESIONES DISPONIBLES
+                  NO PROFESSIONS AVAILABLE
                 </div>
               ) : (
                 <select
                   {...register('profession_id')}
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
-                  <option value="">SELECCIONE...</option>
+                  <option value="">SELECT...</option>
                   {professionsArray.map((p: Record<string, unknown>) => (
                     <option key={p.id as number} value={p.id as number}>
                       {p.name as string}
@@ -171,22 +171,22 @@ export function PersonCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                ESTADO //
+                STATUS //
               </label>
               <select
                 {...register('status')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
-                <option value="HEALTHY">SANO</option>
-                <option value="SICK">ENFERMO</option>
-                <option value="INJURED">LESIONADO</option>
-                <option value="AWAY">AUSENTE</option>
-                <option value="DEAD">FALLECIDO</option>
+                <option value="HEALTHY">HEALTHY</option>
+                <option value="SICK">SICK</option>
+                <option value="INJURED">INJURED</option>
+                <option value="AWAY">AWAY</option>
+                <option value="DEAD">DECEASED</option>
               </select>
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                EDAD //
+                AGE //
               </label>
               <input
                 {...register('age')}
@@ -200,7 +200,7 @@ export function PersonCreatePage() {
           {/* Admitted at */}
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-              FECHA DE INGRESO //
+              ADMISSION DATE //
             </label>
             <input
               {...register('admitted_at')}
@@ -218,7 +218,7 @@ export function PersonCreatePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                CÓDIGO IDENTIFICACIÓN //
+                ID CODE //
               </label>
               <input
                 {...register('identification_code')}
@@ -228,7 +228,7 @@ export function PersonCreatePage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                TIPO SANGRE //
+                BLOOD TYPE //
               </label>
               <input
                 {...register('blood_type')}
@@ -241,12 +241,12 @@ export function PersonCreatePage() {
           {/* Skills */}
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-              HABILIDADES //
+              SKILLS //
             </label>
             <textarea
               {...register('skills_summary')}
               rows={3}
-              placeholder="Primeros auxilios, mecánica básica..."
+              placeholder="First aid, basic mechanics..."
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             />
           </div>
@@ -254,15 +254,15 @@ export function PersonCreatePage() {
           {/* Submit */}
           <div className="flex justify-end gap-3 pt-4 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
             <GlitchButton variant="ghost" type="button" onClick={() => navigate('/people')}>
-              CANCELAR
+              CANCEL
             </GlitchButton>
             <GlitchButton variant="primary" type="submit" disabled={isPending}>
               {isPending ? (
-                'REGISTRANDO...'
+                'REGISTERING...'
               ) : (
                 <span className="flex items-center gap-2">
                   <UserPlus className="h-3.5 w-3.5" />
-                  REGISTRAR
+                  REGISTER
                 </span>
               )}
             </GlitchButton>

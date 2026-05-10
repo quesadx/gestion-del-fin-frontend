@@ -25,10 +25,10 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const resourceSchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio'),
-  unit: z.string().min(1, 'La unidad es obligatoria'),
-  daily_ration: z.coerce.number().min(0, 'No puede ser negativo'),
-  minimum_stock: z.coerce.number().min(0, 'No puede ser negativo'),
+  name: z.string().min(1, 'Name is required'),
+  unit: z.string().min(1, 'Unit is required'),
+  daily_ration: z.coerce.number().min(0, 'Cannot be negative'),
+  minimum_stock: z.coerce.number().min(0, 'Cannot be negative'),
 });
 
 type ResourceFormValues = z.infer<typeof resourceSchema>;
@@ -100,10 +100,10 @@ export function ResourcesPage() {
       <div className="space-y-6">
         <Panel title="ERROR" tag="RSC.ERR" status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(error as Error)?.message || 'Error al cargar recursos'}
+            {(error as Error)?.message || 'Failed to load resources'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       </div>
@@ -118,11 +118,9 @@ export function ResourcesPage() {
         {items.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <Package className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY RECURSOS REGISTRADOS
-            </p>
+            <p className="font-mono-data text-sm text-muted-foreground">NO RESOURCES REGISTERED</p>
             <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
-              NUEVO RECURSO
+              NEW RESOURCE
             </GlitchButton>
           </div>
         ) : (
@@ -131,11 +129,11 @@ export function ResourcesPage() {
               <table className="w-full text-left font-mono-data text-xs">
                 <thead>
                   <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                    <th className="py-3 px-2 font-semibold">NOMBRE</th>
-                    <th className="py-3 px-2 font-semibold">UNIDAD</th>
-                    <th className="py-3 px-2 font-semibold text-right">RACIÓN DIARIA</th>
-                    <th className="py-3 px-2 font-semibold text-right">STOCK MÍNIMO</th>
-                    <th className="py-3 px-2 font-semibold text-right">ACCIONES</th>
+                    <th className="py-3 px-2 font-semibold">NAME</th>
+                    <th className="py-3 px-2 font-semibold">UNIT</th>
+                    <th className="py-3 px-2 font-semibold text-right">DAILY RATION</th>
+                    <th className="py-3 px-2 font-semibold text-right">MINIMUM STOCK</th>
+                    <th className="py-3 px-2 font-semibold text-right">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -168,7 +166,7 @@ export function ResourcesPage() {
                               })
                             }
                             className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
-                            title="Editar"
+                            title="Edit"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
                           </button>
@@ -178,7 +176,7 @@ export function ResourcesPage() {
                               setDeleteTarget({ id: item.id as number, name: item.name as string })
                             }
                             className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
-                            title="Eliminar"
+                            title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -193,7 +191,7 @@ export function ResourcesPage() {
               <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
-                  NUEVO RECURSO
+                  NEW RESOURCE
                 </span>
               </GlitchButton>
             </div>
@@ -206,18 +204,18 @@ export function ResourcesPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              NUEVO RECURSO
+              NEW RESOURCE
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOMBRE //
+                NAME //
               </label>
               <input
                 {...formCreate.register('name')}
                 type="text"
-                placeholder="AGUA"
+                placeholder="WATER"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {formCreate.formState.errors.name && (
@@ -228,12 +226,12 @@ export function ResourcesPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                UNIDAD //
+                UNIT //
               </label>
               <input
                 {...formCreate.register('unit')}
                 type="text"
-                placeholder="LITROS"
+                placeholder="LITERS"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {formCreate.formState.errors.unit && (
@@ -245,7 +243,7 @@ export function ResourcesPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  RACIÓN DIARIA //
+                  DAILY RATION //
                 </label>
                 <input
                   {...formCreate.register('daily_ration')}
@@ -263,7 +261,7 @@ export function ResourcesPage() {
               </div>
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  STOCK MÍNIMO //
+                  MINIMUM STOCK //
                 </label>
                 <input
                   {...formCreate.register('minimum_stock')}
@@ -289,10 +287,10 @@ export function ResourcesPage() {
                   setCreateDialogOpen(false);
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'CREANDO...' : 'CREAR'}
+                {createMutation.isPending ? 'CREATING...' : 'CREATE'}
               </GlitchButton>
             </div>
           </form>
@@ -309,13 +307,13 @@ export function ResourcesPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              EDITAR RECURSO
+              EDIT RESOURCE
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formEdit.handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOMBRE //
+                NAME //
               </label>
               <input
                 {...formEdit.register('name')}
@@ -330,7 +328,7 @@ export function ResourcesPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                UNIDAD //
+                UNIT //
               </label>
               <input
                 {...formEdit.register('unit')}
@@ -346,7 +344,7 @@ export function ResourcesPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  RACIÓN DIARIA //
+                  DAILY RATION //
                 </label>
                 <input
                   {...formEdit.register('daily_ration')}
@@ -358,7 +356,7 @@ export function ResourcesPage() {
               </div>
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  STOCK MÍNIMO //
+                  MINIMUM STOCK //
                 </label>
                 <input
                   {...formEdit.register('minimum_stock')}
@@ -371,10 +369,10 @@ export function ResourcesPage() {
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'GUARDANDO...' : 'GUARDAR'}
+                {updateMutation.isPending ? 'SAVING...' : 'SAVE'}
               </GlitchButton>
             </div>
           </form>
@@ -386,24 +384,24 @@ export function ResourcesPage() {
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
-              CONFIRMAR ELIMINACIÓN
+              CONFIRM DELETE
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              ¿Eliminar recurso{' '}
-              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>? Esta acción
-              no se puede deshacer.
+              Delete resource{' '}
+              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
-              CANCELAR
+              CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
               className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
             >
-              {deleteMutation.isPending ? 'ELIMINANDO...' : 'ELIMINAR'}
+              {deleteMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

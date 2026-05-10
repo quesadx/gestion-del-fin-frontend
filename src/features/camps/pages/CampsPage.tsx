@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const createCampSchema = z.object({
-  name: z.string().min(1, 'El nombre es obligatorio'),
+  name: z.string().min(1, 'Name is required'),
   location: z.string().optional(),
   status: z.enum(['ACTIVE', 'ABANDONED']).default('ACTIVE'),
 });
@@ -73,10 +73,10 @@ export function CampsPage() {
       <div className="space-y-6">
         <Panel title="ERROR" tag="ERR.01" status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(error as Error)?.message || 'Error al cargar campamentos'}
+            {(error as Error)?.message || 'Failed to load camps'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       </div>
@@ -90,11 +90,9 @@ export function CampsPage() {
           {!camps || camps.length === 0 ? (
             <div className="flex flex-col items-center gap-4 py-8">
               <MapPin className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-              <p className="font-mono-data text-sm text-muted-foreground">
-                NO HAY CAMPAMENTOS REGISTRADOS
-              </p>
+              <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS REGISTERED</p>
               <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
-                NUEVO CAMPAMENTO
+                NEW CAMP
               </GlitchButton>
             </div>
           ) : (
@@ -103,11 +101,11 @@ export function CampsPage() {
                 <table className="w-full text-left font-mono-data text-xs">
                   <thead>
                     <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                      <th className="py-3 px-2 font-semibold">NOMBRE</th>
-                      <th className="py-3 px-2 font-semibold">UBICACIÓN</th>
-                      <th className="py-3 px-2 font-semibold">ESTADO</th>
-                      <th className="py-3 px-2 font-semibold">CREADO</th>
-                      <th className="py-3 px-2 font-semibold text-right">ACCIONES</th>
+                      <th className="py-3 px-2 font-semibold">NAME</th>
+                      <th className="py-3 px-2 font-semibold">LOCATION</th>
+                      <th className="py-3 px-2 font-semibold">STATUS</th>
+                      <th className="py-3 px-2 font-semibold">CREATED</th>
+                      <th className="py-3 px-2 font-semibold text-right">ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -143,7 +141,7 @@ export function CampsPage() {
                                 navigate(`/camps/${camp.id}`);
                               }}
                               className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
-                              title="Ver detalle"
+                              title="View details"
                             >
                               <Eye className="h-3.5 w-3.5" />
                             </button>
@@ -157,7 +155,7 @@ export function CampsPage() {
                                 });
                               }}
                               className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
-                              title="Eliminar"
+                              title="Delete"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -172,7 +170,7 @@ export function CampsPage() {
                 <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
                   <span className="flex items-center gap-2">
                     <Plus className="h-3.5 w-3.5" />
-                    NUEVO CAMPAMENTO
+                    NEW CAMP
                   </span>
                 </GlitchButton>
               </div>
@@ -186,18 +184,18 @@ export function CampsPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              NUEVO CAMPAMENTO
+              NEW CAMP
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOMBRE //
+                NAME //
               </label>
               <input
                 {...register('name')}
                 type="text"
-                placeholder="CAMPAMENTO NORTE"
+                placeholder="NORTH CAMP"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {errors.name && (
@@ -208,25 +206,25 @@ export function CampsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                UBICACIÓN //
+                LOCATION //
               </label>
               <input
                 {...register('location')}
                 type="text"
-                placeholder="SECTOR 7G - ZONA NORTE"
+                placeholder="SECTOR 7G - NORTH ZONE"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                ESTADO //
+                STATUS //
               </label>
               <select
                 {...register('status')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
-                <option value="ACTIVE">ACTIVO</option>
-                <option value="ABANDONED">ABANDONADO</option>
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="ABANDONED">ABANDONED</option>
               </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -238,10 +236,10 @@ export function CampsPage() {
                   setCreateDialogOpen(false);
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createCampMutation.isPending}>
-                {createCampMutation.isPending ? 'CREANDO...' : 'CREAR'}
+                {createCampMutation.isPending ? 'CREATING...' : 'CREATE'}
               </GlitchButton>
             </div>
           </form>
@@ -253,24 +251,23 @@ export function CampsPage() {
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
-              CONFIRMAR ELIMINACIÓN
+              CONFIRM DELETE
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              ¿Eliminar campamento{' '}
-              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>? Esta acción
-              no se puede deshacer.
+              Delete camp <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>?
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
-              CANCELAR
+              CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteCampMutation.isPending}
               className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
             >
-              {deleteCampMutation.isPending ? 'ELIMINANDO...' : 'ELIMINAR'}
+              {deleteCampMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

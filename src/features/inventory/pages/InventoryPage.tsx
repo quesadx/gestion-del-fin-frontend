@@ -16,9 +16,9 @@ import { Warehouse, ClipboardList, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const adjustmentSchema = z.object({
-  resource_type_id: z.coerce.number().min(1, 'Seleccione un recurso'),
+  resource_type_id: z.coerce.number().min(1, 'Select a resource'),
   type: z.enum(['MANUAL_IN', 'MANUAL_OUT']),
-  quantity: z.coerce.number().min(1, 'La cantidad debe ser mayor a 0'),
+  quantity: z.coerce.number().min(1, 'Quantity must be greater than 0'),
   description: z.string().optional(),
 });
 
@@ -61,7 +61,7 @@ export function InventoryPage() {
     <div className="space-y-6">
       {/* Camp selector */}
       <Panel
-        title="INVENTARIO"
+        title="INVENTORY"
         tag="INV.01"
         status={selectedCampId ? 'ONLINE' : 'AWAITING'}
         accent="cyan"
@@ -71,21 +71,19 @@ export function InventoryPage() {
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <Warehouse className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY CAMPAMENTOS DISPONIBLES
-            </p>
+            <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
           </div>
         ) : (
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-              CAMPAMENTO //
+              CAMP //
             </label>
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
-              <option value="">SELECCIONE UN CAMPAMENTO</option>
+              <option value="">SELECT A CAMP</option>
               {campsArray.map((c: Record<string, unknown>) => (
                 <option key={c.id as number} value={c.id as number}>
                   {c.name as string}
@@ -101,7 +99,7 @@ export function InventoryPage() {
         <Panel accent="fuchsia">
           <div className="flex flex-col items-center gap-4 py-8">
             <Warehouse className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">SELECCIONE UN CAMPAMENTO</p>
+            <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
           </div>
         </Panel>
       ) : invLoading ? (
@@ -109,22 +107,22 @@ export function InventoryPage() {
       ) : invError ? (
         <Panel title="ERROR" status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(invErr as Error)?.message || 'Error al cargar inventario'}
+            {(invErr as Error)?.message || 'Failed to load inventory'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       ) : invArray.length === 0 ? (
         <Panel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardList className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">EL INVENTARIO ESTÁ VACÍO</p>
+            <p className="font-mono-data text-sm text-muted-foreground">INVENTORY IS EMPTY</p>
           </div>
         </Panel>
       ) : (
         <Panel
-          title="STOCK ACTUAL"
+          title="CURRENT STOCK"
           tag={`INV.${selectedCampId}`}
           status={`${invArray.length} ITEMS`}
           accent="cyan"
@@ -133,13 +131,13 @@ export function InventoryPage() {
             <GlitchButton variant="primary" onClick={() => setAdjustOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
-                AJUSTE MANUAL
+                MANUAL ADJUSTMENT
               </span>
             </GlitchButton>
             <GlitchButton variant="ghost" onClick={() => navigate('/inventory/audit')}>
               <span className="flex items-center gap-2">
                 <ClipboardList className="h-3.5 w-3.5" />
-                AUDITORÍA
+                AUDIT
               </span>
             </GlitchButton>
           </div>
@@ -147,10 +145,10 @@ export function InventoryPage() {
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
                 <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-3 px-2 font-semibold">RECURSO</th>
-                  <th className="py-3 px-2 font-semibold">STOCK ACTUAL</th>
-                  <th className="py-3 px-2 font-semibold">MÍNIMO</th>
-                  <th className="py-3 px-2 font-semibold">ESTADO</th>
+                  <th className="py-3 px-2 font-semibold">RESOURCE</th>
+                  <th className="py-3 px-2 font-semibold">CURRENT STOCK</th>
+                  <th className="py-3 px-2 font-semibold">MINIMUM</th>
+                  <th className="py-3 px-2 font-semibold">STATUS</th>
                 </tr>
               </thead>
               <tbody>
@@ -173,7 +171,7 @@ export function InventoryPage() {
                       <td className="py-3 px-2 text-muted-foreground">{min}</td>
                       <td className="py-3 px-2">
                         <StatusBadge
-                          status={aboveMin ? 'OK' : 'CRÍTICO'}
+                          status={aboveMin ? 'OK' : 'CRITICAL'}
                           variant={aboveMin ? 'green' : 'red'}
                         />
                       </td>
@@ -191,19 +189,19 @@ export function InventoryPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              AJUSTE MANUAL DE INVENTARIO
+              MANUAL INVENTORY ADJUSTMENT
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={adjForm.handleSubmit(onSubmitAdjust)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                RECURSO //
+                RESOURCE //
               </label>
               <select
                 {...adjForm.register('resource_type_id')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
-                <option value="">SELECCIONE...</option>
+                <option value="">SELECT...</option>
                 {invArray.map((item: Record<string, unknown>) => (
                   <option
                     key={(item.resource_type_id as number) || (item.id as number)}
@@ -221,19 +219,19 @@ export function InventoryPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  TIPO //
+                  TYPE //
                 </label>
                 <select
                   {...adjForm.register('type')}
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
-                  <option value="MANUAL_IN">ENTRADA</option>
-                  <option value="MANUAL_OUT">SALIDA</option>
+                  <option value="MANUAL_IN">IN</option>
+                  <option value="MANUAL_OUT">OUT</option>
                 </select>
               </div>
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  CANTIDAD //
+                  QUANTITY //
                 </label>
                 <input
                   {...adjForm.register('quantity')}
@@ -245,7 +243,7 @@ export function InventoryPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                DESCRIPCIÓN //
+                DESCRIPTION //
               </label>
               <textarea
                 {...adjForm.register('description')}
@@ -262,10 +260,10 @@ export function InventoryPage() {
                   adjForm.reset();
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createAdjustment.isPending}>
-                {createAdjustment.isPending ? 'PROCESANDO...' : 'APLICAR AJUSTE'}
+                {createAdjustment.isPending ? 'PROCESSING...' : 'APPLY ADJUSTMENT'}
               </GlitchButton>
             </div>
           </form>

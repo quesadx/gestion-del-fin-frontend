@@ -89,7 +89,7 @@ export function LoginPage() {
               className="font-sans text-sm font-extrabold tracking-[0.25em] text-accent-primary"
               style={{ textShadow: '0 0 16px var(--accent-primary)' }}
             >
-              GESTION DEL FIN
+              END MANAGEMENT
             </h1>
             <span className="block font-mono-sm text-text-muted">
               TERMINAL v2.0 · AUTHENTICATION REQUIRED

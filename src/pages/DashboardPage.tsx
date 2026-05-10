@@ -111,7 +111,7 @@ export function DashboardPage() {
             <div className="flex items-center gap-3">
               <StatusBadge status="TERMINAL ACTIVE" variant="green" />
               <span className="font-mono-sm tracking-[0.15em] text-text-muted">
-                GESTION DEL FIN · COMMAND INTERFACE
+                END MANAGEMENT · COMMAND INTERFACE
               </span>
             </div>
             <h1 className="font-sans text-3xl font-extrabold tracking-tight">

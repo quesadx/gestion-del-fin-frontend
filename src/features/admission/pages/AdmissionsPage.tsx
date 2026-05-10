@@ -17,7 +17,7 @@ import { ClipboardCheck, UserPlus, CheckCircle, XCircle, FileText } from 'lucide
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const createAdmissionSchema = z.object({
-  applicant_name: z.string().min(1, 'El nombre es obligatorio'),
+  applicant_name: z.string().min(1, 'Name is required'),
   applicant_age: z.coerce.number().min(0).optional(),
   applicant_skills: z.string().optional(),
   health_notes: z.string().optional(),
@@ -78,7 +78,7 @@ export function AdmissionsPage() {
   return (
     <div className="space-y-6">
       <Panel
-        title="SOLICITUDES DE ADMISIÓN"
+        title="ADMISSION REQUESTS"
         tag="ADM.01"
         status={selectedCampId ? 'ONLINE' : 'AWAITING'}
         accent="cyan"
@@ -88,21 +88,19 @@ export function AdmissionsPage() {
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <ClipboardCheck className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY CAMPAMENTOS DISPONIBLES
-            </p>
+            <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
           </div>
         ) : (
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-              CAMPAMENTO //
+              CAMP //
             </label>
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
-              <option value="">SELECCIONE UN CAMPAMENTO</option>
+              <option value="">SELECT A CAMP</option>
               {campsArray.map((c: Record<string, unknown>) => (
                 <option key={c.id as number} value={c.id as number}>
                   {c.name as string}
@@ -117,7 +115,7 @@ export function AdmissionsPage() {
         <Panel accent="fuchsia">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardCheck className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">SELECCIONE UN CAMPAMENTO</p>
+            <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
           </div>
         </Panel>
       ) : admLoading ? (
@@ -125,39 +123,37 @@ export function AdmissionsPage() {
       ) : admError ? (
         <Panel title="ERROR" status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(admErr as Error)?.message || 'Error al cargar solicitudes'}
+            {(admErr as Error)?.message || 'Failed to load requests'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       ) : admArray.length === 0 ? (
         <Panel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
             <FileText className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY SOLICITUDES DE ADMISIÓN
-            </p>
+            <p className="font-mono-data text-sm text-muted-foreground">NO ADMISSION REQUESTS</p>
             <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <UserPlus className="h-3.5 w-3.5" />
-                NUEVA SOLICITUD
+                NEW REQUEST
               </span>
             </GlitchButton>
           </div>
         </Panel>
       ) : (
         <Panel
-          title="SOLICITUDES"
+          title="REQUESTS"
           tag={`ADM.${selectedCampId}`}
-          status={`${admArray.length} REGISTROS`}
+          status={`${admArray.length} RECORDS`}
           accent="cyan"
         >
           <div className="mb-4 flex justify-end">
             <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <UserPlus className="h-3.5 w-3.5" />
-                NUEVA SOLICITUD
+                NEW REQUEST
               </span>
             </GlitchButton>
           </div>
@@ -165,13 +161,13 @@ export function AdmissionsPage() {
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
                 <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-3 px-2">NOMBRE</th>
-                  <th className="py-3 px-2">EDAD</th>
-                  <th className="py-3 px-2">HABILIDADES</th>
-                  <th className="py-3 px-2">SALUD</th>
-                  <th className="py-3 px-2">DECISIÓN</th>
-                  <th className="py-3 px-2">FECHA</th>
-                  <th className="py-3 px-2">ACCIONES</th>
+                  <th className="py-3 px-2">NAME</th>
+                  <th className="py-3 px-2">AGE</th>
+                  <th className="py-3 px-2">SKILLS</th>
+                  <th className="py-3 px-2">HEALTH</th>
+                  <th className="py-3 px-2">DECISION</th>
+                  <th className="py-3 px-2">DATE</th>
+                  <th className="py-3 px-2">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
@@ -199,7 +195,7 @@ export function AdmissionsPage() {
                           variant={a.final_decision === 'ACCEPTED' ? 'green' : 'red'}
                         />
                       ) : (
-                        <StatusBadge status="PENDIENTE" variant="yellow" />
+                        <StatusBadge status="PENDING" variant="yellow" />
                       )}
                     </td>
                     <td className="py-3 px-2 text-muted-foreground">
@@ -212,7 +208,7 @@ export function AdmissionsPage() {
                             type="button"
                             onClick={() => handleReview(a.id as number, 'ACCEPTED')}
                             className="p-1.5 rounded-sm text-green-400 hover:bg-green-400/10 transition-colors"
-                            title="Aceptar"
+                            title="Accept"
                           >
                             <CheckCircle className="h-3.5 w-3.5" />
                           </button>
@@ -220,7 +216,7 @@ export function AdmissionsPage() {
                             type="button"
                             onClick={() => handleReview(a.id as number, 'REJECTED')}
                             className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
-                            title="Rechazar"
+                            title="Reject"
                           >
                             <XCircle className="h-3.5 w-3.5" />
                           </button>
@@ -240,13 +236,13 @@ export function AdmissionsPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              NUEVA SOLICITUD DE ADMISIÓN
+              NEW ADMISSION REQUEST
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={form.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOMBRE DEL SOLICITANTE //
+                APPLICANT NAME //
               </label>
               <input
                 {...form.register('applicant_name')}
@@ -261,7 +257,7 @@ export function AdmissionsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  EDAD //
+                  AGE //
                 </label>
                 <input
                   {...form.register('applicant_age')}
@@ -272,7 +268,7 @@ export function AdmissionsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                HABILIDADES //
+                SKILLS //
               </label>
               <textarea
                 {...form.register('applicant_skills')}
@@ -282,7 +278,7 @@ export function AdmissionsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOTAS DE SALUD //
+                HEALTH NOTES //
               </label>
               <textarea
                 {...form.register('health_notes')}
@@ -292,7 +288,7 @@ export function AdmissionsPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOTAS DE ANTECEDENTES //
+                BACKGROUND NOTES //
               </label>
               <textarea
                 {...form.register('background_notes')}
@@ -309,10 +305,10 @@ export function AdmissionsPage() {
                   form.reset();
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'CREANDO...' : 'CREAR SOLICITUD'}
+                {createMutation.isPending ? 'CREATING...' : 'CREATE REQUEST'}
               </GlitchButton>
             </div>
           </form>

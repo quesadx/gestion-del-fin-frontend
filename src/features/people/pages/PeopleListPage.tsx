@@ -57,19 +57,17 @@ export function PeopleListPage() {
         {campsLoading ? (
           <ScreenLoader />
         ) : campsError ? (
-          <p className="text-sm text-red-400 font-mono-data">Error al cargar campamentos.</p>
+          <p className="text-sm text-red-400 font-mono-data">Failed to load camps.</p>
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <Users className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
-              NO HAY CAMPAMENTOS DISPONIBLES
-            </p>
+            <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
           </div>
         ) : (
           <>
             <div className="mb-4">
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                CAMPAMENTO //
+                CAMP //
               </label>
               <select
                 value={selectedCampId ?? ''}
@@ -79,7 +77,7 @@ export function PeopleListPage() {
                 }}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               >
-                <option value="">SELECCIONE UN CAMPAMENTO</option>
+                <option value="">SELECT A CAMP</option>
                 {campsArray.map((camp: Record<string, unknown>) => (
                   <option key={camp.id as number} value={camp.id as number}>
                     {camp.name as string}
@@ -97,7 +95,7 @@ export function PeopleListPage() {
           <div className="flex flex-col items-center gap-4 py-8">
             <Users className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground text-center">
-              SELECCIONE UN CAMPAMENTO
+              SELECT A CAMP
             </p>
           </div>
         </Panel>
@@ -106,10 +104,10 @@ export function PeopleListPage() {
       ) : peopleError ? (
         <Panel title="ERROR" status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(peopleErr as Error)?.message || 'Error al cargar personas'}
+            {(peopleErr as Error)?.message || 'Failed to load people'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetchPeople()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       ) : filteredPeople.length === 0 ? (
@@ -117,29 +115,22 @@ export function PeopleListPage() {
           <div className="flex flex-col items-center gap-4 py-8">
             <Users className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">
-              {searchTerm
-                ? 'NO SE ENCONTRARON PERSONAS CON ESE NOMBRE'
-                : 'NO HAY PERSONAS REGISTRADAS EN ESTE CAMPAMENTO'}
+              {searchTerm ? 'NO PEOPLE FOUND WITH THAT NAME' : 'NO PEOPLE REGISTERED IN THIS CAMP'}
             </p>
             <GlitchButton variant="primary" onClick={() => navigate('/people/new')}>
-              REGISTRAR PERSONA
+              REGISTER PERSON
             </GlitchButton>
           </div>
         </Panel>
       ) : (
-        <Panel
-          title="LISTADO DE PERSONAS"
-          tag={`PPL.${selectedCampId}`}
-          status="ONLINE"
-          accent="cyan"
-        >
+        <Panel title="PEOPLE LIST" tag={`PPL.${selectedCampId}`} status="ONLINE" accent="cyan">
           {/* Search and New */}
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]/50" />
               <input
                 type="text"
-                placeholder="BUSCAR POR NOMBRE..."
+                placeholder="SEARCH BY NAME..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
@@ -148,7 +139,7 @@ export function PeopleListPage() {
             <GlitchButton variant="primary" onClick={() => navigate('/people/new')}>
               <span className="flex items-center gap-2">
                 <UserPlus className="h-3.5 w-3.5" />
-                REGISTRAR PERSONA
+                REGISTER PERSON
               </span>
             </GlitchButton>
           </div>
@@ -158,10 +149,10 @@ export function PeopleListPage() {
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
                 <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-3 px-2 font-semibold">NOMBRE</th>
-                  <th className="py-3 px-2 font-semibold">ESTADO</th>
-                  <th className="py-3 px-2 font-semibold">PROFESIÓN</th>
-                  <th className="py-3 px-2 font-semibold">INGRESO</th>
+                  <th className="py-3 px-2 font-semibold">NAME</th>
+                  <th className="py-3 px-2 font-semibold">STATUS</th>
+                  <th className="py-3 px-2 font-semibold">PROFESSION</th>
+                  <th className="py-3 px-2 font-semibold">ADMITTED</th>
                 </tr>
               </thead>
               <tbody>
@@ -202,17 +193,17 @@ export function PeopleListPage() {
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
-                ANTERIOR
+                PREVIOUS
               </GlitchButton>
               <span className="flex items-center font-mono-data text-xs text-muted-foreground">
-                PÁGINA {page}
+                PAGE {page}
               </span>
               <GlitchButton
                 variant="ghost"
                 disabled={filteredPeople.length < PAGE_SIZE}
                 onClick={() => setPage((p) => p + 1)}
               >
-                SIGUIENTE
+                NEXT
               </GlitchButton>
             </div>
           )}

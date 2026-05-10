@@ -30,14 +30,14 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const updatePersonSchema = z.object({
-  full_name: z.string().min(1, 'El nombre es obligatorio'),
+  full_name: z.string().min(1, 'Name is required'),
   age: z.coerce.number().min(0).optional(),
   identification_code: z.string().optional(),
   blood_type: z.string().optional(),
   skills_summary: z.string().optional(),
   status: z.enum(['HEALTHY', 'SICK', 'INJURED', 'AWAY', 'DEAD']).default('HEALTHY'),
-  profession_id: z.coerce.number().min(1, 'Seleccione una profesión'),
-  admitted_at: z.string().min(1, 'La fecha de ingreso es obligatoria'),
+  profession_id: z.coerce.number().min(1, 'Select a profession'),
+  admitted_at: z.string().min(1, 'Admission date is required'),
 });
 
 type UpdatePersonFormValues = z.infer<typeof updatePersonSchema>;
@@ -117,10 +117,10 @@ export function PersonDetailPage() {
       <div className="space-y-6">
         <Panel title="ERROR" tag={`PPL.${personId}`} status="ERROR" accent="fuchsia">
           <p className="text-sm text-red-400 font-mono-data mb-4">
-            {(error as Error)?.message || 'Error al cargar persona'}
+            {(error as Error)?.message || 'Failed to load person'}
           </p>
           <GlitchButton variant="warning" onClick={() => refetch()}>
-            REINTENTAR
+            RETRY
           </GlitchButton>
         </Panel>
       </div>
@@ -130,14 +130,9 @@ export function PersonDetailPage() {
   if (!person) {
     return (
       <div className="space-y-6">
-        <Panel
-          title="PERSONA NO ENCONTRADA"
-          tag={`PPL.${personId}`}
-          status="OFFLINE"
-          accent="fuchsia"
-        >
+        <Panel title="PERSON NOT FOUND" tag={`PPL.${personId}`} status="OFFLINE" accent="fuchsia">
           <p className="text-sm text-muted-foreground font-mono-data">
-            La persona solicitada no existe.
+            Requested person does not exist.
           </p>
         </Panel>
       </div>
@@ -180,7 +175,7 @@ export function PersonDetailPage() {
       <GlitchButton variant="ghost" onClick={() => navigate('/people')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
-          VOLVER
+          BACK
         </span>
       </GlitchButton>
 
@@ -193,76 +188,76 @@ export function PersonDetailPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="space-y-2 font-mono-data text-xs">
             <div>
-              <span className="text-muted-foreground">ESTADO: </span>
+              <span className="text-muted-foreground">STATUS: </span>
               <StatusBadge
                 status={p.status as string}
                 variant={getStatusVariant(p.status as string)}
               />
             </div>
             <div>
-              <span className="text-muted-foreground">PROFESIÓN: </span>
+              <span className="text-muted-foreground">PROFESSION: </span>
               <span className="text-[var(--neon-fuchsia)]">{(profObj?.name as string) || '—'}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">CAMPAMENTO: </span>
+              <span className="text-muted-foreground">CAMP: </span>
               {((camp as Record<string, unknown>)?.name as string) || (p.camp_id as string)}
             </div>
             <div>
-              <span className="text-muted-foreground">INGRESO: </span>
+              <span className="text-muted-foreground">ADMITTED: </span>
               {p.admitted_at ? format(new Date(p.admitted_at as string), 'dd/MM/yyyy') : '—'}
             </div>
           </div>
           <div className="space-y-2 font-mono-data text-xs">
             <div>
-              <span className="text-muted-foreground">EDAD: </span>
+              <span className="text-muted-foreground">AGE: </span>
               {(p.age as number) ?? '—'}
             </div>
             <div>
-              <span className="text-muted-foreground">CÓDIGO: </span>
+              <span className="text-muted-foreground">CODE: </span>
               {(p.identification_code as string) || '—'}
             </div>
             <div>
-              <span className="text-muted-foreground">TIPO SANGRE: </span>
+              <span className="text-muted-foreground">BLOOD TYPE: </span>
               {(p.blood_type as string) || '—'}
             </div>
           </div>
         </div>
         {p.skills_summary && (
           <div className="font-mono-data text-xs">
-            <span className="text-muted-foreground">HABILIDADES: </span>
+            <span className="text-muted-foreground">SKILLS: </span>
             {p.skills_summary as string}
           </div>
         )}
         <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
           <GlitchButton variant="ghost" onClick={() => setEditOpen(true)}>
             <Edit3 className="h-3.5 w-3.5 mr-1" />
-            EDITAR
+            EDIT
           </GlitchButton>
           <GlitchButton variant="ghost" onClick={() => setStatusLogOpen(true)}>
             <Activity className="h-3.5 w-3.5 mr-1" />
-            CAMBIAR ESTADO
+            CHANGE STATUS
           </GlitchButton>
           <GlitchButton variant="warning" onClick={() => setDeleteTarget(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1" />
-            ELIMINAR
+            DELETE
           </GlitchButton>
         </div>
       </Panel>
 
       {statusLogs && statusLogs.length > 0 && (
         <Panel
-          title="HISTORIAL DE ESTADOS"
+          title="STATUS HISTORY"
           tag={`PPL.${personId}.LOGS`}
-          status={`${statusLogs.length} REGISTROS`}
+          status={`${statusLogs.length} RECORDS`}
           accent="cyan"
         >
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
                 <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-2 px-2">ESTADO</th>
-                  <th className="py-2 px-2">FECHA</th>
-                  <th className="py-2 px-2">MOTIVO</th>
+                  <th className="py-2 px-2">STATUS</th>
+                  <th className="py-2 px-2">DATE</th>
+                  <th className="py-2 px-2">REASON</th>
                 </tr>
               </thead>
               <tbody>
@@ -295,13 +290,13 @@ export function PersonDetailPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              EDITAR PERSONA
+              EDIT PERSON
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOMBRE //
+                NAME //
               </label>
               <input
                 {...editForm.register('full_name')}
@@ -316,7 +311,7 @@ export function PersonDetailPage() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  EDAD //
+                  AGE //
                 </label>
                 <input
                   {...editForm.register('age')}
@@ -326,7 +321,7 @@ export function PersonDetailPage() {
               </div>
               <div>
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                  PROFESIÓN //
+                  PROFESSION //
                 </label>
                 <select
                   {...editForm.register('profession_id')}
@@ -344,22 +339,22 @@ export function PersonDetailPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                ESTADO //
+                STATUS //
               </label>
               <select
                 {...editForm.register('status')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
-                <option value="HEALTHY">SANO</option>
-                <option value="SICK">ENFERMO</option>
-                <option value="INJURED">LESIONADO</option>
-                <option value="AWAY">AUSENTE</option>
-                <option value="DEAD">FALLECIDO</option>
+                <option value="HEALTHY">HEALTHY</option>
+                <option value="SICK">SICK</option>
+                <option value="INJURED">INJURED</option>
+                <option value="AWAY">AWAY</option>
+                <option value="DEAD">DECEASED</option>
               </select>
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                INGRESO //
+                ADMITTED //
               </label>
               <input
                 {...editForm.register('admitted_at')}
@@ -369,7 +364,7 @@ export function PersonDetailPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                CÓDIGO IDENTIFICACIÓN //
+                ID CODE //
               </label>
               <input
                 {...editForm.register('identification_code')}
@@ -378,7 +373,7 @@ export function PersonDetailPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                TIPO SANGRE //
+                BLOOD TYPE //
               </label>
               <input
                 {...editForm.register('blood_type')}
@@ -388,7 +383,7 @@ export function PersonDetailPage() {
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                HABILIDADES //
+                SKILLS //
               </label>
               <textarea
                 {...editForm.register('skills_summary')}
@@ -398,10 +393,10 @@ export function PersonDetailPage() {
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton variant="ghost" type="button" onClick={() => setEditOpen(false)}>
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={updateMutation.isPending}>
-                {updateMutation.isPending ? 'GUARDANDO...' : 'GUARDAR'}
+                {updateMutation.isPending ? 'SAVING...' : 'SAVE'}
               </GlitchButton>
             </div>
           </form>
@@ -413,28 +408,28 @@ export function PersonDetailPage() {
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
             <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
-              REGISTRAR CAMBIO DE ESTADO
+              LOG STATUS CHANGE
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={statusLogForm.handleSubmit(onSubmitStatusLog)} className="space-y-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NUEVO ESTADO //
+                NEW STATUS //
               </label>
               <select
                 {...statusLogForm.register('new_status')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
-                <option value="HEALTHY">SANO</option>
-                <option value="SICK">ENFERMO</option>
-                <option value="INJURED">LESIONADO</option>
-                <option value="AWAY">AUSENTE</option>
-                <option value="DEAD">FALLECIDO</option>
+                <option value="HEALTHY">HEALTHY</option>
+                <option value="SICK">SICK</option>
+                <option value="INJURED">INJURED</option>
+                <option value="AWAY">AWAY</option>
+                <option value="DEAD">DECEASED</option>
               </select>
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                MOTIVO //
+                REASON //
               </label>
               <textarea
                 {...statusLogForm.register('reason')}
@@ -451,10 +446,10 @@ export function PersonDetailPage() {
                   statusLogForm.reset();
                 }}
               >
-                CANCELAR
+                CANCEL
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={statusLogMutation.isPending}>
-                {statusLogMutation.isPending ? 'REGISTRANDO...' : 'REGISTRAR'}
+                {statusLogMutation.isPending ? 'LOGGING...' : 'LOG'}
               </GlitchButton>
             </div>
           </form>
@@ -466,24 +461,23 @@ export function PersonDetailPage() {
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
-              CONFIRMAR ELIMINACIÓN
+              CONFIRM DELETE
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              ¿Eliminar a{' '}
-              <span className="text-[var(--neon-fuchsia)]">{p.full_name as string}</span>? Esta
-              acción no se puede deshacer.
+              Delete <span className="text-[var(--neon-fuchsia)]">{p.full_name as string}</span>?
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
-              CANCELAR
+              CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
               className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
             >
-              {deleteMutation.isPending ? 'ELIMINANDO...' : 'ELIMINAR'}
+              {deleteMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
