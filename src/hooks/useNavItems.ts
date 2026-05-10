@@ -56,7 +56,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Explorations',
     to: '/explorations',
     icon: Compass,
-    roles: ['travel_coordinator'],
+    roles: ['system_admin', 'travel_coordinator'],
   },
   {
     label: 'Admissions',

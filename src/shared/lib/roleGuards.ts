@@ -10,7 +10,7 @@ export const ROLE_ACCESS: Record<string, Role[]> = {
   '/resources': ['resource_manager'],
   '/inventory': ['resource_manager', 'worker'],
   '/inventory/audit': ['resource_manager'],
-  '/explorations': ['travel_coordinator'],
+  '/explorations': ['system_admin', 'travel_coordinator'],
   '/admissions': ['system_admin'],
   '/users': ['system_admin'],
   '/professions': ['system_admin'],

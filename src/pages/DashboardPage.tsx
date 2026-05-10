@@ -79,6 +79,7 @@ export function DashboardPage() {
     modules.push({ label: 'ADMISSIONS', to: '/admissions', accent: 'green' });
     modules.push({ label: 'USERS', to: '/users', accent: 'cyan' });
     modules.push({ label: 'PROFESSIONS', to: '/professions', accent: 'purple' });
+    modules.push({ label: 'EXPLORATIONS', to: '/explorations', accent: 'green' });
   }
   if (role === 'resource_manager') {
     modules.push({
