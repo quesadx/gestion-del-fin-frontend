@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GESTIÓN DEL FIN — Terminal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    />
+    <style>
+      /* ── Pre-hydration splash ── */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: oklch(0.07 0.01 255);
+        color: oklch(0.96 0.01 260);
+        font-family: 'JetBrains Mono', monospace;
+        transition: opacity 0.4s ease-out;
+      }
+
+      #splash.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      #splash-spinner {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 32px;
+      }
+
+      #splash-spinner .ring-outer {
+        position: absolute;
+        inset: 0;
+        border: 2px solid transparent;
+        border-top-color: oklch(0.65 0.28 210);
+        box-shadow: 0 0 12px oklch(0.65 0.28 210 / 0.6);
+        animation: splash-spin 0.8s linear infinite;
+      }
+
+      #splash-spinner .ring-inner {
+        position: absolute;
+        inset: 6px;
+        border: 1px solid transparent;
+        border-bottom-color: oklch(0.65 0.28 210);
+        opacity: 0.6;
+        animation: splash-spin-reverse 1.2s linear infinite;
+      }
+
+      #splash-spinner .dot {
+        position: absolute;
+        inset: 18px;
+        background: oklch(0.65 0.28 210);
+        box-shadow: 0 0 10px oklch(0.65 0.28 210);
+        animation: splash-pulse 1.5s ease-in-out infinite;
+      }
+
+      #splash-lines {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.15em;
+        color: oklch(0.7 0.05 210);
+      }
+
+      #splash-lines span {
+        opacity: 0;
+        animation: splash-fade-in 0.3s ease-out forwards;
+      }
+
+      /* Keyframes */
+      @keyframes splash-spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes splash-spin-reverse {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(-360deg); }
+      }
+
+      @keyframes splash-pulse {
+        0%, 100% { opacity: 0.4; transform: scale(0.7); }
+        50% { opacity: 1; transform: scale(1); }
+      }
+
+      @keyframes splash-fade-in {
+        to { opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Pre-hydration splash: hidden by React on mount -->
+      <div id="splash">
+        <div id="splash-spinner">
+          <div class="ring-outer"></div>
+          <div class="ring-inner"></div>
+          <div class="dot"></div>
+        </div>
+        <div id="splash-lines">
+          <span style="animation-delay: 0s">› TERMINAL BOOT SEQUENCE</span>
+          <span style="animation-delay: 0.3s">› MEMORY CHECK: OK</span>
+          <span style="animation-delay: 0.6s">› GLASS INTERFACE INITIALIZING</span>
+          <span style="animation-delay: 0.9s">› SECURE LINK: ESTABLISHED</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
