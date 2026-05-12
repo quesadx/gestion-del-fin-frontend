@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { resolved } from '@/shared/lib/form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
@@ -73,13 +73,13 @@ export function ExplorationsPage() {
 
   const campsArray = Array.isArray(camps) ? camps : [];
   const expArray = Array.isArray(explorations) ? explorations : [];
-  const resourcesArray = Array.isArray(resources) ? resources : ([] as Record<string, unknown>[]);
+  const resourcesArray = Array.isArray(resources) ? resources : [] as Record<string, unknown>[];
 
   const campMap = new Map<number, string>();
   campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
 
   const formCreate = useForm<CreateExplorationFormValues>({
-    resolver: resolved(createExplorationSchema),
+    resolver: zodResolver(createExplorationSchema),
     defaultValues: {
       destination: '',
       camp_id: 0,
@@ -93,50 +93,15 @@ export function ExplorationsPage() {
   const onSubmitCreate = async (values: CreateExplorationFormValues) => {
     await createMutation.mutateAsync({
       camp_id: values.camp_id,
-      created_by: 0,
+      created_by: (user as any)?.sub ? Number((user as any).sub) : 1,
       destination: values.destination,
-      departure_date: new Date(values.departure_date).toISOString(),
-      expected_return_date: new Date(values.expected_return_date).toISOString(),
-      max_return_date: new Date(values.max_return_date).toISOString(),
+      departure_date: values.departure_date,
+      expected_return_date: values.expected_return_date,
+      max_return_date: values.max_return_date,
       notes: values.notes || undefined,
     });
     formCreate.reset();
     setCreateOpen(false);
-  };
-
-  const formReturn = useForm<ReturnIntakeFormValues>({
-    resolver: resolved(returnIntakeSchema),
-    defaultValues: {
-      actual_return_date: '',
-      resources: [{ resource_type_id: 0, amount: 0 }],
-      return_member_status: undefined,
-      notes: '',
-    },
-  });
-
-  const {
-    fields: resourceFields,
-    append: appendResource,
-    remove: removeResource,
-  } = useFieldArray({
-    control: formReturn.control,
-    name: 'resources',
-  });
-
-  const handleStatusSelect = (exp: Record<string, unknown>, newStatus: string) => {
-    if (newStatus === 'RETURNED') {
-      const today = new Date().toISOString().slice(0, 16);
-      formReturn.reset({
-        actual_return_date: today,
-        resources: [{ resource_type_id: 0, amount: 0 }],
-        return_member_status: undefined,
-        notes: '',
-      });
-      setReturnTarget(exp);
-      return;
-    }
-
-    handleStatusChange(exp.id as number, newStatus);
   };
 
   const handleStatusChange = async (id: number, status: string) => {
@@ -147,30 +112,6 @@ export function ExplorationsPage() {
         changed_by: 0,
       },
     });
-  };
-
-  const handleReturnSubmit = async (values: ReturnIntakeFormValues) => {
-    if (!returnTarget) return;
-
-    const payload = {
-      status: 'RETURNED' as const,
-      actual_return_date: new Date(values.actual_return_date).toISOString(),
-      changed_by: 0,
-      resources_to_return: values.resources
-        .filter((r) => r.resource_type_id > 0 && r.amount > 0)
-        .map((r) => ({
-          resource_type_id: r.resource_type_id,
-          amount: r.amount,
-        })),
-      return_member_status: values.return_member_status,
-      notes: values.notes || undefined,
-    };
-
-    await updateStatusMutation.mutateAsync({
-      id: returnTarget.id as number,
-      payload,
-    });
-    setReturnTarget(null);
   };
 
   const handleDelete = async () => {
@@ -274,7 +215,7 @@ export function ExplorationsPage() {
                       <td className="py-3 px-2">
                         <select
                           value={exp.status as string}
-                          onChange={(e) => handleStatusSelect(exp, e.target.value)}
+                          onChange={(e) => handleStatusChange(exp.id as number, e.target.value)}
                           className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-1 text-[10px] text-foreground outline-none font-mono-data"
                         >
                           <option value="PLANNED">PLANNED</option>
@@ -397,134 +338,6 @@ export function ExplorationsPage() {
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'CREATING...' : 'CREATE'}
-              </GlitchButton>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Return Intake Dialog */}
-      <Dialog open={!!returnTarget} onOpenChange={(o) => !o && setReturnTarget(null)}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-cyan">
-              RETURN INTAKE — {returnTarget?.destination as string}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={formReturn.handleSubmit(handleReturnSubmit)} className="space-y-4">
-            <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                ACTUAL RETURN DATE //
-              </label>
-              <input
-                type="datetime-local"
-                {...formReturn.register('actual_return_date')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
-              />
-              {formReturn.formState.errors.actual_return_date && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
-                  {formReturn.formState.errors.actual_return_date.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                RESOURCES RECOVERED //
-              </label>
-              <div className="space-y-2">
-                {resourceFields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className="flex gap-2 items-end p-2 border border-[oklch(0.68_0.32_340_/_0.2)] rounded-sm"
-                  >
-                    <div className="flex-1">
-                      <label className="text-[9px] text-muted-foreground">RESOURCE</label>
-                      <select
-                        {...formReturn.register(`resources.${index}.resource_type_id`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
-                      >
-                        <option value={0}>SELECT...</option>
-                        {resourcesArray.map((r: Record<string, unknown>) => (
-                          <option key={r.id as number} value={r.id as number}>
-                            {r.name as string} ({r.unit as string})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="w-24">
-                      <label className="text-[9px] text-muted-foreground">AMOUNT</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min={0}
-                        {...formReturn.register(`resources.${index}.amount`, {
-                          valueAsNumber: true,
-                        })}
-                        className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
-                      />
-                    </div>
-                    {resourceFields.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeResource(index)}
-                        className="p-1 rounded-sm text-red-400 hover:bg-red-400/10 mb-1"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => appendResource({ resource_type_id: 0, amount: 0 })}
-                className="mt-2 text-[10px] text-[var(--neon-cyan)] hover:text-[var(--neon-fuchsia)] font-mono-data"
-              >
-                + ADD RESOURCE
-              </button>
-            </div>
-
-            <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                MEMBER STATUS //
-              </label>
-              <select
-                {...formReturn.register('return_member_status')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
-              >
-                <option value="">NO CHANGE</option>
-                <option value="HEALTHY">HEALTHY</option>
-                <option value="SICK">SICK</option>
-                <option value="INJURED">INJURED</option>
-                <option value="AWAY">AWAY</option>
-                <option value="DEAD">DEAD</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-                NOTES //
-              </label>
-              <textarea
-                {...formReturn.register('notes')}
-                rows={2}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton variant="ghost" type="button" onClick={() => setReturnTarget(null)}>
-                CANCEL
-              </GlitchButton>
-              <GlitchButton
-                variant="primary"
-                type="submit"
-                disabled={updateStatusMutation.isPending}
-              >
-                {updateStatusMutation.isPending ? 'PROCESSING...' : 'CONFIRM RETURN'}
               </GlitchButton>
             </div>
           </form>

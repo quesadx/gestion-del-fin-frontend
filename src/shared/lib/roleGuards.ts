@@ -15,6 +15,7 @@ export const ROLE_ACCESS: Record<string, Role[]> = {
   '/users': ['system_admin'],
   '/professions': ['system_admin'],
   '/transfers': ['system_admin', 'resource_manager', 'travel_coordinator'],
+  '/rations': ['system_admin', 'resource_manager'],
 };
 
 export function canAccess(role: Role, path: string): boolean {

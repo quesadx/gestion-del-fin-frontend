@@ -68,6 +68,10 @@ const ProfessionsPage = lazy(() =>
   })),
 );
 
+const RationsPage = lazy(() =>
+  import('@/features/rations/pages/RationsPage').then((m) => ({ default: m.RationsPage })),
+);
+
 function LazyFallback() {
   return (
     <div className="flex items-center justify-center h-full min-h-[40vh]">
@@ -210,6 +214,14 @@ export function AppRoutes() {
               element={
                 <Suspense fallback={<LazyFallback />}>
                   <TransfersPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/rations"
+              element={
+                <Suspense fallback={<LazyFallback />}>
+                  <RationsPage />
                 </Suspense>
               }
             />
