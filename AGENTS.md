@@ -116,6 +116,57 @@ src/
 
 ---
 
+## UI COMPONENTS (cyberpunk neon)
+
+### Cyber components (`src/components/cyber/`)
+| Component | Purpose | Import |
+|-----------|---------|--------|
+| `Panel` | Card wrapper with glass border, title, tag, status, accent (`cyan` \| `purple`) | `from '@/components/cyber/Panel'` |
+| `GlitchButton` | Cyberpunk button with `primary` \| `ghost` \| `warning` \| `danger` variants | `from '@/components/cyber/GlitchButton'` |
+| `StatusBadge` | Inline label with `cyan` \| `purple` \| `green` \| `red` \| `yellow` variants | `from '@/components/cyber/StatusBadge'` |
+| `ScreenLoader` | Full-screen loading spinner with cyberpunk styling | `from '@/components/cyber/ScreenLoader'` |
+| `TerminalLine` | Animated terminal log line with delay + accent | `from '@/components/cyber/TerminalLine'` |
+| `SkeletonTable` | Table skeleton placeholder: `{rows, columns}` props | `from '@/components/cyber/SkeletonTable'` |
+| `SkeletonCard` | Card skeleton placeholder: `{height?}` prop | `from '@/components/cyber/SkeletonCard'` |
+| `DataChart` | SVG donut/line chart with cyberpunk gradients | `from '@/components/cyber/DataChart'` |
+
+### Toast notifications
+- **Store**: `useToastStore` (Zustand) — `toast(message, type?)` 
+- **Imperative**: `toast(message, 'error' | 'success' | 'info')` (no hook needed)
+- **Container**: `<ToastContainer />` — mounted in `App.tsx`
+- **Theme**: error=fuchsia, success=cyan, info=purple on glass backgrounds
+- **Auto-dismiss**: 5s, click X to dismiss early
+
+```typescript
+import { toast } from '@/shared/lib/toast';
+toast('Resource created', 'success');
+toast('Failed to save', 'error');
+```
+
+### Motion helpers (`src/shared/lib/motion.ts`)
+| Variant | Use case |
+|---------|----------|
+| `fadeIn`, `crtOn` | Page enter transitions |
+| `staggerContainer`, `staggerItem` | Item list animations |
+| `cardStaggerContainer`, `cardStaggerItem` | Card grid stagger (scale+fade) |
+| `listStaggerContainer`, `listStaggerItem` | Table row stagger (y-slide) |
+| `modalEnter` | Dialog enter/exit (scale+fade) |
+| `slideInRight` | Detail panel slide-in |
+| `glitch`, `scanlineSweep`, `cursorBlink` | Cyberpunk effects |
+
+---
+
+## MIGRATION NOTES (frontend-remake → gestion-del-fin-frontend)
+
+Visual-only migration completed:
+- ✅ Toast notification system (adapted from brutalist → cyberpunk theme)
+- ✅ SkeletonTable and SkeletonCard components
+- ✅ Enhanced motion animation helpers (card stagger, list stagger, modal enter, slide-in)
+- ⚠️ Page-level animations not applied (large refactor, applied per-module as needed)
+- ⚠️ Recharts theme not migrated (existing `DataChart` SVG component is sufficient)
+
+---
+
 ## ENV
 
 ```

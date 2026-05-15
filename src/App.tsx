@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { AppRoutes } from '@/routes/AppRoutes';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { ToastContainer } from '@/shared/lib/toast';
 import { queryClient } from '@/shared/lib/queryClient';
 
 export function App() {
@@ -24,6 +25,7 @@ export function App() {
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
+      <ToastContainer />
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
