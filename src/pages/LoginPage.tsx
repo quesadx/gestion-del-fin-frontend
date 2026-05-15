@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/features/auth/useAuth';
+import { ShieldAlert } from 'lucide-react';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'Minimum 3 characters required'),
@@ -44,62 +45,25 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-surface-base">
-      {/* Ambient background */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div
-          className="absolute -top-[20%] -left-[15%] w-[70vw] h-[70vw] opacity-20"
-          style={{
-            background: 'radial-gradient(circle, oklch(0.65 0.28 210 / 0.3), transparent 60%)',
-            filter: 'blur(100px)',
-            animation: 'drift 20s ease-in-out infinite alternate',
-          }}
-        />
-        <div
-          className="absolute -bottom-[25%] -right-[12%] w-[65vw] h-[65vw] opacity-15"
-          style={{
-            background: 'radial-gradient(circle, oklch(0.55 0.25 280 / 0.3), transparent 60%)',
-            filter: 'blur(110px)',
-            animation: 'drift 25s ease-in-out infinite alternate-reverse',
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(ellipse at center, transparent 20%, oklch(0.05 0.01 255 / 0.6) 100%)',
-          }}
-        />
-      </div>
-
-      <div className="grid-overlay" />
-
-      {/* Card */}
-      <div className="relative z-10 w-full max-w-md animate-fade-in">
-        <div className="glass-heavy rounded-none border border-border/25 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-surface-base">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="bg-surface-raised border border-zinc-800 p-8">
           {/* Header */}
-          <div className="text-center mb-8 space-y-2">
-            <div className="inline-flex items-center justify-center w-12 h-12 glass-light border border-border/30 mb-2">
-              <span
-                className="w-2 h-2 bg-accent-primary animate-pulse-glow"
-                style={{ boxShadow: '0 0 10px var(--accent-primary)' }}
-              />
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-brand-primary mb-4">
+              <ShieldAlert size={24} className="text-surface-base" />
             </div>
-            <h1
-              className="font-sans text-sm font-extrabold tracking-[0.25em] text-accent-primary"
-              style={{ textShadow: '0 0 16px var(--accent-primary)' }}
-            >
-              END MANAGEMENT
+            <h1 className="font-sans text-2xl font-black tracking-tighter uppercase text-white">
+              End Management
             </h1>
-            <span className="block font-mono-sm text-text-muted">
-              TERMINAL v2.0 · AUTHENTICATION REQUIRED
-            </span>
+            <p className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mt-2">
+              Authentication Required
+            </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            {/* Username */}
             <div>
-              <label className="block mb-2 font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-zinc-400">
                 Operator ID
               </label>
               <input
@@ -107,18 +71,17 @@ export function LoginPage() {
                 type="text"
                 autoComplete="username"
                 placeholder="Enter your operator ID"
-                className="terminal-input"
+                className="w-full bg-surface-base border border-zinc-700 text-zinc-200 font-mono text-sm py-2.5 px-3 placeholder:text-zinc-600 outline-none focus:border-brand-primary transition-colors"
               />
               {errors.username && (
-                <p className="mt-1.5 font-mono-sm text-status-red animate-slide-up">
+                <p className="mt-1.5 font-mono text-[10px] text-brand-primary">
                   {errors.username.message}
                 </p>
               )}
             </div>
 
-            {/* Password */}
             <div>
-              <label className="block mb-2 font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-zinc-400">
                 Cipher Key
               </label>
               <input
@@ -126,44 +89,38 @@ export function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 placeholder="Enter your cipher key"
-                className="terminal-input"
+                className="w-full bg-surface-base border border-zinc-700 text-zinc-200 font-mono text-sm py-2.5 px-3 placeholder:text-zinc-600 outline-none focus:border-brand-primary transition-colors"
               />
               {errors.password && (
-                <p className="mt-1.5 font-mono-sm text-status-red animate-slide-up">
+                <p className="mt-1.5 font-mono text-[10px] text-brand-primary">
                   {errors.password.message}
                 </p>
               )}
             </div>
 
-            {/* Error */}
             {authError && (
-              <div className="rounded-none border border-status-red/25 bg-status-red/5 p-3 font-mono-sm text-status-red animate-slide-up">
-                AUTH_FAILURE: {authError}
+              <div className="border border-red-500/30 bg-red-950/30 p-3 font-mono text-[11px] text-red-400 animate-slide-up">
+                AUTH FAILURE: {authError}
               </div>
             )}
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-none font-mono text-xs tracking-[0.15em] uppercase font-bold px-5 py-3 bg-accent-primary text-surface-base border border-accent-primary/30 hover:shadow-glow active:opacity-80 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full font-sans text-sm font-black uppercase tracking-widest px-5 py-3 bg-brand-primary text-surface-base hover:bg-brand-primary/90 active:bg-brand-primary/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isLoading ? 'AUTHENTICATING...' : 'AUTHORIZE'}
             </button>
 
-            {/* Footer */}
-            <div className="pt-4 border-t border-border/10 flex items-center justify-between font-mono-sm text-text-muted">
-              <span className="flex items-center gap-1.5">
-                <span className="w-1 h-1 bg-status-green animate-blink" />
-                ENC: AES-256
-              </span>
-              <span>SEC_LEVEL: 02</span>
+            <div className="pt-4 border-t border-zinc-800 flex items-center justify-between font-mono text-[10px] text-zinc-600 uppercase">
+              <span>ENC: AES-256</span>
+              <span>SEC LEVEL: 02</span>
             </div>
           </form>
         </div>
 
-        <p className="mt-6 text-center font-mono-sm text-text-muted/40 tracking-[0.1em]">
-          UNAUTHORIZED ACCESS WILL BE PROSECUTED
+        <p className="mt-6 text-center font-mono text-[9px] text-zinc-700 tracking-[0.1em] uppercase">
+          Unauthorized access will be prosecuted
         </p>
       </div>
     </div>
