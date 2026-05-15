@@ -29,6 +29,12 @@ dist-ssr
 *.sw?
 package-lock.json
 
+# TypeScript build artifacts
+*.tsbuildinfo
+
+# Cache / temporary files
+.cache
+
 # direnv
 .envrc
 .direnv
