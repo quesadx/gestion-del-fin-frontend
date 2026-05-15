@@ -22,6 +22,8 @@ Run `npx -y react-doctor@latest . --verbose` (without `--diff`) to scan the full
 
 ```bash
 npx -y react-doctor@latest . --verbose --diff
+##o
+pnpm dlx react-doctor@latest . --verbose --diff
 ```
 
 | Flag        | Purpose                                       |
