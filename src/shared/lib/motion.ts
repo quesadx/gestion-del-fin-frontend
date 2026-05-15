@@ -42,3 +42,32 @@ export const cursorBlink: Variants = {
     transition: { duration: 1, repeat: Infinity, ease: 'linear' },
   },
 };
+
+export const cardStaggerContainer: Variants = {
+  animate: { transition: { staggerChildren: 0.06 } },
+};
+
+export const cardStaggerItem: Variants = {
+  initial: { opacity: 0, scale: 0.95 },
+  animate: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
+};
+
+export const listStaggerContainer: Variants = {
+  animate: { transition: { staggerChildren: 0.03 } },
+};
+
+export const listStaggerItem: Variants = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.15 } },
+};
+
+export const modalEnter: Variants = {
+  initial: { scale: 0.9, opacity: 0 },
+  animate: { scale: 1, opacity: 1, transition: { duration: 0.2 } },
+  exit: { scale: 0.9, opacity: 0, transition: { duration: 0.15 } },
+};
+
+export const slideInRight: Variants = {
+  initial: { opacity: 0, x: 20 },
+  animate: { opacity: 1, x: 0, transition: { duration: 0.2 } },
+};

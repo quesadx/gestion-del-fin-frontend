@@ -109,10 +109,11 @@ export function CampsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {camps.map((camp: Record<string, unknown>) => (
+                    {camps.map((camp: Record<string, unknown>, i: number) => (
                       <tr
                         key={camp.id as number}
-                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
+                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors animate-fade-in"
+                        style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'backwards' }}
                         onClick={() => navigate(`/camps/${camp.id}`)}
                       >
                         <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
