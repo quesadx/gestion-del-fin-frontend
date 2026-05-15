@@ -8,14 +8,13 @@ import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
-import { useInventory, useInventoryAudit, useCreateInventoryAdjustment } from '@/features/inventory/hooks/useInventory';
-import { Utensils, Plus, ClipboardList } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  useInventory,
+  useInventoryAudit,
+  useCreateInventoryAdjustment,
+} from '@/features/inventory/hooks/useInventory';
+import { Utensils, Plus, ClipboardList } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const rationSchema = z.object({
   person_id: z.coerce.number().min(1, 'Select a person'),
@@ -43,7 +42,11 @@ export function RationsPage() {
   const campsArray = Array.isArray(camps) ? camps : ([] as Record<string, unknown>[]);
   const peopleArray = Array.isArray(people) ? people : ([] as Record<string, unknown>[]);
   const invArray = Array.isArray(inventory) ? inventory : ([] as Record<string, unknown>[]);
-  const auditArray = Array.isArray(audit) ? audit : ([] as Record<string, unknown>[]);
+
+  const auditArray = useMemo(
+    () => (Array.isArray(audit) ? audit : ([] as Record<string, unknown>[])),
+    [audit],
+  );
 
   const rationHistory = useMemo(
     () =>
@@ -67,15 +70,16 @@ export function RationsPage() {
   });
 
   const getPersonName = (id: number): string => {
-    const found = peopleArray.find(
-      (p: Record<string, unknown>) => (p.id as number) === id,
-    ) as Record<string, unknown> | undefined;
+    const found = peopleArray.find((p: Record<string, unknown>) => (p.id as number) === id) as
+      | Record<string, unknown>
+      | undefined;
     return (found?.full_name as string) || `PERSON-${id}`;
   };
 
   const getResourceName = (id: number): string => {
     const found = invArray.find(
-      (inv: Record<string, unknown>) => (inv.resource_type_id as number) === id || (inv.id as number) === id,
+      (inv: Record<string, unknown>) =>
+        (inv.resource_type_id as number) === id || (inv.id as number) === id,
     ) as Record<string, unknown> | undefined;
     const resource =
       (found?.resource as Record<string, unknown>) ||
@@ -137,7 +141,9 @@ export function RationsPage() {
         <Panel accent="purple">
           <div className="flex flex-col items-center gap-4 py-8">
             <Utensils className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP TO MANAGE RATIONS</p>
+            <p className="font-mono-data text-sm text-muted-foreground">
+              SELECT A CAMP TO MANAGE RATIONS
+            </p>
           </div>
         </Panel>
       ) : (

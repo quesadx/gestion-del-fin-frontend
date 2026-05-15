@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -14,8 +14,7 @@ import {
   useDeleteExploration,
 } from '@/features/explorations/hooks/useExplorations';
 import { useCamps } from '@/features/camps/hooks/useCamps';
-import { useResources } from '@/features/resources/hooks/useResources';
-import { Compass, Plus, Trash2, X } from 'lucide-react';
+import { Compass, Plus, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -39,20 +38,6 @@ const createExplorationSchema = z.object({
 
 type CreateExplorationFormValues = z.infer<typeof createExplorationSchema>;
 
-const returnIntakeSchema = z.object({
-  actual_return_date: z.string().min(1, 'Return date is required'),
-  resources: z.array(
-    z.object({
-      resource_type_id: z.number().min(1, 'Select a resource'),
-      amount: z.number().min(0.01, 'Amount must be positive'),
-    }),
-  ),
-  return_member_status: z.enum(['SICK', 'HEALTHY', 'INJURED', 'AWAY', 'DEAD']).optional(),
-  notes: z.string().optional(),
-});
-
-type ReturnIntakeFormValues = z.infer<typeof returnIntakeSchema>;
-
 const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
   PLANNED: 'cyan',
   ONGOING: 'yellow',
@@ -63,17 +48,14 @@ const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
 export function ExplorationsPage() {
   const { data: explorations, isLoading, isError, error, refetch } = useExplorations();
   const { data: camps } = useCamps();
-  const { data: resources } = useResources();
   const createMutation = useCreateExploration();
   const updateStatusMutation = useUpdateExplorationStatus();
   const deleteMutation = useDeleteExploration();
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
-  const [returnTarget, setReturnTarget] = useState<Record<string, unknown> | null>(null);
 
   const campsArray = Array.isArray(camps) ? camps : [];
   const expArray = Array.isArray(explorations) ? explorations : [];
-  const resourcesArray = Array.isArray(resources) ? resources : [] as Record<string, unknown>[];
 
   const campMap = new Map<number, string>();
   campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
@@ -93,7 +75,7 @@ export function ExplorationsPage() {
   const onSubmitCreate = async (values: CreateExplorationFormValues) => {
     await createMutation.mutateAsync({
       camp_id: values.camp_id,
-      created_by: (user as any)?.sub ? Number((user as any).sub) : 1,
+      created_by: 0,
       destination: values.destination,
       departure_date: values.departure_date,
       expected_return_date: values.expected_return_date,
