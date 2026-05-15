@@ -480,7 +480,7 @@ export function TransfersPage() {
                         <td className="py-2 px-2">
                           <div className="flex flex-wrap gap-1 items-center">
                             {events.map((ev, i) => (
-                              <span key={i} className="inline-flex items-center gap-0.5">
+                              <span key={ev.label} className="inline-flex items-center gap-0.5">
                                 {i > 0 && (
                                   <span className="text-muted-foreground/50 mx-0.5">→</span>
                                 )}
@@ -594,7 +594,7 @@ export function TransfersPage() {
               <div className="space-y-2">
                 {watchItems?.map((_, index) => (
                   <div
-                    key={index}
+                    key={`item-${index}`}
                     className="flex gap-2 items-start p-2 border border-[oklch(0.68_0.32_340_/_0.2)] rounded-sm"
                   >
                     <div className="flex-1 grid grid-cols-2 gap-2">

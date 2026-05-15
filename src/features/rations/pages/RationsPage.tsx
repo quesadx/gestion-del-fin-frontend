@@ -199,7 +199,7 @@ export function RationsPage() {
 
                         return (
                           <tr
-                            key={i}
+                            key={(entry.id as number) || i}
                             className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
                           >
                             <td className="py-2 px-2 text-muted-foreground">
@@ -281,7 +281,7 @@ export function RationsPage() {
                       key={(inv.resource_type_id as number) || (inv.id as number)}
                       value={(inv.resource_type_id as number) || (inv.id as number)}
                     >
-                      {resource?.name as string} — STOCK: {stock}
+                      {resource?.name as string}: STOCK: {stock}
                     </option>
                   );
                 })}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
@@ -91,7 +91,7 @@ export function PersonDetailPage() {
     defaultValues: { new_status: 'HEALTHY', reason: '' },
   });
 
-  useEffect(() => {
+  const handleOpenEdit = () => {
     if (person) {
       const p = person as Record<string, unknown>;
       editForm.reset({
@@ -109,7 +109,8 @@ export function PersonDetailPage() {
           : '',
       });
     }
-  }, [person, editForm]);
+    setEditOpen(true);
+  };
 
   if (isLoading) return <ScreenLoader />;
 
@@ -235,7 +236,7 @@ export function PersonDetailPage() {
           </div>
         )}
         <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
-          <GlitchButton variant="ghost" onClick={() => setEditOpen(true)}>
+          <GlitchButton variant="ghost" onClick={handleOpenEdit}>
             <Edit3 className="h-3.5 w-3.5 mr-1" />
             EDIT
           </GlitchButton>
@@ -268,7 +269,10 @@ export function PersonDetailPage() {
               </thead>
               <tbody>
                 {statusLogs.map((log, i) => (
-                  <tr key={i} className="border-b border-[oklch(0.68_0.32_340_/_0.1)]">
+                  <tr
+                    key={(log.id as number) || i}
+                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
+                  >
                     <td className="py-2 px-2">
                       <StatusBadge
                         status={log.new_status as string}
