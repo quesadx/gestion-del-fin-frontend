@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
@@ -7,6 +7,8 @@ import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
+import { StockBarChart } from '@/components/cyber/StockBarChart';
+import type { StockBarEntry } from '@/components/cyber/StockBarChart';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import {
   useInventory,
@@ -42,7 +44,25 @@ export function InventoryPage() {
   const stockAlerts = useStockAlerts(selectedCampId ?? 0);
 
   const campsArray = Array.isArray(camps) ? camps : [];
-  const invArray = Array.isArray(inventory) ? inventory : [];
+  const invArray = useMemo(() => (Array.isArray(inventory) ? inventory : []), [inventory]);
+
+  const stockChartData: StockBarEntry[] = useMemo(
+    () =>
+      invArray.map((item: Record<string, unknown>) => {
+        const current = (item.current_stock as number) || 0;
+        const minimum = (item.minimum_stock as number) || 0;
+        const resource = (item.resource as Record<string, unknown>) || {};
+        const status: 'CRITICAL' | 'LOW' | 'OK' =
+          current === 0 ? 'CRITICAL' : current < minimum ? 'LOW' : 'OK';
+        return {
+          name: (resource.name as string) || `ID:${item.resource_type_id}`,
+          current,
+          minimum,
+          status,
+        };
+      }),
+    [invArray],
+  );
 
   const adjForm = useForm<AdjustmentFormValues>({
     resolver: resolved(adjustmentSchema),
@@ -135,6 +155,21 @@ export function InventoryPage() {
           accent="cyan"
         >
           <StockAlertBanner alerts={stockAlerts} />
+
+          {stockChartData.length > 0 && (
+            <div className="mt-4 mb-4">
+              <div className="flex items-center gap-2 mb-2 font-mono-data text-[10px] text-muted-foreground">
+                <span className="w-1.5 h-1.5 bg-[var(--neon-cyan)] animate-pulse" />
+                STOCK DISTRIBUTION
+              </div>
+              <div className="glass-heavy rounded-sm p-4 border border-[oklch(0.68_0.32_340_/_0.2)]">
+                <StockBarChart
+                  data={stockChartData}
+                  height={Math.max(160, stockChartData.length * 36)}
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-3 mb-4 mt-4">
             <GlitchButton variant="primary" onClick={() => setAdjustOpen(true)}>
