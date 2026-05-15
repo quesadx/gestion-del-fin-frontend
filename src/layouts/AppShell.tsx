@@ -1,10 +1,12 @@
-import { useCallback } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useCallback, useState } from 'react';
+import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useNavItems } from '@/hooks/useNavItems';
-import { DockBar } from '@/components/navigation/DockBar';
+import { useCamps } from '@/features/camps/hooks/useCamps';
+import { useCampStore } from '@/features/camps/store/camp.store';
+import { LayoutGrid, Tent, LogOut, Clock, PanelLeftClose, PanelLeft } from 'lucide-react';
 
 export function AppShell() {
   const navigate = useNavigate();
@@ -12,6 +14,22 @@ export function AppShell() {
   const { user, logout } = useAuth();
   const role = useAuthStore((state) => state.role);
   const items = useNavItems(role);
+  const { data: camps } = useCamps();
+  const { activeCamp, setActiveCamp, serverTime } = useCampStore();
+  const [collapsed, setCollapsed] = useState(false);
+  const [localCampId, setLocalCampId] = useState<number | null>(activeCamp?.id ?? null);
+
+  const campsArray = Array.isArray(camps) ? camps : ([] as Record<string, unknown>[]);
+
+  const handleCampChange = (id: number | null) => {
+    setLocalCampId(id);
+    if (id) {
+      const camp = campsArray.find((c: Record<string, unknown>) => (c.id as number) === id);
+      setActiveCamp(camp ? { id, name: camp.name as string } : { id });
+    } else {
+      setActiveCamp(null);
+    }
+  };
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -20,65 +38,142 @@ export function AppShell() {
   }, [logout, queryClient, navigate]);
 
   return (
-    <div className="relative min-h-screen bg-surface-base text-text-primary">
-      {/* Ambient background blobs */}
-      <div className="fixed inset-0 -z-20 overflow-hidden pointer-events-none">
-        <div
-          className="absolute -top-[20%] -left-[10%] w-[60vw] h-[60vw] rounded-none opacity-25"
-          style={{
-            background: 'radial-gradient(circle, oklch(0.65 0.28 210 / 0.3), transparent 60%)',
-            filter: 'blur(120px)',
-            animation: 'drift 25s ease-in-out infinite alternate',
-          }}
-        />
-        <div
-          className="absolute -bottom-[20%] -right-[10%] w-[55vw] h-[55vw] rounded-none opacity-20"
-          style={{
-            background: 'radial-gradient(circle, oklch(0.55 0.25 280 / 0.3), transparent 60%)',
-            filter: 'blur(130px)',
-            animation: 'drift 30s ease-in-out infinite alternate-reverse',
-          }}
-        />
-      </div>
+    <div className="flex h-screen bg-surface-base">
+      {/* Sidebar */}
+      <aside
+        className={`${collapsed ? 'w-16' : 'w-64'} bg-surface-raised border-r border-zinc-800 flex flex-col transition-all duration-200 shrink-0`}
+      >
+        {/* Logo */}
+        <div className="px-4 py-5 border-b border-zinc-800">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-brand-primary flex items-center justify-center shrink-0">
+              <span className="font-sans font-black italic text-sm text-surface-base">GF</span>
+            </div>
+            {!collapsed && (
+              <div className="text-[10px] font-mono text-zinc-400 uppercase leading-tight">
+                <div>END TIMES</div>
+                <div>MGMT</div>
+              </div>
+            )}
+          </div>
+        </div>
 
-      {/* Subtle grid overlay */}
-      <div className="grid-overlay" />
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto py-3 space-y-1 px-2">
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center gap-3 px-3 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-all ${
+                    isActive
+                      ? 'bg-zinc-800 text-brand-primary border-r-2 border-brand-primary'
+                      : 'text-zinc-400 border-r-2 border-transparent hover:text-zinc-200 hover:bg-zinc-800/50'
+                  }`
+                }
+              >
+                {Icon && <Icon size={16} />}
+                {!collapsed && <span>{item.label}</span>}
+              </NavLink>
+            );
+          })}
+        </nav>
 
-      <div className="relative z-10 flex min-h-screen flex-col">
-        {/* Top status bar — thin, informational */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border/20 bg-surface-deep/60 backdrop-blur-heavy px-6 py-2">
-          <div className="flex items-center gap-3 font-mono-sm text-text-muted">
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-status-green shadow-[0_0_6px_#00e676] animate-pulse-glow" />
-              <span className="tracking-[0.15em] text-text-secondary">END MANAGEMENT</span>
+        {/* Camp selector */}
+        <div className="border-t border-zinc-800 p-3">
+          {!collapsed && (
+            <div className="space-y-2">
+              <label className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Tent size={10} />
+                ACTIVE CAMP
+              </label>
+              <select
+                value={localCampId ?? ''}
+                onChange={(e) => handleCampChange(e.target.value ? Number(e.target.value) : null)}
+                className="w-full bg-surface-base border border-zinc-700 text-zinc-300 font-mono text-[11px] py-1.5 px-2 focus:border-brand-primary outline-none"
+              >
+                <option value="">ALL CAMPS</option>
+                {campsArray.map((c: Record<string, unknown>) => (
+                  <option key={c.id as number} value={c.id as number}>
+                    {c.name as string}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* User info */}
+          <div className="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-2">
+            <div className="w-6 h-6 bg-zinc-800 flex items-center justify-center shrink-0">
+              <span className="font-mono text-[10px] font-bold text-brand-secondary">
+                {(user?.username || 'U')[0].toUpperCase()}
+              </span>
+            </div>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] font-mono text-zinc-300 truncate">
+                  {user?.username?.toUpperCase() || 'USER'}
+                </div>
+                <div className="text-[8px] font-mono text-zinc-500 uppercase">
+                  {role || 'OPERATOR'}
+                </div>
+              </div>
+            )}
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="text-zinc-600 hover:text-zinc-300 shrink-0"
+              title={collapsed ? 'Expand' : 'Collapse'}
+            >
+              {collapsed ? <PanelLeft size={14} /> : <PanelLeftClose size={14} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Logout */}
+        <div className="p-2 border-t border-zinc-800">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 text-[10px] font-mono text-zinc-500 hover:text-brand-primary hover:bg-zinc-800/50 transition-colors uppercase tracking-wider"
+          >
+            <LogOut size={12} />
+            {!collapsed && <span>LOGOUT</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* Main area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-14 bg-surface-base/80 backdrop-blur-sm border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
+          <div className="flex items-center gap-3">
+            <LayoutGrid size={14} className="text-zinc-600" />
+            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
+              OPERATIONAL SECTOR 04 // ONLINE
             </span>
-            <span className="text-border/40">|</span>
-            <span className="tracking-wider">TERMINAL v2.0</span>
           </div>
 
-          <div className="flex items-center gap-4 font-mono-sm text-text-muted">
-            {user?.username && (
-              <span className="flex items-center gap-2">
-                <span className="text-border/40">OP:</span>
-                <span className="text-text-secondary tracking-wide">
-                  {user.username.toUpperCase()}
-                </span>
-              </span>
+          <div className="flex items-center gap-4">
+            {serverTime > 0 && (
+              <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400">
+                <Clock size={12} className="text-zinc-500" />
+                <span>{new Date(serverTime).toISOString()}</span>
+              </div>
             )}
-            <span className="text-border/40">|</span>
-            <span className="text-status-green tracking-wider">ONLINE</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-brand-accent animate-pulse" />
+              <span className="text-[9px] font-mono font-bold text-brand-accent uppercase tracking-widest">
+                NOMINAL SYSTEM
+              </span>
+            </div>
           </div>
         </header>
 
-        {/* Main content — centered, max-width, with padding for dock */}
-        <main className="flex-1 px-6 py-8 pb-24">
-          <div className="mx-auto max-w-7xl">
-            <Outlet />
-          </div>
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-8">
+          <Outlet />
         </main>
-
-        {/* Floating bottom dock */}
-        <DockBar items={items} userName={user?.username} onLogout={handleLogout} />
       </div>
     </div>
   );

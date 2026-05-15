@@ -7,10 +7,10 @@
 ## QUICK START
 
 ```bash
-npm run dev      # vite dev server → http://localhost:5173
-npm run build    # tsc + vite build
-npm run check    # lint + spell + build — run before commit
-npm run format   # prettier src/
+pnpm dev      # vite dev server → http://localhost:5173
+pnpm build    # tsc + vite build
+pnpm check    # lint + spell + build — run before commit
+pnpm format   # prettier src/
 ```
 
 ---
@@ -23,7 +23,7 @@ npm run format   # prettier src/
 | Type | Zombie apocalypse multi-camp resource manager |
 | Context | Univ final project · EIF209 · UNA Costa Rica 2026 |
 | Stack | React 19 / TypeScript strict / Vite 8 / Tailwind 3 / TanStack Query 5 / Zustand 5 / shadcn/ui / Axios |
-| Visual | Neon cyberpunk — fuchsia + cyan + yellow on dark oklch backgrounds |
+| Visual | **Brutalist dark** — red (#ef4444) / amber (#f59e0b) / green (#10b981) on near-black (#0a0a0a) |
 | Auth | JWT. Stored in Zustand (persisted to localStorage as `gdf.auth`). Axios interceptor attaches Bearer token, auto-redirects on 401. |
 | Proxy | Vite proxies `/api` → `http://localhost:3000` (dev) |
 
@@ -44,14 +44,14 @@ src/
 │   └── index.ts      # Barrel export
 ├── components/       # Reusable UI components
 │   ├── ui/           # shadcn/ui primitives
-│   ├── cyber/        # Cyberpunk theme components
-│   └── navigation/   # Sidebar, Navbar
+│   ├── cyber/        # Shared visual components (Panel, GlitchButton, StatusBadge, Skeleton, Charts)
+│   └── navigation/   # Sidebar, Navbar (legacy, unused in new layout)
 ├── hooks/            # Shared hooks
-├── layouts/          # AppShell layout
+├── layouts/          # AppShell — sidebar + header + content (brutalist)
 ├── lib/              # Utilities
 ├── pages/            # Top-level page components
 ├── routes/           # Router + ProtectedRoute
-└── shared/           # Cross-cutting (axios, api types)
+└── shared/           # Cross-cutting (axios, api types, toast, motion, roleGuards)
 ```
 
 **State split (hard rule):**
@@ -61,109 +61,80 @@ src/
 
 ---
 
-## CURRENT STATE
+## DESIGN SYSTEM (Brutalist Dark)
 
-### Working
-- Auth: login flow, JWT persistence, logout, protected routes, 401 interception
-- AppShell: sidebar (collapsible, mobile overlay), navbar, wave background
-- Dashboard: placeholder page
-- Design system: neon cyberpunk tokens, fonts, global CSS, Panel component
-- UI: full shadcn/ui component library installed
-- Routing: React Router v7 with lazy dashboard
+### Colors
+| Token | Hex | Uses |
+|---|---|---|
+| `brand-primary` | `#ef4444` | Alerts, active nav, primary buttons, errors |
+| `brand-secondary` | `#f59e0b` | Warnings, transfers, amber accents |
+| `brand-accent` | `#10b981` | Success, online status, completed |
+| `surface-base` | `#0a0a0a` | Main background |
+| `surface-raised` | `#171717` | Cards, sidebar, tables |
+| `surface-overlay` | `#262626` | Modals, dialogs |
 
-### Not yet built
-- Feature pages (camps, people, inventory, explorations)
-- TanStack Query hooks for server data
-- Dashboard metrics/charts with real data
-- Gamification (threat level, achievements, camp health)
-- Inactivity lock screen
-- AI decision displays
-- Device frame + scanlines overlay
-- Framer Motion page transitions
-- Barrel export pattern per feature module
-- E2E tests
+### Typography
+- **Inter** (weight 400-900) — body, headings, UI
+- **JetBrains Mono** (weight 400-700) — data, labels, monospace
+
+### Utility Classes
+- `.brutalist-border` — `border border-zinc-800`
+- `.neon-glow-red` — red text shadow
+- `.glass` / `.glass-heavy` — solid raised panels (backward-compat)
+- `.font-mono-data` — 12px JetBrains Mono
+
+### Animation
+- Keyframe CSS: `fade-in`, `slide-up`, `slide-in-right`, `blink`
+- Framer Motion `motion/react` v12 — toast, stagger, modal enter/exit
+- Motion variants in `src/shared/lib/motion.ts`
 
 ---
 
-## CONTEXT DOCS (docs/)
+## LAYOUT
 
-| File | Load when... |
-|---|---|
-| `docs/AGENT.md` | Project overview, conventions, folder structure, state management rules |
-| `docs/DESIGN_SYSTEM.md` | UI work: tokens, fonts, layouts, animations, shadcn customization |
-| `docs/API_CONTRACT.md` | API calls, queries, mutations, types |
-| `docs/ROLES_ACCESS.md` | Auth guards, role-based access, session |
-| `docs/MILESTONES.md` | Planning checklist, deliverables, roadmap |
-| `docs/TOOLING.md` | ESLint, Prettier, CSpell config details |
-| `docs/BACKEND_SCHEMAS.md` | Backend DB schema reference |
-| `docs/ENDPOINT_IMPLEMENTATION_WORKFLOW.md` | Step-by-step endpoint integration process |
-| `docs/Endpoints.json` | Raw endpoint specs |
+**AppShell** (`src/layouts/AppShell.tsx`):
+- Fixed left sidebar (collapsible w-64 / w-16) with nav links, camp selector, user info, logout
+- Sticky top header with clock + "NOMINAL SYSTEM" status dot
+- `<Outlet />` in scrollable content area
+- Red GF logo square in sidebar
+- Active nav link: red right border + bg-zinc-800
+
+---
+
+## UI COMPONENTS
+
+### Panel
+Card wrapper. Props: `title?`, `tag?`, `status?`, `accent?` (cyan | purple), `children`. Uses `.glass` styling with corner brackets.
+
+### GlitchButton  
+Button with variants: `primary` (red), `ghost` (transparent), `warning` (amber), `danger` (red border).
+
+### StatusBadge
+Inline badge with colored dot + text. Variants: `cyan` (red), `purple` (amber), `green`, `red`, `yellow`.
+
+### StockBarChart
+Recharts horizontal bar chart. Props: `data: StockBarEntry[]`, `height?`. Color-coded: CRITICAL=red, LOW=amber, OK=cyan.
+
+### SkeletonTable / SkeletonCard
+Loading placeholders with `animate-pulse`.
+
+### Toast
+Zustand-based notification system. Usage: `toast('message', 'error'|'success'|'info')`. Auto-dismiss 5s.
 
 ---
 
 ## CONVENTIONS
 
-- All code in English (UI text can be localized to Spanish)
+- All code in English (UI text in English)
 - No `any` or `as any`. TypeScript strict.
-- No `console.log` — use `shared/utils/logger.ts`
 - Named exports only (no default exports)
 - Component order: hooks → derived state → handlers → JSX
 - Imports order: react → libraries → @/features → @/shared → ./local
 - All forms: react-hook-form + zod
 - All async: explicit error handling
 - Server time for business logic, not `Date.now()`
-- `npm run check` before every commit
-
----
-
-## UI COMPONENTS (cyberpunk neon)
-
-### Cyber components (`src/components/cyber/`)
-| Component | Purpose | Import |
-|-----------|---------|--------|
-| `Panel` | Card wrapper with glass border, title, tag, status, accent (`cyan` \| `purple`) | `from '@/components/cyber/Panel'` |
-| `GlitchButton` | Cyberpunk button with `primary` \| `ghost` \| `warning` \| `danger` variants | `from '@/components/cyber/GlitchButton'` |
-| `StatusBadge` | Inline label with `cyan` \| `purple` \| `green` \| `red` \| `yellow` variants | `from '@/components/cyber/StatusBadge'` |
-| `ScreenLoader` | Full-screen loading spinner with cyberpunk styling | `from '@/components/cyber/ScreenLoader'` |
-| `TerminalLine` | Animated terminal log line with delay + accent | `from '@/components/cyber/TerminalLine'` |
-| `SkeletonTable` | Table skeleton placeholder: `{rows, columns}` props | `from '@/components/cyber/SkeletonTable'` |
-| `SkeletonCard` | Card skeleton placeholder: `{height?}` prop | `from '@/components/cyber/SkeletonCard'` |
-| `DataChart` | SVG donut/line chart with cyberpunk gradients | `from '@/components/cyber/DataChart'` |
-
-### Toast notifications
-- **Store**: `useToastStore` (Zustand) — `toast(message, type?)` 
-- **Imperative**: `toast(message, 'error' | 'success' | 'info')` (no hook needed)
-- **Container**: `<ToastContainer />` — mounted in `App.tsx`
-- **Theme**: error=fuchsia, success=cyan, info=purple on glass backgrounds
-- **Auto-dismiss**: 5s, click X to dismiss early
-
-```typescript
-import { toast } from '@/shared/lib/toast';
-toast('Resource created', 'success');
-toast('Failed to save', 'error');
-```
-
-### Motion helpers (`src/shared/lib/motion.ts`)
-| Variant | Use case |
-|---------|----------|
-| `fadeIn`, `crtOn` | Page enter transitions |
-| `staggerContainer`, `staggerItem` | Item list animations |
-| `cardStaggerContainer`, `cardStaggerItem` | Card grid stagger (scale+fade) |
-| `listStaggerContainer`, `listStaggerItem` | Table row stagger (y-slide) |
-| `modalEnter` | Dialog enter/exit (scale+fade) |
-| `slideInRight` | Detail panel slide-in |
-| `glitch`, `scanlineSweep`, `cursorBlink` | Cyberpunk effects |
-
----
-
-## MIGRATION NOTES (frontend-remake → gestion-del-fin-frontend)
-
-Visual-only migration completed:
-- ✅ Toast notification system (adapted from brutalist → cyberpunk theme)
-- ✅ SkeletonTable and SkeletonCard components
-- ✅ Enhanced motion animation helpers (card stagger, list stagger, modal enter, slide-in)
-- ⚠️ Page-level animations not applied (large refactor, applied per-module as needed)
-- ⚠️ Recharts theme not migrated (existing `DataChart` SVG component is sufficient)
+- `pnpm check` before every commit
+- Before `.map`/`.filter`/`.reduce`: always `Array.isArray(data)`
 
 ---
 

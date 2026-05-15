@@ -66,10 +66,7 @@ export function StockBarChart({ data, height = 300 }: StockBarChartProps) {
           }}
           width={100}
         />
-        <Tooltip
-          cursor={{ fill: 'oklch(0.68 0.32 340 / 0.05)' }}
-          contentStyle={TOOLTIP_STYLE}
-        />
+        <Tooltip cursor={{ fill: 'oklch(0.68 0.32 340 / 0.05)' }} contentStyle={TOOLTIP_STYLE} />
         <Bar dataKey="current" radius={[0, 2, 2, 0]} barSize={16}>
           {data.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status] || STATUS_COLORS.OK} />

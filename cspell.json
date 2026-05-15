@@ -46,7 +46,8 @@
     "sublabel",
     "silverhand",
     "vaul",
-    "OPERATOR"
+    "OPERATOR",
+    "MGMT"
   ],
   "ignorePaths": [
     "node_modules",
