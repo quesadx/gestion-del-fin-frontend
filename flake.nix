@@ -20,6 +20,7 @@
             nodePackages.eslint
             nodePackages.prettier
             nodePackages.cspell
+            nodePackages.pnpm
           ];
 
           shellHook = ''
@@ -30,10 +31,10 @@
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             
             # Alias automáticos para ahorrar tiempo
-            alias ni="npm install"
-            alias nd="npm run dev"
-            alias nb="npm run build"
-            alias nc="npm run check" # Corre lint, spell y build en cadena
+            alias pi="pnpm install"
+            alias pd="pnpm dev"
+            alias pb="pnpm build"
+            alias pc="pnpm check"
           '';
         };
       }

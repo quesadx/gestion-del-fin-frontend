@@ -10,6 +10,7 @@ import {
   Shield,
   Wrench,
   ArrowRightLeft,
+  Utensils,
   type LucideIcon,
 } from 'lucide-react';
 import type { Role } from '@/features/auth/types/auth.types';
@@ -81,6 +82,12 @@ const NAV_ITEMS: NavItem[] = [
     to: '/transfers',
     icon: ArrowRightLeft,
     roles: ['system_admin', 'resource_manager', 'travel_coordinator'],
+  },
+  {
+    label: 'Rations',
+    to: '/rations',
+    icon: Utensils,
+    roles: ['system_admin', 'resource_manager'],
   },
 ];
 
