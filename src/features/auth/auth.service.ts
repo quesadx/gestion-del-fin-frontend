@@ -15,11 +15,10 @@ function decodeRoleFromToken(token: string): Role | null {
     if (['system_admin', 'resource_manager', 'worker', 'travel_coordinator'].includes(role)) {
       return role as Role;
     }
-    // Map numeric role_id to named role
     const roleMap: Record<number, Role> = {
       1: 'system_admin',
-      2: 'resource_manager',
-      3: 'worker',
+      2: 'worker',
+      3: 'resource_manager',
       4: 'travel_coordinator',
     };
     return roleMap[Number(role)] ?? null;

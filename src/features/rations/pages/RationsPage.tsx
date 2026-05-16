@@ -112,7 +112,6 @@ export function RationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Camp selector */}
       <Panel title="RATION MANAGEMENT" tag="RTN.01" status="ONLINE" accent="cyan">
         {campsLoading ? (
           <ScreenLoader />
@@ -148,7 +147,6 @@ export function RationsPage() {
         </Panel>
       ) : (
         <>
-          {/* Ration form panel */}
           <Panel title="ISSUE RATION" tag={`RTN.${campId}`} status="READY" accent="cyan">
             <div className="mb-4">
               <GlitchButton variant="primary" onClick={() => setDialogOpen(true)}>
@@ -159,7 +157,6 @@ export function RationsPage() {
               </GlitchButton>
             </div>
 
-            {/* Consumption history */}
             <div className="mt-6">
               <div className="flex items-center gap-2 mb-3 font-mono-data text-xs text-muted-foreground">
                 <ClipboardList className="h-3.5 w-3.5" />
@@ -231,7 +228,6 @@ export function RationsPage() {
         </>
       )}
 
-      {/* Ration entry dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>

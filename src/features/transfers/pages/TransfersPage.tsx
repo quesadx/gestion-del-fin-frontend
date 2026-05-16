@@ -361,7 +361,6 @@ export function TransfersPage() {
         )}
       </Panel>
 
-      {/* Transfer History / Audit Log */}
       {historyTransfers.length > 0 && (
         <Panel
           title="TRANSFER LOG"
@@ -531,7 +530,6 @@ export function TransfersPage() {
         </Panel>
       )}
 
-      {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
@@ -691,7 +689,6 @@ export function TransfersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>

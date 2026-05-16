@@ -12,9 +12,15 @@ export interface CreateUserDto {
 
 export type UpdateUserDto = Partial<CreateUserDto>;
 
+export interface RoleItem {
+  id: number;
+  name: string;
+}
+
 export const usersApi = {
   getAll: () => api.get('/users').then((res) => res.data.data),
   getById: (id: number) => api.get(`/users/${id}`).then((res) => res.data),
+  getRoles: () => api.get('/users/roles').then((res) => res.data),
   create: (payload: CreateUserDto) => api.post('/users', payload).then((res) => res.data),
   update: (id: number, payload: UpdateUserDto) =>
     api.put(`/users/${id}`, payload).then((res) => res.data),

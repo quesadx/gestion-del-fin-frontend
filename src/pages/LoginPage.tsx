@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/features/auth/useAuth';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { ROLE_LANDING } from '@/shared/lib/roleGuards';
 import { ShieldAlert } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -16,6 +18,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
+  const role = useAuthStore((state) => state.role);
 
   const mutation = useMutation({
     mutationFn: (values: LoginFormValues) => login(values),
@@ -37,7 +40,9 @@ export function LoginPage() {
   );
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const landing = role ? (ROLE_LANDING[role] ?? '/dashboard') : '/dashboard';
+
+    return <Navigate to={landing} replace />;
   }
 
   const onSubmit = async (values: LoginFormValues) => {
@@ -48,7 +53,6 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-surface-base">
       <div className="w-full max-w-md animate-fade-in">
         <div className="bg-surface-raised border border-zinc-800 p-8">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-brand-primary mb-4">
               <ShieldAlert size={24} className="text-surface-base" />

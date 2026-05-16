@@ -12,8 +12,6 @@ export const logger = {
     }
   },
   error: (...args: unknown[]) => {
-    // Always log errors even in production
-
     console.error(LOG_PREFIX, ...args);
   },
 };

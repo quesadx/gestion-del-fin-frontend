@@ -11,7 +11,6 @@ export function App() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Ensure at least a brief moment for the splash fade-out to feel smooth
     const timer = setTimeout(() => setReady(true), 600);
     return () => clearTimeout(timer);
   }, []);

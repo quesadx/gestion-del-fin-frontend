@@ -101,7 +101,6 @@ export function AppRoutes() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Routes that require auth only */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route
@@ -112,7 +111,6 @@ export function AppRoutes() {
                 </Suspense>
               }
             />
-            {/* System admin routes */}
             <Route
               path="/camps"
               element={

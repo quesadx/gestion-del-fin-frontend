@@ -13,7 +13,9 @@ import {
   useCreateUser,
   useUpdateUser,
   useDeleteUser,
+  useRoles,
 } from '@/features/users/hooks/useUsers';
+import type { RoleItem } from '@/features/users/api/users.api';
 import { Shield, Plus, Edit3, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -45,9 +47,17 @@ const updateUserSchema = z.object({
 type CreateFormValues = z.infer<typeof createUserSchema>;
 type UpdateFormValues = z.infer<typeof updateUserSchema>;
 
+const ROLE_DISPLAY_LABEL: Record<string, string> = {
+  system_admin: 'ADMIN',
+  worker: 'WORKER',
+  resource_manager: 'MANAGER',
+  travel_coordinator: 'TRAVEL_LEAD',
+};
+
 export function UsersPage() {
   const { data: users, isLoading, isError, error, refetch } = useUsers();
   const { data: camps } = useCamps();
+  const { data: roles } = useRoles();
   const createMutation = useCreateUser();
   const updateMutation = useUpdateUser();
   const deleteMutation = useDeleteUser();
@@ -55,9 +65,12 @@ export function UsersPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Record<string, unknown> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; username: string } | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const campsArray = Array.isArray(camps) ? camps : [];
   const usersArray = Array.isArray(users) ? users : [];
+  const rolesArray: RoleItem[] = Array.isArray(roles) ? roles : [];
   const campMap = new Map<number, string>();
   campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
 
@@ -82,21 +95,44 @@ export function UsersPage() {
     setEditTarget(u);
   };
 
+  const roleNameById = (roleId: number): string => {
+    const found = rolesArray.find((r) => r.id === roleId);
+    return found ? found.name : '';
+  };
+
+  const roleLabel = (roleId: number): string => {
+    const name = roleNameById(roleId);
+    if (!name) return `ROLE_${roleId}`;
+    return ROLE_DISPLAY_LABEL[name] || name.toUpperCase();
+  };
+
   const onSubmitCreate = async (values: CreateFormValues) => {
-    await createMutation.mutateAsync(values);
-    setCreateOpen(false);
-    createForm.reset();
+    setCreateError(null);
+    try {
+      await createMutation.mutateAsync(values);
+      setCreateOpen(false);
+      createForm.reset();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Creation failed';
+      setCreateError(message);
+    }
   };
 
   const onSubmitEdit = async (values: UpdateFormValues) => {
     if (!editTarget) return;
+    setEditError(null);
     const payload: Record<string, unknown> = { ...values };
     if (!payload.password) delete payload.password;
-    await updateMutation.mutateAsync({
-      id: editTarget.id as number,
-      payload: payload as Parameters<typeof updateMutation.mutateAsync>[0]['payload'],
-    });
-    setEditTarget(null);
+    try {
+      await updateMutation.mutateAsync({
+        id: editTarget.id as number,
+        payload: payload as Parameters<typeof updateMutation.mutateAsync>[0]['payload'],
+      });
+      setEditTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      setEditError(message);
+    }
   };
 
   const handleToggleActive = async (u: Record<string, unknown>) => {
@@ -115,11 +151,6 @@ export function UsersPage() {
     if (!deleteTarget) return;
     await deleteMutation.mutateAsync(deleteTarget.id);
     setDeleteTarget(null);
-  };
-
-  const roleLabel = (roleId: number) => {
-    const map: Record<number, string> = { 1: 'ADMIN', 2: 'MANAGER', 3: 'WORKER', 4: 'TRAVEL_LEAD' };
-    return map[roleId] || `ROLE_${roleId}`;
   };
 
   if (isLoading) return <ScreenLoader />;
@@ -252,7 +283,6 @@ export function UsersPage() {
         )}
       </Panel>
 
-      {/* Create Dialog */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
@@ -305,6 +335,11 @@ export function UsersPage() {
                   </option>
                 ))}
               </select>
+              {createForm.formState.errors.camp_id && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {createForm.formState.errors.camp_id.message}
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -315,12 +350,23 @@ export function UsersPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
-                <option value="1">ADMIN</option>
-                <option value="2">MANAGER</option>
-                <option value="3">WORKER</option>
-                <option value="4">TRAVEL_LEAD</option>
+                {rolesArray.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {ROLE_DISPLAY_LABEL[r.name] || r.name.toUpperCase()}
+                  </option>
+                ))}
               </select>
+              {createForm.formState.errors.role_id && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {createForm.formState.errors.role_id.message}
+                </p>
+              )}
             </div>
+            {createError && (
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                {createError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton
                 variant="ghost"
@@ -340,7 +386,6 @@ export function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
       <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>
@@ -357,6 +402,11 @@ export function UsersPage() {
                 {...editForm.register('username')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
+              {editForm.formState.errors.username && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {editForm.formState.errors.username.message}
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -383,6 +433,11 @@ export function UsersPage() {
                   </option>
                 ))}
               </select>
+              {editForm.formState.errors.camp_id && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {editForm.formState.errors.camp_id.message}
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -392,12 +447,23 @@ export function UsersPage() {
                 {...editForm.register('role_id')}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
-                <option value="1">ADMIN</option>
-                <option value="2">MANAGER</option>
-                <option value="3">WORKER</option>
-                <option value="4">TRAVEL_LEAD</option>
+                {rolesArray.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {ROLE_DISPLAY_LABEL[r.name] || r.name.toUpperCase()}
+                  </option>
+                ))}
               </select>
+              {editForm.formState.errors.role_id && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {editForm.formState.errors.role_id.message}
+                </p>
+              )}
             </div>
+            {editError && (
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                {editError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>
                 CANCEL
@@ -410,7 +476,6 @@ export function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>

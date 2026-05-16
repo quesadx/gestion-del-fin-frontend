@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
@@ -8,6 +9,7 @@ import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useProfessions } from '@/features/people/hooks/useProfessions';
 import { useCreatePerson } from '@/features/people/hooks/usePeople';
+import { toast } from '@/shared/lib/toast';
 import { ArrowLeft, UserPlus, Building2, Wrench } from 'lucide-react';
 
 const createPersonSchema = z.object({
@@ -34,6 +36,8 @@ export function PersonCreatePage() {
   const campsArray = Array.isArray(camps) ? camps : [];
   const professionsArray = Array.isArray(professions) ? professions : [];
 
+  const [createError, setCreateError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -50,19 +54,27 @@ export function PersonCreatePage() {
   });
 
   const onSubmit = async (values: CreatePersonFormValues) => {
-    await createMutation.mutateAsync({
-      campId: values.camp_id,
-      payload: {
-        ...values,
-        admitted_at: new Date(values.admitted_at).toISOString(),
-        age: values.age || undefined,
-        identification_code: values.identification_code || undefined,
-        blood_type: values.blood_type || undefined,
-        skills_summary: values.skills_summary || undefined,
-        photo_url: values.photo_url || undefined,
-      },
-    });
-    navigate('/people');
+    setCreateError(null);
+    try {
+      await createMutation.mutateAsync({
+        campId: values.camp_id,
+        payload: {
+          ...values,
+          admitted_at: new Date(values.admitted_at).toISOString(),
+          age: values.age || undefined,
+          identification_code: values.identification_code || undefined,
+          blood_type: values.blood_type || undefined,
+          skills_summary: values.skills_summary || undefined,
+          photo_url: values.photo_url || undefined,
+        },
+      });
+      toast('Person registered successfully', 'success');
+      navigate('/people');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Registration failed';
+
+      setCreateError(message);
+    }
   };
 
   const isPending = createMutation.isPending;
@@ -78,7 +90,6 @@ export function PersonCreatePage() {
 
       <Panel title="REGISTER PERSON" tag="PPL.NEW" status="INPUT" accent="cyan">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Name */}
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
               FULL NAME //
@@ -95,7 +106,6 @@ export function PersonCreatePage() {
             )}
           </div>
 
-          {/* Row: Camp + Profession */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -168,7 +178,6 @@ export function PersonCreatePage() {
             </div>
           </div>
 
-          {/* Row: Status + Age */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -184,6 +193,11 @@ export function PersonCreatePage() {
                 <option value="AWAY">AWAY</option>
                 <option value="DEAD">DECEASED</option>
               </select>
+              {errors.status && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {errors.status.message}
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -195,10 +209,14 @@ export function PersonCreatePage() {
                 placeholder="30"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
+              {errors.age && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {errors.age.message}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Admitted at */}
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
               ADMISSION DATE //
@@ -215,7 +233,6 @@ export function PersonCreatePage() {
             )}
           </div>
 
-          {/* Row: Code + Blood */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -226,6 +243,11 @@ export function PersonCreatePage() {
                 placeholder="ID-XXX-###"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
+              {errors.identification_code && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {errors.identification_code.message}
+                </p>
+              )}
             </div>
             <div>
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -236,10 +258,14 @@ export function PersonCreatePage() {
                 placeholder="O+"
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
+              {errors.blood_type && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {errors.blood_type.message}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Skills */}
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
               SKILLS //
@@ -250,9 +276,35 @@ export function PersonCreatePage() {
               placeholder="First aid, basic mechanics..."
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             />
+            {errors.skills_summary && (
+              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                {errors.skills_summary.message}
+              </p>
+            )}
           </div>
 
-          {/* Submit */}
+          <div>
+            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              PHOTO URL //
+            </label>
+            <input
+              {...register('photo_url')}
+              placeholder="https://example.com/photo.jpg"
+              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+            />
+            {errors.photo_url && (
+              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                {errors.photo_url.message}
+              </p>
+            )}
+          </div>
+
+          {createError && (
+            <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              {createError}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 pt-4 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
             <GlitchButton variant="ghost" type="button" onClick={() => navigate('/people')}>
               CANCEL

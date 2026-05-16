@@ -26,7 +26,6 @@ export function DataChart() {
             <stop offset="100%" stopColor="var(--accent-primary)" stopOpacity="0" />
           </linearGradient>
         </defs>
-        {/* grid */}
         {[0, 1, 2, 3, 4].map((i) => (
           <line
             key={i}
