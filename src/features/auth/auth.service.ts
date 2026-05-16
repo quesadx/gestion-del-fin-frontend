@@ -10,18 +10,12 @@ function decodeRoleFromToken(token: string): Role | null {
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const payload = JSON.parse(atob(parts[1]));
-    const role: string = payload.role ?? payload.rol ?? payload.rol_id ?? '';
+    const role: string = payload.role ?? '';
     if (!role) return null;
     if (['system_admin', 'resource_manager', 'worker', 'travel_coordinator'].includes(role)) {
       return role as Role;
     }
-    const roleMap: Record<number, Role> = {
-      1: 'system_admin',
-      2: 'worker',
-      3: 'resource_manager',
-      4: 'travel_coordinator',
-    };
-    return roleMap[Number(role)] ?? null;
+    return null;
   } catch {
     return null;
   }

@@ -149,16 +149,20 @@ export function CampDetailPage() {
             </GlitchButton>
           </div>
         </div>
-        {(camp.ai_context_prompt as string) && (
-          <div className="mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
+        <div className="mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
+          {(camp.ai_context_prompt as string) ? (
             <div className="p-3 bg-zinc-800/50 border border-zinc-700 font-mono-data text-xs">
               <p className="text-muted-foreground mb-1">AI CONTEXT PROMPT:</p>
               <p className="text-foreground whitespace-pre-wrap">
                 {camp.ai_context_prompt as string}
               </p>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="p-3 bg-zinc-800/50 border border-zinc-700 font-mono-data text-xs">
+              <p className="text-muted-foreground">AI CONTEXT PROMPT: NO AI CONTEXT CONFIGURED</p>
+            </div>
+          )}
+        </div>
       </Panel>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -206,8 +210,7 @@ export function CampDetailPage() {
                   {peopleArray.slice(0, 10).map((person: Record<string, unknown>) => (
                     <tr
                       key={person.id as number}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
-                      onClick={() => navigate(`/people/${person.id}`)}
+                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
                     >
                       <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
                         {person.full_name as string}
