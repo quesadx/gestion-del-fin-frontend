@@ -16,6 +16,7 @@ import {
   useRoles,
 } from '@/features/users/hooks/useUsers';
 import type { RoleItem } from '@/features/users/api/users.api';
+import { toast } from '@/shared/lib/toast';
 import { Shield, Plus, Edit3, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -67,8 +68,11 @@ export function UsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; username: string } | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const campsArray = Array.isArray(camps) ? camps : [];
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
   const usersArray = Array.isArray(users) ? users : [];
   const rolesArray: RoleItem[] = Array.isArray(roles) ? roles : [];
   const campMap = new Map<number, string>();
@@ -110,6 +114,7 @@ export function UsersPage() {
     setCreateError(null);
     try {
       await createMutation.mutateAsync(values);
+      toast('User created successfully', 'success');
       setCreateOpen(false);
       createForm.reset();
     } catch (err: unknown) {
@@ -128,6 +133,7 @@ export function UsersPage() {
         id: editTarget.id as number,
         payload: payload as Parameters<typeof updateMutation.mutateAsync>[0]['payload'],
       });
+      toast('User updated successfully', 'success');
       setEditTarget(null);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Update failed';
@@ -136,21 +142,34 @@ export function UsersPage() {
   };
 
   const handleToggleActive = async (u: Record<string, unknown>) => {
-    await updateMutation.mutateAsync({
-      id: u.id as number,
-      payload: {
-        username: u.username as string,
-        camp_id: u.camp_id as number,
-        role_id: u.role_id as number,
-        is_active: !(u.is_active as boolean),
-      },
-    });
+    try {
+      await updateMutation.mutateAsync({
+        id: u.id as number,
+        payload: { is_active: !(u.is_active as boolean) } as Parameters<
+          typeof updateMutation.mutateAsync
+        >[0]['payload'],
+      });
+      toast(
+        u.is_active ? 'User deactivated successfully' : 'User activated successfully',
+        'success',
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Toggle failed';
+      toast(message, 'error');
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteMutation.mutateAsync(deleteTarget.id);
-    setDeleteTarget(null);
+    setDeleteError(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      toast('User deleted successfully', 'success');
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      setDeleteError(message);
+    }
   };
 
   if (isLoading) return <ScreenLoader />;
@@ -488,6 +507,11 @@ export function UsersPage() {
               action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError && (
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              {deleteError}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
               CANCEL

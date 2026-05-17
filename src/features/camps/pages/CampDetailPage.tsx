@@ -101,7 +101,11 @@ export function CampDetailPage() {
   }
 
   const statusVariant = camp.status === 'ACTIVE' ? 'green' : 'red';
-  const peopleArray = Array.isArray(people) ? people : [];
+  const peopleArray = Array.isArray((people as Record<string, unknown>)?.data)
+    ? ((people as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
+  const peopleTotal = ((people as Record<string, unknown>)?.pagination as Record<string, unknown>)
+    ?.total as number | undefined;
 
   return (
     <div className="space-y-6">
@@ -171,7 +175,9 @@ export function CampDetailPage() {
             <Users className="h-6 w-6 text-[var(--neon-cyan)]" />
             <div>
               <p className="font-mono-data text-[10px] text-muted-foreground">PEOPLE</p>
-              <p className="font-display text-lg text-glow-cyan">{peopleArray.length}</p>
+              <p className="font-display text-lg text-glow-cyan">
+                {peopleTotal ?? peopleArray.length}
+              </p>
             </div>
           </div>
         </Panel>

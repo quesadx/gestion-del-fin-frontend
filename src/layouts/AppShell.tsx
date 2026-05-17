@@ -19,7 +19,9 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [localCampId, setLocalCampId] = useState<number | null>(activeCamp?.id ?? null);
 
-  const campsArray = Array.isArray(camps) ? camps : ([] as Record<string, unknown>[]);
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
 
   const handleCampChange = (id: number | null) => {
     setLocalCampId(id);

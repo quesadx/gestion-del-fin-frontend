@@ -44,7 +44,7 @@ export interface CreateContributionOverrideDto {
 
 export const peopleApi = {
   getAllByCamp: (campId: number, query?: PaginationQuery) =>
-    api.get(`/camps/${campId}/people`, { params: query }).then((res) => res.data.data),
+    api.get(`/camps/${campId}/people`, { params: query }).then((res) => res.data),
   getById: (campId: number, id: number) =>
     api.get(`/camps/${campId}/people/${id}`).then((res) => res.data),
   create: (campId: number, payload: CreatePersonDto) =>

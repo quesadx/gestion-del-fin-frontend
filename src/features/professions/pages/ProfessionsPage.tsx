@@ -10,7 +10,8 @@ import {
   useCreateProfession,
   useUpdateProfession,
   useDeleteProfession,
-} from '@/features/people/hooks/useProfessions';
+} from '@/features/professions/hooks/useProfessions';
+import { toast } from '@/shared/lib/toast';
 import { Plus, Edit3, Trash2, Wrench } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -44,6 +45,9 @@ export function ProfessionsPage() {
     description?: string;
   } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const formCreate = useForm<ProfessionFormValues>({
     resolver: resolved(professionSchema),
@@ -61,21 +65,42 @@ export function ProfessionsPage() {
   };
 
   const onSubmitCreate = async (values: ProfessionFormValues) => {
-    await createMutation.mutateAsync(values);
-    formCreate.reset();
-    setCreateDialogOpen(false);
+    setCreateError(null);
+    try {
+      await createMutation.mutateAsync(values);
+      toast('Profession created successfully', 'success');
+      formCreate.reset();
+      setCreateDialogOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Creation failed';
+      setCreateError(message);
+    }
   };
 
   const onSubmitEdit = async (values: ProfessionFormValues) => {
     if (!editTarget) return;
-    await updateMutation.mutateAsync({ id: editTarget.id, payload: values });
-    setEditTarget(null);
+    setEditError(null);
+    try {
+      await updateMutation.mutateAsync({ id: editTarget.id, payload: values });
+      toast('Profession updated successfully', 'success');
+      setEditTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      setEditError(message);
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteMutation.mutateAsync(deleteTarget.id);
-    setDeleteTarget(null);
+    setDeleteError(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      toast('Profession deleted successfully', 'success');
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      setDeleteError(message);
+    }
   };
 
   if (isLoading) return <ScreenLoader />;
@@ -212,7 +237,17 @@ export function ProfessionsPage() {
                 rows={3}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data resize-none"
               />
+              {formCreate.formState.errors.description && (
+                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {formCreate.formState.errors.description.message}
+                </p>
+              )}
             </div>
+            {createError && (
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                {createError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton
                 variant="ghost"
@@ -269,7 +304,17 @@ export function ProfessionsPage() {
                 rows={3}
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data resize-none"
               />
+              {formEdit.formState.errors.description && (
+                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {formEdit.formState.errors.description.message}
+                </p>
+              )}
             </div>
+            {editError && (
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                {editError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>
                 CANCEL
@@ -294,6 +339,11 @@ export function ProfessionsPage() {
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError && (
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              {deleteError}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
               CANCEL

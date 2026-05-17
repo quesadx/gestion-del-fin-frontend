@@ -32,9 +32,21 @@ const createCampSchema = z.object({
 
 type CreateCampFormValues = z.infer<typeof createCampSchema>;
 
+const PAGE_SIZE = 20;
+
 export function CampsPage() {
   const navigate = useNavigate();
-  const { data: camps, isLoading, isError, error, refetch } = useCamps();
+  const [page, setPage] = useState(1);
+  const {
+    data: campsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useCamps({
+    page,
+    limit: PAGE_SIZE,
+  });
   const createCampMutation = useCreateCamp();
   const deleteCampMutation = useDeleteCamp();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -103,7 +115,12 @@ export function CampsPage() {
     );
   }
 
-  const campsArray = Array.isArray(camps) ? camps : [];
+  const campsArray = Array.isArray((campsData as Record<string, unknown>)?.data)
+    ? ((campsData as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
+  const pagination = (campsData as Record<string, unknown>)?.pagination as
+    | { page: number; pageSize: number; total: number; hasNextPage: boolean; totalPages: number }
+    | undefined;
   const hasActiveFilters = Boolean(searchTerm || statusFilter);
 
   const filteredCamps = campsArray.filter((camp: Record<string, unknown>) => {
@@ -254,6 +271,27 @@ export function CampsPage() {
                     </tbody>
                   </table>
                 </div>
+                {pagination && pagination.totalPages > 1 && (
+                  <div className="flex justify-center gap-3 mt-4">
+                    <GlitchButton
+                      variant="ghost"
+                      disabled={page <= 1}
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    >
+                      PREVIOUS
+                    </GlitchButton>
+                    <span className="flex items-center font-mono-data text-xs text-muted-foreground">
+                      PAGE {pagination.page} OF {pagination.totalPages}
+                    </span>
+                    <GlitchButton
+                      variant="ghost"
+                      disabled={!pagination.hasNextPage}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
+                      NEXT
+                    </GlitchButton>
+                  </div>
+                )}
               </>
             )}
           </>

@@ -39,7 +39,9 @@ export function RationsPage() {
   const adjustMutation = useCreateInventoryAdjustment();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const campsArray = Array.isArray(camps) ? camps : ([] as Record<string, unknown>[]);
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
   const peopleArray = Array.isArray(people) ? people : ([] as Record<string, unknown>[]);
   const invArray = Array.isArray(inventory) ? inventory : ([] as Record<string, unknown>[]);
 

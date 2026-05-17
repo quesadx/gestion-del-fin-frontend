@@ -45,8 +45,15 @@ export function PeopleListPage() {
     refetch: refetchPeople,
   } = usePeople(selectedCampId ?? 0, { page, limit: PAGE_SIZE });
 
-  const peopleArray = Array.isArray(people) ? people : [];
-  const campsArray = Array.isArray(camps) ? camps : [];
+  const peopleArray = Array.isArray((people as Record<string, unknown>)?.data)
+    ? ((people as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
+  const peoplePagination = (people as Record<string, unknown>)?.pagination as
+    | { page: number; pageSize: number; total: number; hasNextPage: boolean; totalPages: number }
+    | undefined;
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
   const professionsArray = Array.isArray(professions) ? professions : [];
 
   const hasActiveFilters = Boolean(searchTerm || statusFilter || professionFilter);
@@ -264,7 +271,7 @@ export function PeopleListPage() {
                 </table>
               </div>
 
-              {filteredPeople.length >= PAGE_SIZE && (
+              {peoplePagination && peoplePagination.totalPages > 1 && (
                 <div className="flex justify-center gap-3 mt-4">
                   <GlitchButton
                     variant="ghost"
@@ -274,11 +281,11 @@ export function PeopleListPage() {
                     PREVIOUS
                   </GlitchButton>
                   <span className="flex items-center font-mono-data text-xs text-muted-foreground">
-                    PAGE {page}
+                    PAGE {peoplePagination.page} OF {peoplePagination.totalPages}
                   </span>
                   <GlitchButton
                     variant="ghost"
-                    disabled={filteredPeople.length < PAGE_SIZE}
+                    disabled={!peoplePagination.hasNextPage}
                     onClick={() => setPage((p) => p + 1)}
                   >
                     NEXT

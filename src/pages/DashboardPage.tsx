@@ -32,14 +32,19 @@ function useStats(role: Role | null) {
     (role === 'system_admin' && campsQuery.isLoading) ||
     (role === 'resource_manager' && resourcesQuery.isLoading);
 
+  const campsData = (campsQuery.data as Record<string, unknown>)?.data as
+    | Record<string, unknown>[]
+    | undefined;
+  const campsArray = Array.isArray(campsData) ? campsData : [];
+
   return {
     isLoading,
-    camps: campsQuery.data,
+    camps: campsArray,
     resources: resourcesQuery.data,
-    campCount: role === 'system_admin' ? (campsQuery.data?.length ?? 0) : null,
+    campCount: role === 'system_admin' ? campsArray.length : null,
     activeCamps:
-      role === 'system_admin' && Array.isArray(campsQuery.data)
-        ? campsQuery.data.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
+      role === 'system_admin'
+        ? campsArray.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
         : null,
     resourceCount: role === 'resource_manager' ? (resourcesQuery.data?.length ?? 0) : null,
   };

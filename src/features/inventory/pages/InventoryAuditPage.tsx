@@ -21,7 +21,9 @@ export function InventoryAuditPage() {
     refetch,
   } = useInventoryAudit(selectedCampId ?? 0);
 
-  const campsArray = Array.isArray(camps) ? camps : [];
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
   const auditArray = Array.isArray(audit) ? audit : [];
 
   return (

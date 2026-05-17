@@ -76,7 +76,10 @@ export function TransfersPage() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
 
   const campsArray = useMemo(
-    () => (Array.isArray(camps) ? camps : ([] as Record<string, unknown>[])),
+    () =>
+      Array.isArray((camps as Record<string, unknown>)?.data)
+        ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+        : ([] as Record<string, unknown>[]),
     [camps],
   );
   const transfersArray = useMemo(

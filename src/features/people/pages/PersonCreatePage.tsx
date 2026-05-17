@@ -33,7 +33,9 @@ export function PersonCreatePage() {
   const { data: professions, isLoading: profsLoading, isError: profsError } = useProfessions();
   const createMutation = useCreatePerson();
 
-  const campsArray = Array.isArray(camps) ? camps : [];
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
   const professionsArray = Array.isArray(professions) ? professions : [];
 
   const [createError, setCreateError] = useState<string | null>(null);

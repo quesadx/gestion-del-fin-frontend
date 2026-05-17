@@ -43,7 +43,9 @@ export function InventoryPage() {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const stockAlerts = useStockAlerts(selectedCampId ?? 0);
 
-  const campsArray = Array.isArray(camps) ? camps : [];
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
   const invArray = useMemo(() => (Array.isArray(inventory) ? inventory : []), [inventory]);
 
   const stockChartData: StockBarEntry[] = useMemo(

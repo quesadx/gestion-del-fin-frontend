@@ -13,11 +13,12 @@ import {
   useUpdatePerson,
   useDeletePerson,
   useAddPersonStatusLog,
+  useCreateProfessionReassignment,
 } from '@/features/people/hooks/usePeople';
 import { useCamp } from '@/features/camps/hooks/useCamps';
 import { useProfessions } from '@/features/people/hooks/useProfessions';
 import { toast } from '@/shared/lib/toast';
-import { ArrowLeft, Edit3, Trash2, Activity } from 'lucide-react';
+import { ArrowLeft, Edit3, Trash2, Activity, Wrench } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -38,11 +39,19 @@ const updatePersonSchema = z.object({
   skills_summary: z.string().optional(),
   photo_url: z.string().optional(),
   status: z.enum(['HEALTHY', 'SICK', 'INJURED', 'AWAY', 'DEAD']).default('HEALTHY'),
-  profession_id: z.coerce.number().min(1, 'Select a profession'),
   admitted_at: z.string().min(1, 'Admission date is required'),
 });
 
 type UpdatePersonFormValues = z.infer<typeof updatePersonSchema>;
+
+const reassignSchema = z.object({
+  to_profession_id: z.coerce.number().min(1, 'Select a profession'),
+  reason: z.string().optional(),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+});
+
+type ReassignFormValues = z.infer<typeof reassignSchema>;
 
 const statusLogSchema = z.object({
   new_status: z.enum(['HEALTHY', 'SICK', 'INJURED', 'AWAY', 'DEAD']),
@@ -79,6 +88,7 @@ export function PersonDetailPage() {
   const updateMutation = useUpdatePerson();
   const deleteMutation = useDeletePerson();
   const statusLogMutation = useAddPersonStatusLog();
+  const reassignMutation = useCreateProfessionReassignment();
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(false);
@@ -86,6 +96,8 @@ export function PersonDetailPage() {
   const [editError, setEditError] = useState<string | null>(null);
   const [statusLogError, setStatusLogError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const [reassignError, setReassignError] = useState<string | null>(null);
 
   const editForm = useForm<UpdatePersonFormValues>({
     resolver: resolved(updatePersonSchema),
@@ -94,6 +106,11 @@ export function PersonDetailPage() {
   const statusLogForm = useForm<StatusLogFormValues>({
     resolver: resolved(statusLogSchema),
     defaultValues: { new_status: 'HEALTHY', reason: '' },
+  });
+
+  const reassignForm = useForm<ReassignFormValues>({
+    resolver: resolved(reassignSchema),
+    defaultValues: { to_profession_id: 0, reason: '', start_date: '', end_date: '' },
   });
 
   const handleOpenEdit = () => {
@@ -107,9 +124,6 @@ export function PersonDetailPage() {
         skills_summary: (p.skills_summary as string) || '',
         photo_url: (p.photo_url as string) || '',
         status: p.status as 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD',
-        profession_id: (p.profession_id ??
-          (p.professions as Record<string, unknown>)?.id ??
-          0) as number,
         admitted_at: p.admitted_at
           ? format(new Date(p.admitted_at as string), "yyyy-MM-dd'T'HH:mm")
           : '',
@@ -210,6 +224,30 @@ export function PersonDetailPage() {
     }
   };
 
+  const onSubmitReassign = async (values: ReassignFormValues) => {
+    setReassignError(null);
+    try {
+      await reassignMutation.mutateAsync({
+        campId: p.camp_id as number,
+        payload: {
+          person_id: personId,
+          from_profession_id: p.profession_id as number,
+          to_profession_id: values.to_profession_id,
+          reason: values.reason || undefined,
+          start_date: values.start_date || undefined,
+          end_date: values.end_date || undefined,
+        },
+      });
+      toast('Profession reassigned successfully', 'success');
+      setReassignOpen(false);
+      reassignForm.reset();
+      refetch();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Reassignment failed';
+      setReassignError(message);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <GlitchButton variant="ghost" onClick={() => navigate('/people')}>
@@ -289,6 +327,10 @@ export function PersonDetailPage() {
           <GlitchButton variant="ghost" onClick={() => setStatusLogOpen(true)}>
             <Activity className="h-3.5 w-3.5 mr-1" />
             CHANGE STATUS
+          </GlitchButton>
+          <GlitchButton variant="ghost" onClick={() => setReassignOpen(true)}>
+            <Wrench className="h-3.5 w-3.5 mr-1" />
+            REASSIGN PROFESSION
           </GlitchButton>
           <GlitchButton variant="warning" onClick={() => setDeleteTarget(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1" />
@@ -394,23 +436,9 @@ export function PersonDetailPage() {
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
                   PROFESSION //
                 </label>
-                <select
-                  {...editForm.register('profession_id')}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
-                >
-                  {(Array.isArray(professions) ? professions : []).map(
-                    (prof: Record<string, unknown>) => (
-                      <option key={prof.id as number} value={prof.id as number}>
-                        {prof.name as string}
-                      </option>
-                    ),
-                  )}
-                </select>
-                {editForm.formState.errors.profession_id && (
-                  <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
-                    {editForm.formState.errors.profession_id.message}
-                  </p>
-                )}
+                <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
+                  {(profObj?.name as string) || '—'}
+                </div>
               </div>
             </div>
             <div>
@@ -575,6 +603,101 @@ export function PersonDetailPage() {
               </GlitchButton>
               <GlitchButton variant="primary" type="submit" disabled={statusLogMutation.isPending}>
                 {statusLogMutation.isPending ? 'LOGGING...' : 'LOG'}
+              </GlitchButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
+        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <DialogHeader>
+            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+              REASSIGN PROFESSION
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={reassignForm.handleSubmit(onSubmitReassign)} className="space-y-4">
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                CURRENT PROFESSION //
+              </label>
+              <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
+                {(profObj?.name as string) || '—'}
+              </div>
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                NEW PROFESSION //
+              </label>
+              <select
+                {...reassignForm.register('to_profession_id')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              >
+                <option value="">SELECT...</option>
+                {(Array.isArray(professions) ? professions : []).map(
+                  (prof: Record<string, unknown>) => (
+                    <option key={prof.id as number} value={prof.id as number}>
+                      {prof.name as string}
+                    </option>
+                  ),
+                )}
+              </select>
+              {reassignForm.formState.errors.to_profession_id && (
+                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  {reassignForm.formState.errors.to_profession_id.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                REASON //
+              </label>
+              <textarea
+                {...reassignForm.register('reason')}
+                rows={2}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  START DATE //
+                </label>
+                <input
+                  {...reassignForm.register('start_date')}
+                  type="date"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                />
+              </div>
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  END DATE //
+                </label>
+                <input
+                  {...reassignForm.register('end_date')}
+                  type="date"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                />
+              </div>
+            </div>
+            {reassignError && (
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                {reassignError}
+              </div>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setReassignOpen(false);
+                  reassignForm.reset();
+                }}
+              >
+                CANCEL
+              </GlitchButton>
+              <GlitchButton variant="primary" type="submit" disabled={reassignMutation.isPending}>
+                {reassignMutation.isPending ? 'REASSIGNING...' : 'REASSIGN'}
               </GlitchButton>
             </div>
           </form>
