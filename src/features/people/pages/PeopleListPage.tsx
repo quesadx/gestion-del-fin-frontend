@@ -217,6 +217,7 @@ export function PeopleListPage() {
                 <table className="w-full text-left font-mono-data text-xs">
                   <thead>
                     <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                      <th className="py-3 px-2 font-semibold">ID</th>
                       <th className="py-3 px-2 font-semibold">NAME</th>
                       <th className="py-3 px-2 font-semibold">STATUS</th>
                       <th className="py-3 px-2 font-semibold">PROFESSION</th>
@@ -231,6 +232,9 @@ export function PeopleListPage() {
                         style={{ animationDelay: `${i * 40}ms`, animationFillMode: 'backwards' }}
                         onClick={() => navigate(`/people/${person.id}?campId=${selectedCampId}`)}
                       >
+                        <td className="py-3 px-2 text-zinc-500 font-mono text-[10px]">
+                          {person.id as number}
+                        </td>
                         <td className="py-3 px-2">
                           <div className="flex items-center gap-2">
                             {(person.photo_url as string) ? (

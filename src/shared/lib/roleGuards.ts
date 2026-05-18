@@ -11,6 +11,7 @@ export const ROLE_ACCESS: Record<string, Role[]> = {
   '/inventory': ['resource_manager', 'worker'],
   '/inventory/audit': ['resource_manager'],
   '/explorations': ['system_admin', 'travel_coordinator'],
+  '/explorations/:id': ['system_admin', 'travel_coordinator'],
   '/admissions': ['system_admin'],
   '/users': ['system_admin'],
   '/professions': ['system_admin'],

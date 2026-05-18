@@ -5,27 +5,21 @@ import type { AuthUser, Role } from './types/auth.types';
 
 export type LoginPayload = LoginRequest;
 
-function decodeRoleFromToken(token: string): Role | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(atob(parts[1]));
-    const role: string = payload.role ?? '';
-    if (!role) return null;
-    if (['system_admin', 'resource_manager', 'worker', 'travel_coordinator'].includes(role)) {
-      return role as Role;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export const authService = {
   login: async (payload: LoginPayload): Promise<AuthUser> => {
     const { user, token } = await authApi.login(payload);
-    const role = decodeRoleFromToken(token);
-    useAuthStore.getState().setSession({ user, token, role });
+    const parts = token.split('.');
+    const jwtPayload = parts.length === 3 ? JSON.parse(atob(parts[1])) : null;
+    const role = jwtPayload?.role ?? null;
+    const userId = jwtPayload?.userId ?? null;
+    if (
+      role &&
+      ['system_admin', 'resource_manager', 'worker', 'travel_coordinator'].includes(role)
+    ) {
+      useAuthStore.getState().setSession({ user, token, role: role as Role, userId });
+    } else {
+      useAuthStore.getState().setSession({ user, token });
+    }
     return user;
   },
 

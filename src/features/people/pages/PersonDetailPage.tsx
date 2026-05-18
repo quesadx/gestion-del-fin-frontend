@@ -263,6 +263,7 @@ export function PersonDetailPage() {
         status={p.status as string}
         accent="cyan"
       >
+        <div className="text-[10px] font-mono text-zinc-500 mb-3">ID: {personId}</div>
         <div className="flex items-start gap-4 mb-4">
           {(p.photo_url as string) ? (
             <img

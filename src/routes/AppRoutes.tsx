@@ -54,6 +54,12 @@ const ExplorationsPage = lazy(() =>
   })),
 );
 
+const ExplorationDetailPage = lazy(() =>
+  import('@/features/explorations/pages/ExplorationDetailPage').then((m) => ({
+    default: m.ExplorationDetailPage,
+  })),
+);
+
 const AdmissionsPage = lazy(() =>
   import('@/features/admission/pages/AdmissionsPage').then((m) => ({ default: m.AdmissionsPage })),
 );
@@ -180,6 +186,14 @@ export function AppRoutes() {
               element={
                 <Suspense fallback={<LazyFallback />}>
                   <ExplorationsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/explorations/:id"
+              element={
+                <Suspense fallback={<LazyFallback />}>
+                  <ExplorationDetailPage />
                 </Suspense>
               }
             />

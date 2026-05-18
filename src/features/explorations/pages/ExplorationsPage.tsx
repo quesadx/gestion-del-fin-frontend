@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -14,7 +15,10 @@ import {
   useDeleteExploration,
 } from '@/features/explorations/hooks/useExplorations';
 import { useCamps } from '@/features/camps/hooks/useCamps';
-import { Compass, Plus, Trash2 } from 'lucide-react';
+import { usePeople } from '@/features/people/hooks/usePeople';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { toast } from '@/shared/lib/toast';
+import { Compass, Plus, Trash2, FilterX, Users, Package, Gift } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -46,21 +50,58 @@ const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
 };
 
 export function ExplorationsPage() {
+  const navigate = useNavigate();
   const { data: explorations, isLoading, isError, error, refetch } = useExplorations();
   const { data: camps } = useCamps();
+  const userId = useAuthStore((state) => state.userId);
   const createMutation = useCreateExploration();
   const updateStatusMutation = useUpdateExplorationStatus();
   const deleteMutation = useDeleteExploration();
   const [createOpen, setCreateOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; destination: string } | null>(
+    null,
+  );
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [statusTarget, setStatusTarget] = useState<{
+    id: number;
+    destination: string;
+    currentStatus: string;
+    newStatus: string;
+  } | null>(null);
+  const [statusConfirmError, setStatusConfirmError] = useState<string | null>(null);
+  const [campFilter, setCampFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
 
   const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
     ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
     : [];
-  const expArray = Array.isArray(explorations) ? explorations : [];
+  const expArray = Array.isArray(explorations)
+    ? explorations
+    : Array.isArray((explorations as Record<string, unknown>)?.data)
+      ? ((explorations as Record<string, unknown>).data as Record<string, unknown>[])
+      : [];
+
+  const hasActiveFilters = Boolean(campFilter || statusFilter);
+
+  const filteredExps = expArray.filter((exp: Record<string, unknown>) => {
+    if (campFilter && (exp.camp_id as number) !== Number(campFilter)) return false;
+    if (statusFilter && (exp.status as string) !== statusFilter) return false;
+    return true;
+  });
+
+  const campIsEmpty = expArray.length === 0;
+  const filterIsEmpty = !campIsEmpty && filteredExps.length === 0 && hasActiveFilters;
+
+  const clearFilters = () => {
+    setCampFilter('');
+    setStatusFilter('');
+  };
 
   const campMap = new Map<number, string>();
   campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
+
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
 
   const formCreate = useForm<CreateExplorationFormValues>({
     resolver: zodResolver(createExplorationSchema),
@@ -74,37 +115,96 @@ export function ExplorationsPage() {
     },
   });
 
+  const watchedCampId = useWatch({ control: formCreate.control, name: 'camp_id' });
+  const { data: people } = usePeople(watchedCampId || 0, { page: 1, limit: 100 });
+  const peopleArray = Array.isArray((people as Record<string, unknown>)?.data)
+    ? ((people as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
+
+  const availablePeople = peopleArray.filter(
+    (p: Record<string, unknown>) =>
+      (p.status as string) !== 'AWAY' && (p.status as string) !== 'DEAD',
+  );
+  const unavailableCount = peopleArray.length - availablePeople.length;
+
   const onSubmitCreate = async (values: CreateExplorationFormValues) => {
-    await createMutation.mutateAsync({
-      camp_id: values.camp_id,
-      created_by: 0,
-      destination: values.destination,
-      departure_date: values.departure_date,
-      expected_return_date: values.expected_return_date,
-      max_return_date: values.max_return_date,
-      notes: values.notes || undefined,
-    });
-    formCreate.reset();
-    setCreateOpen(false);
+    setCreateError(null);
+    if (!userId) {
+      setCreateError('User ID not available. Please re-login.');
+      return;
+    }
+    if (selectedMembers.length === 0) {
+      setCreateError('Select at least one member for the expedition');
+      return;
+    }
+    try {
+      await createMutation.mutateAsync({
+        camp_id: values.camp_id,
+        created_by: userId,
+        destination: values.destination,
+        departure_date: values.departure_date.slice(0, 10),
+        expected_return_date: values.expected_return_date.slice(0, 10),
+        max_return_date: values.max_return_date.slice(0, 10),
+        notes: values.notes || undefined,
+        members:
+          selectedMembers.length > 0
+            ? selectedMembers.map((pid) => ({ person_id: pid }))
+            : undefined,
+      });
+      toast('Exploration created successfully', 'success');
+      formCreate.reset();
+      setSelectedMembers([]);
+      setCreateOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Creation failed';
+      setCreateError(message);
+    }
   };
 
-  const handleStatusChange = async (id: number, status: string) => {
-    await updateStatusMutation.mutateAsync({
-      id,
-      payload: {
-        status: status as 'PLANNED' | 'ONGOING' | 'RETURNED' | 'CANCELLED',
-        changed_by: 0,
-      },
-    });
+  const handleStatusChange = (
+    id: number,
+    destination: string,
+    currentStatus: string,
+    newStatus: string,
+  ) => {
+    if (currentStatus === newStatus) return;
+    setStatusTarget({ id, destination, currentStatus, newStatus });
+    setStatusConfirmError(null);
+  };
+
+  const confirmStatusChange = async () => {
+    if (!statusTarget) return;
+    setStatusConfirmError(null);
+    try {
+      await updateStatusMutation.mutateAsync({
+        id: statusTarget.id,
+        payload: {
+          status: statusTarget.newStatus as 'PLANNED' | 'ONGOING' | 'RETURNED' | 'CANCELLED',
+          changed_by: userId ?? 0,
+        },
+      });
+      toast('Status updated successfully', 'success');
+      setStatusTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Status change failed';
+      setStatusConfirmError(message);
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteMutation.mutateAsync({
-      id: deleteTarget,
-      payload: { changed_by: 0 },
-    });
-    setDeleteTarget(null);
+    setDeleteError(null);
+    try {
+      await deleteMutation.mutateAsync({
+        id: deleteTarget.id,
+        payload: { changed_by: userId ?? 0 },
+      });
+      toast('Exploration deleted successfully', 'success');
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Delete failed';
+      setDeleteError(message);
+    }
   };
 
   if (isLoading) return <ScreenLoader />;
@@ -132,7 +232,7 @@ export function ExplorationsPage() {
         status={isLoading ? 'LOADING' : expArray.length.toString()}
         accent="cyan"
       >
-        {expArray.length === 0 ? (
+        {campIsEmpty ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <Compass className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">
@@ -147,7 +247,38 @@ export function ExplorationsPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 flex justify-end">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
+              <select
+                value={campFilter}
+                onChange={(e) => setCampFilter(e.target.value)}
+                className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              >
+                <option value="">ALL CAMPS</option>
+                {campsArray.map((c: Record<string, unknown>) => (
+                  <option key={c.id as number} value={c.id as number}>
+                    {c.name as string}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              >
+                <option value="">ALL STATUS</option>
+                <option value="PLANNED">PLANNED</option>
+                <option value="ONGOING">ONGOING</option>
+                <option value="RETURNED">RETURNED</option>
+                <option value="CANCELLED">CANCELLED</option>
+              </select>
+              {hasActiveFilters && (
+                <GlitchButton variant="ghost" onClick={clearFilters}>
+                  <span className="flex items-center gap-1.5">
+                    <FilterX className="h-3 w-3" />
+                    CLEAR
+                  </span>
+                </GlitchButton>
+              )}
               <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
@@ -155,73 +286,101 @@ export function ExplorationsPage() {
                 </span>
               </GlitchButton>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono-data text-xs">
-                <thead>
-                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                    <th className="py-3 px-2">DESTINATION</th>
-                    <th className="py-3 px-2">STATUS</th>
-                    <th className="py-3 px-2">DEPARTURE</th>
-                    <th className="py-3 px-2">EXPECTED RETURN</th>
-                    <th className="py-3 px-2">CAMP</th>
-                    <th className="py-3 px-2">CHANGE STATUS</th>
-                    <th className="py-3 px-2 text-right">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expArray.map((exp: Record<string, unknown>) => (
-                    <tr
-                      key={exp.id as number}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
-                    >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
-                        {exp.destination as string}
-                      </td>
-                      <td className="py-3 px-2">
-                        <StatusBadge
-                          status={exp.status as string}
-                          variant={STATUS_MAP[exp.status as string] || 'cyan'}
-                        />
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        {exp.departure_date
-                          ? format(new Date(exp.departure_date as string), 'dd/MM/yyyy')
-                          : '—'}
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        {exp.expected_return_date
-                          ? format(new Date(exp.expected_return_date as string), 'dd/MM/yyyy')
-                          : '—'}
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        {campMap.get(exp.camp_id as number) || (exp.camp_id as string)}
-                      </td>
-                      <td className="py-3 px-2">
-                        <select
-                          value={exp.status as string}
-                          onChange={(e) => handleStatusChange(exp.id as number, e.target.value)}
-                          className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-1 text-[10px] text-foreground outline-none font-mono-data"
-                        >
-                          <option value="PLANNED">PLANNED</option>
-                          <option value="ONGOING">ONGOING</option>
-                          <option value="RETURNED">RETURNED</option>
-                          <option value="CANCELLED">CANCELLED</option>
-                        </select>
-                      </td>
-                      <td className="py-3 px-2 text-right">
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(exp.id as number)}
-                          className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </td>
+
+            {filterIsEmpty ? (
+              <div className="flex flex-col items-center gap-4 py-8">
+                <FilterX className="h-8 w-8 text-[var(--neon-cyan)]/30" />
+                <p className="font-mono-data text-sm text-muted-foreground">
+                  NO EXPLORATIONS MATCH SELECTED FILTERS
+                </p>
+                <GlitchButton variant="ghost" onClick={clearFilters}>
+                  CLEAR FILTERS
+                </GlitchButton>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono-data text-xs">
+                  <thead>
+                    <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                      <th className="py-3 px-2">DESTINATION</th>
+                      <th className="py-3 px-2">STATUS</th>
+                      <th className="py-3 px-2">DEPARTURE</th>
+                      <th className="py-3 px-2">EXPECTED RETURN</th>
+                      <th className="py-3 px-2">CAMP</th>
+                      <th className="py-3 px-2">CHANGE STATUS</th>
+                      <th className="py-3 px-2 text-right">ACTIONS</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredExps.map((exp: Record<string, unknown>) => (
+                      <tr
+                        key={exp.id as number}
+                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
+                        onClick={() => navigate(`/explorations/${exp.id}`)}
+                      >
+                        <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                          {exp.destination as string}
+                        </td>
+                        <td className="py-3 px-2">
+                          <StatusBadge
+                            status={exp.status as string}
+                            variant={STATUS_MAP[exp.status as string] || 'cyan'}
+                          />
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">
+                          {exp.departure_date
+                            ? format(new Date(exp.departure_date as string), 'dd/MM/yyyy')
+                            : '—'}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">
+                          {exp.expected_return_date
+                            ? format(new Date(exp.expected_return_date as string), 'dd/MM/yyyy')
+                            : '—'}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">
+                          {campMap.get(exp.camp_id as number) || (exp.camp_id as string)}
+                        </td>
+                        <td className="py-3 px-2">
+                          <select
+                            value={exp.status as string}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) =>
+                              handleStatusChange(
+                                exp.id as number,
+                                exp.destination as string,
+                                exp.status as string,
+                                e.target.value,
+                              )
+                            }
+                            className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-1 text-[10px] text-foreground outline-none font-mono-data"
+                          >
+                            <option value="PLANNED">PLANNED</option>
+                            <option value="ONGOING">ONGOING</option>
+                            <option value="RETURNED">RETURNED</option>
+                            <option value="CANCELLED">CANCELLED</option>
+                          </select>
+                        </td>
+                        <td className="py-3 px-2 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget({
+                                id: exp.id as number,
+                                destination: exp.destination as string,
+                              });
+                            }}
+                            className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
       </Panel>
@@ -308,12 +467,76 @@ export function ExplorationsPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
               />
             </div>
+            {watchedCampId > 0 && (
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  MEMBERS //
+                </label>
+                {availablePeople.length === 0 ? (
+                  <p className="text-xs text-muted-foreground font-mono-data">
+                    No available people in selected camp
+                    {unavailableCount > 0 && ` (${unavailableCount} unavailable)`}
+                  </p>
+                ) : (
+                  <>
+                    <div className="max-h-40 overflow-y-auto border border-[oklch(0.68_0.32_340_/_0.4)] rounded-sm">
+                      {availablePeople.map((person: Record<string, unknown>) => (
+                        <label
+                          key={person.id as number}
+                          className="flex items-center gap-2 px-3 py-1.5 hover:bg-[oklch(0.15_0.05_320_/_0.5)] cursor-pointer font-mono-data text-xs"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedMembers.includes(person.id as number)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedMembers((prev) => [...prev, person.id as number]);
+                              } else {
+                                setSelectedMembers((prev) =>
+                                  prev.filter((id) => id !== (person.id as number)),
+                                );
+                              }
+                            }}
+                          />
+                          <span className="text-foreground">{person.full_name as string}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {selectedMembers.length > 0 && (
+                  <p className="mt-1 text-[10px] text-muted-foreground font-mono-data">
+                    {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''} selected
+                  </p>
+                )}
+              </div>
+            )}
+            {!watchedCampId && (
+              <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                Select a camp to choose members
+              </div>
+            )}
+            <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
+              <Package className="h-3.5 w-3.5" />
+              Resource allocation pending inventory integration
+            </div>
+            <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
+              <Gift className="h-3.5 w-3.5" />
+              Found resources can be recorded when return flow is connected
+            </div>
+            {createError && (
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                {createError}
+              </div>
+            )}
             <div className="flex justify-end gap-3 pt-2">
               <GlitchButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
                   formCreate.reset();
+                  setSelectedMembers([]);
                   setCreateOpen(false);
                 }}
               >
@@ -327,6 +550,47 @@ export function ExplorationsPage() {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog open={!!statusTarget} onOpenChange={() => {}}>
+        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+              CONFIRM STATUS CHANGE
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground space-y-1.5">
+              <div>
+                Change status of expedition to{' '}
+                <span className="text-[var(--neon-fuchsia)]">{statusTarget?.destination}</span>?
+              </div>
+              <div>
+                <StatusBadge status={statusTarget?.currentStatus || ''} variant="cyan" />
+                <span className="mx-1 text-muted-foreground">→</span>
+                <StatusBadge
+                  status={statusTarget?.newStatus || ''}
+                  variant={STATUS_MAP[statusTarget?.newStatus || ''] || 'cyan'}
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {statusConfirmError && (
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              {statusConfirmError}
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+              CANCEL
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmStatusChange}
+              disabled={updateStatusMutation.isPending}
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+            >
+              {updateStatusMutation.isPending ? 'UPDATING...' : 'CONFIRM'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <AlertDialogHeader>
@@ -334,9 +598,16 @@ export function ExplorationsPage() {
               CONFIRM DELETE
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              This action cannot be undone.
+              Delete expedition to{' '}
+              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.destination}</span>? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {deleteError && (
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              {deleteError}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
               CANCEL
