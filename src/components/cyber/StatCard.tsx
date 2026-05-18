@@ -77,7 +77,6 @@ export function StatCard({
         </div>
       </div>
 
-      {/* Right corner accent */}
       <span
         className={`absolute bottom-0 right-0 w-6 h-[1px] ${colors.text.replace('text', 'bg')}/30`}
       />

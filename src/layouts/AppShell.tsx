@@ -19,7 +19,9 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [localCampId, setLocalCampId] = useState<number | null>(activeCamp?.id ?? null);
 
-  const campsArray = Array.isArray(camps) ? camps : ([] as Record<string, unknown>[]);
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
 
   const handleCampChange = (id: number | null) => {
     setLocalCampId(id);
@@ -39,11 +41,9 @@ export function AppShell() {
 
   return (
     <div className="flex h-screen bg-surface-base">
-      {/* Sidebar */}
       <aside
         className={`${collapsed ? 'w-16' : 'w-64'} bg-surface-raised border-r border-zinc-800 flex flex-col transition-all duration-200 shrink-0`}
       >
-        {/* Logo */}
         <div className="px-4 py-5 border-b border-zinc-800">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-brand-primary flex items-center justify-center shrink-0">
@@ -58,7 +58,6 @@ export function AppShell() {
           </div>
         </div>
 
-        {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-3 space-y-1 px-2">
           {items.map((item) => {
             const Icon = item.icon;
@@ -81,7 +80,6 @@ export function AppShell() {
           })}
         </nav>
 
-        {/* Camp selector */}
         <div className="border-t border-zinc-800 p-3">
           {!collapsed && (
             <div className="space-y-2">
@@ -104,7 +102,6 @@ export function AppShell() {
             </div>
           )}
 
-          {/* User info */}
           <div className="mt-3 pt-3 border-t border-zinc-800 flex items-center gap-2">
             <div className="w-6 h-6 bg-zinc-800 flex items-center justify-center shrink-0">
               <span className="font-mono text-[10px] font-bold text-brand-secondary">
@@ -131,7 +128,6 @@ export function AppShell() {
           </div>
         </div>
 
-        {/* Logout */}
         <div className="p-2 border-t border-zinc-800">
           <button
             onClick={handleLogout}
@@ -143,9 +139,7 @@ export function AppShell() {
         </div>
       </aside>
 
-      {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
         <header className="h-14 bg-surface-base/80 backdrop-blur-sm border-b border-zinc-800 flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-3">
             <LayoutGrid size={14} className="text-zinc-600" />
@@ -170,8 +164,7 @@ export function AppShell() {
           </div>
         </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

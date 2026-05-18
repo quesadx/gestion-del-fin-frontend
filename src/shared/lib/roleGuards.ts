@@ -11,6 +11,7 @@ export const ROLE_ACCESS: Record<string, Role[]> = {
   '/inventory': ['resource_manager', 'worker'],
   '/inventory/audit': ['resource_manager'],
   '/explorations': ['system_admin', 'travel_coordinator'],
+  '/explorations/:id': ['system_admin', 'travel_coordinator'],
   '/admissions': ['system_admin'],
   '/users': ['system_admin'],
   '/professions': ['system_admin'],
@@ -18,12 +19,37 @@ export const ROLE_ACCESS: Record<string, Role[]> = {
   '/rations': ['system_admin', 'resource_manager'],
 };
 
-export function canAccess(role: Role, path: string): boolean {
-  const allowed = ROLE_ACCESS[path];
+export const ROLE_LANDING: Record<string, string> = {
+  system_admin: '/dashboard',
+  resource_manager: '/dashboard',
+  worker: '/inventory',
+  travel_coordinator: '/explorations',
+};
 
-  if (!allowed) {
+function buildRouteRegexes(): Array<{ regex: RegExp; roles: Role[] }> {
+  const entries = Object.entries(ROLE_ACCESS);
+
+  return entries.map(([pattern, roles]) => {
+    const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const withParams = escaped.replace(/:id/g, '\\d+');
+    const regex = new RegExp('^' + withParams + '$');
+
+    return { regex, roles };
+  });
+}
+
+const ROUTE_REGEXES = buildRouteRegexes();
+
+export function canAccess(role: Role | null, path: string): boolean {
+  if (!role) {
     return false;
   }
 
-  return allowed.includes(role);
+  for (const { regex, roles } of ROUTE_REGEXES) {
+    if (regex.test(path) && roles.includes(role)) {
+      return true;
+    }
+  }
+
+  return false;
 }

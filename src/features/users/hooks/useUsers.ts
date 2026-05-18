@@ -3,6 +3,15 @@ import { usersApi } from '@/features/users/api/users.api';
 import type { CreateUserDto, UpdateUserDto } from '@/features/users/api/users.api';
 
 const USERS_KEY = ['users'] as const;
+const ROLES_KEY = ['users', 'roles'] as const;
+
+export function useRoles() {
+  return useQuery({
+    queryKey: ROLES_KEY,
+    queryFn: usersApi.getRoles,
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 export function useUsers() {
   return useQuery({

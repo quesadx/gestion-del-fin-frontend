@@ -11,7 +11,7 @@ export function useServerTime() {
         const data = await api.get<{ now: number }>('/system/time').then((r) => r.data);
         syncServerTime(data.now);
       } catch {
-        // Silently fall back to local time
+        void 0;
       }
     };
 

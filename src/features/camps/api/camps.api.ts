@@ -1,4 +1,5 @@
 import { api } from '@/shared/api/axiosInstance';
+import type { PaginationQuery } from '@/shared/api/types';
 
 export type CampStatus = 'ACTIVE' | 'ABANDONED';
 
@@ -12,7 +13,7 @@ export interface CreateCampDto {
 export type UpdateCampDto = Partial<CreateCampDto>;
 
 export const campsApi = {
-  getAll: () => api.get('/camps').then((res) => res.data.data),
+  getAll: (query?: PaginationQuery) => api.get('/camps', { params: query }).then((res) => res.data),
   getById: (id: number) => api.get(`/camps/${id}`).then((res) => res.data),
   create: (payload: CreateCampDto) => api.post('/camps', payload).then((res) => res.data),
   update: (id: number, payload: UpdateCampDto) =>

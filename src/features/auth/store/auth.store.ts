@@ -6,10 +6,16 @@ interface AuthState {
   user: AuthUser | null;
   token: string | null;
   role: Role | null;
+  userId: number | null;
   isLocked: boolean;
   lastActivity: number;
   _hasHydrated: boolean;
-  setSession: (payload: { user: AuthUser; token: string; role?: Role | null }) => void;
+  setSession: (payload: {
+    user: AuthUser;
+    token: string;
+    role?: Role | null;
+    userId?: number | null;
+  }) => void;
   logout: () => void;
   updateActivity: () => void;
   lock: () => void;
@@ -22,14 +28,16 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       role: null,
+      userId: null,
       isLocked: false,
       lastActivity: Date.now(),
       _hasHydrated: false,
-      setSession: ({ user, token, role }) =>
+      setSession: ({ user, token, role, userId }) =>
         set({
           user,
           token,
           role: role ?? null,
+          userId: userId ?? null,
           isLocked: false,
           lastActivity: Date.now(),
         }),
@@ -38,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
           user: null,
           token: null,
           role: null,
+          userId: null,
           isLocked: false,
           lastActivity: Date.now(),
         }),

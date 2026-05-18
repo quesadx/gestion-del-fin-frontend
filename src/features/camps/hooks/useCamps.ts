@@ -1,14 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { campsApi } from '@/features/camps/api/camps.api';
 import type { CreateCampDto, UpdateCampDto } from '@/features/camps/api/camps.api';
+import type { PaginationQuery } from '@/shared/api/types';
 
 const CAMPS_KEY = ['camps'] as const;
 
-export function useCamps(options?: { enabled?: boolean }) {
+export function useCamps(query?: PaginationQuery & { enabled?: boolean }) {
+  const { enabled, ...params } = query ?? {};
+
   return useQuery({
-    queryKey: CAMPS_KEY,
-    queryFn: campsApi.getAll,
-    ...options,
+    queryKey: [...CAMPS_KEY, params] as const,
+    queryFn: () => campsApi.getAll(Object.keys(params).length > 0 ? params : undefined),
+    enabled: enabled !== false,
   });
 }
 

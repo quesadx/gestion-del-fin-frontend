@@ -34,7 +34,6 @@ export function Panel({
     <div
       className={`relative rounded-none ${variantClass} ${accentBorder} p-6 transition-all duration-200 ${className}`}
     >
-      {/* Corner brackets */}
       <span
         className={`absolute top-0 left-0 w-3 h-3 border-t border-l ${isCyan ? 'border-accent-primary/60' : 'border-accent-secondary/60'}`}
       />
@@ -42,7 +41,6 @@ export function Panel({
         className={`absolute bottom-0 right-0 w-3 h-3 border-b border-r ${isCyan ? 'border-accent-primary/60' : 'border-accent-secondary/60'}`}
       />
 
-      {/* Header */}
       {(title || tag || status) && (
         <div className="flex items-center justify-between gap-4 mb-5 pb-4 border-b border-border/15">
           <div className="flex items-center gap-3">

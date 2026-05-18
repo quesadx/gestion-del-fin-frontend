@@ -54,6 +54,12 @@ const ExplorationsPage = lazy(() =>
   })),
 );
 
+const ExplorationDetailPage = lazy(() =>
+  import('@/features/explorations/pages/ExplorationDetailPage').then((m) => ({
+    default: m.ExplorationDetailPage,
+  })),
+);
+
 const AdmissionsPage = lazy(() =>
   import('@/features/admission/pages/AdmissionsPage').then((m) => ({ default: m.AdmissionsPage })),
 );
@@ -101,7 +107,6 @@ export function AppRoutes() {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Routes that require auth only */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route
@@ -112,7 +117,6 @@ export function AppRoutes() {
                 </Suspense>
               }
             />
-            {/* System admin routes */}
             <Route
               path="/camps"
               element={
@@ -182,6 +186,14 @@ export function AppRoutes() {
               element={
                 <Suspense fallback={<LazyFallback />}>
                   <ExplorationsPage />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/explorations/:id"
+              element={
+                <Suspense fallback={<LazyFallback />}>
+                  <ExplorationDetailPage />
                 </Suspense>
               }
             />

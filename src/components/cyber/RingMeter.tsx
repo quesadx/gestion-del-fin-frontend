@@ -1,5 +1,5 @@
 interface RingMeterProps {
-  value: number; // 0-100
+  value: number;
   label: string;
   sublabel?: string;
   color?: 'cyan' | 'purple' | 'yellow';
@@ -32,7 +32,6 @@ export function RingMeter({ value, label, sublabel, color = 'cyan', size = 140 }
               </feMerge>
             </filter>
           </defs>
-          {/* track */}
           <circle
             cx={size / 2}
             cy={size / 2}
@@ -41,7 +40,6 @@ export function RingMeter({ value, label, sublabel, color = 'cyan', size = 140 }
             strokeWidth={stroke}
             fill="none"
           />
-          {/* tick marks */}
           {Array.from({ length: 40 }).map((_, i) => {
             const angle = (i / 40) * 360;
             return (

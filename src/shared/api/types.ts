@@ -14,6 +14,7 @@ export interface LoginRequest {
 export interface LoginResponse {
   user: {
     username: string;
+    role: string;
   };
   token: string;
 }

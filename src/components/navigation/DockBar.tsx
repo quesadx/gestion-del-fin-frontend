@@ -33,7 +33,6 @@ export function DockBar({ items, userName, onLogout }: DockBarProps) {
                   {isActive && (
                     <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-accent-primary shadow-glow" />
                   )}
-                  {/* Tooltip */}
                   <span className="absolute -top-9 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-100 pointer-events-none font-mono-sm text-text-secondary whitespace-nowrap bg-surface-deep border border-border px-2 py-1">
                     {item.label}
                   </span>
@@ -43,10 +42,8 @@ export function DockBar({ items, userName, onLogout }: DockBarProps) {
           );
         })}
 
-        {/* Separator */}
         <span className="w-px h-6 bg-border/30 mx-1.5" />
 
-        {/* User info + logout */}
         {userName && (
           <>
             <div className="flex items-center gap-2 px-2 font-mono-sm text-text-muted">

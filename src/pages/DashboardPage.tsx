@@ -32,14 +32,19 @@ function useStats(role: Role | null) {
     (role === 'system_admin' && campsQuery.isLoading) ||
     (role === 'resource_manager' && resourcesQuery.isLoading);
 
+  const campsData = (campsQuery.data as Record<string, unknown>)?.data as
+    | Record<string, unknown>[]
+    | undefined;
+  const campsArray = Array.isArray(campsData) ? campsData : [];
+
   return {
     isLoading,
-    camps: campsQuery.data,
+    camps: campsArray,
     resources: resourcesQuery.data,
-    campCount: role === 'system_admin' ? (campsQuery.data?.length ?? 0) : null,
+    campCount: role === 'system_admin' ? campsArray.length : null,
     activeCamps:
-      role === 'system_admin' && Array.isArray(campsQuery.data)
-        ? campsQuery.data.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
+      role === 'system_admin'
+        ? campsArray.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
         : null,
     resourceCount: role === 'resource_manager' ? (resourcesQuery.data?.length ?? 0) : null,
   };
@@ -65,7 +70,6 @@ export function DashboardPage() {
     return () => clearInterval(interval);
   }, [isSyncing]);
 
-  // Build module cards based on role
   const modules: ModuleCard[] = [];
   if (role === 'system_admin') {
     modules.push({
@@ -103,7 +107,6 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* ── Hero section ── */}
       <div className="relative overflow-hidden rounded-none glass-heavy border border-border/20 p-8">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.65_0.28_210/0.08),transparent_60%)]" />
         <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -134,7 +137,6 @@ export function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Stats row ── */}
       {(campCount !== null || resourceCount !== null) && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {campCount !== null && (
@@ -198,7 +200,6 @@ export function DashboardPage() {
         </div>
       )}
 
-      {/* ── Module grid ── */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {modules.map((mod) => (
           <button
@@ -231,7 +232,6 @@ export function DashboardPage() {
                 Access module <ChevronRight className="inline h-3 w-3 ml-1" />
               </span>
             )}
-            {/* Hover accent line */}
             <span
               className={`absolute bottom-0 left-0 right-0 h-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${mod.accent === 'cyan' ? 'bg-accent-primary' : mod.accent === 'purple' ? 'bg-accent-secondary' : 'bg-status-green'}`}
             />
@@ -239,7 +239,6 @@ export function DashboardPage() {
         ))}
       </div>
 
-      {/* ── Syslog terminal ── */}
       <div className="glass rounded-none border border-border/20 p-6">
         <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border/10">
           <span className="w-1.5 h-1.5 bg-status-green animate-blink" />

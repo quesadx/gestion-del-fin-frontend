@@ -3,10 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ═══════════════════════════════════════════════
-   BRUTALIST DARK — Design Tokens
-   Red (#ef4444) / Amber (#f59e0b) / Green (#10b981)
-   ═══════════════════════════════════════════════ */
 :root {
   --color-brand-primary: #ef4444;
   --color-brand-secondary: #f59e0b;
@@ -124,17 +120,14 @@
 }
 
 @layer components {
-  /* Brutalist border utility */
   .brutalist-border {
     border: 1px solid #27272a;
   }
 
-  /* Neon glow (red text shadow) */
   .neon-glow-red {
     text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
   }
 
-  /* Glass backward-compat */
   .glass {
     background: #171717;
     border: 1px solid #27272a;
@@ -161,7 +154,6 @@
     border-color: #52525b;
   }
 
-  /* Terminal table backward-compat */
   .terminal-table {
     width: 100%;
     border-collapse: collapse;
@@ -215,7 +207,6 @@
     background: linear-gradient(90deg, transparent, #27272a, transparent);
   }
 
-  /* Font backward-compat aliases */
   .font-mono-data {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.75rem;
@@ -261,7 +252,6 @@
   .animate-breathe,
   .animate-breathe-border,
   .animate-pulse-glow {
-    /* Disabled — brutalist theme has no use */
   }
 }
 

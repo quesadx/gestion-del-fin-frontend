@@ -43,7 +43,9 @@ export function InventoryPage() {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const stockAlerts = useStockAlerts(selectedCampId ?? 0);
 
-  const campsArray = Array.isArray(camps) ? camps : [];
+  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
+    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
+    : [];
   const invArray = useMemo(() => (Array.isArray(inventory) ? inventory : []), [inventory]);
 
   const stockChartData: StockBarEntry[] = useMemo(
@@ -82,7 +84,6 @@ export function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      {/* Camp selector */}
       <Panel
         title="INVENTORY"
         tag="INV.01"
@@ -117,7 +118,6 @@ export function InventoryPage() {
         )}
       </Panel>
 
-      {/* Inventory content */}
       {!selectedCampId ? (
         <Panel accent="purple">
           <div className="flex flex-col items-center gap-4 py-8">
@@ -228,7 +228,6 @@ export function InventoryPage() {
         </Panel>
       )}
 
-      {/* Adjustment Dialog */}
       <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
           <DialogHeader>

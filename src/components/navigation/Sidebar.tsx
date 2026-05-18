@@ -29,7 +29,6 @@ export function Sidebar({ items, isOpen, isCollapsed, onClose, onToggleCollapse 
           isCollapsed && 'lg:w-20',
         )}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--border)]/30">
           <div
             className={cn(
@@ -64,7 +63,6 @@ export function Sidebar({ items, isOpen, isCollapsed, onClose, onToggleCollapse 
           </button>
         </div>
 
-        {/* Nav items */}
         <nav className="flex-1 overflow-y-auto px-2 py-3">
           <ul className="space-y-0.5">
             {items.map((item) => {
@@ -93,7 +91,6 @@ export function Sidebar({ items, isOpen, isCollapsed, onClose, onToggleCollapse 
           </ul>
         </nav>
 
-        {/* Footer */}
         <div
           className={cn('px-4 py-3 border-t border-[var(--border)]/30', isCollapsed && 'lg:hidden')}
         >
