@@ -3,6 +3,7 @@ import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { ROLE_LANDING } from '@/shared/lib/roleGuards';
 import { useNavItems } from '@/hooks/useNavItems';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useCampStore } from '@/features/camps/store/camp.store';
@@ -31,6 +32,9 @@ export function AppShell() {
     } else {
       setActiveCamp(null);
     }
+    queryClient.invalidateQueries();
+    const landing = role ? (ROLE_LANDING[role] ?? '/dashboard') : '/dashboard';
+    navigate(landing, { replace: true });
   };
 
   const handleLogout = useCallback(async () => {
