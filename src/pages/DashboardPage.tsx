@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useCamps } from '@/features/camps/hooks/useCamps';
-import { useResources } from '@/features/inventory/hooks/useResources';
+import { useResources } from '@/features/resources/hooks/useResources';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useCampStore } from '@/features/camps/store/camp.store';
 import { getServerNow } from '@/shared/hooks/useServerTime';

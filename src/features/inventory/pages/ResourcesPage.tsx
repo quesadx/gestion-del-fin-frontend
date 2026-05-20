@@ -10,7 +10,7 @@ import {
   useCreateResource,
   useUpdateResource,
   useDeleteResource,
-} from '@/features/inventory/hooks/useResources';
+} from '@/features/resources/hooks/useResources';
 import { Plus, Edit3, Trash2, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
