@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, useWatch } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Panel } from '@/components/cyber/Panel';
@@ -139,7 +139,7 @@ export function ExplorationsPage() {
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
 
   const formCreate = useForm<CreateExplorationFormValues>({
-    resolver: zodResolver(createExplorationSchema),
+    resolver: resolved(createExplorationSchema),
     defaultValues: {
       destination: '',
       camp_id: 0,
