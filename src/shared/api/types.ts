@@ -6,17 +6,15 @@ export interface ErrorResponse {
   };
 }
 
-export interface LoginRequest {
-  username: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  user: {
-    username: string;
-    role: string;
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasNextPage: boolean;
+    totalPages: number;
   };
-  token: string;
 }
 
 export interface SystemTimeResponse {
