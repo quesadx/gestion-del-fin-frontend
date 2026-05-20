@@ -1,7 +1,5 @@
 import { api } from '@/shared/api/axiosInstance';
-import type { PaginationQuery } from '@/shared/api/types';
-
-export type PersonStatus = 'SICK' | 'HEALTHY' | 'INJURED' | 'AWAY' | 'DEAD';
+import type { PaginationQuery, PersonStatus } from '@/shared/api/types';
 
 export interface CreatePersonDto {
   full_name: string;

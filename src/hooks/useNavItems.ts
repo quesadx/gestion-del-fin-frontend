@@ -87,14 +87,14 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Rations',
     to: '/rations',
     icon: Utensils,
-    roles: ['system_admin', 'resource_manager'],
+    roles: ['system_admin', 'resource_manager', 'worker'],
   },
 ];
 
 export function useNavItems(role: Role | null) {
   return useMemo(() => {
     if (!role) {
-      return NAV_ITEMS;
+      return [];
     }
 
     return NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));

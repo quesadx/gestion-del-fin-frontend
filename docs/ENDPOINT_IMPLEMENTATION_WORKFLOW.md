@@ -3,6 +3,7 @@
 This document is the working checklist for implementing the backend contract in the frontend.
 
 Rule:
+
 - Implement exactly one endpoint at a time.
 - Review it.
 - Test it.
@@ -16,12 +17,12 @@ Rule:
 3. `GET /camps` D ✅
 4. `GET /camps/{id}` D ✅
 5. `GET /camps/{campId}/people` D ✅
-6. `GET /resources` ⏳ pending
+6. `GET /resources` D ✅
 7. `GET /inventory/{campId}` D ✅
-8. `GET /professions` ⏳ pending
+8. `GET /professions` D ✅
 9. `GET /expeditions` D ✅
 10. `GET /admission/camps/{campId}` ✅
-11. `GET /users` ⏳ pending
+11. `GET /users` D ✅
 
 Then implement the corresponding create, update, delete, review, and status endpoints for the same feature before moving to another domain.
 

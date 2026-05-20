@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/store/auth.store';
@@ -29,7 +29,7 @@ export function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: resolved(loginSchema),
     defaultValues: { username: '', password: '' },
   });
 

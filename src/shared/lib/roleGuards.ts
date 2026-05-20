@@ -16,7 +16,7 @@ export const ROLE_ACCESS: Record<string, Role[]> = {
   '/users': ['system_admin'],
   '/professions': ['system_admin'],
   '/transfers': ['system_admin', 'resource_manager', 'travel_coordinator'],
-  '/rations': ['system_admin', 'resource_manager'],
+  '/rations': ['system_admin', 'resource_manager', 'worker'],
 };
 
 export const ROLE_LANDING: Record<string, string> = {

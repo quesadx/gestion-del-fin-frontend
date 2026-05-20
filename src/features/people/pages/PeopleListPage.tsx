@@ -7,7 +7,7 @@ import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
-import { useProfessions } from '@/features/people/hooks/useProfessions';
+import { useProfessions } from '@/features/professions/hooks/useProfessions';
 import { Users, UserPlus, Search, FilterX } from 'lucide-react';
 
 const PAGE_SIZE = 20;

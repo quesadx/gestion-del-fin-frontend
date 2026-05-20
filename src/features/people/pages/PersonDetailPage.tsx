@@ -16,7 +16,7 @@ import {
   useCreateProfessionReassignment,
 } from '@/features/people/hooks/usePeople';
 import { useCamp } from '@/features/camps/hooks/useCamps';
-import { useProfessions } from '@/features/people/hooks/useProfessions';
+import { useProfessions } from '@/features/professions/hooks/useProfessions';
 import { toast } from '@/shared/lib/toast';
 import { ArrowLeft, Edit3, Trash2, Activity, Wrench } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

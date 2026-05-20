@@ -1,7 +1,7 @@
 import { api } from '@/shared/api/axiosInstance';
+import type { PersonStatus } from '@/shared/api/types';
 
 export type ExpeditionStatus = 'PLANNED' | 'ONGOING' | 'RETURNED' | 'CANCELLED';
-export type PersonStatus = 'SICK' | 'HEALTHY' | 'INJURED' | 'AWAY' | 'DEAD';
 
 export interface ResourceAllocation {
   resource_type_id: number;

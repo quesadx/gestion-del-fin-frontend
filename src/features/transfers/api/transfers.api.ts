@@ -1,4 +1,5 @@
 import { api } from '@/shared/api/axiosInstance';
+import type { PersonStatus } from '@/shared/api/types';
 
 export type TransferStatus =
   | 'PENDING'
@@ -8,7 +9,6 @@ export type TransferStatus =
   | 'REJECTED';
 export type TransferType = 'RESOURCE' | 'PERSON' | 'MIXED';
 export type TransferItemType = 'RESOURCE' | 'PERSON';
-export type PersonStatus = 'SICK' | 'HEALTHY' | 'INJURED' | 'AWAY' | 'DEAD';
 
 export interface TransferItem {
   item_type: TransferItemType;

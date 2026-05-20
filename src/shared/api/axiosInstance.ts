@@ -21,7 +21,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-let isHandling401 = false;
+type Pending401Entry = {
+  resolve: () => void;
+  reject: (error: unknown) => void;
+};
+
+let pending401Queue: Pending401Entry[] | null = null;
 
 api.interceptors.response.use(
   (response) => response,
@@ -31,20 +36,30 @@ api.interceptors.response.use(
     if (status === 401) {
       const { token } = useAuthStore.getState();
 
-      if (token && !isHandling401) {
-        isHandling401 = true;
-        useAuthStore.getState().logout();
-
-        if (navigationRef.current) {
-          navigationRef.current('/login', { replace: true });
-        } else if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-
-        setTimeout(() => {
-          isHandling401 = false;
-        }, 2000);
+      if (!token) {
+        return Promise.reject(error);
       }
+
+      if (pending401Queue) {
+        return new Promise<void>((resolve, reject) => {
+          pending401Queue!.push({ resolve, reject });
+        }).then(() => Promise.reject(error));
+      }
+
+      pending401Queue = [];
+      useAuthStore.getState().logout();
+
+      if (navigationRef.current) {
+        navigationRef.current('/login', { replace: true });
+      } else if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+
+      setTimeout(() => {
+        const queue = pending401Queue;
+        pending401Queue = null;
+        queue?.forEach(({ resolve }) => resolve());
+      }, 100);
     }
 
     return Promise.reject(error);

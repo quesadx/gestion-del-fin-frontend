@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# Gestión del Fin — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Zombie apocalypse multi-camp resource management system. Universidad Nacional de Costa Rica final project (EIF209, 2026).
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** / **TypeScript** (strict) / **Vite 8**
+- **Tailwind CSS 3** / **shadcn/ui**
+- **TanStack Query 5** / **Zustand 5**
+- **Axios** / **react-hook-form** + **zod**
 
-## React Compiler
+## Quick Start
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+nix develop          # enter Nix shell
+pnpm install         # install dependencies
+pnpm dev             # vite dev server → http://localhost:5173
+pnpm build           # tsc + vite production build
+pnpm check           # lint + spell + build — run before commit
+pnpm format          # prettier src/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Architecture
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```
+src/
+├── app/             # Global styles
+├── features/        # Business domains (auth, camps, people, inventory, etc.)
+│   ├── api/         # Axios call functions
+│   ├── hooks/       # TanStack Query hooks
+│   ├── pages/       # Route pages
+│   ├── store/       # Zustand stores (client state only)
+│   └── types/       # Domain types
+├── components/      # Reusable UI (cyber/, ui/, navigation/)
+├── layouts/         # AppShell (sidebar + header + content)
+├── routes/          # Router + ProtectedRoute + ErrorBoundary
+├── shared/          # Axios instance, API types, toast, form helpers
+└── lib/             # Utilities
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### State split
+
+- **Zustand** → client state only (auth, UI)
+- **TanStack Query** → server state (camps, people, resources, etc.)
+
+## Design
+
+**Brutalist dark** — red (#ef4444) / amber (#f59e0b) / green (#10b981) on near-black (#0a0a0a).
+
+## Env
+
+```
+VITE_API_URL=/api          # proxied to localhost:3000 in dev
+VITE_APP_NAME=Gestión del Fin
+VITE_SESSION_TIMEOUT_MS=1200000   # 20 min
 ```

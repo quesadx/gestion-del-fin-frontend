@@ -1,5 +1,5 @@
 import { api } from '@/shared/api/axiosInstance';
-import type { LoginRequest, LoginResponse } from '@/shared/api/types';
+import type { LoginRequest, LoginResponse } from '@/features/auth/types/auth.types';
 
 export const authApi = {
   login: (credentials: LoginRequest) =>

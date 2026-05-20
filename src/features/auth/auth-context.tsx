@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useEffect, type ReactNode } from 'react';
+import { useCallback, useMemo, useEffect, useRef, type ReactNode } from 'react';
 import { authService, type LoginPayload } from './auth.service';
 import { useAuthStore } from './store/auth.store';
 import { AuthContext } from './auth-context-store';
 
 const SESSION_TIMEOUT_MS = Number(import.meta.env.VITE_SESSION_TIMEOUT_MS) || 1_200_000;
+const ACTIVITY_THROTTLE_MS = 5_000;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const user = useAuthStore((state) => state.user);
@@ -16,10 +17,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((credentials: LoginPayload) => authService.login(credentials), []);
   const logout = useCallback(() => authService.logout(), []);
 
+  const lastActivityRef = useRef(0);
+
   useEffect(() => {
     if (!token || isLocked) return;
 
-    const handleActivity = () => updateActivity();
+    const now = Date.now();
+    lastActivityRef.current = now;
+    const storedLastActivity = useAuthStore.getState().lastActivity;
+    if (now - storedLastActivity < ACTIVITY_THROTTLE_MS) {
+      return;
+    }
+    updateActivity();
+  }, [token, isLocked, updateActivity]);
+
+  useEffect(() => {
+    if (!token || isLocked) return;
+
+    const handleActivity = () => {
+      const now = Date.now();
+      if (now - lastActivityRef.current < ACTIVITY_THROTTLE_MS) return;
+      lastActivityRef.current = now;
+      updateActivity();
+    };
+
     const events: (keyof DocumentEventMap)[] = ['mousedown', 'keydown', 'scroll', 'touchstart'];
     events.forEach((ev) => document.addEventListener(ev, handleActivity));
     updateActivity();

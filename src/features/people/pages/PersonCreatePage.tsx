@@ -8,7 +8,7 @@ import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { FileInput } from '@/components/cyber/FileInput';
 import { useCamps } from '@/features/camps/hooks/useCamps';
-import { useProfessions } from '@/features/people/hooks/useProfessions';
+import { useProfessions } from '@/features/professions/hooks/useProfessions';
 import { useCreatePerson } from '@/features/people/hooks/usePeople';
 import { toast } from '@/shared/lib/toast';
 import { ArrowLeft, UserPlus, Building2, Wrench } from 'lucide-react';
