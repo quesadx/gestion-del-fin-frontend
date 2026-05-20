@@ -60,6 +60,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         token: state.token,
         role: state.role,
+        lastActivity: state.lastActivity,
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
