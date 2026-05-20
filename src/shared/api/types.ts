@@ -23,6 +23,8 @@ export interface SystemTimeResponse {
   today: string;
 }
 
+export type PersonStatus = 'SICK' | 'HEALTHY' | 'INJURED' | 'AWAY' | 'DEAD';
+
 export interface PaginationQuery {
   page?: number;
   limit?: number;

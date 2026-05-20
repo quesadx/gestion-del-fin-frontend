@@ -1,7 +1,6 @@
 import { api } from '@/shared/api/axiosInstance';
 import type { PaginationQuery } from '@/shared/api/types';
-
-export type CampStatus = 'ACTIVE' | 'ABANDONED';
+import type { CampStatus } from '@/features/camps/types/camp.types';
 
 export interface CreateCampDto {
   name: string;
