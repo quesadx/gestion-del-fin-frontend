@@ -4,6 +4,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { AppShell } from '@/layouts/AppShell';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { navigationRef } from '@/shared/api/axiosInstance';
 
 const DashboardPage = lazy(() =>
@@ -112,129 +113,161 @@ export function AppRoutes() {
             <Route
               path="/dashboard"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <DashboardPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <DashboardPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/camps"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <CampsPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <CampsPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/camps/:id"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <CampDetailPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <CampDetailPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/people"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <PeopleListPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <PeopleListPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/people/new"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <PersonCreatePage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <PersonCreatePage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/people/:id"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <PersonDetailPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <PersonDetailPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/resources"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <ResourcesPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <ResourcesPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/inventory"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <InventoryPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <InventoryPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/inventory/audit"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <InventoryAuditPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <InventoryAuditPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/explorations"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <ExplorationsPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <ExplorationsPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/explorations/:id"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <ExplorationDetailPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <ExplorationDetailPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/admissions"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <AdmissionsPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <AdmissionsPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/users"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <UsersPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <UsersPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/professions"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <ProfessionsPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <ProfessionsPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/transfers"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <TransfersPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <TransfersPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
             <Route
               path="/rations"
               element={
-                <Suspense fallback={<LazyFallback />}>
-                  <RationsPage />
-                </Suspense>
+                <ErrorBoundary>
+                  <Suspense fallback={<LazyFallback />}>
+                    <RationsPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
           </Route>
