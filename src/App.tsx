@@ -6,6 +6,12 @@ import { AppRoutes } from '@/routes/AppRoutes';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { ToastContainer } from '@/shared/lib/toast';
 import { queryClient } from '@/shared/lib/queryClient';
+import { useServerTime } from '@/features/system/hooks/useServerTime';
+
+function ServerTimeSync() {
+  useServerTime();
+  return null;
+}
 
 export function App() {
   const [ready, setReady] = useState(false);
@@ -22,6 +28,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ServerTimeSync />
         <AppRoutes />
       </AuthProvider>
       <ToastContainer />

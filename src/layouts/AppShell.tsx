@@ -7,6 +7,7 @@ import { ROLE_LANDING } from '@/shared/lib/roleGuards';
 import { useNavItems } from '@/hooks/useNavItems';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useCampStore } from '@/features/camps/store/camp.store';
+import { useServerTime } from '@/features/system/hooks/useServerTime';
 import { LayoutGrid, Tent, LogOut, Clock, PanelLeftClose, PanelLeft } from 'lucide-react';
 
 export function AppShell() {
@@ -16,7 +17,8 @@ export function AppShell() {
   const role = useAuthStore((state) => state.role);
   const items = useNavItems(role);
   const { data: camps } = useCamps();
-  const { activeCamp, setActiveCamp, serverTime } = useCampStore();
+  const { activeCamp, setActiveCamp } = useCampStore();
+  const { data: serverTimeData } = useServerTime();
   const [collapsed, setCollapsed] = useState(false);
   const [localCampId, setLocalCampId] = useState<number | null>(activeCamp?.id ?? null);
 
@@ -153,10 +155,10 @@ export function AppShell() {
           </div>
 
           <div className="flex items-center gap-4">
-            {serverTime > 0 && (
+            {serverTimeData && (
               <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400">
                 <Clock size={12} className="text-zinc-500" />
-                <span>{new Date(serverTime).toISOString()}</span>
+                <span>{new Date(serverTimeData.now).toISOString()}</span>
               </div>
             )}
             <div className="flex items-center gap-1.5">

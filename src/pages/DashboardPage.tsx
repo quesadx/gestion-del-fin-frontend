@@ -4,8 +4,7 @@ import { Cpu, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useResources } from '@/features/resources/hooks/useResources';
 import { useAuthStore } from '@/features/auth/store/auth.store';
-import { useCampStore } from '@/features/camps/store/camp.store';
-import { getServerNow } from '@/shared/hooks/useServerTime';
+import { useServerTime, getServerNow } from '@/features/system/hooks/useServerTime';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { TerminalLine } from '@/components/cyber/TerminalLine';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
@@ -69,7 +68,8 @@ export function DashboardPage() {
     useStats(role);
 
   const [serverTime, setServerTime] = useState<string>('');
-  const isSyncing = useCampStore((state) => state.serverTime) > 0;
+  const { data: timeData } = useServerTime();
+  const isSyncing = !!timeData;
 
   useEffect(() => {
     const update = () => {
