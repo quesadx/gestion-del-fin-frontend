@@ -21,32 +21,42 @@ interface ModuleCard {
 }
 
 function useStats(role: Role | null) {
+  const showStock = role === 'system_admin' || role === 'resource_manager';
   const campsQuery = useCamps({
     enabled: role === 'system_admin',
   });
   const resourcesQuery = useResources({
-    enabled: role === 'resource_manager',
+    enabled: showStock,
   });
 
   const isLoading =
-    (role === 'system_admin' && campsQuery.isLoading) ||
-    (role === 'resource_manager' && resourcesQuery.isLoading);
+    (role === 'system_admin' && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
 
   const campsData = (campsQuery.data as Record<string, unknown>)?.data as
     | Record<string, unknown>[]
     | undefined;
   const campsArray = Array.isArray(campsData) ? campsData : [];
+  const resourcesData = (resourcesQuery.data as Record<string, unknown>)?.data as
+    | Record<string, unknown>[]
+    | undefined;
+  const resourcesArray = Array.isArray(resourcesData) ? resourcesData : [];
+
+  const autoDailyCount = resourcesArray.filter(
+    (r: Record<string, unknown>) => r.auto_daily === true,
+  ).length;
 
   return {
     isLoading,
     camps: campsArray,
     resources: resourcesQuery.data,
+    resourcesArray,
     campCount: role === 'system_admin' ? campsArray.length : null,
     activeCamps:
       role === 'system_admin'
         ? campsArray.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
         : null,
-    resourceCount: role === 'resource_manager' ? (resourcesQuery.data?.length ?? 0) : null,
+    resourceCount: showStock ? resourcesArray.length : null,
+    autoDailyCount: showStock ? autoDailyCount : null,
   };
 }
 
@@ -55,7 +65,8 @@ export function DashboardPage() {
   const role = useAuthStore((state) => state.role);
   const userName = useAuthStore((state) => state.user?.username);
 
-  const { isLoading, campCount, activeCamps, resourceCount, camps } = useStats(role);
+  const { isLoading, campCount, activeCamps, resourceCount, camps, autoDailyCount } =
+    useStats(role);
 
   const [serverTime, setServerTime] = useState<string>('');
   const isSyncing = useCampStore((state) => state.serverTime) > 0;
@@ -98,6 +109,7 @@ export function DashboardPage() {
   }
   if (role === 'worker') {
     modules.push({ label: 'INVENTORY', to: '/inventory', accent: 'cyan' });
+    modules.push({ label: 'RATIONS', to: '/rations', accent: 'purple' });
   }
   if (role === 'travel_coordinator') {
     modules.push({ label: 'EXPEDITIONS', to: '/explorations', accent: 'purple' });
@@ -197,6 +209,25 @@ export function DashboardPage() {
               <span className="font-mono-sm text-text-muted">nominal</span>
             </div>
           </div>
+          {autoDailyCount !== null && (
+            <div className="glass p-5 rounded-none border border-border/20">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+                  Auto Supply
+                </span>
+                <span className="w-1.5 h-1.5 bg-accent-secondary animate-pulse" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="font-sans text-3xl font-bold text-accent-secondary">
+                  {autoDailyCount}
+                </span>
+                <span className="font-mono-sm text-text-muted">active</span>
+              </div>
+              <div className="mt-2 font-mono-sm text-text-muted">
+                of {resourceCount} resource types
+              </div>
+            </div>
+          )}
         </div>
       )}
 
