@@ -34,7 +34,12 @@ export function AppShell() {
     } else {
       setActiveCamp(null);
     }
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey;
+        return key.includes('camps') || key.includes('people') || key.includes('inventory');
+      },
+    });
     const landing = role ? (ROLE_LANDING[role] ?? '/dashboard') : '/dashboard';
     navigate(landing, { replace: true });
   };

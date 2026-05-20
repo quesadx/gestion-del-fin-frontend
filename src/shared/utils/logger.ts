@@ -12,6 +12,8 @@ export const logger = {
     }
   },
   error: (...args: unknown[]) => {
-    console.error(LOG_PREFIX, ...args);
+    if (import.meta.env.DEV) {
+      console.error(LOG_PREFIX, ...args);
+    }
   },
 };
