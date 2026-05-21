@@ -11,6 +11,7 @@ import {
   useUpdateResource,
   useDeleteResource,
 } from '@/features/resources/hooks/useResources';
+import type { Resource } from '@/features/resources/types/resource.types';
 import { toast } from '@/shared/lib/toast';
 import { Plus, Edit3, Trash2, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -129,7 +130,9 @@ export function ResourcesPage() {
     );
   }
 
-  const items = Array.isArray(resources) ? resources : [];
+  const items: Resource[] = Array.isArray(resources)
+    ? (resources as Resource[])
+    : ([] as Resource[]);
 
   return (
     <div className="space-y-6">
@@ -156,20 +159,20 @@ export function ResourcesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item: Record<string, unknown>) => (
+                  {items.map((item: Resource) => (
                     <tr
-                      key={item.id as number}
+                      key={item.id}
                       className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
                     >
                       <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
-                        {item.name as string}
+                        {item.name}
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground">{item.unit as string}</td>
+                      <td className="py-3 px-2 text-muted-foreground">{item.unit}</td>
                       <td className="py-3 px-2 text-right text-muted-foreground">
-                        {item.daily_ration as number}
+                        {item.daily_ration}
                       </td>
                       <td className="py-3 px-2 text-right text-muted-foreground">
-                        {item.minimum_stock as number}
+                        {item.minimum_stock}
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex justify-end gap-2">
@@ -177,11 +180,11 @@ export function ResourcesPage() {
                             type="button"
                             onClick={() =>
                               openEdit({
-                                id: item.id as number,
-                                name: item.name as string,
-                                unit: item.unit as string,
-                                daily_ration: item.daily_ration as number,
-                                minimum_stock: item.minimum_stock as number,
+                                id: item.id,
+                                name: item.name,
+                                unit: item.unit,
+                                daily_ration: item.daily_ration,
+                                minimum_stock: item.minimum_stock,
                               })
                             }
                             className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
@@ -191,9 +194,7 @@ export function ResourcesPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() =>
-                              setDeleteTarget({ id: item.id as number, name: item.name as string })
-                            }
+                            onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
                             className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
                             title="Delete"
                           >

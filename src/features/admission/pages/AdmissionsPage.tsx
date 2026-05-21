@@ -15,6 +15,8 @@ import {
   useReviewAdmission,
 } from '@/features/admission/hooks/useAdmissions';
 import type { AdmissionResponse } from '@/features/admission/api/admission.api';
+import type { Camp } from '@/features/camps/types/camp.types';
+import type { PaginatedResponse } from '@/shared/api/types';
 import { AIAnalysisPanel } from '@/features/admission/components/AIAnalysisPanel';
 import { AdmissionDetailPanel } from '@/features/admission/components/AdmissionDetailPanel';
 import { ClipboardCheck, UserPlus, CheckCircle, XCircle, FileText, Eye } from 'lucide-react';
@@ -49,15 +51,13 @@ export function AdmissionsPage() {
   const [detailTarget, setDetailTarget] = useState<AdmissionResponse | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsResponse = camps as PaginatedResponse<Camp> | undefined;
+  const campsArray = Array.isArray(campsResponse?.data) ? campsResponse.data : ([] as Camp[]);
   const admArray: AdmissionResponse[] = Array.isArray(admissions)
     ? (admissions as AdmissionResponse[])
     : [];
   const activeCampName = selectedCampId
-    ? ((campsArray.find((c: Record<string, unknown>) => c.id === selectedCampId)?.name as string) ??
-      '')
+    ? (campsArray.find((c: Camp) => c.id === selectedCampId)?.name ?? '')
     : '';
 
   const form = useForm<CreateFormValues>({
@@ -134,9 +134,9 @@ export function AdmissionsPage() {
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
-              {campsArray.map((c: Record<string, unknown>) => (
-                <option key={c.id as number} value={c.id as number}>
-                  {c.name as string}
+              {campsArray.map((c: Camp) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>

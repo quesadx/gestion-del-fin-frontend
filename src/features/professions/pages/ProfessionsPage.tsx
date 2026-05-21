@@ -11,6 +11,7 @@ import {
   useUpdateProfession,
   useDeleteProfession,
 } from '@/features/professions/hooks/useProfessions';
+import type { Profession } from '@/features/professions/types/profession.types';
 import { toast } from '@/shared/lib/toast';
 import { Plus, Edit3, Trash2, Wrench } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -120,7 +121,7 @@ export function ProfessionsPage() {
     );
   }
 
-  const items = Array.isArray(professions) ? professions : [];
+  const items: Profession[] = Array.isArray(professions) ? (professions as Profession[]) : [];
 
   return (
     <div className="space-y-6">
@@ -147,26 +148,24 @@ export function ProfessionsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item: Record<string, unknown>) => (
+                  {items.map((item: Profession) => (
                     <tr
-                      key={item.id as number}
+                      key={item.id}
                       className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
                     >
                       <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
-                        {item.name as string}
+                        {item.name}
                       </td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        {(item.description as string) || '—'}
-                      </td>
+                      <td className="py-3 px-2 text-muted-foreground">{item.description || '—'}</td>
                       <td className="py-3 px-2">
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
                             onClick={() =>
                               openEdit({
-                                id: item.id as number,
-                                name: item.name as string,
-                                description: item.description as string | undefined,
+                                id: item.id,
+                                name: item.name,
+                                description: item.description,
                               })
                             }
                             className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
@@ -176,9 +175,7 @@ export function ProfessionsPage() {
                           </button>
                           <button
                             type="button"
-                            onClick={() =>
-                              setDeleteTarget({ id: item.id as number, name: item.name as string })
-                            }
+                            onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
                             className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
                             title="Delete"
                           >
