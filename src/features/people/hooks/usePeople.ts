@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { peopleApi } from '@/features/people/api/people.api';
 import type {
   CreatePersonDto,
@@ -14,6 +14,7 @@ export function usePeople(campId: number, query?: PaginationQuery) {
     queryKey: ['camps', campId, 'people', query] as const,
     queryFn: () => peopleApi.getAllByCamp(campId, query),
     enabled: !!campId,
+    placeholderData: keepPreviousData,
   });
 }
 

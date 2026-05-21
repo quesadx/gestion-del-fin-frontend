@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { campsApi } from '@/features/camps/api/camps.api';
 import type { CreateCampDto, UpdateCampDto } from '@/features/camps/api/camps.api';
 import type { PaginationQuery } from '@/shared/api/types';
@@ -12,6 +12,7 @@ export function useCamps(query?: PaginationQuery & { enabled?: boolean }) {
     queryKey: [...CAMPS_KEY, params] as const,
     queryFn: () => campsApi.getAll(Object.keys(params).length > 0 ? params : undefined),
     enabled: enabled !== false,
+    placeholderData: keepPreviousData,
   });
 }
 
