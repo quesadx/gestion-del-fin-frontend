@@ -175,15 +175,33 @@ export function TransfersPage() {
   };
 
   const handleApproveSource = async (id: number) => {
-    await approveSourceMutation.mutateAsync({ id, payload: {} });
+    try {
+      await approveSourceMutation.mutateAsync({ id, payload: {} });
+      toast('Source approved successfully', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to approve source';
+      toast(message, 'error');
+    }
   };
 
   const handleApproveTarget = async (id: number) => {
-    await approveTargetMutation.mutateAsync({ id, payload: {} });
+    try {
+      await approveTargetMutation.mutateAsync({ id, payload: {} });
+      toast('Destination approved successfully', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to approve destination';
+      toast(message, 'error');
+    }
   };
 
   const handleComplete = async (id: number) => {
-    await completeMutation.mutateAsync({ id, payload: {} });
+    try {
+      await completeMutation.mutateAsync({ id, payload: {} });
+      toast('Transfer completed successfully', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to complete transfer';
+      toast(message, 'error');
+    }
   };
 
   const handleSchedule = (id: number) => {
@@ -210,12 +228,18 @@ export function TransfersPage() {
 
   const handleReject = async () => {
     if (!rejectTarget) return;
-    await rejectMutation.mutateAsync({
-      id: rejectTarget.id,
-      payload: { reason: rejectTarget.reason },
-    });
-    setRejectDialogOpen(false);
-    setRejectTarget(null);
+    try {
+      await rejectMutation.mutateAsync({
+        id: rejectTarget.id,
+        payload: { reason: rejectTarget.reason },
+      });
+      toast('Transfer rejected', 'success');
+      setRejectDialogOpen(false);
+      setRejectTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to reject transfer';
+      toast(message, 'error');
+    }
   };
 
   const campMap = new Map<number, string>();

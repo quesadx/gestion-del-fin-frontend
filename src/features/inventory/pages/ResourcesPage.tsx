@@ -11,6 +11,7 @@ import {
   useUpdateResource,
   useDeleteResource,
 } from '@/features/resources/hooks/useResources';
+import { toast } from '@/shared/lib/toast';
 import { Plus, Edit3, Trash2, Package } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -76,21 +77,39 @@ export function ResourcesPage() {
   };
 
   const onSubmitCreate = async (values: ResourceFormValues) => {
-    await createMutation.mutateAsync(values);
-    formCreate.reset();
-    setCreateDialogOpen(false);
+    try {
+      await createMutation.mutateAsync(values);
+      toast('Resource created successfully', 'success');
+      formCreate.reset();
+      setCreateDialogOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create resource';
+      toast(message, 'error');
+    }
   };
 
   const onSubmitEdit = async (values: ResourceFormValues) => {
     if (!editTarget) return;
-    await updateMutation.mutateAsync({ id: editTarget.id, payload: values });
-    setEditTarget(null);
+    try {
+      await updateMutation.mutateAsync({ id: editTarget.id, payload: values });
+      toast('Resource updated successfully', 'success');
+      setEditTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update resource';
+      toast(message, 'error');
+    }
   };
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteMutation.mutateAsync(deleteTarget.id);
-    setDeleteTarget(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      toast('Resource deleted successfully', 'success');
+      setDeleteTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete resource';
+      toast(message, 'error');
+    }
   };
 
   if (isLoading) return <ScreenLoader />;

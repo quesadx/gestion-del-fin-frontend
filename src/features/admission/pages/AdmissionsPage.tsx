@@ -7,6 +7,7 @@ import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
+import { toast } from '@/shared/lib/toast';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import {
   useAdmissions,
@@ -59,22 +60,35 @@ export function AdmissionsPage() {
 
   const onSubmitCreate = async (values: CreateFormValues) => {
     if (!selectedCampId) return;
-    await createMutation.mutateAsync({
-      campId: selectedCampId,
-      payload: {
-        ...values,
-        applicant_age: values.applicant_age || undefined,
-        applicant_skills: values.applicant_skills || undefined,
-        health_notes: values.health_notes || undefined,
-        background_notes: values.background_notes || undefined,
-      },
-    });
-    setCreateOpen(false);
-    form.reset();
+    try {
+      await createMutation.mutateAsync({
+        campId: selectedCampId,
+        payload: {
+          ...values,
+          applicant_age: values.applicant_age || undefined,
+          applicant_skills: values.applicant_skills || undefined,
+          health_notes: values.health_notes || undefined,
+          background_notes: values.background_notes || undefined,
+        },
+      });
+      toast('Admission request created successfully', 'success');
+      setCreateOpen(false);
+      form.reset();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create admission request';
+      toast(message, 'error');
+    }
   };
 
   const handleReview = async (id: number, final_decision: 'ACCEPTED' | 'REJECTED') => {
-    await reviewMutation.mutateAsync({ id, payload: { final_decision } });
+    try {
+      await reviewMutation.mutateAsync({ id, payload: { final_decision } });
+      const label = final_decision === 'ACCEPTED' ? 'accepted' : 'rejected';
+      toast(`Admission ${label} successfully`, 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to review admission';
+      toast(message, 'error');
+    }
   };
 
   return (

@@ -76,6 +76,7 @@ export function CampsPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Creation failed';
       setCreateError(message);
+      toast(message, 'error');
     }
   };
 
@@ -89,6 +90,7 @@ export function CampsPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Delete failed';
       setDeleteError(message);
+      toast(message, 'error');
     }
   };
 

@@ -14,6 +14,7 @@ import {
   useCreateInventoryAdjustment,
 } from '@/features/inventory/hooks/useInventory';
 import { Utensils, Plus, ClipboardList } from 'lucide-react';
+import { toast } from '@/shared/lib/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const rationSchema = z.object({
@@ -98,22 +99,27 @@ export function RationsPage() {
     const resourceName = getResourceName(values.resource_type_id);
     const description = `${RATION_DESC_PREFIX} person=${personName} person_id=${values.person_id} resource=${resourceName} consumed_at=${values.consumed_at}${values.notes ? ` notes=${values.notes}` : ''}`;
 
-    await adjustMutation.mutateAsync({
-      camp_id: campId,
-      resource_type_id: values.resource_type_id,
-      type: 'MANUAL_OUT',
-      quantity: values.quantity,
-      description,
-    });
-
-    form.reset({
-      person_id: 0,
-      resource_type_id: 0,
-      quantity: 0 as unknown as number,
-      consumed_at: new Date().toISOString().slice(0, 16),
-      notes: '',
-    });
-    setDialogOpen(false);
+    try {
+      await adjustMutation.mutateAsync({
+        camp_id: campId,
+        resource_type_id: values.resource_type_id,
+        type: 'MANUAL_OUT',
+        quantity: values.quantity,
+        description,
+      });
+      toast('Ration recorded successfully', 'success');
+      form.reset({
+        person_id: 0,
+        resource_type_id: 0,
+        quantity: 0 as unknown as number,
+        consumed_at: new Date().toISOString().slice(0, 16),
+        notes: '',
+      });
+      setDialogOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to record ration';
+      toast(message, 'error');
+    }
   };
 
   return (
