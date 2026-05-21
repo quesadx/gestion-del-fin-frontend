@@ -21,6 +21,16 @@ import { useAuthStore } from '@/features/auth/store/auth.store';
 import { toast } from '@/shared/lib/toast';
 import { ArrowRightLeft, Plus, Truck, Check, X, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
   PENDING: 'yellow',
@@ -81,6 +91,12 @@ export function TransfersPage() {
   const [scheduleTarget, setScheduleTarget] = useState<number | null>(null);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
+  const [confirmAction, setConfirmAction] = useState<{
+    id: number;
+    action: string;
+    label: string;
+  } | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const campsArray = useMemo(
     () =>
@@ -242,6 +258,16 @@ export function TransfersPage() {
     }
   };
 
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    setConfirmDialogOpen(false);
+    const { id, action } = confirmAction;
+    setConfirmAction(null);
+    if (action === 'approve-source') await handleApproveSource(id);
+    else if (action === 'approve-target') await handleApproveTarget(id);
+    else if (action === 'complete') await handleComplete(id);
+  };
+
   const campMap = new Map<number, string>();
   campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
 
@@ -367,7 +393,14 @@ export function TransfersPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleApproveSource(t.id as number)}
+                                  onClick={() => {
+                                    setConfirmAction({
+                                      id: t.id as number,
+                                      action: 'approve-source',
+                                      label: 'Approve source camp',
+                                    });
+                                    setConfirmDialogOpen(true);
+                                  }}
                                   className="p-1 rounded-sm text-green-400 hover:bg-green-400/10 text-[10px]"
                                   title="Approve source"
                                 >
@@ -389,7 +422,14 @@ export function TransfersPage() {
                             {status === 'APPROVED_SOURCE' && (
                               <button
                                 type="button"
-                                onClick={() => handleApproveTarget(t.id as number)}
+                                onClick={() => {
+                                  setConfirmAction({
+                                    id: t.id as number,
+                                    action: 'approve-target',
+                                    label: 'Approve destination camp',
+                                  });
+                                  setConfirmDialogOpen(true);
+                                }}
                                 className="p-1 rounded-sm bg-green-400/10 text-green-400 hover:bg-green-400/20 text-[10px] px-2"
                               >
                                 APPROVE DESTINATION
@@ -398,7 +438,14 @@ export function TransfersPage() {
                             {status === 'APPROVED_TARGET' && (
                               <button
                                 type="button"
-                                onClick={() => handleComplete(t.id as number)}
+                                onClick={() => {
+                                  setConfirmAction({
+                                    id: t.id as number,
+                                    action: 'complete',
+                                    label: 'Complete transfer',
+                                  });
+                                  setConfirmDialogOpen(true);
+                                }}
                                 className="p-1 rounded-sm bg-[var(--neon-fuchsia)]/10 text-[var(--neon-fuchsia)] hover:bg-[var(--neon-fuchsia)]/20 text-[10px] px-2"
                               >
                                 COMPLETE
@@ -837,6 +884,33 @@ export function TransfersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+              CONFIRM ACTION
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
+              {confirmAction?.label} — Transfer #{confirmAction?.id}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setConfirmAction(null)}
+              className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs"
+            >
+              CANCEL
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+            >
+              CONFIRM
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

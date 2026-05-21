@@ -576,11 +576,11 @@ export function ExplorationsPage() {
             )}
             <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
               <Package className="h-3.5 w-3.5" />
-              Resource allocation pending inventory integration
+              Resource allocation is configured in the expedition return flow
             </div>
             <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
               <Gift className="h-3.5 w-3.5" />
-              Found resources can be recorded when return flow is connected
+              Found resources are recorded when marking the expedition as returned
             </div>
             {createError && (
               <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">

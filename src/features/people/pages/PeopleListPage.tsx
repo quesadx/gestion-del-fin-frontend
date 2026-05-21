@@ -171,7 +171,7 @@ export function PeopleListPage() {
               <option value="SICK">SICK</option>
               <option value="INJURED">INJURED</option>
               <option value="AWAY">AWAY</option>
-              <option value="DEAD">DECEASED</option>
+              <option value="DEAD">DEAD</option>
             </select>
             <select
               value={professionFilter}
