@@ -6,18 +6,19 @@ import type {
   UpdateExplorationStatusDto,
   DeleteExplorationDto,
 } from '@/features/explorations/api/explorations.api';
+import type { Exploration } from '@/features/explorations/types/exploration.types';
 
 const EXPLORATIONS_KEY = ['explorations'] as const;
 
 export function useExplorations() {
-  return useQuery({
+  return useQuery<Exploration[]>({
     queryKey: EXPLORATIONS_KEY,
     queryFn: explorationsApi.getAll,
   });
 }
 
 export function useExploration(id: number) {
-  return useQuery({
+  return useQuery<Exploration>({
     queryKey: [...EXPLORATIONS_KEY, id] as const,
     queryFn: () => explorationsApi.getById(id),
     enabled: !!id,

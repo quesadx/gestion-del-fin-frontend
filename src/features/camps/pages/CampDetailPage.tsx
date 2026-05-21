@@ -101,11 +101,8 @@ export function CampDetailPage() {
   }
 
   const statusVariant = camp.status === 'ACTIVE' ? 'green' : 'red';
-  const peopleArray = Array.isArray((people as Record<string, unknown>)?.data)
-    ? ((people as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
-  const peopleTotal = ((people as Record<string, unknown>)?.pagination as Record<string, unknown>)
-    ?.total as number | undefined;
+  const peopleArray = people?.data ?? [];
+  const peopleTotal = people?.pagination?.total;
 
   return (
     <div className="space-y-6">
@@ -213,7 +210,7 @@ export function CampDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {peopleArray.slice(0, 10).map((person: Record<string, unknown>) => (
+                  {peopleArray.slice(0, 10).map((person) => (
                     <tr
                       key={person.id as number}
                       className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"

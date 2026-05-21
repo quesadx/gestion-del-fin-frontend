@@ -24,14 +24,13 @@ export function useStockAlerts(campId: number): StockAlerts {
     const items = Array.isArray(inventory) ? inventory : [];
 
     const criticalItems: StockAlertItem[] = items
-      .map((item: Record<string, unknown>) => {
-        const current = (item.current_stock as number) || 0;
-        const min = (item.minimum_stock as number) || 0;
+      .map((item) => {
+        const current = item.quantity || 0;
+        const min = item.min_stock || 0;
         if (current >= min) return null;
 
-        const resource = item.resource as Record<string, unknown> | undefined;
+        const resource = item.resource;
         return {
-          resource_type_id: (item.resource_type_id as number) || 0,
           resourceName: (resource?.name as string) || `RESOURCE_${item.resource_type_id}`,
           currentStock: current,
           minimumStock: min,

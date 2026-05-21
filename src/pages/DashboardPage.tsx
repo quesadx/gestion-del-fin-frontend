@@ -31,29 +31,19 @@ function useStats(role: Role | null) {
   const isLoading =
     (role === 'system_admin' && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
 
-  const campsData = (campsQuery.data as Record<string, unknown>)?.data as
-    | Record<string, unknown>[]
-    | undefined;
-  const campsArray = Array.isArray(campsData) ? campsData : [];
-  const resourcesData = (resourcesQuery.data as Record<string, unknown>)?.data as
-    | Record<string, unknown>[]
-    | undefined;
-  const resourcesArray = Array.isArray(resourcesData) ? resourcesData : [];
+  const campsArray = campsQuery.data?.data ?? [];
+  const resourcesArray = resourcesQuery.data ?? [];
 
-  const autoDailyCount = resourcesArray.filter(
-    (r: Record<string, unknown>) => r.auto_daily === true,
-  ).length;
+  const autoDailyCount = resourcesArray.filter((r) => r.auto_daily === true).length;
 
   return {
     isLoading,
-    camps: campsArray,
+    camps: campsQuery.data?.data ?? [],
     resources: resourcesQuery.data,
     resourcesArray,
     campCount: role === 'system_admin' ? campsArray.length : null,
     activeCamps:
-      role === 'system_admin'
-        ? campsArray.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
-        : null,
+      role === 'system_admin' ? campsArray.filter((c) => c.status === 'ACTIVE').length : null,
     resourceCount: showStock ? resourcesArray.length : null,
     autoDailyCount: showStock ? autoDailyCount : null,
   };
@@ -304,14 +294,14 @@ export function DashboardPage() {
         </div>
         {camps && Array.isArray(camps) && camps.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border/10 flex flex-wrap gap-2">
-            {camps.slice(0, 5).map((camp: Record<string, unknown>) => (
+            {camps.slice(0, 5).map((camp) => (
               <StatusBadge
-                key={camp.id as number}
-                status={(camp.name as string)?.slice(0, 16) ?? ''}
+                key={camp.id}
+                status={camp.name?.slice(0, 16) ?? ''}
                 variant={camp.status === 'ACTIVE' ? 'green' : 'red'}
               />
             ))}
-            {(camps.length as number) > 5 && (
+            {camps.length > 5 && (
               <span className="font-mono-sm text-text-muted self-center">
                 +{camps.length - 5} more
               </span>

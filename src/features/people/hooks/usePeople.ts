@@ -7,10 +7,11 @@ import type {
   CreateProfessionReassignmentDto,
   CreateContributionOverrideDto,
 } from '@/features/people/api/people.api';
-import type { PaginationQuery } from '@/shared/api/types';
+import type { PaginationQuery, PaginatedResponse } from '@/shared/api/types';
+import type { Person } from '@/features/people/types/person.types';
 
 export function usePeople(campId: number, query?: PaginationQuery) {
-  return useQuery({
+  return useQuery<PaginatedResponse<Person>>({
     queryKey: ['camps', campId, 'people', query] as const,
     queryFn: () => peopleApi.getAllByCamp(campId, query),
     enabled: !!campId,
@@ -19,7 +20,7 @@ export function usePeople(campId: number, query?: PaginationQuery) {
 }
 
 export function usePerson(campId: number, id: number) {
-  return useQuery({
+  return useQuery<Person>({
     queryKey: ['camps', campId, 'people', id] as const,
     queryFn: () => peopleApi.getById(campId, id),
     enabled: !!campId && !!id,

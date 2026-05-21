@@ -22,15 +22,13 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [localCampId, setLocalCampId] = useState<number | null>(activeCamp?.id ?? null);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsArray = camps?.data ?? [];
 
   const handleCampChange = (id: number | null) => {
     setLocalCampId(id);
     if (id) {
-      const camp = campsArray.find((c: Record<string, unknown>) => (c.id as number) === id);
-      setActiveCamp(camp ? { id, name: camp.name as string } : { id });
+      const camp = campsArray.find((c) => c.id === id);
+      setActiveCamp(camp ? { id, name: camp.name } : { id });
     } else {
       setActiveCamp(null);
     }
@@ -104,9 +102,9 @@ export function AppShell() {
                 className="w-full bg-surface-base border border-zinc-700 text-zinc-300 font-mono text-[11px] py-1.5 px-2 focus:border-brand-primary outline-none"
               >
                 <option value="">ALL CAMPS</option>
-                {campsArray.map((c: Record<string, unknown>) => (
-                  <option key={c.id as number} value={c.id as number}>
-                    {c.name as string}
+                {campsArray.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>

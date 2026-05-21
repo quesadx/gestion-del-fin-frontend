@@ -27,6 +27,8 @@ export interface Transfer {
   notes?: string;
   leader_person_id?: number;
   scheduled_delivery_date?: string;
+  approved_source_at?: string;
+  approved_target_at?: string;
   created_at: string;
   updated_at: string;
   requesting_camp_info?: { id: number; name: string };

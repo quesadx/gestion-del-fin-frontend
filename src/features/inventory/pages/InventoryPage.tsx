@@ -43,21 +43,19 @@ export function InventoryPage() {
   const [adjustOpen, setAdjustOpen] = useState(false);
   const stockAlerts = useStockAlerts(selectedCampId ?? 0);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsArray = camps?.data ?? [];
   const invArray = useMemo(() => (Array.isArray(inventory) ? inventory : []), [inventory]);
 
   const stockChartData: StockBarEntry[] = useMemo(
     () =>
-      invArray.map((item: Record<string, unknown>) => {
-        const current = (item.current_stock as number) || 0;
-        const minimum = (item.minimum_stock as number) || 0;
-        const resource = (item.resource as Record<string, unknown>) || {};
+      invArray.map((item) => {
+        const current = item.quantity || 0;
+        const minimum = item.min_stock || 0;
+        const resource = item.resource;
         const status: 'CRITICAL' | 'LOW' | 'OK' =
           current === 0 ? 'CRITICAL' : current < minimum ? 'LOW' : 'OK';
         return {
-          name: (resource.name as string) || `ID:${item.resource_type_id}`,
+          name: resource?.name || `ID:${item.resource_type_id}`,
           current,
           minimum,
           status,
@@ -108,9 +106,9 @@ export function InventoryPage() {
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
-              {campsArray.map((c: Record<string, unknown>) => (
-                <option key={c.id as number} value={c.id as number}>
-                  {c.name as string}
+              {campsArray.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -196,13 +194,11 @@ export function InventoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {invArray.map((item: Record<string, unknown>) => {
-                  const current = (item.current_stock as number) || 0;
-                  const min = (item.minimum_stock as number) || 0;
+                {invArray.map((item) => {
+                  const current = item.quantity || 0;
+                  const min = item.min_stock || 0;
                   const aboveMin = current >= min;
-                  const resourceName =
-                    (item.resource as Record<string, unknown>)?.name ||
-                    (item.resource_type_id as string);
+                  const resourceName = item.resource?.name || String(item.resource_type_id);
                   return (
                     <tr
                       key={item.id as number}
@@ -245,16 +241,12 @@ export function InventoryPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
-                {invArray.map((item: Record<string, unknown>) => (
+                {invArray.map((item) => (
                   <option
-                    key={(item.resource_type_id as number) || (item.id as number)}
-                    value={
-                      (item.resource_type_id as number) ||
-                      ((item.resource as Record<string, unknown>)?.id as number)
-                    }
+                    key={item.resource_type_id || item.id}
+                    value={item.resource_type_id || item.resource?.id}
                   >
-                    {((item.resource as Record<string, unknown>)?.name as string) ||
-                      (item.resource_type_id as string)}
+                    {item.resource?.name || String(item.resource_type_id)}
                   </option>
                 ))}
               </select>

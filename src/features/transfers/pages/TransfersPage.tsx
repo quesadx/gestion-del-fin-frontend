@@ -75,17 +75,8 @@ export function TransfersPage() {
   const [rejectTarget, setRejectTarget] = useState<{ id: number; reason: string } | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
 
-  const campsArray = useMemo(
-    () =>
-      Array.isArray((camps as Record<string, unknown>)?.data)
-        ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-        : ([] as Record<string, unknown>[]),
-    [camps],
-  );
-  const transfersArray = useMemo(
-    () => (Array.isArray(transfers) ? transfers : ([] as Record<string, unknown>[])),
-    [transfers],
-  );
+  const campsArray = useMemo(() => camps?.data ?? [], [camps]);
+  const transfersArray = useMemo(() => transfers ?? [], [transfers]);
 
   const formCreate = useForm<TransferFormValues>({
     resolver: resolved(createTransferSchema),
@@ -185,17 +176,17 @@ export function TransfersPage() {
   };
 
   const campMap = new Map<number, string>();
-  campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
+  campsArray.forEach((c) => campMap.set(c.id, c.name));
 
   const historyTransfers = useMemo(() => {
     return transfersArray
-      .filter((t: Record<string, unknown>) => {
-        const status = t.status as string;
+      .filter((t) => {
+        const status = t.status;
         return status === 'COMPLETED' || status === 'REJECTED';
       })
-      .sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
-        const aTime = new Date((a.updated_at ?? a.created_at) as string).getTime();
-        const bTime = new Date((b.updated_at ?? b.created_at) as string).getTime();
+      .sort((a, b) => {
+        const aTime = new Date(a.updated_at ?? a.created_at).getTime();
+        const bTime = new Date(b.updated_at ?? b.created_at).getTime();
         return bTime - aTime;
       });
   }, [transfersArray]);
@@ -259,8 +250,8 @@ export function TransfersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {transfersArray.map((t: Record<string, unknown>) => {
-                    const items = t.items as Record<string, unknown>[] | undefined;
+                  {transfersArray.map((t) => {
+                    const items = t.items;
                     const itemCount = items?.length ?? 0;
                     const requesting =
                       campMap.get(t.requesting_camp as number) || `CAMP-${t.requesting_camp}`;
@@ -389,12 +380,12 @@ export function TransfersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {historyTransfers.map((t: Record<string, unknown>) => {
+                  {historyTransfers.map((t) => {
                     const requesting =
-                      campMap.get(t.requesting_camp as number) || `CAMP-${t.requesting_camp}`;
-                    const target = campMap.get(t.target_camp as number) || `CAMP-${t.target_camp}`;
-                    const status = t.status as string;
-                    const items = t.items as Record<string, unknown>[] | undefined;
+                      campMap.get(t.requesting_camp) || `CAMP-${t.requesting_camp}`;
+                    const target = campMap.get(t.target_camp) || `CAMP-${t.target_camp}`;
+                    const status = t.status;
+                    const items = t.items;
                     const itemCount = items?.length ?? 0;
 
                     const events: Array<{
@@ -504,19 +495,17 @@ export function TransfersPage() {
                 </tbody>
               </table>
             </div>
-            {historyTransfers.some(
-              (t: Record<string, unknown>) => t.status === 'REJECTED' && t.notes,
-            ) && (
+            {historyTransfers.some((t) => t.status === 'REJECTED' && t.notes) && (
               <details className="mt-3">
                 <summary className="font-mono-data text-[10px] text-muted-foreground cursor-pointer hover:text-[var(--neon-yellow)]">
                   SHOW REJECTION NOTES
                 </summary>
                 <div className="mt-2 space-y-1">
                   {historyTransfers
-                    .filter((t: Record<string, unknown>) => t.status === 'REJECTED' && t.notes)
-                    .map((t: Record<string, unknown>) => {
-                      const tid = t.id as number;
-                      const tnotes = t.notes as string;
+                    .filter((t) => t.status === 'REJECTED' && t.notes)
+                    .map((t) => {
+                      const tid = t.id;
+                      const tnotes = t.notes ?? '';
                       return (
                         <div
                           key={tid}
@@ -551,9 +540,9 @@ export function TransfersPage() {
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 >
                   <option value="0">SELECT...</option>
-                  {campsArray.map((c: Record<string, unknown>) => (
-                    <option key={c.id as number} value={c.id as number}>
-                      {c.name as string}
+                  {campsArray.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -567,9 +556,9 @@ export function TransfersPage() {
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
                   <option value="0">SELECT...</option>
-                  {campsArray.map((c: Record<string, unknown>) => (
-                    <option key={c.id as number} value={c.id as number}>
-                      {c.name as string}
+                  {campsArray.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>

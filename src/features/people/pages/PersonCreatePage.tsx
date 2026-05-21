@@ -34,9 +34,7 @@ export function PersonCreatePage() {
   const { data: professions, isLoading: profsLoading, isError: profsError } = useProfessions();
   const createMutation = useCreatePerson();
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsArray = camps?.data ?? [];
   const professionsArray = Array.isArray(professions) ? professions : [];
 
   const [createError, setCreateError] = useState<string | null>(null);
@@ -132,9 +130,9 @@ export function PersonCreatePage() {
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 >
                   <option value="">SELECT...</option>
-                  {campsArray.map((c: Record<string, unknown>) => (
-                    <option key={c.id as number} value={c.id as number}>
-                      {c.name as string}
+                  {campsArray.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
                     </option>
                   ))}
                 </select>
@@ -167,7 +165,7 @@ export function PersonCreatePage() {
                   className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
                   <option value="">SELECT...</option>
-                  {professionsArray.map((p: Record<string, unknown>) => (
+                  {professionsArray.map((p) => (
                     <option key={p.id as number} value={p.id as number}>
                       {p.name as string}
                     </option>

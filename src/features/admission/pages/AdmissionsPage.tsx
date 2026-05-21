@@ -41,9 +41,7 @@ export function AdmissionsPage() {
 
   const [createOpen, setCreateOpen] = useState(false);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsArray = camps?.data ?? [];
   const admArray = Array.isArray(admissions) ? admissions : [];
 
   const form = useForm<CreateFormValues>({
@@ -103,9 +101,9 @@ export function AdmissionsPage() {
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
-              {campsArray.map((c: Record<string, unknown>) => (
-                <option key={c.id as number} value={c.id as number}>
-                  {c.name as string}
+              {campsArray.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -173,7 +171,7 @@ export function AdmissionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {admArray.map((a: Record<string, unknown>) => (
+                {admArray.map((a) => (
                   <tr
                     key={a.id as number}
                     className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"

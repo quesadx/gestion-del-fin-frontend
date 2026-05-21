@@ -50,19 +50,6 @@ export function ExplorationDetailPage() {
     );
   }
 
-  const p = exp as Record<string, unknown>;
-  const camp = p.camps as Record<string, unknown> | undefined;
-  const user = p.users as Record<string, unknown> | undefined;
-  const members = Array.isArray(p.expedition_members)
-    ? (p.expedition_members as Array<Record<string, unknown>>)
-    : undefined;
-  const allocated = Array.isArray(p.expedition_allocated_resources)
-    ? (p.expedition_allocated_resources as Array<Record<string, unknown>>)
-    : undefined;
-  const found = Array.isArray(p.expedition_found_resources)
-    ? (p.expedition_found_resources as Array<Record<string, unknown>>)
-    : undefined;
-
   return (
     <div className="space-y-6">
       <GlitchButton variant="ghost" onClick={() => navigate('/explorations')}>
@@ -72,31 +59,19 @@ export function ExplorationDetailPage() {
         </span>
       </GlitchButton>
 
-      <Panel
-        title={p.destination as string}
-        tag={`EXP.${p.id}`}
-        status={p.status as string}
-        accent="cyan"
-      >
+      <Panel title={exp.destination} tag={`EXP.${exp.id}`} status={exp.status} accent="cyan">
         <div className="space-y-2 font-mono-data text-xs mb-4">
           <div>
             <span className="text-muted-foreground">STATUS: </span>
-            <StatusBadge
-              status={p.status as string}
-              variant={STATUS_MAP[p.status as string] || 'cyan'}
-            />
+            <StatusBadge status={exp.status} variant={STATUS_MAP[exp.status] || 'cyan'} />
           </div>
           <div>
             <span className="text-muted-foreground">CAMP: </span>
-            <span className="text-foreground">
-              {(camp?.name as string) || (p.camp_id as string) || '—'}
-            </span>
+            <span className="text-foreground">{exp.camps?.name || String(exp.camp_id)}</span>
           </div>
           <div>
             <span className="text-muted-foreground">PLANNED BY: </span>
-            <span className="text-foreground">
-              {(user?.username as string) || (p.created_by as string) || '—'}
-            </span>
+            <span className="text-foreground">{exp.users?.username || String(exp.created_by)}</span>
           </div>
         </div>
 
@@ -104,47 +79,45 @@ export function ExplorationDetailPage() {
           <div>
             <span className="text-muted-foreground">DEPARTURE: </span>
             <span className="text-foreground">
-              {p.departure_date ? format(new Date(p.departure_date as string), 'dd/MM/yyyy') : '—'}
+              {exp.departure_date ? format(new Date(exp.departure_date), 'dd/MM/yyyy') : '—'}
             </span>
           </div>
           <div>
             <span className="text-muted-foreground">EXPECTED RETURN: </span>
             <span className="text-foreground">
-              {p.expected_return_date
-                ? format(new Date(p.expected_return_date as string), 'dd/MM/yyyy')
+              {exp.expected_return_date
+                ? format(new Date(exp.expected_return_date), 'dd/MM/yyyy')
                 : '—'}
             </span>
           </div>
           <div>
             <span className="text-muted-foreground">MAX RETURN: </span>
             <span className="text-foreground">
-              {p.max_return_date
-                ? format(new Date(p.max_return_date as string), 'dd/MM/yyyy')
-                : '—'}
+              {exp.max_return_date ? format(new Date(exp.max_return_date), 'dd/MM/yyyy') : '—'}
             </span>
           </div>
           <div>
             <span className="text-muted-foreground">ACTUAL RETURN: </span>
             <span className="text-foreground">
-              {p.actual_return_date
-                ? format(new Date(p.actual_return_date as string), 'dd/MM/yyyy')
+              {exp.actual_return_date
+                ? format(new Date(exp.actual_return_date), 'dd/MM/yyyy')
                 : 'NOT YET RETURNED'}
             </span>
           </div>
         </div>
 
-        {(p.notes as string) && (
+        {exp.notes && (
           <div className="space-y-1 font-mono-data text-xs mb-4">
             <span className="text-muted-foreground">NOTES: </span>
             <p className="text-foreground whitespace-pre-wrap bg-zinc-800/50 border border-zinc-700 p-3">
-              {p.notes as string}
+              {exp.notes}
             </p>
           </div>
         )}
       </Panel>
 
-      <Panel title="EXPEDITION MEMBERS" tag={`EXP.${p.id}.MEMBERS`} accent="cyan">
-        {members && members.length > 0 ? (
+      <Panel title="EXPEDITION MEMBERS" tag={`EXP.${exp.id}.MEMBERS`} accent="cyan">
+        {exp.members && exp.members.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
@@ -153,12 +126,12 @@ export function ExplorationDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m, i) => (
+                {exp.members.map((m, i) => (
                   <tr
-                    key={(m.person_id as number) || i}
+                    key={m.person_id || i}
                     className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
                   >
-                    <td className="py-2 px-2 text-foreground">{m.person_id as number}</td>
+                    <td className="py-2 px-2 text-foreground">{m.person_id}</td>
                   </tr>
                 ))}
               </tbody>
@@ -167,13 +140,15 @@ export function ExplorationDetailPage() {
         ) : (
           <div className="flex items-center gap-2 py-4 font-mono-data text-xs text-muted-foreground">
             <Users className="h-4 w-4" />
-            {members === undefined ? 'Member data not included in response' : 'No members assigned'}
+            {exp.members === undefined
+              ? 'Member data not included in response'
+              : 'No members assigned'}
           </div>
         )}
       </Panel>
 
-      <Panel title="ALLOCATED RESOURCES" tag={`EXP.${p.id}.ALLOC`} accent="cyan">
-        {allocated && allocated.length > 0 ? (
+      <Panel title="ALLOCATED RESOURCES" tag={`EXP.${exp.id}.ALLOC`} accent="cyan">
+        {exp.allocated_resources && exp.allocated_resources.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
@@ -183,13 +158,13 @@ export function ExplorationDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {allocated.map((r, i) => (
+                {exp.allocated_resources.map((r, i) => (
                   <tr
-                    key={(r.resource_type_id as number) || i}
+                    key={r.resource_type_id || i}
                     className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
                   >
-                    <td className="py-2 px-2 text-foreground">{r.resource_type_id as number}</td>
-                    <td className="py-2 px-2 text-right text-foreground">{r.amount as number}</td>
+                    <td className="py-2 px-2 text-foreground">{r.resource_type_id}</td>
+                    <td className="py-2 px-2 text-right text-foreground">{r.amount}</td>
                   </tr>
                 ))}
               </tbody>
@@ -198,15 +173,15 @@ export function ExplorationDetailPage() {
         ) : (
           <div className="flex items-center gap-2 py-4 font-mono-data text-xs text-muted-foreground">
             <Package className="h-4 w-4" />
-            {allocated === undefined
+            {exp.allocated_resources === undefined
               ? 'Resource data not included in response'
               : 'No allocated resources'}
           </div>
         )}
       </Panel>
 
-      <Panel title="FOUND RESOURCES" tag={`EXP.${p.id}.FOUND`} accent="cyan">
-        {found && found.length > 0 ? (
+      <Panel title="FOUND RESOURCES" tag={`EXP.${exp.id}.FOUND`} accent="cyan">
+        {exp.found_resources && exp.found_resources.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
               <thead>
@@ -216,13 +191,13 @@ export function ExplorationDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {found.map((r, i) => (
+                {exp.found_resources.map((r, i) => (
                   <tr
-                    key={(r.resource_type_id as number) || i}
+                    key={r.resource_type_id || i}
                     className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
                   >
-                    <td className="py-2 px-2 text-foreground">{r.resource_type_id as number}</td>
-                    <td className="py-2 px-2 text-right text-foreground">{r.amount as number}</td>
+                    <td className="py-2 px-2 text-foreground">{r.resource_type_id}</td>
+                    <td className="py-2 px-2 text-right text-foreground">{r.amount}</td>
                   </tr>
                 ))}
               </tbody>
@@ -231,7 +206,7 @@ export function ExplorationDetailPage() {
         ) : (
           <div className="flex items-center gap-2 py-4 font-mono-data text-xs text-muted-foreground">
             <Gift className="h-4 w-4" />
-            {found === undefined
+            {exp.found_resources === undefined
               ? 'Resource data not included in response'
               : 'No found resources recorded'}
           </div>

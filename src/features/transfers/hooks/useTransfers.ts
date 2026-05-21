@@ -8,18 +8,19 @@ import type {
   CompleteTransferDto,
   RejectTransferDto,
 } from '@/features/transfers/api/transfers.api';
+import type { Transfer } from '@/features/transfers/types/transfer.types';
 
 const TRANSFERS_KEY = ['transfers'] as const;
 
 export function useTransfers() {
-  return useQuery({
+  return useQuery<Transfer[]>({
     queryKey: TRANSFERS_KEY,
     queryFn: transfersApi.getAll,
   });
 }
 
 export function useTransfer(id: number) {
-  return useQuery({
+  return useQuery<Transfer>({
     queryKey: [...TRANSFERS_KEY, id] as const,
     queryFn: () => transfersApi.getById(id),
     enabled: !!id,

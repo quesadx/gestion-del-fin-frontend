@@ -115,15 +115,11 @@ export function CampsPage() {
     );
   }
 
-  const campsArray = Array.isArray((campsData as Record<string, unknown>)?.data)
-    ? ((campsData as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
-  const pagination = (campsData as Record<string, unknown>)?.pagination as
-    | { page: number; pageSize: number; total: number; hasNextPage: boolean; totalPages: number }
-    | undefined;
+  const campsArray = campsData?.data ?? [];
+  const pagination = campsData?.pagination;
   const hasActiveFilters = Boolean(searchTerm || statusFilter);
 
-  const filteredCamps = campsArray.filter((camp: Record<string, unknown>) => {
+  const filteredCamps = campsArray.filter((camp) => {
     if (searchTerm) {
       const name = (camp.name as string) || '';
       if (!name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
@@ -213,7 +209,7 @@ export function CampsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCamps.map((camp: Record<string, unknown>, i: number) => (
+                      {filteredCamps.map((camp, i: number) => (
                         <tr
                           key={camp.id as number}
                           className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors animate-fade-in"

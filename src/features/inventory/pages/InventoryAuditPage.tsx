@@ -21,9 +21,7 @@ export function InventoryAuditPage() {
     refetch,
   } = useInventoryAudit(selectedCampId ?? 0);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsArray = camps?.data ?? [];
   const auditArray = Array.isArray(audit) ? audit : [];
 
   return (
@@ -59,9 +57,9 @@ export function InventoryAuditPage() {
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
-              {campsArray.map((c: Record<string, unknown>) => (
-                <option key={c.id as number} value={c.id as number}>
-                  {c.name as string}
+              {campsArray.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>
@@ -113,32 +111,26 @@ export function InventoryAuditPage() {
                 </tr>
               </thead>
               <tbody>
-                {auditArray.map((entry: Record<string, unknown>) => {
-                  const resourceName =
-                    (entry.resource as Record<string, unknown>)?.name ||
-                    (entry.resource_type_id as string);
+                {auditArray.map((entry) => {
+                  const resourceName = String(entry.resource_type_id);
                   const typeVariant = entry.type === 'MANUAL_IN' ? 'green' : 'red';
                   const typeLabel = entry.type === 'MANUAL_IN' ? 'IN' : 'OUT';
                   return (
                     <tr
-                      key={entry.id as number}
+                      key={entry.id}
                       className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
                     >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
-                        {resourceName as string}
-                      </td>
+                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{resourceName}</td>
                       <td className="py-3 px-2">
                         <StatusBadge status={typeLabel} variant={typeVariant} />
                       </td>
-                      <td className="py-3 px-2 text-foreground font-bold">
-                        {entry.quantity as string}
-                      </td>
+                      <td className="py-3 px-2 text-foreground font-bold">{entry.quantity}</td>
                       <td className="py-3 px-2 text-muted-foreground max-w-[200px] truncate">
-                        {(entry.description as string) || '—'}
+                        {entry.description || '—'}
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
                         {entry.created_at
-                          ? format(new Date(entry.created_at as string), 'dd/MM/yyyy HH:mm')
+                          ? format(new Date(entry.created_at), 'dd/MM/yyyy HH:mm')
                           : '—'}
                       </td>
                     </tr>

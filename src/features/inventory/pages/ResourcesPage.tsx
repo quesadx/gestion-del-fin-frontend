@@ -137,7 +137,7 @@ export function ResourcesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item: Record<string, unknown>) => (
+                  {items.map((item) => (
                     <tr
                       key={item.id as number}
                       className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"

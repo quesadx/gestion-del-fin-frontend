@@ -115,17 +115,16 @@ export function PersonDetailPage() {
 
   const handleOpenEdit = () => {
     if (person) {
-      const p = person as Record<string, unknown>;
       editForm.reset({
-        full_name: p.full_name as string,
-        age: p.age as number | undefined,
-        identification_code: (p.identification_code as string) || '',
-        blood_type: (p.blood_type as string) || '',
-        skills_summary: (p.skills_summary as string) || '',
-        photo_url: (p.photo_url as string) || '',
-        status: p.status as 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD',
-        admitted_at: p.admitted_at
-          ? format(new Date(p.admitted_at as string), "yyyy-MM-dd'T'HH:mm")
+        full_name: person.full_name,
+        age: person.age,
+        identification_code: person.identification_code || '',
+        blood_type: person.blood_type || '',
+        skills_summary: person.skills_summary || '',
+        photo_url: person.photo_url || '',
+        status: person.status as 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD',
+        admitted_at: person.admitted_at
+          ? format(new Date(person.admitted_at), "yyyy-MM-dd'T'HH:mm")
           : '',
       });
     }
@@ -161,17 +160,11 @@ export function PersonDetailPage() {
     );
   }
 
-  const p = person as Record<string, unknown>;
-  const profObj = p.professions as Record<string, unknown> | undefined;
-  const statusLogs: Array<Record<string, unknown>> | undefined = Array.isArray(p.person_status_log)
-    ? (p.person_status_log as Array<Record<string, unknown>>)
-    : undefined;
-
   const onSubmitEdit = async (values: UpdatePersonFormValues) => {
     setEditError(null);
     try {
       await updateMutation.mutateAsync({
-        campId: p.camp_id as number,
+        campId: person.camp_id,
         id: personId,
         payload: {
           ...values,
@@ -191,7 +184,7 @@ export function PersonDetailPage() {
     setDeleteError(null);
     try {
       await deleteMutation.mutateAsync({
-        campId: p.camp_id as number,
+        campId: person.camp_id as number,
         id: personId,
       });
       toast('Person deleted successfully', 'success');
@@ -211,7 +204,7 @@ export function PersonDetailPage() {
     setStatusLogError(null);
     try {
       await statusLogMutation.mutateAsync({
-        campId: p.camp_id as number,
+        campId: person.camp_id as number,
         payload: { person_id: personId, ...values },
       });
       toast('Status updated successfully', 'success');
@@ -228,10 +221,10 @@ export function PersonDetailPage() {
     setReassignError(null);
     try {
       await reassignMutation.mutateAsync({
-        campId: p.camp_id as number,
+        campId: person.camp_id as number,
         payload: {
           person_id: personId,
-          from_profession_id: p.profession_id as number,
+          from_profession_id: person.profession_id as number,
           to_profession_id: values.to_profession_id,
           reason: values.reason || undefined,
           start_date: values.start_date || undefined,
@@ -258,23 +251,23 @@ export function PersonDetailPage() {
       </GlitchButton>
 
       <Panel
-        title={p.full_name as string}
+        title={person.full_name as string}
         tag={`PPL.${personId}`}
-        status={p.status as string}
+        status={person.status as string}
         accent="cyan"
       >
         <div className="text-[10px] font-mono text-zinc-500 mb-3">ID: {personId}</div>
         <div className="flex items-start gap-4 mb-4">
-          {(p.photo_url as string) ? (
+          {(person.photo_url as string) ? (
             <img
-              src={p.photo_url as string}
-              alt={p.full_name as string}
+              src={person.photo_url as string}
+              alt={person.full_name as string}
               className="w-16 h-16 rounded-sm object-cover border border-zinc-700"
             />
           ) : (
             <div className="w-16 h-16 rounded-sm bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-700">
               <span className="font-mono text-xl font-bold text-zinc-500">
-                {(p.full_name as string)?.[0]?.toUpperCase() || '?'}
+                {(person.full_name as string)?.[0]?.toUpperCase() || '?'}
               </span>
             </div>
           )}
@@ -282,42 +275,46 @@ export function PersonDetailPage() {
             <div>
               <span className="text-muted-foreground">STATUS: </span>
               <StatusBadge
-                status={p.status as string}
-                variant={getStatusVariant(p.status as string)}
+                status={person.status as string}
+                variant={getStatusVariant(person.status as string)}
               />
             </div>
             <div>
               <span className="text-muted-foreground">PROFESSION: </span>
-              <span className="text-[var(--neon-fuchsia)]">{(profObj?.name as string) || '—'}</span>
+              <span className="text-[var(--neon-fuchsia)]">
+                {(person.professions?.name as string) || '—'}
+              </span>
             </div>
             <div>
               <span className="text-muted-foreground">CAMP: </span>
-              {((camp as Record<string, unknown>)?.name as string) || (p.camp_id as string)}
+              {camp?.name || String(person.camp_id)}
             </div>
             <div>
               <span className="text-muted-foreground">ADMITTED: </span>
-              {p.admitted_at ? format(new Date(p.admitted_at as string), 'dd/MM/yyyy') : '—'}
+              {person.admitted_at
+                ? format(new Date(person.admitted_at as string), 'dd/MM/yyyy')
+                : '—'}
             </div>
           </div>
         </div>
         <div className="space-y-2 font-mono-data text-xs mb-4">
           <div>
             <span className="text-muted-foreground">AGE: </span>
-            {(p.age as number) ?? '—'}
+            {(person.age as number) ?? '—'}
           </div>
           <div>
             <span className="text-muted-foreground">CODE: </span>
-            {(p.identification_code as string) || '—'}
+            {(person.identification_code as string) || '—'}
           </div>
           <div>
             <span className="text-muted-foreground">BLOOD TYPE: </span>
-            {(p.blood_type as string) || '—'}
+            {(person.blood_type as string) || '—'}
           </div>
         </div>
-        {(p.skills_summary as string) && (
+        {(person.skills_summary as string) && (
           <div className="font-mono-data text-xs">
             <span className="text-muted-foreground">SKILLS: </span>
-            {p.skills_summary as string}
+            {person.skills_summary as string}
           </div>
         )}
         <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
@@ -340,11 +337,11 @@ export function PersonDetailPage() {
         </div>
       </Panel>
 
-      {statusLogs && statusLogs.length > 0 ? (
+      {person.person_status_log && person.person_status_log.length > 0 ? (
         <Panel
           title="STATUS HISTORY"
           tag={`PPL.${personId}.LOGS`}
-          status={`${statusLogs.length} RECORDS`}
+          status={`${person.person_status_log.length} RECORDS`}
           accent="cyan"
         >
           <div className="overflow-x-auto">
@@ -357,7 +354,7 @@ export function PersonDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {statusLogs.map((log, i) => (
+                {person.person_status_log.map((log, i) => (
                   <tr
                     key={(log.id as number) || i}
                     className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
@@ -438,7 +435,7 @@ export function PersonDetailPage() {
                   PROFESSION //
                 </label>
                 <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
-                  {(profObj?.name as string) || '—'}
+                  {(person.professions?.name as string) || '—'}
                 </div>
               </div>
             </div>
@@ -623,7 +620,7 @@ export function PersonDetailPage() {
                 CURRENT PROFESSION //
               </label>
               <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
-                {(profObj?.name as string) || '—'}
+                {(person.professions?.name as string) || '—'}
               </div>
             </div>
             <div>
@@ -712,8 +709,9 @@ export function PersonDetailPage() {
               CONFIRM DELETE
             </AlertDialogTitle>
             <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              Delete <span className="text-[var(--neon-fuchsia)]">{p.full_name as string}</span>?
-              This action cannot be undone.
+              Delete{' '}
+              <span className="text-[var(--neon-fuchsia)]">{person.full_name as string}</span>? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && (

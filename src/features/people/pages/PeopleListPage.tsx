@@ -45,20 +45,14 @@ export function PeopleListPage() {
     refetch: refetchPeople,
   } = usePeople(selectedCampId ?? 0, { page, limit: PAGE_SIZE });
 
-  const peopleArray = Array.isArray((people as Record<string, unknown>)?.data)
-    ? ((people as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
-  const peoplePagination = (people as Record<string, unknown>)?.pagination as
-    | { page: number; pageSize: number; total: number; hasNextPage: boolean; totalPages: number }
-    | undefined;
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const peopleArray = people?.data ?? [];
+  const peoplePagination = people?.pagination;
+  const campsArray = camps?.data ?? [];
   const professionsArray = Array.isArray(professions) ? professions : [];
 
   const hasActiveFilters = Boolean(searchTerm || statusFilter || professionFilter);
 
-  const filteredPeople = peopleArray.filter((p: Record<string, unknown>) => {
+  const filteredPeople = peopleArray.filter((p) => {
     if (searchTerm) {
       const name = (p.full_name as string) || '';
       if (!name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
@@ -106,9 +100,9 @@ export function PeopleListPage() {
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
-              {campsArray.map((camp: Record<string, unknown>) => (
-                <option key={camp.id as number} value={camp.id as number}>
-                  {camp.name as string}
+              {campsArray.map((camp) => (
+                <option key={camp.id} value={camp.id}>
+                  {camp.name}
                 </option>
               ))}
             </select>
@@ -179,7 +173,7 @@ export function PeopleListPage() {
               className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">ALL PROFESSIONS</option>
-              {professionsArray.map((prof: Record<string, unknown>) => (
+              {professionsArray.map((prof) => (
                 <option key={prof.id as number} value={prof.id as number}>
                   {prof.name as string}
                 </option>
@@ -225,7 +219,7 @@ export function PeopleListPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredPeople.map((person: Record<string, unknown>, i: number) => (
+                    {filteredPeople.map((person, i: number) => (
                       <tr
                         key={person.id as number}
                         className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors animate-fade-in"
