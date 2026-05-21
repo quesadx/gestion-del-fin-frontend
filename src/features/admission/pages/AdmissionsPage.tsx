@@ -211,7 +211,7 @@ export function AdmissionsPage() {
                           variant={a.final_decision === 'ACCEPTED' ? 'green' : 'red'}
                         />
                       ) : (
-                        <StatusBadge status="PENDING" variant="yellow" />
+                        <StatusBadge status="PENDING" variant="amber" />
                       )}
                     </td>
                     <td className="py-3 px-2 text-muted-foreground">

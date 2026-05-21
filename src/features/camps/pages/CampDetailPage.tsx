@@ -120,7 +120,7 @@ export function CampDetailPage() {
         title={camp.name as string}
         tag={`CAMP.${campId}`}
         status={camp.status as string}
-        accent={statusVariant === 'green' ? 'cyan' : 'purple'}
+        accent={statusVariant}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -231,12 +231,12 @@ export function CampDetailPage() {
                             person.status === 'HEALTHY'
                               ? 'green'
                               : person.status === 'SICK'
-                                ? 'yellow'
+                                ? 'amber'
                                 : person.status === 'INJURED'
-                                  ? 'yellow'
+                                  ? 'amber'
                                   : person.status === 'DEAD'
                                     ? 'red'
-                                    : 'cyan'
+                                    : 'red'
                           }
                         />
                       </td>

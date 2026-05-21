@@ -7,9 +7,9 @@ import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useExploration } from '@/features/explorations/hooks/useExplorations';
 import { ArrowLeft, Users, Package, Gift } from 'lucide-react';
 
-const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
-  PLANNED: 'cyan',
-  ONGOING: 'yellow',
+const STATUS_MAP: Record<string, 'red' | 'amber' | 'green'> = {
+  PLANNED: 'red',
+  ONGOING: 'amber',
   RETURNED: 'green',
   CANCELLED: 'red',
 };
@@ -83,7 +83,7 @@ export function ExplorationDetailPage() {
             <span className="text-muted-foreground">STATUS: </span>
             <StatusBadge
               status={p.status as string}
-              variant={STATUS_MAP[p.status as string] || 'cyan'}
+              variant={STATUS_MAP[p.status as string] || 'red'}
             />
           </div>
           <div>

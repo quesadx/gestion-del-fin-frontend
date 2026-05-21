@@ -64,9 +64,9 @@ const createExplorationSchema = z
 
 type CreateExplorationFormValues = z.infer<typeof createExplorationSchema>;
 
-const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
-  PLANNED: 'cyan',
-  ONGOING: 'yellow',
+const STATUS_MAP: Record<string, 'red' | 'amber' | 'green'> = {
+  PLANNED: 'red',
+  ONGOING: 'amber',
   RETURNED: 'green',
   CANCELLED: 'red',
 };
@@ -381,7 +381,7 @@ export function ExplorationsPage() {
                         <td className="py-3 px-2">
                           <StatusBadge
                             status={exp.status as string}
-                            variant={STATUS_MAP[exp.status as string] || 'cyan'}
+                            variant={STATUS_MAP[exp.status as string] || 'red'}
                           />
                         </td>
                         <td className="py-3 px-2 text-muted-foreground">
@@ -764,11 +764,11 @@ export function ExplorationsPage() {
                   <span className="text-[var(--neon-fuchsia)]">{statusTarget?.destination}</span>?
                 </div>
                 <div>
-                  <StatusBadge status={statusTarget?.currentStatus || ''} variant="cyan" />
+                  <StatusBadge status={statusTarget?.currentStatus || ''} variant="red" />
                   <span className="mx-1 text-muted-foreground">→</span>
                   <StatusBadge
                     status={statusTarget?.newStatus || ''}
-                    variant={STATUS_MAP[statusTarget?.newStatus || ''] || 'cyan'}
+                    variant={STATUS_MAP[statusTarget?.newStatus || ''] || 'red'}
                   />
                 </div>
               </AlertDialogDescription>

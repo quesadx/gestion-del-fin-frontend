@@ -60,18 +60,18 @@ const statusLogSchema = z.object({
 
 type StatusLogFormValues = z.infer<typeof statusLogSchema>;
 
-function getStatusVariant(status: string): 'green' | 'yellow' | 'red' | 'cyan' {
+function getStatusVariant(status: string): 'green' | 'amber' | 'red' | 'red' {
   switch (status) {
     case 'HEALTHY':
       return 'green';
     case 'SICK':
-      return 'yellow';
+      return 'amber';
     case 'INJURED':
-      return 'yellow';
+      return 'amber';
     case 'DEAD':
       return 'red';
     default:
-      return 'cyan';
+      return 'red';
   }
 }
 

@@ -12,18 +12,18 @@ import { Users, UserPlus, Search, FilterX } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
-function getPersonStatusVariant(status: string): 'green' | 'yellow' | 'red' | 'cyan' {
+function getPersonStatusVariant(status: string): 'green' | 'amber' | 'red' | 'red' {
   switch (status) {
     case 'HEALTHY':
       return 'green';
     case 'SICK':
-      return 'yellow';
+      return 'amber';
     case 'INJURED':
-      return 'yellow';
+      return 'amber';
     case 'DEAD':
       return 'red';
     default:
-      return 'cyan';
+      return 'red';
   }
 }
 

@@ -32,10 +32,10 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
-  PENDING: 'yellow',
-  APPROVED_SOURCE: 'cyan',
-  APPROVED_TARGET: 'cyan',
+const STATUS_MAP: Record<string, 'red' | 'amber' | 'green'> = {
+  PENDING: 'amber',
+  APPROVED_SOURCE: 'red',
+  APPROVED_TARGET: 'red',
   COMPLETED: 'green',
   REJECTED: 'red',
 };
@@ -359,7 +359,7 @@ export function TransfersPage() {
                         <td className="py-3 px-2">
                           <StatusBadge
                             status={TYPE_LABELS[t.type as string] || (t.type as string)}
-                            variant="purple"
+                            variant="amber"
                           />
                         </td>
                         <td className="py-3 px-2">
@@ -370,7 +370,7 @@ export function TransfersPage() {
                         <td className="py-3 px-2">
                           <StatusBadge
                             status={STATUS_LABELS[status] || status}
-                            variant={STATUS_MAP[status] || 'cyan'}
+                            variant={STATUS_MAP[status] || 'red'}
                           />
                         </td>
                         <td className="py-3 px-2 text-muted-foreground">{itemCount}</td>
@@ -505,20 +505,20 @@ export function TransfersPage() {
                     const events: Array<{
                       label: string;
                       date: string | null;
-                      accent: 'cyan' | 'purple' | 'green' | 'red';
+                      accent: 'red' | 'amber' | 'green';
                     }> = [];
                     if (t.created_at) {
                       events.push({
                         label: 'CREATED',
                         date: t.created_at as string,
-                        accent: 'cyan',
+                        accent: 'red',
                       });
                     }
                     if (t.scheduled_delivery_date) {
                       events.push({
                         label: 'SCHEDULED',
                         date: t.scheduled_delivery_date as string,
-                        accent: 'purple',
+                        accent: 'amber',
                       });
                     }
                     if (t.approved_source_at) {
@@ -569,7 +569,7 @@ export function TransfersPage() {
                         <td className="py-2 px-2">
                           <StatusBadge
                             status={TYPE_LABELS[t.type as string] || (t.type as string)}
-                            variant="purple"
+                            variant="amber"
                           />
                         </td>
                         <td className="py-2 px-2">
@@ -580,7 +580,7 @@ export function TransfersPage() {
                         <td className="py-2 px-2">
                           <StatusBadge
                             status={STATUS_LABELS[status]}
-                            variant={STATUS_MAP[status] || 'cyan'}
+                            variant={STATUS_MAP[status] || 'red'}
                           />
                         </td>
                         <td className="py-2 px-2 text-muted-foreground text-center">{itemCount}</td>

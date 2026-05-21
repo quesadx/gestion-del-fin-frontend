@@ -94,10 +94,10 @@ export function CampsPage() {
     }
   };
 
-  const getStatusVariant = (status: string): 'green' | 'cyan' | 'red' => {
+  const getStatusVariant = (status: string): 'green' | 'red' | 'red' => {
     if (status === 'ACTIVE') return 'green';
     if (status === 'ABANDONED') return 'red';
-    return 'cyan';
+    return 'red';
   };
 
   if (isLoading) return <ScreenLoader />;
