@@ -29,6 +29,8 @@ export interface Transfer {
   scheduled_delivery_date?: string;
   approved_source_at?: string;
   approved_target_at?: string;
+  completed_at?: string;
+  rejected_at?: string;
   created_at: string;
   updated_at: string;
   requesting_camp_info?: { id: number; name: string };

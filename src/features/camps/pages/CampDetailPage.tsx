@@ -237,7 +237,7 @@ export function CampDetailPage() {
                         {person.full_name as string}
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
-                        {((person.professions as Record<string, unknown>)?.name as string) || '—'}
+                        {person.professions?.name || '—'}
                       </td>
                       <td className="py-3 px-2">
                         <StatusBadge

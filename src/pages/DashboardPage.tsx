@@ -262,10 +262,10 @@ export function DashboardPage() {
         </div>
         {camps && Array.isArray(camps) && camps.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border/10 flex flex-wrap gap-2">
-            {(camps as Record<string, unknown>[]).slice(0, 5).map((camp) => (
+            {camps.slice(0, 5).map((camp) => (
               <StatusBadge
-                key={(camp.id as number | string) ?? ''}
-                status={(camp.name as string)?.slice(0, 16) ?? ''}
+                key={camp.id}
+                status={camp.name.slice(0, 16)}
                 variant={camp.status === 'ACTIVE' ? 'green' : 'red'}
               />
             ))}

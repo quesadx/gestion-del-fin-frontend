@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/features/users/api/users.api';
-import type { CreateUserDto, UpdateUserDto } from '@/features/users/api/users.api';
+import type { CreateUserDto, UpdateUserDto, RoleItem } from '@/features/users/api/users.api';
+import type { User } from '@/features/users/types/user.types';
 
 const USERS_KEY = ['users'] as const;
 const ROLES_KEY = ['users', 'roles'] as const;
 
 export function useRoles() {
-  return useQuery({
+  return useQuery<RoleItem[]>({
     queryKey: ROLES_KEY,
     queryFn: usersApi.getRoles,
     staleTime: 5 * 60 * 1000,
@@ -14,14 +15,14 @@ export function useRoles() {
 }
 
 export function useUsers() {
-  return useQuery({
+  return useQuery<User[]>({
     queryKey: USERS_KEY,
     queryFn: usersApi.getAll,
   });
 }
 
 export function useUser(id: number) {
-  return useQuery({
+  return useQuery<User>({
     queryKey: [...USERS_KEY, id] as const,
     queryFn: () => usersApi.getById(id),
     enabled: !!id,

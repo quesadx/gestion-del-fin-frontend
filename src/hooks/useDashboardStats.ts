@@ -1,6 +1,8 @@
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useResources } from '@/features/resources/hooks/useResources';
 import type { Role } from '@/features/auth/types/auth.types';
+import type { Camp } from '@/features/camps/types/camp.types';
+import type { Resource } from '@/features/resources/types/resource.types';
 
 export function useDashboardStats(role: Role | null) {
   const showStock = role === 'system_admin' || role === 'resource_manager';
@@ -14,18 +16,10 @@ export function useDashboardStats(role: Role | null) {
   const isLoading =
     (role === 'system_admin' && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
 
-  const campsData = (campsQuery.data as unknown as Record<string, unknown>)?.data as
-    | Record<string, unknown>[]
-    | undefined;
-  const campsArray = Array.isArray(campsData) ? campsData : [];
-  const resourcesData = (resourcesQuery.data as unknown as Record<string, unknown>)?.data as
-    | Record<string, unknown>[]
-    | undefined;
-  const resourcesArray = Array.isArray(resourcesData) ? resourcesData : [];
+  const campsArray: Camp[] = campsQuery.data?.data ?? [];
+  const resourcesArray: Resource[] = resourcesQuery.data ?? [];
 
-  const autoDailyCount = resourcesArray.filter(
-    (r: Record<string, unknown>) => r.auto_daily === true,
-  ).length;
+  const autoDailyCount = resourcesArray.filter((r) => r.auto_daily === true).length;
 
   return {
     isLoading,
@@ -34,9 +28,7 @@ export function useDashboardStats(role: Role | null) {
     resourcesArray,
     campCount: role === 'system_admin' ? campsArray.length : null,
     activeCamps:
-      role === 'system_admin'
-        ? campsArray.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
-        : null,
+      role === 'system_admin' ? campsArray.filter((c) => c.status === 'ACTIVE').length : null,
     resourceCount: showStock ? resourcesArray.length : null,
     autoDailyCount: showStock ? autoDailyCount : null,
   };
