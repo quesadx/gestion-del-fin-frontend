@@ -7,9 +7,9 @@ import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useExploration } from '@/features/explorations/hooks/useExplorations';
 import { ArrowLeft, Users, Package, Gift } from 'lucide-react';
 
-const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
-  PLANNED: 'cyan',
-  ONGOING: 'yellow',
+const STATUS_MAP: Record<string, 'red' | 'amber' | 'green'> = {
+  PLANNED: 'red',
+  ONGOING: 'amber',
   RETURNED: 'green',
   CANCELLED: 'red',
 };
@@ -180,29 +180,46 @@ export function ExplorationDetailPage() {
         )}
       </Panel>
 
-      <Panel title="FOUND RESOURCES" tag={`EXP.${exp.id}.FOUND`} accent="cyan">
-        {exp.found_resources && exp.found_resources.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono-data text-xs">
-              <thead>
-                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-2 px-2">RESOURCE TYPE ID</th>
-                  <th className="py-2 px-2 text-right">AMOUNT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exp.found_resources.map((r, i) => (
-                  <tr
-                    key={r.resource_type_id || i}
-                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
-                  >
-                    <td className="py-2 px-2 text-foreground">{r.resource_type_id}</td>
-                    <td className="py-2 px-2 text-right text-foreground">{r.amount}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <Panel title="FOUND RESOURCES" tag={`EXP.${p.id}.FOUND`} accent="cyan">
+        {found && found.length > 0 ? (
+          (() => {
+            const valid = found.filter((r) => r.resource_type_id != null);
+            const skipped = found.length - valid.length;
+            return (
+              <>
+                {skipped > 0 && (
+                  <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-mono-data text-[10px] text-amber-400">
+                    {skipped} resource(s) missing resource_type_id and not shown
+                  </div>
+                )}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono-data text-xs">
+                    <thead>
+                      <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                        <th className="py-2 px-2">RESOURCE TYPE ID</th>
+                        <th className="py-2 px-2 text-right">AMOUNT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {valid.map((r) => (
+                        <tr
+                          key={`found-${r.resource_type_id}`}
+                          className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
+                        >
+                          <td className="py-2 px-2 text-foreground">
+                            {r.resource_type_id as number}
+                          </td>
+                          <td className="py-2 px-2 text-right text-foreground">
+                            {r.amount as number}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            );
+          })()
         ) : (
           <div className="flex items-center gap-2 py-4 font-mono-data text-xs text-muted-foreground">
             <Gift className="h-4 w-4" />

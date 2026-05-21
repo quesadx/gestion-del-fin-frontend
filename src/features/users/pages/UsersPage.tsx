@@ -243,7 +243,7 @@ export function UsersPage() {
                         {campMap.get(u.camp_id as number) || (u.camp_id as string)}
                       </td>
                       <td className="py-3 px-2">
-                        <StatusBadge status={roleLabel(u.role_id as number)} variant="purple" />
+                        <StatusBadge status={roleLabel(u.role_id as number)} variant="amber" />
                       </td>
                       <td className="py-3 px-2">
                         <StatusBadge

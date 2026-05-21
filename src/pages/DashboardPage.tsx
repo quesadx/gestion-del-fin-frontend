@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, ArrowUpRight, ChevronRight } from 'lucide-react';
-import { useCamps } from '@/features/camps/hooks/useCamps';
-import { useResources } from '@/features/resources/hooks/useResources';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useServerTime, getServerNow } from '@/features/system/hooks/useServerTime';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { TerminalLine } from '@/components/cyber/TerminalLine';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { format } from 'date-fns';
-import type { Role } from '@/features/auth/types/auth.types';
 
 interface ModuleCard {
   label: string;
@@ -55,7 +53,7 @@ export function DashboardPage() {
   const userName = useAuthStore((state) => state.user?.username);
 
   const { isLoading, campCount, activeCamps, resourceCount, camps, autoDailyCount } =
-    useStats(role);
+    useDashboardStats(role);
 
   const [serverTime, setServerTime] = useState<string>('');
   const { data: timeData } = useServerTime();

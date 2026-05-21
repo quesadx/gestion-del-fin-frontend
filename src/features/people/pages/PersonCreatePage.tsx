@@ -6,10 +6,10 @@ import { z } from 'zod';
 import { Panel } from '@/components/cyber/Panel';
 import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
-import { FileInput } from '@/components/cyber/FileInput';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useProfessions } from '@/features/professions/hooks/useProfessions';
 import { useCreatePerson } from '@/features/people/hooks/usePeople';
+import { getServerNow } from '@/features/system/hooks/useServerTime';
 import { toast } from '@/shared/lib/toast';
 import { ArrowLeft, UserPlus, Building2, Wrench } from 'lucide-react';
 
@@ -42,7 +42,6 @@ export function PersonCreatePage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<CreatePersonFormValues>({
     resolver: resolved(createPersonSchema),
@@ -51,7 +50,7 @@ export function PersonCreatePage() {
       camp_id: 0,
       profession_id: 0,
       status: 'HEALTHY',
-      admitted_at: new Date().toISOString().slice(0, 16),
+      admitted_at: new Date(getServerNow()).toISOString().slice(0, 16),
     },
   });
 
@@ -287,29 +286,19 @@ export function PersonCreatePage() {
 
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-              PHOTO //
+              PHOTO URL //
             </label>
-            <FileInput
-              value=""
-              onChange={(dataUrl) => setValue('photo_url', dataUrl)}
-              label="UPLOAD PHOTO"
+            <input
+              {...register('photo_url')}
+              type="text"
+              placeholder="https://..."
+              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             />
             {errors.photo_url && (
               <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
                 {errors.photo_url.message}
               </p>
             )}
-          </div>
-
-          <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
-              ID CARD //
-            </label>
-            <FileInput
-              value=""
-              onChange={(dataUrl) => setValue('identification_code', dataUrl)}
-              label="UPLOAD ID CARD"
-            />
           </div>
 
           {createError && (

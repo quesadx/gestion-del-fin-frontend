@@ -9,6 +9,8 @@ import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps, useCreateCamp, useDeleteCamp } from '@/features/camps/hooks/useCamps';
+import type { Camp } from '@/features/camps/types/camp.types';
+import type { PaginatedResponse } from '@/shared/api/types';
 import { toast } from '@/shared/lib/toast';
 import { MapPin, Plus, Trash2, Eye, Search, FilterX } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -76,6 +78,7 @@ export function CampsPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Creation failed';
       setCreateError(message);
+      toast(message, 'error');
     }
   };
 
@@ -89,13 +92,14 @@ export function CampsPage() {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Delete failed';
       setDeleteError(message);
+      toast(message, 'error');
     }
   };
 
-  const getStatusVariant = (status: string): 'green' | 'cyan' | 'red' => {
+  const getStatusVariant = (status: string): 'green' | 'red' | 'red' => {
     if (status === 'ACTIVE') return 'green';
     if (status === 'ABANDONED') return 'red';
-    return 'cyan';
+    return 'red';
   };
 
   if (isLoading) return <ScreenLoader />;
@@ -121,10 +125,9 @@ export function CampsPage() {
 
   const filteredCamps = campsArray.filter((camp) => {
     if (searchTerm) {
-      const name = (camp.name as string) || '';
-      if (!name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+      if (!camp.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     }
-    if (statusFilter && (camp.status as string) !== statusFilter) return false;
+    if (statusFilter && camp.status !== statusFilter) return false;
     return true;
   });
 
@@ -211,26 +214,26 @@ export function CampsPage() {
                     <tbody>
                       {filteredCamps.map((camp, i: number) => (
                         <tr
-                          key={camp.id as number}
+                          key={camp.id}
                           className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors animate-fade-in"
                           style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'backwards' }}
                           onClick={() => navigate(`/camps/${camp.id}`)}
                         >
                           <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
-                            {camp.name as string}
+                            {camp.name}
                           </td>
                           <td className="py-3 px-2 text-muted-foreground">
-                            {(camp.location as string) || '—'}
+                            {camp.location || '—'}
                           </td>
                           <td className="py-3 px-2">
                             <StatusBadge
-                              status={camp.status as string}
-                              variant={getStatusVariant(camp.status as string)}
+                              status={camp.status}
+                              variant={getStatusVariant(camp.status)}
                             />
                           </td>
                           <td className="py-3 px-2 text-muted-foreground">
                             {camp.created_at
-                              ? format(new Date(camp.created_at as string), 'dd/MM/yyyy')
+                              ? format(new Date(camp.created_at), 'dd/MM/yyyy')
                               : '—'}
                           </td>
                           <td className="py-3 px-2">

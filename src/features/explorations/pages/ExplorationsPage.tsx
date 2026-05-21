@@ -64,9 +64,9 @@ const createExplorationSchema = z
 
 type CreateExplorationFormValues = z.infer<typeof createExplorationSchema>;
 
-const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
-  PLANNED: 'cyan',
-  ONGOING: 'yellow',
+const STATUS_MAP: Record<string, 'red' | 'amber' | 'green'> = {
+  PLANNED: 'red',
+  ONGOING: 'amber',
   RETURNED: 'green',
   CANCELLED: 'red',
 };
@@ -367,7 +367,7 @@ export function ExplorationsPage() {
                         <td className="py-3 px-2">
                           <StatusBadge
                             status={exp.status as string}
-                            variant={STATUS_MAP[exp.status as string] || 'cyan'}
+                            variant={STATUS_MAP[exp.status as string] || 'red'}
                           />
                         </td>
                         <td className="py-3 px-2 text-muted-foreground">
@@ -562,11 +562,11 @@ export function ExplorationsPage() {
             )}
             <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
               <Package className="h-3.5 w-3.5" />
-              Resource allocation pending inventory integration
+              Resource allocation is configured in the expedition return flow
             </div>
             <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
               <Gift className="h-3.5 w-3.5" />
-              Found resources can be recorded when return flow is connected
+              Found resources are recorded when marking the expedition as returned
             </div>
             {createError && (
               <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
@@ -738,7 +738,7 @@ export function ExplorationsPage() {
           </DialogContent>
         </Dialog>
       ) : (
-        <AlertDialog open={!!statusTarget} onOpenChange={() => {}}>
+        <AlertDialog open={!!statusTarget} onOpenChange={(open) => !open && setStatusTarget(null)}>
           <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
             <AlertDialogHeader>
               <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
@@ -750,11 +750,11 @@ export function ExplorationsPage() {
                   <span className="text-[var(--neon-fuchsia)]">{statusTarget?.destination}</span>?
                 </div>
                 <div>
-                  <StatusBadge status={statusTarget?.currentStatus || ''} variant="cyan" />
+                  <StatusBadge status={statusTarget?.currentStatus || ''} variant="red" />
                   <span className="mx-1 text-muted-foreground">→</span>
                   <StatusBadge
                     status={statusTarget?.newStatus || ''}
-                    variant={STATUS_MAP[statusTarget?.newStatus || ''] || 'cyan'}
+                    variant={STATUS_MAP[statusTarget?.newStatus || ''] || 'red'}
                   />
                 </div>
               </AlertDialogDescription>

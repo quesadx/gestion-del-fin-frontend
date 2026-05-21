@@ -17,13 +17,25 @@ import {
   useRejectTransfer,
 } from '@/features/transfers/hooks/useTransfers';
 import { useCamps } from '@/features/camps/hooks/useCamps';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { toast } from '@/shared/lib/toast';
 import { ArrowRightLeft, Plus, Truck, Check, X, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
-const STATUS_MAP: Record<string, 'cyan' | 'yellow' | 'green' | 'red'> = {
-  PENDING: 'yellow',
-  APPROVED_SOURCE: 'cyan',
-  APPROVED_TARGET: 'cyan',
+const STATUS_MAP: Record<string, 'red' | 'amber' | 'green'> = {
+  PENDING: 'amber',
+  APPROVED_SOURCE: 'red',
+  APPROVED_TARGET: 'red',
   COMPLETED: 'green',
   REJECTED: 'red',
 };
@@ -71,9 +83,20 @@ export function TransfersPage() {
   const completeMutation = useCompleteTransfer();
   const rejectMutation = useRejectTransfer();
 
+  const userId = useAuthStore((state) => state.userId);
+
   const [createOpen, setCreateOpen] = useState(false);
   const [rejectTarget, setRejectTarget] = useState<{ id: number; reason: string } | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [scheduleTarget, setScheduleTarget] = useState<number | null>(null);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [confirmAction, setConfirmAction] = useState<{
+    id: number;
+    action: string;
+    label: string;
+  } | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const campsArray = useMemo(() => camps?.data ?? [], [camps]);
   const transfersArray = useMemo(() => transfers ?? [], [transfers]);
@@ -124,6 +147,11 @@ export function TransfersPage() {
   };
 
   const onSubmitCreate = async (values: TransferFormValues) => {
+    if (!userId) {
+      toast('Authentication required — user ID not available', 'error');
+      return;
+    }
+
     const items = values.items.map((item) => ({
       item_type: item.item_type,
       resource_type_id: item.item_type === 'RESOURCE' ? item.resource_type_id : undefined,
@@ -136,43 +164,99 @@ export function TransfersPage() {
       target_camp: values.target_camp,
       type: values.type,
       notes: values.notes || undefined,
-      requested_by: 0,
+      requested_by: userId,
       leader_person_id: values.leader_person_id || undefined,
       scheduled_delivery_date: values.scheduled_delivery_date || undefined,
       items,
     };
 
-    await createMutation.mutateAsync(payload);
-    formCreate.reset();
-    setCreateOpen(false);
+    try {
+      await createMutation.mutateAsync(payload);
+      toast('Transfer created successfully', 'success');
+      formCreate.reset();
+      setCreateOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create transfer';
+      toast(message, 'error');
+    }
   };
 
   const handleApproveSource = async (id: number) => {
-    await approveSourceMutation.mutateAsync({ id, payload: {} });
+    try {
+      await approveSourceMutation.mutateAsync({ id, payload: {} });
+      toast('Source approved successfully', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to approve source';
+      toast(message, 'error');
+    }
   };
 
   const handleApproveTarget = async (id: number) => {
-    await approveTargetMutation.mutateAsync({ id, payload: {} });
+    try {
+      await approveTargetMutation.mutateAsync({ id, payload: {} });
+      toast('Destination approved successfully', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to approve destination';
+      toast(message, 'error');
+    }
   };
 
   const handleComplete = async (id: number) => {
-    await completeMutation.mutateAsync({ id, payload: {} });
+    try {
+      await completeMutation.mutateAsync({ id, payload: {} });
+      toast('Transfer completed successfully', 'success');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to complete transfer';
+      toast(message, 'error');
+    }
   };
 
-  const handleSchedule = async (id: number) => {
-    const date = prompt('Delivery date (YYYY-MM-DDTHH:mm):');
-    if (!date) return;
-    await scheduleMutation.mutateAsync({ id, payload: { scheduled_delivery_date: date } });
+  const handleSchedule = (id: number) => {
+    setScheduleTarget(id);
+    setScheduleDate('');
+    setScheduleDialogOpen(true);
+  };
+
+  const handleScheduleConfirm = async () => {
+    if (!scheduleTarget || !scheduleDate) return;
+    try {
+      await scheduleMutation.mutateAsync({
+        id: scheduleTarget,
+        payload: { scheduled_delivery_date: new Date(scheduleDate).toISOString() },
+      });
+      toast('Delivery scheduled successfully', 'success');
+      setScheduleDialogOpen(false);
+      setScheduleTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to schedule delivery';
+      toast(message, 'error');
+    }
   };
 
   const handleReject = async () => {
     if (!rejectTarget) return;
-    await rejectMutation.mutateAsync({
-      id: rejectTarget.id,
-      payload: { reason: rejectTarget.reason },
-    });
-    setRejectDialogOpen(false);
-    setRejectTarget(null);
+    try {
+      await rejectMutation.mutateAsync({
+        id: rejectTarget.id,
+        payload: { reason: rejectTarget.reason },
+      });
+      toast('Transfer rejected', 'success');
+      setRejectDialogOpen(false);
+      setRejectTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to reject transfer';
+      toast(message, 'error');
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return;
+    setConfirmDialogOpen(false);
+    const { id, action } = confirmAction;
+    setConfirmAction(null);
+    if (action === 'approve-source') await handleApproveSource(id);
+    else if (action === 'approve-target') await handleApproveTarget(id);
+    else if (action === 'complete') await handleComplete(id);
   };
 
   const campMap = new Map<number, string>();
@@ -266,7 +350,7 @@ export function TransfersPage() {
                         <td className="py-3 px-2">
                           <StatusBadge
                             status={TYPE_LABELS[t.type as string] || (t.type as string)}
-                            variant="purple"
+                            variant="amber"
                           />
                         </td>
                         <td className="py-3 px-2">
@@ -277,7 +361,7 @@ export function TransfersPage() {
                         <td className="py-3 px-2">
                           <StatusBadge
                             status={STATUS_LABELS[status] || status}
-                            variant={STATUS_MAP[status] || 'cyan'}
+                            variant={STATUS_MAP[status] || 'red'}
                           />
                         </td>
                         <td className="py-3 px-2 text-muted-foreground">{itemCount}</td>
@@ -300,7 +384,14 @@ export function TransfersPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleApproveSource(t.id as number)}
+                                  onClick={() => {
+                                    setConfirmAction({
+                                      id: t.id as number,
+                                      action: 'approve-source',
+                                      label: 'Approve source camp',
+                                    });
+                                    setConfirmDialogOpen(true);
+                                  }}
                                   className="p-1 rounded-sm text-green-400 hover:bg-green-400/10 text-[10px]"
                                   title="Approve source"
                                 >
@@ -322,7 +413,14 @@ export function TransfersPage() {
                             {status === 'APPROVED_SOURCE' && (
                               <button
                                 type="button"
-                                onClick={() => handleApproveTarget(t.id as number)}
+                                onClick={() => {
+                                  setConfirmAction({
+                                    id: t.id as number,
+                                    action: 'approve-target',
+                                    label: 'Approve destination camp',
+                                  });
+                                  setConfirmDialogOpen(true);
+                                }}
                                 className="p-1 rounded-sm bg-green-400/10 text-green-400 hover:bg-green-400/20 text-[10px] px-2"
                               >
                                 APPROVE DESTINATION
@@ -331,7 +429,14 @@ export function TransfersPage() {
                             {status === 'APPROVED_TARGET' && (
                               <button
                                 type="button"
-                                onClick={() => handleComplete(t.id as number)}
+                                onClick={() => {
+                                  setConfirmAction({
+                                    id: t.id as number,
+                                    action: 'complete',
+                                    label: 'Complete transfer',
+                                  });
+                                  setConfirmDialogOpen(true);
+                                }}
                                 className="p-1 rounded-sm bg-[var(--neon-fuchsia)]/10 text-[var(--neon-fuchsia)] hover:bg-[var(--neon-fuchsia)]/20 text-[10px] px-2"
                               >
                                 COMPLETE
@@ -391,20 +496,20 @@ export function TransfersPage() {
                     const events: Array<{
                       label: string;
                       date: string | null;
-                      accent: 'cyan' | 'purple' | 'green' | 'red';
+                      accent: 'red' | 'amber' | 'green';
                     }> = [];
                     if (t.created_at) {
                       events.push({
                         label: 'CREATED',
                         date: t.created_at as string,
-                        accent: 'cyan',
+                        accent: 'red',
                       });
                     }
                     if (t.scheduled_delivery_date) {
                       events.push({
                         label: 'SCHEDULED',
                         date: t.scheduled_delivery_date as string,
-                        accent: 'purple',
+                        accent: 'amber',
                       });
                     }
                     if (t.approved_source_at) {
@@ -455,7 +560,7 @@ export function TransfersPage() {
                         <td className="py-2 px-2">
                           <StatusBadge
                             status={TYPE_LABELS[t.type as string] || (t.type as string)}
-                            variant="purple"
+                            variant="amber"
                           />
                         </td>
                         <td className="py-2 px-2">
@@ -466,7 +571,7 @@ export function TransfersPage() {
                         <td className="py-2 px-2">
                           <StatusBadge
                             status={STATUS_LABELS[status]}
-                            variant={STATUS_MAP[status] || 'cyan'}
+                            variant={STATUS_MAP[status] || 'red'}
                           />
                         </td>
                         <td className="py-2 px-2 text-muted-foreground text-center">{itemCount}</td>
@@ -725,6 +830,76 @@ export function TransfersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <DialogHeader>
+            <DialogTitle className="font-display text-sm tracking-widest text-[var(--neon-cyan)]">
+              SCHEDULE DELIVERY
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                DELIVERY DATE //
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data [color-scheme:dark]"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setScheduleDialogOpen(false);
+                  setScheduleTarget(null);
+                }}
+              >
+                CANCEL
+              </GlitchButton>
+              <GlitchButton
+                variant="primary"
+                type="button"
+                onClick={handleScheduleConfirm}
+                disabled={!scheduleDate || scheduleMutation.isPending}
+              >
+                {scheduleMutation.isPending ? 'SCHEDULING...' : 'SCHEDULE'}
+              </GlitchButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+              CONFIRM ACTION
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
+              {confirmAction?.label} — Transfer #{confirmAction?.id}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setConfirmAction(null)}
+              className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs"
+            >
+              CANCEL
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmAction}
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+            >
+              CONFIRM
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
