@@ -56,10 +56,6 @@ export function AdmissionsPage() {
   const admArray: AdmissionResponse[] = Array.isArray(admissions)
     ? (admissions as AdmissionResponse[])
     : [];
-  const activeCampName = selectedCampId
-    ? (campsArray.find((c: Camp) => c.id === selectedCampId)?.name ?? '')
-    : '';
-
   const form = useForm<CreateFormValues>({
     resolver: resolved(createAdmissionSchema),
     defaultValues: {
@@ -228,7 +224,7 @@ export function AdmissionsPage() {
                           variant={a.final_decision === 'ACCEPTED' ? 'green' : 'red'}
                         />
                       ) : (
-                        <StatusBadge status="PENDING" variant="yellow" />
+                        <StatusBadge status="PENDING" variant="amber" />
                       )}
                     </td>
                     <td className="py-3 px-2 text-muted-foreground">
@@ -269,14 +265,14 @@ export function AdmissionsPage() {
                             </>
                           )}
                         </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Panel>
-        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

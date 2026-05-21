@@ -99,6 +99,8 @@ export function PersonDetailPage() {
   const [reassignOpen, setReassignOpen] = useState(false);
   const [reassignError, setReassignError] = useState<string | null>(null);
 
+  const statusLogs = person?.person_status_log ?? [];
+
   const editForm = useForm<UpdatePersonFormValues>({
     resolver: resolved(updatePersonSchema),
   });

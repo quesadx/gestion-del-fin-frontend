@@ -14,11 +14,11 @@ export function useDashboardStats(role: Role | null) {
   const isLoading =
     (role === 'system_admin' && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
 
-  const campsData = (campsQuery.data as Record<string, unknown>)?.data as
+  const campsData = (campsQuery.data as unknown as Record<string, unknown>)?.data as
     | Record<string, unknown>[]
     | undefined;
   const campsArray = Array.isArray(campsData) ? campsData : [];
-  const resourcesData = (resourcesQuery.data as Record<string, unknown>)?.data as
+  const resourcesData = (resourcesQuery.data as unknown as Record<string, unknown>)?.data as
     | Record<string, unknown>[]
     | undefined;
   const resourcesArray = Array.isArray(resourcesData) ? resourcesData : [];

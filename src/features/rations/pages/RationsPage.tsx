@@ -52,7 +52,7 @@ export function RationsPage() {
   const invArray = Array.isArray(inventory) ? inventory : ([] as Record<string, unknown>[]);
 
   const auditArray = useMemo(
-    () => (Array.isArray(audit) ? audit : ([] as Record<string, unknown>[])),
+    () => (Array.isArray(audit) ? (audit as unknown as Record<string, unknown>[]) : []),
     [audit],
   );
 
@@ -94,13 +94,15 @@ export function RationsPage() {
 
   const getPersonName = (id: number): string => {
     const found = peopleArray.find((p) => p.id === id);
-    return found?.full_name || `PERSON-${id}`;
+    return ((found as Record<string, unknown> | undefined)?.full_name as string) || `PERSON-${id}`;
   };
 
   const getResourceName = (id: number): string => {
     const found = invArray.find((inv) => inv.resource_type_id === id || inv.id === id);
-    const resource = found?.resource || found?.resource_type;
-    return resource?.name || `RES-${id}`;
+    const resource =
+      (found as Record<string, unknown> | undefined)?.resource ||
+      (found as Record<string, unknown> | undefined)?.resource_type;
+    return ((resource as Record<string, unknown> | undefined)?.name as string) || `RES-${id}`;
   };
 
   const onSubmit = async (values: RationFormValues) => {
@@ -154,9 +156,9 @@ export function RationsPage() {
               className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
-              {campsArray.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+              {(campsArray as Record<string, unknown>[]).map((c) => (
+                <option key={c.id as number} value={c.id as number}>
+                  {c.name as string}
                 </option>
               ))}
             </select>
@@ -257,7 +259,7 @@ export function RationsPage() {
                             </td>
                             <td className="py-2 px-2 text-[var(--neon-fuchsia)]">{personName}</td>
                             <td className="py-2 px-2 text-muted-foreground">
-                              {getResourceName(entry.resource_type_id || 0)}
+                              {getResourceName((entry.resource_type_id as number) || 0)}
                             </td>
                             <td className="py-2 px-2 text-right text-[var(--neon-yellow)] font-bold tabular-nums">
                               {Math.abs(delta)}
@@ -294,9 +296,9 @@ export function RationsPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value={0}>SELECT...</option>
-                {peopleArray.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.full_name}
+                {(peopleArray as Record<string, unknown>[]).map((p) => (
+                  <option key={p.id as number} value={p.id as number}>
+                    {p.full_name as string}
                   </option>
                 ))}
               </select>
@@ -316,15 +318,24 @@ export function RationsPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value={0}>SELECT...</option>
-                {invArray.map((inv) => {
-                  const resource = inv.resource || inv.resource_type;
-                  const stock = inv.quantity || 0;
+                {(invArray as Record<string, unknown>[]).map((inv) => {
+                  const resource =
+                    (inv as Record<string, unknown>).resource ||
+                    (inv as Record<string, unknown>).resource_type;
+                  const stock = (inv as Record<string, unknown>).quantity || 0;
                   return (
                     <option
-                      key={inv.resource_type_id || inv.id}
-                      value={inv.resource_type_id || inv.id}
+                      key={
+                        ((inv as Record<string, unknown>).resource_type_id ||
+                          (inv as Record<string, unknown>).id) as number
+                      }
+                      value={
+                        ((inv as Record<string, unknown>).resource_type_id ||
+                          (inv as Record<string, unknown>).id) as number
+                      }
                     >
-                      {resource?.name}: STOCK: {stock}
+                      {(resource as Record<string, unknown> | undefined)?.name as string}: STOCK:{' '}
+                      {stock as number}
                     </option>
                   );
                 })}
