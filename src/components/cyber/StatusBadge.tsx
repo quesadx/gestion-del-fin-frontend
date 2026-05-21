@@ -1,28 +1,24 @@
 import { cn } from '@/lib/utils';
 
 const STATUS_CLASSES: Record<string, string> = {
-  cyan: 'border-red-500/30 text-red-400',
-  purple: 'border-amber-500/30 text-amber-400',
-  green: 'border-emerald-500/30 text-emerald-400',
   red: 'border-red-500/30 text-red-400',
-  yellow: 'border-amber-500/30 text-amber-400',
+  amber: 'border-amber-500/30 text-amber-400',
+  green: 'border-emerald-500/30 text-emerald-400',
 };
 
 const DOT_CLASSES: Record<string, string> = {
-  cyan: 'bg-red-500',
-  purple: 'bg-amber-500',
-  green: 'bg-emerald-500',
   red: 'bg-red-500',
-  yellow: 'bg-amber-500',
+  amber: 'bg-amber-500',
+  green: 'bg-emerald-500',
 };
 
 export interface StatusBadgeProps {
   status: string;
-  variant?: 'cyan' | 'purple' | 'green' | 'red' | 'yellow';
+  variant?: 'red' | 'amber' | 'green';
   className?: string;
 }
 
-export function StatusBadge({ status, variant = 'cyan', className = '' }: StatusBadgeProps) {
+export function StatusBadge({ status, variant = 'red', className = '' }: StatusBadgeProps) {
   return (
     <span
       className={cn(

@@ -27,12 +27,13 @@ export function CampDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const campId = Number(id);
-  const { data: camp, isLoading, isError, error, refetch } = useCamp(campId);
+  const isValidId = Number.isFinite(campId) && campId > 0;
+  const { data: camp, isLoading, isError, error, refetch } = useCamp(isValidId ? campId : 0);
   const {
     data: people,
     isLoading: peopleLoading,
     isError: peopleError,
-  } = usePeople(campId, { page: 1, limit: 10 });
+  } = usePeople(isValidId ? campId : 0, { page: 1, limit: 10 });
   const updateCampMutation = useUpdateCamp();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -70,6 +71,23 @@ export function CampDetailPage() {
       setEditError(message);
     }
   };
+
+  if (!isValidId) {
+    return (
+      <div className="space-y-6">
+        <Panel title="INVALID CAMP ID" tag="CAMP.ERR" status="ERROR" accent="purple">
+          <p className="text-sm text-muted-foreground font-mono-data">
+            The camp ID in the URL is not valid.
+          </p>
+          <div className="mt-4">
+            <GlitchButton variant="ghost" onClick={() => navigate('/camps')}>
+              BACK TO CAMPS
+            </GlitchButton>
+          </div>
+        </Panel>
+      </div>
+    );
+  }
 
   if (isLoading) return <ScreenLoader />;
 
@@ -120,7 +138,7 @@ export function CampDetailPage() {
         title={camp.name as string}
         tag={`CAMP.${campId}`}
         status={camp.status as string}
-        accent={statusVariant === 'green' ? 'cyan' : 'purple'}
+        accent={statusVariant}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -231,12 +249,12 @@ export function CampDetailPage() {
                             person.status === 'HEALTHY'
                               ? 'green'
                               : person.status === 'SICK'
-                                ? 'yellow'
+                                ? 'amber'
                                 : person.status === 'INJURED'
-                                  ? 'yellow'
+                                  ? 'amber'
                                   : person.status === 'DEAD'
                                     ? 'red'
-                                    : 'cyan'
+                                    : 'red'
                           }
                         />
                       </td>

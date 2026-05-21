@@ -14,6 +14,8 @@ import {
   useCreateInventoryAdjustment,
 } from '@/features/inventory/hooks/useInventory';
 import { Utensils, Plus, ClipboardList } from 'lucide-react';
+import { getServerNow } from '@/features/system/hooks/useServerTime';
+import { toast } from '@/shared/lib/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const rationSchema = z.object({
@@ -39,10 +41,14 @@ export function RationsPage() {
   const adjustMutation = useCreateInventoryAdjustment();
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
-  const peopleArray = Array.isArray(people) ? people : ([] as Record<string, unknown>[]);
+  const campsResponse = camps as Record<string, unknown> | undefined;
+  const campsArray = Array.isArray(campsResponse?.data)
+    ? (campsResponse.data as Record<string, unknown>[])
+    : ([] as Record<string, unknown>[]);
+  const peopleResponse = people as Record<string, unknown> | undefined;
+  const peopleArray = Array.isArray(peopleResponse?.data)
+    ? (peopleResponse.data as Record<string, unknown>[])
+    : ([] as Record<string, unknown>[]);
   const invArray = Array.isArray(inventory) ? inventory : ([] as Record<string, unknown>[]);
 
   const auditArray = useMemo(
@@ -55,7 +61,22 @@ export function RationsPage() {
       auditArray.filter((entry: Record<string, unknown>) => {
         const desc = (entry.description as string) || '';
         const type = (entry.log_type as string) || (entry.type as string) || '';
-        return type === 'MANUAL_OUT' && desc.startsWith(RATION_DESC_PREFIX);
+        if (type !== 'MANUAL_OUT') return false;
+        if (desc.startsWith(RATION_DESC_PREFIX)) return true;
+        if (desc.startsWith('{')) {
+          try {
+            const parsed: unknown = JSON.parse(desc);
+            if (
+              parsed &&
+              typeof parsed === 'object' &&
+              (parsed as Record<string, unknown>).kind === 'RATION'
+            )
+              return true;
+          } catch {
+            return false;
+          }
+        }
+        return false;
       }),
     [auditArray],
   );
@@ -66,7 +87,7 @@ export function RationsPage() {
       person_id: 0,
       resource_type_id: 0,
       quantity: 0 as unknown as number,
-      consumed_at: new Date().toISOString().slice(0, 16),
+      consumed_at: new Date(getServerNow()).toISOString().slice(0, 16),
       notes: '',
     },
   });
@@ -92,24 +113,36 @@ export function RationsPage() {
   const onSubmit = async (values: RationFormValues) => {
     const personName = getPersonName(values.person_id);
     const resourceName = getResourceName(values.resource_type_id);
-    const description = `${RATION_DESC_PREFIX} person=${personName} person_id=${values.person_id} resource=${resourceName} consumed_at=${values.consumed_at}${values.notes ? ` notes=${values.notes}` : ''}`;
-
-    await adjustMutation.mutateAsync({
-      camp_id: campId,
-      resource_type_id: values.resource_type_id,
-      type: 'MANUAL_OUT',
-      quantity: values.quantity,
-      description,
+    const description = JSON.stringify({
+      kind: 'RATION' as const,
+      person: personName,
+      person_id: values.person_id,
+      resource: resourceName,
+      consumed_at: values.consumed_at,
+      notes: values.notes || '',
     });
 
-    form.reset({
-      person_id: 0,
-      resource_type_id: 0,
-      quantity: 0 as unknown as number,
-      consumed_at: new Date().toISOString().slice(0, 16),
-      notes: '',
-    });
-    setDialogOpen(false);
+    try {
+      await adjustMutation.mutateAsync({
+        camp_id: campId,
+        resource_type_id: values.resource_type_id,
+        type: 'MANUAL_OUT',
+        quantity: values.quantity,
+        description,
+      });
+      toast('Ration recorded successfully', 'success');
+      form.reset({
+        person_id: 0,
+        resource_type_id: 0,
+        quantity: 0 as unknown as number,
+        consumed_at: new Date(getServerNow()).toISOString().slice(0, 16),
+        notes: '',
+      });
+      setDialogOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to record ration';
+      toast(message, 'error');
+    }
   };
 
   return (
@@ -185,20 +218,43 @@ export function RationsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {rationHistory.map((entry: Record<string, unknown>, i: number) => {
+                      {rationHistory.map((entry: Record<string, unknown>) => {
                         const desc = (entry.description as string) || '';
-                        const personMatch = desc.match(/person=([^ ]+)/);
-                        const notesMatch = desc.match(/notes=(.+)$/);
-                        const consumedMatch = desc.match(/consumed_at=([^ ]+)/);
-                        const personName = personMatch ? personMatch[1] : '—';
-                        const rNotes = notesMatch ? notesMatch[1] : '';
-                        const consumedDate = consumedMatch ? consumedMatch[1] : null;
+                        let personName = '—';
+                        let rNotes = '';
+                        let consumedDate: string | null = null;
+
+                        if (desc.startsWith('{')) {
+                          try {
+                            const parsed: unknown = JSON.parse(desc);
+                            if (parsed && typeof parsed === 'object') {
+                              const obj = parsed as Record<string, unknown>;
+                              personName = typeof obj.person === 'string' ? obj.person : '—';
+                              rNotes = typeof obj.notes === 'string' ? obj.notes : '';
+                              consumedDate =
+                                typeof obj.consumed_at === 'string' ? obj.consumed_at : null;
+                            }
+                          } catch {
+                            // fall through to regex
+                          }
+                        }
+                        if (desc.startsWith(RATION_DESC_PREFIX) || personName === '—') {
+                          const personMatch = desc.match(/person=([^ ]+)/);
+                          const notesMatch = desc.match(/notes=(.+)$/);
+                          const consumedMatch = desc.match(/consumed_at=([^ ]+)/);
+                          if (personMatch) personName = personMatch[1];
+                          if (notesMatch) rNotes = notesMatch[1];
+                          if (consumedMatch) consumedDate = consumedMatch[1];
+                        }
 
                         const delta = (entry.delta as number) || (entry.quantity as number) || 0;
+                        const stableKey = entry.id
+                          ? String(entry.id)
+                          : `${desc.slice(0, 40)}-${entry.created_at ?? ''}-${entry.resource_type_id ?? ''}`;
 
                         return (
                           <tr
-                            key={(entry.id as number) || i}
+                            key={stableKey}
                             className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
                           >
                             <td className="py-2 px-2 text-muted-foreground">

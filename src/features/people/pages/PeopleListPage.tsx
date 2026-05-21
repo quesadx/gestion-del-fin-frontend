@@ -12,18 +12,18 @@ import { Users, UserPlus, Search, FilterX } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
-function getPersonStatusVariant(status: string): 'green' | 'yellow' | 'red' | 'cyan' {
+function getPersonStatusVariant(status: string): 'green' | 'amber' | 'red' {
   switch (status) {
     case 'HEALTHY':
       return 'green';
     case 'SICK':
-      return 'yellow';
+      return 'amber';
     case 'INJURED':
-      return 'yellow';
+      return 'amber';
     case 'DEAD':
       return 'red';
     default:
-      return 'cyan';
+      return 'red';
   }
 }
 
@@ -171,7 +171,7 @@ export function PeopleListPage() {
               <option value="SICK">SICK</option>
               <option value="INJURED">INJURED</option>
               <option value="AWAY">AWAY</option>
-              <option value="DEAD">DECEASED</option>
+              <option value="DEAD">DEAD</option>
             </select>
             <select
               value={professionFilter}
@@ -201,15 +201,19 @@ export function PeopleListPage() {
             </GlitchButton>
           </div>
 
+          {hasActiveFilters && peoplePagination && peoplePagination.totalPages > 1 && (
+            <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-mono-data text-[10px] text-amber-400">
+              Filters are applied to the current page only. {peoplePagination.total} total records
+              across {peoplePagination.totalPages} pages. Navigate pages to see more results.
+            </div>
+          )}
+
           {filterIsEmpty ? (
             <div className="flex flex-col items-center gap-4 py-8">
               <FilterX className="h-8 w-8 text-[var(--neon-cyan)]/30" />
               <p className="font-mono-data text-sm text-muted-foreground">
                 NO PEOPLE MATCH SELECTED FILTERS
               </p>
-              <GlitchButton variant="ghost" onClick={clearFilters}>
-                CLEAR FILTERS
-              </GlitchButton>
             </div>
           ) : (
             <>
@@ -274,29 +278,29 @@ export function PeopleListPage() {
                   </tbody>
                 </table>
               </div>
-
-              {peoplePagination && peoplePagination.totalPages > 1 && (
-                <div className="flex justify-center gap-3 mt-4">
-                  <GlitchButton
-                    variant="ghost"
-                    disabled={page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    PREVIOUS
-                  </GlitchButton>
-                  <span className="flex items-center font-mono-data text-xs text-muted-foreground">
-                    PAGE {peoplePagination.page} OF {peoplePagination.totalPages}
-                  </span>
-                  <GlitchButton
-                    variant="ghost"
-                    disabled={!peoplePagination.hasNextPage}
-                    onClick={() => setPage((p) => p + 1)}
-                  >
-                    NEXT
-                  </GlitchButton>
-                </div>
-              )}
             </>
+          )}
+
+          {peoplePagination && peoplePagination.totalPages > 1 && (
+            <div className="flex justify-center gap-3 mt-4">
+              <GlitchButton
+                variant="ghost"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                PREVIOUS
+              </GlitchButton>
+              <span className="flex items-center font-mono-data text-xs text-muted-foreground">
+                PAGE {peoplePagination.page} OF {peoplePagination.totalPages}
+              </span>
+              <GlitchButton
+                variant="ghost"
+                disabled={!peoplePagination.hasNextPage}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                NEXT
+              </GlitchButton>
+            </div>
           )}
         </Panel>
       )}

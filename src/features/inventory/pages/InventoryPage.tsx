@@ -16,6 +16,7 @@ import {
 } from '@/features/inventory/hooks/useInventory';
 import { useStockAlerts } from '@/features/inventory/hooks/useStockAlerts';
 import { StockAlertBanner } from '@/features/inventory/components/StockAlertBanner';
+import { toast } from '@/shared/lib/toast';
 import { Warehouse, ClipboardList, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -73,13 +74,19 @@ export function InventoryPage() {
 
   const onSubmitAdjust = async (values: AdjustmentFormValues) => {
     if (!selectedCampId) return;
-    await createAdjustment.mutateAsync({
-      camp_id: selectedCampId,
-      ...values,
-    });
-    setAdjustOpen(false);
-    adjForm.reset();
-    refetch();
+    try {
+      await createAdjustment.mutateAsync({
+        camp_id: selectedCampId,
+        ...values,
+      });
+      toast('Inventory adjustment applied successfully', 'success');
+      setAdjustOpen(false);
+      adjForm.reset();
+      refetch();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to apply adjustment';
+      toast(message, 'error');
+    }
   };
 
   return (
