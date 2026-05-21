@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, ArrowUpRight, ChevronRight } from 'lucide-react';
-import { useCamps } from '@/features/camps/hooks/useCamps';
-import { useResources } from '@/features/resources/hooks/useResources';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { useServerTime, getServerNow } from '@/features/system/hooks/useServerTime';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { TerminalLine } from '@/components/cyber/TerminalLine';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { format } from 'date-fns';
-import type { Role } from '@/features/auth/types/auth.types';
 
 interface ModuleCard {
   label: string;
@@ -19,53 +17,13 @@ interface ModuleCard {
   accent: 'cyan' | 'purple' | 'green';
 }
 
-function useStats(role: Role | null) {
-  const showStock = role === 'system_admin' || role === 'resource_manager';
-  const campsQuery = useCamps({
-    enabled: role === 'system_admin',
-  });
-  const resourcesQuery = useResources({
-    enabled: showStock,
-  });
-
-  const isLoading =
-    (role === 'system_admin' && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
-
-  const campsData = (campsQuery.data as Record<string, unknown>)?.data as
-    | Record<string, unknown>[]
-    | undefined;
-  const campsArray = Array.isArray(campsData) ? campsData : [];
-  const resourcesData = (resourcesQuery.data as Record<string, unknown>)?.data as
-    | Record<string, unknown>[]
-    | undefined;
-  const resourcesArray = Array.isArray(resourcesData) ? resourcesData : [];
-
-  const autoDailyCount = resourcesArray.filter(
-    (r: Record<string, unknown>) => r.auto_daily === true,
-  ).length;
-
-  return {
-    isLoading,
-    camps: campsArray,
-    resources: resourcesQuery.data,
-    resourcesArray,
-    campCount: role === 'system_admin' ? campsArray.length : null,
-    activeCamps:
-      role === 'system_admin'
-        ? campsArray.filter((c: Record<string, unknown>) => c.status === 'ACTIVE').length
-        : null,
-    resourceCount: showStock ? resourcesArray.length : null,
-    autoDailyCount: showStock ? autoDailyCount : null,
-  };
-}
-
 export function DashboardPage() {
   const navigate = useNavigate();
   const role = useAuthStore((state) => state.role);
   const userName = useAuthStore((state) => state.user?.username);
 
   const { isLoading, campCount, activeCamps, resourceCount, camps, autoDailyCount } =
-    useStats(role);
+    useDashboardStats(role);
 
   const [serverTime, setServerTime] = useState<string>('');
   const { data: timeData } = useServerTime();

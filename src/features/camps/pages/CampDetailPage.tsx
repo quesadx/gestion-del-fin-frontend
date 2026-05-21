@@ -27,12 +27,13 @@ export function CampDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const campId = Number(id);
-  const { data: camp, isLoading, isError, error, refetch } = useCamp(campId);
+  const isValidId = Number.isFinite(campId) && campId > 0;
+  const { data: camp, isLoading, isError, error, refetch } = useCamp(isValidId ? campId : 0);
   const {
     data: people,
     isLoading: peopleLoading,
     isError: peopleError,
-  } = usePeople(campId, { page: 1, limit: 10 });
+  } = usePeople(isValidId ? campId : 0, { page: 1, limit: 10 });
   const updateCampMutation = useUpdateCamp();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
@@ -70,6 +71,23 @@ export function CampDetailPage() {
       setEditError(message);
     }
   };
+
+  if (!isValidId) {
+    return (
+      <div className="space-y-6">
+        <Panel title="INVALID CAMP ID" tag="CAMP.ERR" status="ERROR" accent="purple">
+          <p className="text-sm text-muted-foreground font-mono-data">
+            The camp ID in the URL is not valid.
+          </p>
+          <div className="mt-4">
+            <GlitchButton variant="ghost" onClick={() => navigate('/camps')}>
+              BACK TO CAMPS
+            </GlitchButton>
+          </div>
+        </Panel>
+      </div>
+    );
+  }
 
   if (isLoading) return <ScreenLoader />;
 

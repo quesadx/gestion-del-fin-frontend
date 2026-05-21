@@ -145,25 +145,38 @@ export function ExplorationDetailPage() {
 
       <Panel title="EXPEDITION MEMBERS" tag={`EXP.${p.id}.MEMBERS`} accent="cyan">
         {members && members.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono-data text-xs">
-              <thead>
-                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-2 px-2">PERSON ID</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((m, i) => (
-                  <tr
-                    key={(m.person_id as number) || i}
-                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
-                  >
-                    <td className="py-2 px-2 text-foreground">{m.person_id as number}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          (() => {
+            const valid = members.filter((m) => m.person_id != null);
+            const skipped = members.length - valid.length;
+            return (
+              <>
+                {skipped > 0 && (
+                  <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-mono-data text-[10px] text-amber-400">
+                    {skipped} member(s) missing person_id and not shown
+                  </div>
+                )}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono-data text-xs">
+                    <thead>
+                      <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                        <th className="py-2 px-2">PERSON ID</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {valid.map((m) => (
+                        <tr
+                          key={String(m.person_id)}
+                          className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
+                        >
+                          <td className="py-2 px-2 text-foreground">{m.person_id as number}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            );
+          })()
         ) : (
           <div className="flex items-center gap-2 py-4 font-mono-data text-xs text-muted-foreground">
             <Users className="h-4 w-4" />
@@ -174,27 +187,44 @@ export function ExplorationDetailPage() {
 
       <Panel title="ALLOCATED RESOURCES" tag={`EXP.${p.id}.ALLOC`} accent="cyan">
         {allocated && allocated.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono-data text-xs">
-              <thead>
-                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-2 px-2">RESOURCE TYPE ID</th>
-                  <th className="py-2 px-2 text-right">AMOUNT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {allocated.map((r, i) => (
-                  <tr
-                    key={(r.resource_type_id as number) || i}
-                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
-                  >
-                    <td className="py-2 px-2 text-foreground">{r.resource_type_id as number}</td>
-                    <td className="py-2 px-2 text-right text-foreground">{r.amount as number}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          (() => {
+            const valid = allocated.filter((r) => r.resource_type_id != null);
+            const skipped = allocated.length - valid.length;
+            return (
+              <>
+                {skipped > 0 && (
+                  <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-mono-data text-[10px] text-amber-400">
+                    {skipped} resource(s) missing resource_type_id and not shown
+                  </div>
+                )}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono-data text-xs">
+                    <thead>
+                      <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                        <th className="py-2 px-2">RESOURCE TYPE ID</th>
+                        <th className="py-2 px-2 text-right">AMOUNT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {valid.map((r) => (
+                        <tr
+                          key={`alloc-${r.resource_type_id}`}
+                          className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
+                        >
+                          <td className="py-2 px-2 text-foreground">
+                            {r.resource_type_id as number}
+                          </td>
+                          <td className="py-2 px-2 text-right text-foreground">
+                            {r.amount as number}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            );
+          })()
         ) : (
           <div className="flex items-center gap-2 py-4 font-mono-data text-xs text-muted-foreground">
             <Package className="h-4 w-4" />
@@ -207,27 +237,44 @@ export function ExplorationDetailPage() {
 
       <Panel title="FOUND RESOURCES" tag={`EXP.${p.id}.FOUND`} accent="cyan">
         {found && found.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono-data text-xs">
-              <thead>
-                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-2 px-2">RESOURCE TYPE ID</th>
-                  <th className="py-2 px-2 text-right">AMOUNT</th>
-                </tr>
-              </thead>
-              <tbody>
-                {found.map((r, i) => (
-                  <tr
-                    key={(r.resource_type_id as number) || i}
-                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
-                  >
-                    <td className="py-2 px-2 text-foreground">{r.resource_type_id as number}</td>
-                    <td className="py-2 px-2 text-right text-foreground">{r.amount as number}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          (() => {
+            const valid = found.filter((r) => r.resource_type_id != null);
+            const skipped = found.length - valid.length;
+            return (
+              <>
+                {skipped > 0 && (
+                  <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-mono-data text-[10px] text-amber-400">
+                    {skipped} resource(s) missing resource_type_id and not shown
+                  </div>
+                )}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left font-mono-data text-xs">
+                    <thead>
+                      <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                        <th className="py-2 px-2">RESOURCE TYPE ID</th>
+                        <th className="py-2 px-2 text-right">AMOUNT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {valid.map((r) => (
+                        <tr
+                          key={`found-${r.resource_type_id}`}
+                          className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
+                        >
+                          <td className="py-2 px-2 text-foreground">
+                            {r.resource_type_id as number}
+                          </td>
+                          <td className="py-2 px-2 text-right text-foreground">
+                            {r.amount as number}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            );
+          })()
         ) : (
           <div className="flex items-center gap-2 py-4 font-mono-data text-xs text-muted-foreground">
             <Gift className="h-4 w-4" />

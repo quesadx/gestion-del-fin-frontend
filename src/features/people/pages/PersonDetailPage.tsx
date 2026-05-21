@@ -341,47 +341,65 @@ export function PersonDetailPage() {
       </Panel>
 
       {statusLogs && statusLogs.length > 0 ? (
-        <Panel
-          title="STATUS HISTORY"
-          tag={`PPL.${personId}.LOGS`}
-          status={`${statusLogs.length} RECORDS`}
-          accent="cyan"
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono-data text-xs">
-              <thead>
-                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                  <th className="py-2 px-2">STATUS</th>
-                  <th className="py-2 px-2">DATE</th>
-                  <th className="py-2 px-2">REASON</th>
-                </tr>
-              </thead>
-              <tbody>
-                {statusLogs.map((log, i) => (
-                  <tr
-                    key={(log.id as number) || i}
-                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
-                  >
-                    <td className="py-2 px-2">
-                      <StatusBadge
-                        status={log.new_status as string}
-                        variant={getStatusVariant(log.new_status as string)}
-                      />
-                    </td>
-                    <td className="py-2 px-2 text-muted-foreground">
-                      {log.changed_at
-                        ? format(new Date(log.changed_at as string), 'dd/MM/yyyy HH:mm')
-                        : '—'}
-                    </td>
-                    <td className="py-2 px-2 text-muted-foreground">
-                      {(log.reason as string) || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Panel>
+        (() => {
+          const validLogs = statusLogs.filter(
+            (log) => log.id || (log.new_status && log.changed_at),
+          );
+          const skipped = statusLogs.length - validLogs.length;
+
+          return (
+            <Panel
+              title="STATUS HISTORY"
+              tag={`PPL.${personId}.LOGS`}
+              status={`${statusLogs.length} RECORDS`}
+              accent="cyan"
+            >
+              {skipped > 0 && (
+                <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-mono-data text-[10px] text-amber-400">
+                  {skipped} record(s) missing required identifiers and not shown
+                </div>
+              )}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono-data text-xs">
+                  <thead>
+                    <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                      <th className="py-2 px-2">STATUS</th>
+                      <th className="py-2 px-2">DATE</th>
+                      <th className="py-2 px-2">REASON</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {validLogs.map((log) => (
+                      <tr
+                        key={
+                          log.id
+                            ? String(log.id)
+                            : `${log.new_status}-${log.changed_at}-${(log.reason as string) ?? ''}`
+                        }
+                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
+                      >
+                        <td className="py-2 px-2">
+                          <StatusBadge
+                            status={log.new_status as string}
+                            variant={getStatusVariant(log.new_status as string)}
+                          />
+                        </td>
+                        <td className="py-2 px-2 text-muted-foreground">
+                          {log.changed_at
+                            ? format(new Date(log.changed_at as string), 'dd/MM/yyyy HH:mm')
+                            : '—'}
+                        </td>
+                        <td className="py-2 px-2 text-muted-foreground">
+                          {(log.reason as string) || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Panel>
+          );
+        })()
       ) : (
         <Panel
           title="STATUS HISTORY"
