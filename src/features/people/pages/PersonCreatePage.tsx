@@ -9,6 +9,7 @@ import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useProfessions } from '@/features/professions/hooks/useProfessions';
 import { useCreatePerson } from '@/features/people/hooks/usePeople';
+import { getServerNow } from '@/features/system/hooks/useServerTime';
 import { toast } from '@/shared/lib/toast';
 import { ArrowLeft, UserPlus, Building2, Wrench } from 'lucide-react';
 
@@ -51,7 +52,7 @@ export function PersonCreatePage() {
       camp_id: 0,
       profession_id: 0,
       status: 'HEALTHY',
-      admitted_at: new Date().toISOString().slice(0, 16),
+      admitted_at: new Date(getServerNow()).toISOString().slice(0, 16),
     },
   });
 

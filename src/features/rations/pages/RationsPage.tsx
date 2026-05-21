@@ -14,6 +14,7 @@ import {
   useCreateInventoryAdjustment,
 } from '@/features/inventory/hooks/useInventory';
 import { Utensils, Plus, ClipboardList } from 'lucide-react';
+import { getServerNow } from '@/features/system/hooks/useServerTime';
 import { toast } from '@/shared/lib/toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -71,7 +72,7 @@ export function RationsPage() {
       person_id: 0,
       resource_type_id: 0,
       quantity: 0 as unknown as number,
-      consumed_at: new Date().toISOString().slice(0, 16),
+      consumed_at: new Date(getServerNow()).toISOString().slice(0, 16),
       notes: '',
     },
   });
@@ -112,7 +113,7 @@ export function RationsPage() {
         person_id: 0,
         resource_type_id: 0,
         quantity: 0 as unknown as number,
-        consumed_at: new Date().toISOString().slice(0, 16),
+        consumed_at: new Date(getServerNow()).toISOString().slice(0, 16),
         notes: '',
       });
       setDialogOpen(false);
