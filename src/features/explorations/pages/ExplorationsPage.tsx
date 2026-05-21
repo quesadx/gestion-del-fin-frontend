@@ -752,7 +752,7 @@ export function ExplorationsPage() {
           </DialogContent>
         </Dialog>
       ) : (
-        <AlertDialog open={!!statusTarget} onOpenChange={() => {}}>
+        <AlertDialog open={!!statusTarget} onOpenChange={(open) => !open && setStatusTarget(null)}>
           <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
             <AlertDialogHeader>
               <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">

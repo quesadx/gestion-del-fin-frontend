@@ -17,6 +17,8 @@ import {
   useRejectTransfer,
 } from '@/features/transfers/hooks/useTransfers';
 import { useCamps } from '@/features/camps/hooks/useCamps';
+import { useAuthStore } from '@/features/auth/store/auth.store';
+import { toast } from '@/shared/lib/toast';
 import { ArrowRightLeft, Plus, Truck, Check, X, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -71,9 +73,14 @@ export function TransfersPage() {
   const completeMutation = useCompleteTransfer();
   const rejectMutation = useRejectTransfer();
 
+  const userId = useAuthStore((state) => state.userId);
+
   const [createOpen, setCreateOpen] = useState(false);
   const [rejectTarget, setRejectTarget] = useState<{ id: number; reason: string } | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [scheduleTarget, setScheduleTarget] = useState<number | null>(null);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
 
   const campsArray = useMemo(
     () =>
@@ -133,6 +140,11 @@ export function TransfersPage() {
   };
 
   const onSubmitCreate = async (values: TransferFormValues) => {
+    if (!userId) {
+      toast('Authentication required — user ID not available', 'error');
+      return;
+    }
+
     const items = values.items.map((item) => ({
       item_type: item.item_type,
       resource_type_id: item.item_type === 'RESOURCE' ? item.resource_type_id : undefined,
@@ -145,15 +157,21 @@ export function TransfersPage() {
       target_camp: values.target_camp,
       type: values.type,
       notes: values.notes || undefined,
-      requested_by: 0,
+      requested_by: userId,
       leader_person_id: values.leader_person_id || undefined,
       scheduled_delivery_date: values.scheduled_delivery_date || undefined,
       items,
     };
 
-    await createMutation.mutateAsync(payload);
-    formCreate.reset();
-    setCreateOpen(false);
+    try {
+      await createMutation.mutateAsync(payload);
+      toast('Transfer created successfully', 'success');
+      formCreate.reset();
+      setCreateOpen(false);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create transfer';
+      toast(message, 'error');
+    }
   };
 
   const handleApproveSource = async (id: number) => {
@@ -168,10 +186,26 @@ export function TransfersPage() {
     await completeMutation.mutateAsync({ id, payload: {} });
   };
 
-  const handleSchedule = async (id: number) => {
-    const date = prompt('Delivery date (YYYY-MM-DDTHH:mm):');
-    if (!date) return;
-    await scheduleMutation.mutateAsync({ id, payload: { scheduled_delivery_date: date } });
+  const handleSchedule = (id: number) => {
+    setScheduleTarget(id);
+    setScheduleDate('');
+    setScheduleDialogOpen(true);
+  };
+
+  const handleScheduleConfirm = async () => {
+    if (!scheduleTarget || !scheduleDate) return;
+    try {
+      await scheduleMutation.mutateAsync({
+        id: scheduleTarget,
+        payload: { scheduled_delivery_date: new Date(scheduleDate).toISOString() },
+      });
+      toast('Delivery scheduled successfully', 'success');
+      setScheduleDialogOpen(false);
+      setScheduleTarget(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to schedule delivery';
+      toast(message, 'error');
+    }
   };
 
   const handleReject = async () => {
@@ -731,6 +765,49 @@ export function TransfersPage() {
                 disabled={!rejectTarget?.reason || rejectMutation.isPending}
               >
                 {rejectMutation.isPending ? 'REJECTING...' : 'REJECT'}
+              </GlitchButton>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
+        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <DialogHeader>
+            <DialogTitle className="font-display text-sm tracking-widest text-[var(--neon-cyan)]">
+              SCHEDULE DELIVERY
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                DELIVERY DATE //
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data [color-scheme:dark]"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setScheduleDialogOpen(false);
+                  setScheduleTarget(null);
+                }}
+              >
+                CANCEL
+              </GlitchButton>
+              <GlitchButton
+                variant="primary"
+                type="button"
+                onClick={handleScheduleConfirm}
+                disabled={!scheduleDate || scheduleMutation.isPending}
+              >
+                {scheduleMutation.isPending ? 'SCHEDULING...' : 'SCHEDULE'}
               </GlitchButton>
             </div>
           </div>
