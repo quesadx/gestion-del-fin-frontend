@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resourcesApi } from '@/features/resources/api/resources.api';
 import type { CreateResourceDto, UpdateResourceDto } from '@/features/resources/api/resources.api';
+import type { Resource } from '@/features/resources/types/resource.types';
 
 const RESOURCES_KEY = ['resources'] as const;
 
 export function useResources(options?: { enabled?: boolean }) {
-  return useQuery({
+  return useQuery<Resource[]>({
     queryKey: RESOURCES_KEY,
     queryFn: () => resourcesApi.getAll(),
     ...options,
@@ -13,7 +14,7 @@ export function useResources(options?: { enabled?: boolean }) {
 }
 
 export function useResource(id: number) {
-  return useQuery({
+  return useQuery<Resource>({
     queryKey: [...RESOURCES_KEY, id] as const,
     queryFn: () => resourcesApi.getById(id),
     enabled: !!id,

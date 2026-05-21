@@ -17,15 +17,15 @@ pnpm format   # prettier src/
 
 ## PROJECT
 
-| Field | Value |
-|---|---|
-| Name | Gestión del Fin |
-| Type | Zombie apocalypse multi-camp resource manager |
-| Context | Univ final project · EIF209 · UNA Costa Rica 2026 |
-| Stack | React 19 / TypeScript strict / Vite 8 / Tailwind 3 / TanStack Query 5 / Zustand 5 / shadcn/ui / Axios |
-| Visual | **Brutalist dark** — red (#ef4444) / amber (#f59e0b) / green (#10b981) on near-black (#0a0a0a) |
-| Auth | JWT. Stored in Zustand (persisted to localStorage as `gdf.auth`). Axios interceptor attaches Bearer token, auto-redirects on 401. |
-| Proxy | Vite proxies `/api` → `http://localhost:3000` (dev) |
+| Field   | Value                                                                                                                             |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Name    | Gestión del Fin                                                                                                                   |
+| Type    | Zombie apocalypse multi-camp resource manager                                                                                     |
+| Context | Univ final project · EIF209 · UNA Costa Rica 2026                                                                                 |
+| Stack   | React 19 / TypeScript strict / Vite 8 / Tailwind 3 / TanStack Query 5 / Zustand 5 / shadcn/ui / Axios                             |
+| Visual  | **Brutalist dark** — red (#ef4444) / amber (#f59e0b) / green (#10b981) on near-black (#0a0a0a)                                    |
+| Auth    | JWT. Stored in Zustand (persisted to localStorage as `gdf.auth`). Axios interceptor attaches Bearer token, auto-redirects on 401. |
+| Proxy   | Vite proxies `/api` → `http://localhost:3000` (dev)                                                                               |
 
 ---
 
@@ -55,6 +55,7 @@ src/
 ```
 
 **State split (hard rule):**
+
 - Zustand → client state only (auth, UI)
 - TanStack Query → server state (camps, people, resources, etc.)
 - Never store API data in Zustand. Never fetch inside Zustand.
@@ -64,35 +65,39 @@ src/
 ## DESIGN SYSTEM (Brutalist Dark)
 
 ### Colors
-| Token | Hex | Uses |
-|---|---|---|
-| `brand-primary` | `#ef4444` | Alerts, active nav, primary buttons, errors |
-| `brand-secondary` | `#f59e0b` | Warnings, transfers, amber accents |
-| `brand-accent` | `#10b981` | Success, online status, completed |
-| `surface-base` | `#0a0a0a` | Main background |
-| `surface-raised` | `#171717` | Cards, sidebar, tables |
-| `surface-overlay` | `#262626` | Modals, dialogs |
+
+| Token             | Hex       | Uses                                        |
+| ----------------- | --------- | ------------------------------------------- |
+| `brand-primary`   | `#ef4444` | Alerts, active nav, primary buttons, errors |
+| `brand-secondary` | `#f59e0b` | Warnings, transfers, amber accents          |
+| `brand-accent`    | `#10b981` | Success, online status, completed           |
+| `surface-base`    | `#0a0a0a` | Main background                             |
+| `surface-raised`  | `#171717` | Cards, sidebar, tables                      |
+| `surface-overlay` | `#262626` | Modals, dialogs                             |
 
 ### Typography
+
 - **Inter** (weight 400-900) — body, headings, UI
 - **JetBrains Mono** (weight 400-700) — data, labels, monospace
 
 ### Utility Classes
+
 - `.brutalist-border` — `border border-zinc-800`
 - `.neon-glow-red` — red text shadow
 - `.glass` / `.glass-heavy` — solid raised panels (backward-compat)
 - `.font-mono-data` — 12px JetBrains Mono
 
 ### Animation
+
 - Keyframe CSS: `fade-in`, `slide-up`, `slide-in-right`, `blink`
-- Framer Motion `motion/react` v12 — toast, stagger, modal enter/exit
-- Motion variants in `src/shared/lib/motion.ts`
+- Framer Motion used inline in `src/shared/lib/toast.tsx` — no shared motion variants file
 
 ---
 
 ## LAYOUT
 
 **AppShell** (`src/layouts/AppShell.tsx`):
+
 - Fixed left sidebar (collapsible w-64 / w-16) with nav links, camp selector, user info, logout
 - Sticky top header with clock + "NOMINAL SYSTEM" status dot
 - `<Outlet />` in scrollable content area
@@ -104,21 +109,27 @@ src/
 ## UI COMPONENTS
 
 ### Panel
+
 Card wrapper. Props: `title?`, `tag?`, `status?`, `accent?` (cyan | purple), `children`. Uses `.glass` styling with corner brackets.
 
-### GlitchButton  
+### GlitchButton
+
 Button with variants: `primary` (red), `ghost` (transparent), `warning` (amber), `danger` (red border).
 
 ### StatusBadge
+
 Inline badge with colored dot + text. Variants: `cyan` (red), `purple` (amber), `green`, `red`, `yellow`.
 
 ### StockBarChart
+
 Recharts horizontal bar chart. Props: `data: StockBarEntry[]`, `height?`. Color-coded: CRITICAL=red, LOW=amber, OK=cyan.
 
 ### SkeletonTable / SkeletonCard
+
 Loading placeholders with `animate-pulse`.
 
 ### Toast
+
 Zustand-based notification system. Usage: `toast('message', 'error'|'success'|'info')`. Auto-dismiss 5s.
 
 ---

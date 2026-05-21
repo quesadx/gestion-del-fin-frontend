@@ -119,12 +119,11 @@ export function CampsPage() {
     );
   }
 
-  const campsResponse = campsData as PaginatedResponse<Camp> | undefined;
-  const campsArray = Array.isArray(campsResponse?.data) ? campsResponse.data : ([] as Camp[]);
-  const pagination = campsResponse?.pagination;
+  const campsArray = campsData?.data ?? [];
+  const pagination = campsData?.pagination;
   const hasActiveFilters = Boolean(searchTerm || statusFilter);
 
-  const filteredCamps = campsArray.filter((camp: Camp) => {
+  const filteredCamps = campsArray.filter((camp) => {
     if (searchTerm) {
       if (!camp.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
     }
@@ -213,7 +212,7 @@ export function CampsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCamps.map((camp: Camp, i: number) => (
+                      {filteredCamps.map((camp, i: number) => (
                         <tr
                           key={camp.id}
                           className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors animate-fade-in"

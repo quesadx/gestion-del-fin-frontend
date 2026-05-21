@@ -2,6 +2,7 @@ import { useCallback, useMemo, useEffect, useRef, type ReactNode } from 'react';
 import { authService, type LoginPayload } from './auth.service';
 import { useAuthStore } from './store/auth.store';
 import { AuthContext } from './auth-context-store';
+import { getServerNow } from '@/features/system/hooks/useServerTime';
 
 const SESSION_TIMEOUT_MS = Number(import.meta.env.VITE_SESSION_TIMEOUT_MS) || 1_200_000;
 const ACTIVITY_THROTTLE_MS = 5_000;
@@ -22,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!token || isLocked) return;
 
-    const now = Date.now();
+    const now = getServerNow();
     lastActivityRef.current = now;
     const storedLastActivity = useAuthStore.getState().lastActivity;
     if (now - storedLastActivity < ACTIVITY_THROTTLE_MS) {
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token || isLocked) return;
 
     const handleActivity = () => {
-      const now = Date.now();
+      const now = getServerNow();
       if (now - lastActivityRef.current < ACTIVITY_THROTTLE_MS) return;
       lastActivityRef.current = now;
       updateActivity();
@@ -46,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateActivity();
 
     const interval = setInterval(() => {
-      const elapsed = Date.now() - useAuthStore.getState().lastActivity;
+      const elapsed = getServerNow() - useAuthStore.getState().lastActivity;
       if (elapsed >= SESSION_TIMEOUT_MS) {
         lock();
         logout();

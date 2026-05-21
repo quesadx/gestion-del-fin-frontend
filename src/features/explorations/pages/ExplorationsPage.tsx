@@ -102,24 +102,13 @@ export function ExplorationsPage() {
   const [returnNotes, setReturnNotes] = useState('');
   const [returnError, setReturnError] = useState<string | null>(null);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
-  const expArray = Array.isArray(explorations)
-    ? explorations
-    : Array.isArray((explorations as Record<string, unknown>)?.data)
-      ? ((explorations as Record<string, unknown>).data as Record<string, unknown>[])
-      : [];
-
-  const resourcesArray = Array.isArray(resources)
-    ? resources
-    : Array.isArray((resources as Record<string, unknown>)?.data)
-      ? ((resources as Record<string, unknown>).data as Record<string, unknown>[])
-      : [];
+  const campsArray = camps?.data ?? [];
+  const expArray = Array.isArray(explorations) ? explorations : [];
+  const resourcesArray = Array.isArray(resources) ? resources : [];
 
   const hasActiveFilters = Boolean(campFilter || statusFilter);
 
-  const filteredExps = expArray.filter((exp: Record<string, unknown>) => {
+  const filteredExps = expArray.filter((exp) => {
     if (campFilter && (exp.camp_id as number) !== Number(campFilter)) return false;
     if (statusFilter && (exp.status as string) !== statusFilter) return false;
     return true;
@@ -134,7 +123,7 @@ export function ExplorationsPage() {
   };
 
   const campMap = new Map<number, string>();
-  campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
+  campsArray.forEach((c) => campMap.set(c.id, c.name));
 
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
 
@@ -152,13 +141,10 @@ export function ExplorationsPage() {
 
   const watchedCampId = useWatch({ control: formCreate.control, name: 'camp_id' });
   const { data: people } = usePeople(watchedCampId || 0, { page: 1, limit: 100 });
-  const peopleArray = Array.isArray((people as Record<string, unknown>)?.data)
-    ? ((people as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const peopleArray = people?.data ?? [];
 
   const availablePeople = peopleArray.filter(
-    (p: Record<string, unknown>) =>
-      (p.status as string) !== 'AWAY' && (p.status as string) !== 'DEAD',
+    (p) => (p.status as string) !== 'AWAY' && (p.status as string) !== 'DEAD',
   );
   const unavailableCount = peopleArray.length - availablePeople.length;
 
@@ -311,9 +297,9 @@ export function ExplorationsPage() {
                 className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="">ALL CAMPS</option>
-                {campsArray.map((c: Record<string, unknown>) => (
-                  <option key={c.id as number} value={c.id as number}>
-                    {c.name as string}
+                {campsArray.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
@@ -369,7 +355,7 @@ export function ExplorationsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredExps.map((exp: Record<string, unknown>) => (
+                    {filteredExps.map((exp) => (
                       <tr
                         key={exp.id as number}
                         className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
@@ -395,7 +381,7 @@ export function ExplorationsPage() {
                             : '—'}
                         </td>
                         <td className="py-3 px-2 text-muted-foreground">
-                          {campMap.get(exp.camp_id as number) || (exp.camp_id as string)}
+                          {campMap.get(exp.camp_id) || String(exp.camp_id)}
                         </td>
                         <td className="py-3 px-2">
                           <select
@@ -475,9 +461,9 @@ export function ExplorationsPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="0">SELECT...</option>
-                {campsArray.map((c: Record<string, unknown>) => (
-                  <option key={c.id as number} value={c.id as number}>
-                    {c.name as string}
+                {campsArray.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
@@ -537,7 +523,7 @@ export function ExplorationsPage() {
                 ) : (
                   <>
                     <div className="max-h-40 overflow-y-auto border border-[oklch(0.68_0.32_340_/_0.4)] rounded-sm">
-                      {availablePeople.map((person: Record<string, unknown>) => (
+                      {availablePeople.map((person) => (
                         <label
                           key={person.id as number}
                           className="flex items-center gap-2 px-3 py-1.5 hover:bg-[oklch(0.15_0.05_320_/_0.5)] cursor-pointer font-mono-data text-xs"
@@ -653,9 +639,9 @@ export function ExplorationsPage() {
                           className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                         >
                           <option value={0}>SELECT...</option>
-                          {resourcesArray.map((res: Record<string, unknown>) => (
-                            <option key={res.id as number} value={res.id as number}>
-                              {res.name as string} ({res.unit as string})
+                          {resourcesArray.map((res) => (
+                            <option key={res.id} value={res.id}>
+                              {res.name} ({res.unit})
                             </option>
                           ))}
                         </select>

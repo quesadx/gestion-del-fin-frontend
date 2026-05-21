@@ -20,6 +20,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { hasError: true, error };
   }
 
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    if (import.meta.env.DEV) {
+      console.error('[ErrorBoundary] Render error caught:', error, errorInfo);
+    }
+  }
+
   handleRetry = () => {
     this.setState({ hasError: false, error: null });
   };

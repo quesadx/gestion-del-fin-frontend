@@ -17,6 +17,36 @@ interface ModuleCard {
   accent: 'cyan' | 'purple' | 'green';
 }
 
+function useStats(role: Role | null) {
+  const showStock = role === 'system_admin' || role === 'resource_manager';
+  const campsQuery = useCamps({
+    enabled: role === 'system_admin',
+  });
+  const resourcesQuery = useResources({
+    enabled: showStock,
+  });
+
+  const isLoading =
+    (role === 'system_admin' && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
+
+  const campsArray = campsQuery.data?.data ?? [];
+  const resourcesArray = resourcesQuery.data ?? [];
+
+  const autoDailyCount = resourcesArray.filter((r) => r.auto_daily === true).length;
+
+  return {
+    isLoading,
+    camps: campsQuery.data?.data ?? [],
+    resources: resourcesQuery.data,
+    resourcesArray,
+    campCount: role === 'system_admin' ? campsArray.length : null,
+    activeCamps:
+      role === 'system_admin' ? campsArray.filter((c) => c.status === 'ACTIVE').length : null,
+    resourceCount: showStock ? resourcesArray.length : null,
+    autoDailyCount: showStock ? autoDailyCount : null,
+  };
+}
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const role = useAuthStore((state) => state.role);
@@ -262,14 +292,14 @@ export function DashboardPage() {
         </div>
         {camps && Array.isArray(camps) && camps.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border/10 flex flex-wrap gap-2">
-            {camps.slice(0, 5).map((camp: Record<string, unknown>) => (
+            {camps.slice(0, 5).map((camp) => (
               <StatusBadge
-                key={camp.id as number}
-                status={(camp.name as string)?.slice(0, 16) ?? ''}
+                key={camp.id}
+                status={camp.name?.slice(0, 16) ?? ''}
                 variant={camp.status === 'ACTIVE' ? 'green' : 'red'}
               />
             ))}
-            {(camps.length as number) > 5 && (
+            {camps.length > 5 && (
               <span className="font-mono-sm text-text-muted self-center">
                 +{camps.length - 5} more
               </span>

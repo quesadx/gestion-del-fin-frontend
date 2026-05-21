@@ -176,81 +176,66 @@ export function AdmissionsPage() {
           </div>
         </Panel>
       ) : (
-        <>
-          {activeCampName && (
-            <div className="flex items-center gap-2 font-mono-data text-[10px] text-[var(--neon-cyan)]/60 tracking-[0.15em]">
-              <span className="w-1.5 h-1.5 bg-[var(--neon-cyan)] animate-blink" />
-              ACTIVE CAMP: {activeCampName.toUpperCase()}
-            </div>
-          )}
-          <Panel
-            title="REQUESTS"
-            tag={`ADM.${selectedCampId}`}
-            status={`${admArray.length} RECORDS`}
-            accent="cyan"
-          >
-            <div className="mb-4 flex justify-end">
-              <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
-                <span className="flex items-center gap-2">
-                  <UserPlus className="h-3.5 w-3.5" />
-                  NEW ADMISSION REQUEST
-                </span>
-              </GlitchButton>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono-data text-xs">
-                <thead>
-                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
-                    <th className="py-3 px-2">NAME</th>
-                    <th className="py-3 px-2">AGE</th>
-                    <th className="py-3 px-2">AI RECOMMENDATION</th>
-                    <th className="py-3 px-2">FINAL DECISION</th>
-                    <th className="py-3 px-2">SUGGESTED PROFESSION</th>
-                    <th className="py-3 px-2">DATE</th>
-                    <th className="py-3 px-2">ACTIONS</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {admArray.map((a) => (
-                    <tr
-                      key={a.id}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
-                    >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{a.applicant_name}</td>
-                      <td className="py-3 px-2 text-muted-foreground">{a.applicant_age ?? '—'}</td>
-                      <td className="py-3 px-2">
-                        {a.ai_decision ? (
-                          <StatusBadge
-                            status={a.ai_decision.toUpperCase()}
-                            variant={
-                              a.ai_decision.toUpperCase() === 'ACCEPTED'
-                                ? 'green'
-                                : a.ai_decision.toUpperCase() === 'REJECTED'
-                                  ? 'red'
-                                  : 'amber'
-                            }
-                          />
-                        ) : (
-                          <span className="text-muted-foreground/50 text-[10px]">—</span>
-                        )}
-                      </td>
-                      <td className="py-3 px-2">
-                        {a.final_decision && a.final_decision !== 'PENDING' ? (
-                          <StatusBadge
-                            status={a.final_decision}
-                            variant={a.final_decision === 'ACCEPTED' ? 'green' : 'red'}
-                          />
-                        ) : (
-                          <StatusBadge status="PENDING" variant="amber" />
-                        )}
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground max-w-[120px] truncate">
-                        {a.ai_suggested_profession || '—'}
-                      </td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        {a.created_at ? format(new Date(a.created_at), 'dd/MM/yyyy') : '—'}
-                      </td>
-                      <td className="py-3 px-2">
+        <Panel
+          title="REQUESTS"
+          tag={`ADM.${selectedCampId}`}
+          status={`${admArray.length} RECORDS`}
+          accent="cyan"
+        >
+          <div className="mb-4 flex justify-end">
+            <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
+              <span className="flex items-center gap-2">
+                <UserPlus className="h-3.5 w-3.5" />
+                NEW REQUEST
+              </span>
+            </GlitchButton>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left font-mono-data text-xs">
+              <thead>
+                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                  <th className="py-3 px-2">NAME</th>
+                  <th className="py-3 px-2">AGE</th>
+                  <th className="py-3 px-2">SKILLS</th>
+                  <th className="py-3 px-2">HEALTH</th>
+                  <th className="py-3 px-2">DECISION</th>
+                  <th className="py-3 px-2">DATE</th>
+                  <th className="py-3 px-2">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {admArray.map((a) => (
+                  <tr
+                    key={a.id as number}
+                    className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                  >
+                    <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                      {a.applicant_name as string}
+                    </td>
+                    <td className="py-3 px-2 text-muted-foreground">
+                      {(a.applicant_age as number) ?? '—'}
+                    </td>
+                    <td className="py-3 px-2 text-muted-foreground max-w-[150px] truncate">
+                      {(a.applicant_skills as string) || '—'}
+                    </td>
+                    <td className="py-3 px-2 text-muted-foreground max-w-[150px] truncate">
+                      {(a.health_notes as string) || '—'}
+                    </td>
+                    <td className="py-3 px-2">
+                      {a.final_decision ? (
+                        <StatusBadge
+                          status={a.final_decision as string}
+                          variant={a.final_decision === 'ACCEPTED' ? 'green' : 'red'}
+                        />
+                      ) : (
+                        <StatusBadge status="PENDING" variant="yellow" />
+                      )}
+                    </td>
+                    <td className="py-3 px-2 text-muted-foreground">
+                      {a.created_at ? format(new Date(a.created_at as string), 'dd/MM/yyyy') : '—'}
+                    </td>
+                    <td className="py-3 px-2">
+                      {!a.final_decision && (
                         <div className="flex gap-1">
                           <button
                             type="button"

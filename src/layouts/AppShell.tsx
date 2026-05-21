@@ -27,15 +27,13 @@ export function AppShell() {
   const isMobile = useIsMobile();
   const showLabels = isMobile || !collapsed;
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsArray = camps?.data ?? [];
 
   const handleCampChange = (id: number | null) => {
     setLocalCampId(id);
     if (id) {
-      const camp = campsArray.find((c: Record<string, unknown>) => (c.id as number) === id);
-      setActiveCamp(camp ? { id, name: camp.name as string } : { id });
+      const camp = campsArray.find((c) => c.id === id);
+      setActiveCamp(camp ? { id, name: camp.name } : { id });
     } else {
       setActiveCamp(null);
     }

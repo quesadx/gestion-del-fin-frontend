@@ -70,13 +70,11 @@ export function UsersPage() {
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const campsArray = Array.isArray((camps as Record<string, unknown>)?.data)
-    ? ((camps as Record<string, unknown>).data as Record<string, unknown>[])
-    : [];
+  const campsArray = camps?.data ?? [];
   const usersArray = Array.isArray(users) ? users : [];
   const rolesArray: RoleItem[] = Array.isArray(roles) ? roles : [];
   const campMap = new Map<number, string>();
-  campsArray.forEach((c: Record<string, unknown>) => campMap.set(c.id as number, c.name as string));
+  campsArray.forEach((c) => campMap.set(c.id, c.name));
 
   const createForm = useForm<CreateFormValues>({
     resolver: resolved(createUserSchema),
@@ -233,7 +231,7 @@ export function UsersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {usersArray.map((u: Record<string, unknown>) => (
+                  {usersArray.map((u) => (
                     <tr
                       key={u.id as number}
                       className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
@@ -348,9 +346,9 @@ export function UsersPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
-                {campsArray.map((c: Record<string, unknown>) => (
-                  <option key={c.id as number} value={c.id as number}>
-                    {c.name as string}
+                {campsArray.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
@@ -446,9 +444,9 @@ export function UsersPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="">SELECT...</option>
-                {campsArray.map((c: Record<string, unknown>) => (
-                  <option key={c.id as number} value={c.id as number}>
-                    {c.name as string}
+                {campsArray.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
                   </option>
                 ))}
               </select>
