@@ -14,9 +14,11 @@ import {
   useDeletePerson,
   useAddPersonStatusLog,
   useCreateProfessionReassignment,
+  useCreateContributionOverride,
 } from '@/features/people/hooks/usePeople';
 import { useCamp } from '@/features/camps/hooks/useCamps';
 import { useProfessions } from '@/features/professions/hooks/useProfessions';
+import { useResources } from '@/features/resources/hooks/useResources';
 import { toast } from '@/shared/lib/toast';
 import type { Profession } from '@/features/professions/types/profession.types';
 import { ArrowLeft, Edit3, Trash2, Activity, Wrench } from 'lucide-react';
@@ -61,6 +63,16 @@ const statusLogSchema = z.object({
 
 type StatusLogFormValues = z.infer<typeof statusLogSchema>;
 
+const contributionOverrideSchema = z.object({
+  resource_type_id: z.coerce.number().min(1, 'Select a resource type'),
+  amount: z.coerce.number().min(0, 'Amount must be positive'),
+  reason: z.string().min(1, 'Reason is required'),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+});
+
+type ContributionOverrideFormValues = z.infer<typeof contributionOverrideSchema>;
+
 function getStatusVariant(status: string): 'green' | 'amber' | 'red' | 'red' {
   switch (status) {
     case 'HEALTHY':
@@ -90,6 +102,8 @@ export function PersonDetailPage() {
   const deleteMutation = useDeletePerson();
   const statusLogMutation = useAddPersonStatusLog();
   const reassignMutation = useCreateProfessionReassignment();
+  const contributionOverrideMutation = useCreateContributionOverride();
+  const { data: resources } = useResources();
 
   const [editOpen, setEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(false);
@@ -99,6 +113,8 @@ export function PersonDetailPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reassignOpen, setReassignOpen] = useState(false);
   const [reassignError, setReassignError] = useState<string | null>(null);
+  const [contributionOpen, setContributionOpen] = useState(false);
+  const [contributionError, setContributionError] = useState<string | null>(null);
 
   const statusLogs = person?.person_status_log ?? [];
 
@@ -114,6 +130,11 @@ export function PersonDetailPage() {
   const reassignForm = useForm<ReassignFormValues>({
     resolver: resolved(reassignSchema),
     defaultValues: { to_profession_id: 0, reason: '', start_date: '', end_date: '' },
+  });
+
+  const contributionForm = useForm<ContributionOverrideFormValues>({
+    resolver: resolved(contributionOverrideSchema),
+    defaultValues: { resource_type_id: 0, amount: 0, reason: '', start_date: '', end_date: '' },
   });
 
   const handleOpenEdit = () => {
@@ -244,6 +265,29 @@ export function PersonDetailPage() {
     }
   };
 
+  const onSubmitContributionOverride = async (values: ContributionOverrideFormValues) => {
+    setContributionError(null);
+    try {
+      await contributionOverrideMutation.mutateAsync({
+        campId: person.camp_id as number,
+        payload: {
+          person_id: personId,
+          resource_type_id: values.resource_type_id,
+          amount: values.amount,
+          reason: values.reason,
+          start_date: values.start_date || undefined,
+          end_date: values.end_date || undefined,
+        },
+      });
+      toast('Contribution override created', 'success');
+      setContributionOpen(false);
+      contributionForm.reset();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Override failed';
+      setContributionError(message);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <GlitchButton variant="ghost" onClick={() => navigate('/people')}>
@@ -334,6 +378,9 @@ export function PersonDetailPage() {
           <GlitchButton variant="warning" onClick={() => setDeleteTarget(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1" />
             DELETE
+          </GlitchButton>
+          <GlitchButton variant="ghost" onClick={() => setContributionOpen(true)}>
+            CONTRIB OVERRIDE
           </GlitchButton>
         </div>
       </Panel>
@@ -750,6 +797,103 @@ export function PersonDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={contributionOpen} onOpenChange={setContributionOpen}>
+        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+              CONTRIBUTION OVERRIDE
+            </DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={contributionForm.handleSubmit(onSubmitContributionOverride)}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                RESOURCE TYPE //
+              </label>
+              <select
+                {...contributionForm.register('resource_type_id')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              >
+                <option value={0}>Select a resource...</option>
+                {(resources ?? []).map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                AMOUNT //
+              </label>
+              <input
+                {...contributionForm.register('amount')}
+                type="number"
+                min={0}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
+            </div>
+            <div>
+              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                REASON //
+              </label>
+              <input
+                {...contributionForm.register('reason')}
+                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  START DATE //
+                </label>
+                <input
+                  {...contributionForm.register('start_date')}
+                  type="date"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                />
+              </div>
+              <div>
+                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                  END DATE //
+                </label>
+                <input
+                  {...contributionForm.register('end_date')}
+                  type="date"
+                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                />
+              </div>
+            </div>
+            {contributionError && (
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                {contributionError}
+              </div>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <GlitchButton
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  setContributionOpen(false);
+                  contributionForm.reset();
+                }}
+              >
+                CANCEL
+              </GlitchButton>
+              <GlitchButton
+                variant="primary"
+                type="submit"
+                disabled={contributionOverrideMutation.isPending}
+              >
+                {contributionOverrideMutation.isPending ? 'SENDING...' : 'OVERRIDE'}
+              </GlitchButton>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
