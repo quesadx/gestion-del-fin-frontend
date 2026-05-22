@@ -35,6 +35,11 @@ package-lock.json
 # Cache / temporary files
 .cache
 
+# Playwright
+/test-results/
+/playwright-report/
+/.playwright-mcp/
+
 # direnv
 .envrc
 .direnv

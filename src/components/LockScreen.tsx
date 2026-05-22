@@ -48,7 +48,7 @@ export function LockScreen() {
               d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
             />
           </svg>
-          <h2 className="text-lg font-bold text-white font-mono-data tracking-wider">
+          <h2 className="text-lg font-semibold text-white font-mono-data tracking-wider">
             SESSION LOCKED
           </h2>
           <p className="text-zinc-400 text-sm mt-2">Enter your password to unlock</p>
