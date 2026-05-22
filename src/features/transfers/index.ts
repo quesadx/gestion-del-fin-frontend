@@ -1,8 +1,5 @@
 export { transfersApi } from './api/transfers.api';
 export type {
-  TransferStatus,
-  TransferType,
-  TransferItemType,
   TransferItem,
   CreateTransferDto,
   ScheduleTransferDeliveryDto,
@@ -11,4 +8,10 @@ export type {
   CompleteTransferDto,
   RejectTransferDto,
 } from './api/transfers.api';
-export type { Transfer, TransferItemEntity } from './types/transfer.types';
+export type {
+  Transfer,
+  TransferItemEntity,
+  TransferStatus,
+  TransferType,
+  TransferItemType,
+} from './types/transfer.types';

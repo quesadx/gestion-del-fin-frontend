@@ -106,9 +106,9 @@ export function AppShell() {
               className="w-full bg-surface-base border border-zinc-700 text-zinc-300 font-mono text-[11px] py-1.5 px-2 focus:border-brand-primary outline-none"
             >
               <option value="">ALL CAMPS</option>
-              {campsArray.map((c: Record<string, unknown>) => (
-                <option key={c.id as number} value={c.id as number}>
-                  {c.name as string}
+              {campsArray.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>

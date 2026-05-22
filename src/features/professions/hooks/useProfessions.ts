@@ -4,18 +4,19 @@ import type {
   CreateProfessionDto,
   UpdateProfessionDto,
 } from '@/features/professions/api/professions.api';
+import type { Profession } from '@/features/professions/types/profession.types';
 
 const PROFESSIONS_KEY = ['professions'] as const;
 
 export function useProfessions() {
-  return useQuery({
+  return useQuery<Profession[]>({
     queryKey: PROFESSIONS_KEY,
     queryFn: professionsApi.getAll,
   });
 }
 
 export function useProfession(id: number) {
-  return useQuery({
+  return useQuery<Profession>({
     queryKey: [...PROFESSIONS_KEY, id] as const,
     queryFn: () => professionsApi.getById(id),
     enabled: !!id,

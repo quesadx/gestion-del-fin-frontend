@@ -6,7 +6,7 @@ import type { SystemTimeResponse } from '@/shared/api/types';
 const SYSTEM_TIME_KEY = ['system-time'] as const;
 
 export function useServerTime() {
-  return useQuery({
+  return useQuery<SystemTimeResponse>({
     queryKey: SYSTEM_TIME_KEY,
     queryFn: systemApi.getTime,
     refetchInterval: 60_000,

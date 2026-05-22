@@ -180,11 +180,11 @@ export function ExplorationDetailPage() {
         )}
       </Panel>
 
-      <Panel title="FOUND RESOURCES" tag={`EXP.${p.id}.FOUND`} accent="cyan">
-        {found && found.length > 0 ? (
+      <Panel title="FOUND RESOURCES" tag={`EXP.${exp.id}.FOUND`} accent="cyan">
+        {exp.found_resources && exp.found_resources.length > 0 ? (
           (() => {
-            const valid = found.filter((r) => r.resource_type_id != null);
-            const skipped = found.length - valid.length;
+            const valid = exp.found_resources.filter((r) => r.resource_type_id != null);
+            const skipped = exp.found_resources.length - valid.length;
             return (
               <>
                 {skipped > 0 && (

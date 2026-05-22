@@ -3,10 +3,11 @@ import { admissionApi } from '@/features/admission/api/admission.api';
 import type {
   CreateAdmissionDto,
   ReviewAdmissionDto,
+  AdmissionResponse,
 } from '@/features/admission/api/admission.api';
 
 export function useAdmissions(campId: number) {
-  return useQuery({
+  return useQuery<AdmissionResponse[]>({
     queryKey: ['admissions', campId] as const,
     queryFn: () => admissionApi.getAllByCamp(campId),
     enabled: !!campId,
@@ -14,7 +15,7 @@ export function useAdmissions(campId: number) {
 }
 
 export function useAdmission(id: number) {
-  return useQuery({
+  return useQuery<AdmissionResponse>({
     queryKey: ['admission', id] as const,
     queryFn: () => admissionApi.getById(id),
     enabled: !!id,

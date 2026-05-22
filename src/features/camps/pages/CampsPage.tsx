@@ -9,8 +9,6 @@ import { GlitchButton } from '@/components/cyber/GlitchButton';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps, useCreateCamp, useDeleteCamp } from '@/features/camps/hooks/useCamps';
-import type { Camp } from '@/features/camps/types/camp.types';
-import type { PaginatedResponse } from '@/shared/api/types';
 import { toast } from '@/shared/lib/toast';
 import { MapPin, Plus, Trash2, Eye, Search, FilterX } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

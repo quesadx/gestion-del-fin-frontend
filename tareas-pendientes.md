@@ -1,727 +1,610 @@
 # Tareas Pendientes — Gestión del Fin · Frontend
 
-> Auditoría completa del estado del proyecto al 2026-05-19.
-> Basada en evidencia directa del código fuente, documentación y configuración.
+> Auditoría completa del estado del proyecto al 2026-05-21.
+> Basada en evidencia directa del código fuente, comparación contra `requerimientos-frontend.md`.
+> Las 40 tareas del plan anterior (A1-A18, B1-B22, 2026-05-19) están **completadas** en commits posteriores.
+> Este documento solo contiene **faltantes reales** detectados en la auditoría actual.
 
 ---
 
-# Estado General del Proyecto
+# Estado General Actual
 
-## Resumen
+## Qué partes ya están completas
 
-El proyecto tiene **14 módulos funcionales** (admission, auth, camps, explorations, inventory, people, professions, rations, resources, system, transfers, users) con su capa de API y hooks de TanStack Query implementados. Las rutas están definidas con lazy loading y protección RBAC. Sin embargo, el proyecto acumula **deuda técnica significativa** y varias funcionalidades documentadas como requisitos están incompletas o ausentes.
+| Área                                                 | Estado           | Evidencia                                                                                                   |
+| ---------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| Login con credenciales JWT                           | COMPLETO         | `LoginPage.tsx`, `auth.service.ts`, `auth.store.ts`                                                         |
+| Protección de rutas por rol (RBAC)                   | COMPLETO         | `ProtectedRoute.tsx`, `roleGuards.ts` (13 rutas mapeadas)                                                   |
+| Sidebar con filtrado por rol                         | COMPLETO         | `useNavItems.ts:94-101` — 4 roles con nav items distintos                                                   |
+| Session expiry 20 min con server time                | COMPLETO         | `auth-context.tsx` + `getServerNow()`, throttle 5s, persist `lastActivity`                                  |
+| JWT decoding con try-catch + validación              | COMPLETO         | `auth.service.ts:26-30` — usa tipo `Role` y `ALL_ROLES`                                                     |
+| 401 handler con cola de promesas                     | COMPLETO         | `axiosInstance.ts:31-67`                                                                                    |
+| Módulos API/hooks consolidados (dedup)               | COMPLETO         | Sin duplicación `resources.api.ts`/`professions.api.ts` activa                                              |
+| Tipos genéricos `PaginatedResponse<T>`               | COMPLETO         | `shared/api/types.ts:9-18`                                                                                  |
+| Tipos duplicados unificados                          | COMPLETO         | `CampStatus`, `PersonStatus`, `TransferStatus` canónicos                                                    |
+| Eliminación de `as Record<string, unknown>`          | COMPLETO         | 63+ casts reemplazados por `PaginatedResponse<T>`                                                           |
+| ErrorBoundary por ruta                               | COMPLETO         | `ErrorBoundary.tsx:13-62`, `AppRoutes.tsx` envuelve cada lazy route                                         |
+| Dead code eliminado                                  | COMPLETO         | `App.css`, `fonts.css`, `tokens.css`, `system.api.ts`, `Navbar`, `DockBar`, `temp/`, delay 600ms eliminados |
+| Logger condicional (solo DEV)                        | COMPLETO         | `logger.ts`                                                                                                 |
+| ReactQueryDevtools solo en DEV                       | COMPLETO         | `App.tsx`                                                                                                   |
+| `zodResolver` estandarizado a wrapper `resolved`     | COMPLETO         | Todas las páginas usan `@/shared/lib/form`                                                                  |
+| QueryClient invalidation con filtro por camp         | COMPLETO         | `AppShell.tsx:35` usa predicate por query key                                                               |
+| `staleTime` aumentado a 5 min + `keepPreviousData`   | COMPLETO         | `queryClient.ts`, `useCamps.ts`, `usePeople.ts`                                                             |
+| CSP meta tag                                         | COMPLETO         | `index.html`                                                                                                |
+| Toasts + try-catch en todas las mutaciones           | COMPLETO         | Todas las páginas de features                                                                               |
+| `requested_by: 0` corregido                          | COMPLETO         | `TransfersPage.tsx` usa `userId` del store                                                                  |
+| `FileInput` no sobreescribe `identification_code`    | COMPLETO         | `PersonCreatePage.tsx`                                                                                      |
+| `prompt()` nativo reemplazado por Dialog             | COMPLETO         | `TransfersPage.tsx`                                                                                         |
+| AlertDialog sticky arreglado                         | COMPLETO         | `ExplorationsPage.tsx`                                                                                      |
+| Filtrado client-side con aviso en PeopleListPage     | COMPLETO         | `PeopleListPage.tsx`                                                                                        |
+| RationsPage — selectores y parsing arreglados (JSON) | COMPLETO         | `RationsPage.tsx` usa JSON `kind:'RATION'`                                                                  |
+| Confirmaciones en acciones destructivas              | COMPLETO         | Transferencias, delete acciones con AlertDialog                                                             |
+| `Date.now()` reemplazado por `getServerNow()`        | COMPLETO         | `PersonCreatePage`, `PersonDetailPage`, `RationsPage`                                                       |
+| AI Analysis Panel implementado                       | COMPLETO         | `AIAnalysisPanel.tsx` muestra decision, reasoning, suggested profession                                     |
+| StatusBadge variantes corregidas + amber             | COMPLETO         | `StatusBadge.tsx`                                                                                           |
+| Panel accent expandido                               | COMPLETO         | `Panel.tsx` acepta cyan/purple/green/red                                                                    |
+| `campId` NaN validado                                | COMPLETO         | `CampDetailPage.tsx`                                                                                        |
+| React key sin fallback de índice                     | COMPLETO         | `PersonDetailPage.tsx`, `ExplorationDetailPage.tsx`                                                         |
+| `useStats` extraído a `useDashboardStats.ts`         | COMPLETO         | `src/hooks/useDashboardStats.ts`                                                                            |
+| Responsive layout con drawer mobile                  | COMPLETO         | `AppShell.tsx:159-212` — Sheet en mobile, sidebar en desktop                                                |
+| Documentación actualizada                            | COMPLETO         | `README.md`, `ROLES_ACCESS.md`, milestones, workflow docs                                                   |
+| Server time infrastructure                           | COMPLETO         | `ServerTimeSync` en `App.tsx`, `getServerNow()` interpolado                                                 |
+| Status "DECEASED" vs "DEAD" corregido                | COMPLETO         | `PeopleListPage.tsx`                                                                                        |
+| Rations API/hooks/types layer                        | COMPLETO         | `src/features/rations/api/`, `hooks/`, `types/`                                                             |
+| `RoleGate` component infrastructure                  | COMPLETO (infra) | `src/shared/guards/RoleGate.tsx` — pero NUNCA usado (ver gaps abajo)                                        |
 
-El pipeline `pnpm check` (lint + spell + build) existe pero no hay tests automatizados de ningún tipo. La documentación (`docs/`, `.planning/`) está parcialmente desactualizada respecto al código real.
+## Qué partes siguen INCOMPLETAS (faltantes reales contra requerimientos-frontend.md)
 
-## Problemas Críticos Detectados
+| #   | Requisito     | Gap                                                                                                                                                                                                       | Severidad |
+| --- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 1   | RF-01         | **LockScreen**: no existe componente. `isLocked`/`lock()`/`unlock()` existen en el store pero `logout()` se llama en vez de bloquear. `unlock()` nunca se invoca.                                         | CRÍTICO   |
+| 2   | RF-01 / RF-08 | **Camp change no resetea sesión**: `handleCampChange()` (`AppShell.tsx:32-48`) no llama `updateActivity()`.                                                                                               | ALTO      |
+| 3   | RF-03         | **Dashboard no accesible para worker/travel_coordinator**: `roleGuards.ts:4` bloquea estos roles. El requerimiento dice que deben ver sus recursos asignados.                                             | ALTO      |
+| 4   | RF-03         | **Dashboard ignora campamento activo**: `DashboardPage.tsx` nunca lee `activeCamp` del store. Las métricas son globales, no por campamento.                                                               | ALTO      |
+| 5   | RF-04         | **Image/ID card upload**: `FileInput.tsx` existe pero NO se usa en `AdmissionsPage` ni `PersonCreatePage`. Ambas usan inputs de texto para URLs.                                                          | ALTO      |
+| 6   | RF-04         | **Corrección de decisión AI**: solo se puede aceptar/rechazar. No hay UI para corregir la profesión sugerida ni añadir razón de override.                                                                 | ALTO      |
+| 7   | RF-04         | **Auto-asignar ID y profesión al aceptar**: `ai_suggested_profession` se muestra pero nunca se actúa sobre ella al aceptar. No se crea automáticamente la persona.                                        | ALTO      |
+| 8   | RF-04         | **Generación de reporte**: no hay PDF, export, ni descarga de reporte de aceptación/rechazo.                                                                                                              | MEDIO     |
+| 9   | RF-05         | **Work availability en UI**: el estado (HEALTHY/SICK/etc.) no muestra indicador de "disponible para trabajar" en `PeopleListPage` ni `PersonDetailPage`. Solo se filtra en exploraciones.                 | MEDIO     |
+| 10  | RF-06         | **Procesamiento automático diario comida/agua**: cero implementación frontend. `auto_daily` existe en el tipo pero no es configurable en el formulario de recurso.                                        | ALTO      |
+| 11  | RF-06         | **Procesamiento automático diario consumo raciones**: cero implementación frontend.                                                                                                                       | ALTO      |
+| 12  | RF-06         | **Formulario de ingreso manual por persona**: el formulario de ajuste de inventario (`InventoryPage.tsx`) es genérico (no tiene selector de persona ni concepto de "meta").                               | MEDIO     |
+| 13  | RF-06         | **Nombres de recurso en auditoría**: `InventoryAuditPage.tsx:115` muestra `String(entry.resource_type_id)` (un número) en vez del nombre del recurso por falta de join en el tipo.                        | MEDIO     |
+| 14  | RF-07         | **Consumo de raciones en exploraciones**: cero implementación. Crear/iniciar exploración no deduce raciones del inventario.                                                                               | ALTO      |
+| 15  | RF-09         | **Invalidación de inventario en transfers**: ninguna mutación de transfer (`approveSource`, `approveTarget`, `complete`) invalida queries de inventory. El inventario no se actualiza automáticamente.    | ALTO      |
+| 16  | RF-09         | **Grupos para envío de personas**: no existe feature `groups/`. Cero archivos. `leader_person_id` en schema pero sin UI input. Sin cálculo de raciones de viaje.                                          | ALTO      |
+| 17  | RF-09         | **Audit trail inventory↔transfer**: `TransfersPage` muestra log de eventos pero no los deltas de inventario. `InventoryAuditPage` no filtra por transfer ID.                                              | MEDIO     |
+| 18  | RF-09         | **Double approval no es específico a préstamos**: aplica a todos los tipos de transferencia, no solo resource loans como pide el requerimiento.                                                           | BAJO      |
+| 19  | RNF-03        | **Gamificación**: cero elementos. Sin progreso, niveles, logros, badges, recompensas visuales, XP, misiones. `Progress` de shadcn existe pero no se usa. `RingMeter` existe sin contexto de gamificación. | ALTO      |
+| 20  | RNF-03        | **Bug `@keyframes drift`**: `WaveBackground.tsx` referencia animación `drift` pero el keyframe no existe en ningún CSS. Los blobs del fondo no se animan.                                                 | BAJO      |
+| 21  | RNF-05        | **Tests E2E Playwright**: cero archivos de test (`.spec.ts`, `.test.ts`). Playwright no instalado. Sin `playwright.config.*`.                                                                             | CRÍTICO   |
+| 22  | RNF-05        | **CI/CD**: `.github/workflows/` no existe. Sin GitHub Actions.                                                                                                                                            | CRÍTICO   |
+| 23  | RNF-06        | **Vercel deployment config**: no existe `vercel.json`. Sin configuración de despliegue.                                                                                                                   | ALTO      |
+| 24  | RNF-07        | **Documentación del modelo AI**: no se documenta qué modelo se usa, cómo se toman decisiones, ni hay confidence scores.                                                                                   | BAJO      |
+| 25  | RF-06         | **Contribution overrides sin UI**: `useCreateContributionOverride` hook y API existen pero ninguna página los usa (dead code).                                                                            | MEDIO     |
+| 26  | —             | **`useCreateRation` hook no usado**: `rationsApi.create` existe (genera formato antiguo key=value). `RationsPage` usa `useCreateInventoryAdjustment` directamente. Es dead code.                          | BAJO      |
+| 27  | —             | **`ResourcesPage.tsx` duplicado**: `src/features/inventory/pages/ResourcesPage.tsx` idéntico a `src/features/resources/pages/ResourcesPage.tsx`. Solo el segundo está routeado.                           | BAJO      |
+| 28  | —             | **`RoleGate` nunca usado**: el componente existe (`src/shared/guards/RoleGate.tsx`) pero 0 imports. Sin per-action gating en páginas compartidas como `/transfers`.                                       | BAJO      |
 
-1. **Tiempo del servidor nunca sincronizado** — `useServerTime()` nunca se invoca; el reloj del header nunca muestra la hora real del servidor (`src/shared/hooks/useServerTime.ts`, `src/layouts/AppShell.tsx:156`, `src/features/camps/store/camp.store.ts:18`)
-2. **Sin Error Boundary** — fallos en lazy-loaded routes crashean la app completa
-3. **0 tests** — sin Playwright, sin unit tests, sin CI/CD
-4. **Violación de arquitectura** — `camp.store.ts` almacena `serverTime` (API data) en Zustand, contradiciendo la regla explícita de AGENTS.md
-5. **`requested_by: 0` hardcodeado** en `TransfersPage.tsx:149` — todas las transferencias creadas desde el frontend tienen un `requested_by` inválido (el backend requiere `z.number().int().positive()`)
-6. **Raza condition en 401 handler** (`axiosInstance.ts:31-47`) — si un segundo 401 llega dentro de la ventana de 2s, se ignora silenciosamente
-7. **JWT decoding sin try-catch** en `auth.service.ts:12` — un token malformado crashea el flujo de login
-8. **Duplicación masiva de módulos** — `resources.api.ts` existe en 2 lugares, `professions.api.ts` existe en 2 lugares, ambas con la misma TanStack Query key causando potencial corrupción de caché
+## Riesgos técnicos detectados
 
-## Funcionalidades Incompletas
+1. **Sin tests** → regresiones invisibles. Cualquier cambio puede romper funcionalidad sin detección.
+2. **Sin CI/CD** → no hay validación automática. El deploy a Vercel es manual y no reproducible.
+3. **LockScreen ausente** → el requerimiento RF-01 exige bloqueo de sesión con re-autenticación. Sin esto, la funcionalidad no cumple.
+4. **Exploraciones sin consumo de raciones** → la economía de recursos del campamento no se refleja correctamente.
+5. **Transfers sin sync de inventario** → los movimientos entre campamentos no se reflejan hasta refresh manual.
+6. **Sin grupos** → el envío de personas entre campamentos (RF-09) no puede completarse sin esta feature.
 
-| Funcionalidad                                            | Requisito | Estado                                                                         |
-| -------------------------------------------------------- | --------- | ------------------------------------------------------------------------------ |
-| AI-Powered Admission Evaluation (explicabilidad)         | RF-04     | Sin UI de `ai_reasoning`, `ai_decision` ni `ai_suggested_profession`           |
-| Gamification (Threat Level, Days Survived, achievements) | RNF-03    | Cero implementación                                                            |
-| LockScreen / session lock con password unlock            | RF-08     | Solo hay logout; no existe componente `LockScreen`                             |
-| Rations — daily consumption processing                   | RF-06     | Una página plana sin API/hooks; usa parsing frágil de strings en `description` |
-| Exploration Resource Allocation                          | RF-07     | Placeholder: "Resource allocation pending inventory integration"               |
-| Dashboard role-specific views                            | RF-03     | Worker y travel_coordinator no tienen métricas reales                          |
-| Responsive mobile layout                                 | —         | `use-mobile.tsx` existe pero no se usa; sidebar es fixed-width                 |
-| `/resources/mine` (vista restringida worker)             | —         | No existe ruta, API, hook ni página                                            |
+## Áreas más inestables
 
-## Riesgos Técnicos
-
-- **Sin tests** → cualquier cambio puede romper funcionalidad sin detección
-- **Sin CI/CD** → no hay validación automática previa a despliegue
-- **Tipado débil** → 15+ archivos de página usan `as Record<string, unknown>` en lugar de tipos definidos, haciendo frágiles los refactors
-- **Manejo de errores inconsistente** → 10+ mutaciones sin try-catch ni toasts de feedback
-- **Filtrado client-side rompe paginación** → `PeopleListPage` filtra datos localmente; solo se ven resultados de la página actual
-- **Role list duplicada** → hardcodeada en `auth.service.ts:17` sin referenciar el tipo `Role`
-
----
-
-# División de Responsabilidades
-
-La división separa **infraestructura/sistema** (Persona A) de **páginas/UI** (Persona B), minimizando el solapamiento de archivos.
-
-## Persona A — Infraestructura, Auth, API Layer, Tipo de Datos, Dead Code
-
-**Área**: Capa compartida, autenticación, enrutamiento, estado global, tipos, tooling, limpieza, documentación.
-
-### Tareas
-
-#### A1. Sincronización del tiempo del servidor
-
-- **Descripción**: El `useServerTime()` hook (`src/shared/hooks/useServerTime.ts`) nunca se llama. El `serverTime` en `camp.store.ts` siempre es `0`. El header del AppShell en línea 156 nunca muestra hora. Hay dos implementaciones duplicadas: una en `shared/hooks/` (usa Zustand) y otra en `features/system/hooks/` (usa TanStack Query).
-- **Archivos**: `src/shared/hooks/useServerTime.ts`, `src/features/system/hooks/useServerTime.ts`, `src/features/camps/store/camp.store.ts`, `src/layouts/AppShell.tsx`, `src/App.tsx`
-- **Solución propuesta**:
-  1. Consolidar en una única implementación con TanStack Query (eliminar la de `shared/hooks/` que viola la regla de Zustand)
-  2. Extraer `serverTime` de `camp.store.ts` (mover a TanStack Query únicamente)
-  3. Invocar el hook de sincronización desde `App.tsx` o `AppShell.tsx`
-  4. Eliminar `systems.api.ts` muerto en `src/shared/api/system.api.ts`
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Media
-
-#### A2. Corrección de la raza condition del 401 handler
-
-- **Descripción**: El interceptor de Axios (`axiosInstance.ts:31-47`) resetea `isHandling401` tras 2000ms con `setTimeout`. Si un segundo 401 llega en esa ventana, el `logout()` y redirect se saltan.
-- **Archivos**: `src/shared/api/axiosInstance.ts`
-- **Solución propuesta**: Usar una cola de promesas pendientes durante el handling de 401 en lugar de un flag booleano con timeout. Reintentar requests pendientes después del re-login.
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Media
-
-#### A3. JWT decoding con manejo de errores
-
-- **Descripción**: `auth.service.ts:12` hace `JSON.parse(atob(parts[1]))` sin try-catch. Un token malformado crashea el login. Además, la lista de roles permitidos en línea 17 está hardcodeada en lugar de usar el tipo `Role`.
-- **Archivos**: `src/features/auth/auth.service.ts`, `src/features/auth/types/auth.types.ts`
-- **Solución propuesta**:
-  1. Envolver `JSON.parse(atob(...))` en try-catch con error descriptivo
-  2. Reemplazar el array hardcodeado por una referencia al union type `Role`
-  3. Agregar validación de `userId` como `Number.isInteger`
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A4. Dedo duplicación de módulos API/hooks
-
-- **Descripción**: `resources.api.ts` y `useResources.ts` existen idénticos en `features/inventory/` y `features/resources/`. Lo mismo para `professions.api.ts` y `useProfessions.ts` en `features/people/` y `features/professions/`. Ambas usan la misma TanStack Query key (`['resources']`, `['professions']`), causando potencial corrupción de caché.
-- **Archivos**: `src/features/resources/api/resources.api.ts`, `src/features/inventory/api/resources.api.ts`, `src/features/resources/hooks/useResources.ts`, `src/features/inventory/hooks/useResources.ts`, `src/features/people/api/professions.api.ts`, `src/features/professions/api/professions.api.ts`, `src/features/people/hooks/useProfessions.ts`, `src/features/professions/hooks/useProfessions.ts`
-- **Solución propuesta**:
-  1. Consolidar `resources.api.ts` y `useResources.ts` — eliminar una copia y actualizar imports
-  2. Consolidar `professions.api.ts` y `useProfessions.ts` — eliminar una copia y actualizar imports
-  3. Verificar que los `index.ts` barrel exports de ambos módulos funcionen correctamente tras la consolidación
-- **Prioridad**: Alta
-- **Dependencias**: A5 (tipos deben ser consistentes primero)
-- **Complejidad estimada**: Media
-
-#### A5. Tipado de respuestas API — crear `PaginatedResponse<T>` genérico
-
-- **Descripción**: Cada endpoint retorna `res.data` sin tipo. Los consumidores usan `as Record<string, unknown>`. Se necesita un tipo genérico `PaginatedResponse<T>` para respuestas paginadas y usarlo consistentemente en todas las API functions.
-- **Archivos**: `src/shared/api/types.ts`, `src/features/*/api/*.api.ts`
-- **Solución propuesta**:
-  1. Agregar `PaginatedResponse<T>` a `shared/api/types.ts`
-  2. Tipar todas las API functions con `Promise<PaginatedResponse<Camp>>` etc.
-  3. Revisar inconsistencia: algunas API retornan `res.data` (wrapper) y otras `res.data.data` (array plano). Estandarizar a `res.data` con tipo genérico.
-  4. Mover `LoginRequest`/`LoginResponse` de `shared/api/types.ts` a `features/auth/types/auth.types.ts`
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna (prerequisito para A4 y tareas de Persona B)
-- **Complejidad estimada**: Alta
-
-#### A6. Tipos duplicados — unificar `CampStatus` y `PersonStatus`
-
-- **Descripción**: `CampStatus` definido en `camps/api/camps.api.ts:4` y `camps/types/camp.types.ts:1`. `PersonStatus` definido en 3 lugares: `people/api/people.api.ts:4`, `explorations/api/explorations.api.ts:4`, `transfers/api/transfers.api.ts:11`. Debe haber una sola fuente canónica por tipo.
-- **Archivos**: `src/features/camps/api/camps.api.ts`, `src/features/camps/types/camp.types.ts`, `src/features/people/api/people.api.ts`, `src/features/explorations/api/explorations.api.ts`, `src/features/transfers/api/transfers.api.ts`
-- **Solución propuesta**: Mover todas las definiciones de tipo a los archivos `types/` correspondientes y hacer que los `api/` importen desde allí. Para `PersonStatus` que se usa en 3 features, mover a un tipo compartido.
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A7. Error Boundary para lazy-loaded routes
-
-- **Descripción**: No existe ningún `ErrorBoundary` en la app. Si una ruta lazy-loaded falla al cargarse (error de red, chunk missing), la app crashea completamente.
-- **Archivos**: Nuevo archivo `src/components/ErrorBoundary.tsx`, `src/routes/AppRoutes.tsx`
-- **Solución propuesta**: Crear un `ErrorBoundary` con React error boundary pattern (class component o `react-error-boundary`). Envolver el `<Suspense>` de cada lazy route.
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A8. Event listeners de inactividad sin debounce
-
-- **Descripción**: `auth-context.tsx:24` dispara `handleActivity()` en cada `mousedown`, `keydown`, `scroll` y `touchstart`. Cada evento llama `updateActivity()` que dispara `set()` en Zustand. Esto causa actualizaciones de store en cada tecla y movimiento del mouse.
-- **Archivos**: `src/features/auth/auth-context.tsx`
-- **Solución propuesta**: Aplicar throttle (ej. 5 segundos mínimo entre actualizaciones de actividad) o usar un patrón de debounce con `useRef` para la última actividad.
-- **Prioridad**: Media
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A9. `lastActivity` no persistido en el store
-
-- **Descripción**: `auth.store.ts:59-63` — `lastActivity` no está en la lista `partialize`. Al recargar la página, `lastActivity` se resetea a `Date.now()`, dando otros 20 minutos de gracia aunque el usuario llevara 19 minutos inactivo.
-- **Archivos**: `src/features/auth/store/auth.store.ts`
-- **Solución propuesta**: Agregar `lastActivity` a `partialize` o calcular el timeout basado en el timestamp del token JWT (`iat`).
-- **Prioridad**: Media
-- **Dependencias**: A8
-- **Complejidad estimada**: Baja
-
-#### A10. Limpiar archivos vacíos y dead code
-
-- **Descripción**: 5 archivos vacíos (`App.css`, `fonts.css`, `tokens.css`, `scanlines.css` no usado, `system.api.ts` en shared muerto). 13 motion variants en `motion.ts` sin ningún uso. Legacy navigation components (`Navbar.tsx`, `DockBar.tsx` no usados con AppShell). Directorio `temp/neon-nova-dashboard/` (~2100 líneas de código scaffold).
-- **Archivos**: `src/App.css`, `src/app/styles/fonts.css`, `src/app/styles/tokens.css`, `src/app/styles/scanlines.css`, `src/shared/api/system.api.ts`, `src/shared/lib/motion.ts`, `src/components/navigation/Navbar.tsx`, `src/components/navigation/DockBar.tsx`, `temp/neon-nova-dashboard/`
-- **Solución propuesta**: Eliminar archivos vacíos y no importados. Eliminar `motion.ts` (o conservar solo las variantes en uso real). Eliminar `temp/`. Si `Navbar` y `DockBar` son legacy según AGENTS.md, eliminarlos.
-- **Prioridad**: Media
-- **Dependencias**: Verificar imports de `motion.ts` antes de eliminar
-- **Complejidad estimada**: Baja
-
-#### A11. Clases CSS vacías en `globals.css`
-
-- **Descripción**: `globals.css:249-256` define 6 clases (`.corner-brackets`, `.animate-pulse-soft`, `.hover-lift`, `.animate-breathe`, `.animate-breathe-border`, `.animate-pulse-glow`) sin propiedades. Dos de ellas (`.animate-pulse-soft`, `.animate-pulse-glow`) se usan en JSX pero no producen efecto visual.
-- **Archivos**: `src/app/styles/globals.css`
-- **Solución propuesta**: Eliminar clases no usadas. Agregar las propiedades CSS faltantes a `.animate-pulse-soft` y `.animate-pulse-glow` o eliminar su uso en JSX.
-- **Prioridad**: Baja
-- **Dependencias**: Verificar uso en JSX antes de eliminar
-- **Complejidad estimada**: Baja
-
-#### A12. `queryClient.invalidateQueries()` sin filtro en AppShell
-
-- **Descripción**: `AppShell.tsx:35` llama `queryClient.invalidateQueries()` sin query key. Cada cambio de campamento seleccionado refetcha **todas** las queries activas. Debería invalidar solo queries con scope de campamento.
-- **Archivos**: `src/layouts/AppShell.tsx`
-- **Solución propuesta**: Usar `queryClient.invalidateQueries({ predicate: (query) => query.queryKey.includes('camps') })` o un array de keys específicas.
-- **Prioridad**: Media
-- **Dependencias**: A5 (tipos de query keys estandarizados)
-- **Complejidad estimada**: Baja
-
-#### A13. Role list duplicada y permisos inconsistentes
-
-- **Descripción**: `auth.service.ts:17` tiene roles hardcodeados. `useNavItems.ts:97` retorna TODOS los nav items cuando `role` es null. `useNavItems.ts:91` lista rations para `system_admin, resource_manager` pero `DashboardPage.tsx:111` también incluye `worker`.
-- **Archivos**: `src/features/auth/auth.service.ts`, `src/hooks/useNavItems.ts`, `src/shared/lib/roleGuards.ts`
-- **Solución propuesta**:
-  1. Centralizar la validación de roles usando el tipo `Role`
-  2. `useNavItems` debe retornar `[]` o solo items públicos cuando `role === null`
-  3. Estandarizar permisos de rations entre `useNavItems` y `DashboardPage`
-- **Prioridad**: Media
-- **Dependencias**: A3
-- **Complejidad estimada**: Baja
-
-#### A14. `ReactQueryDevtools` en bundle de producción
-
-- **Descripción**: `App.tsx:28` renderiza `<ReactQueryDevtools />` incondicionalmente. No se usa `import.meta.env.DEV` para excluirlo del build de producción.
-- **Archivos**: `src/App.tsx`
-- **Solución propuesta**: Envolver con `{import.meta.env.DEV && <ReactQueryDevtools />}` o usar dynamic import condicional.
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A15. Retraso artificial de 600ms en App.tsx
-
-- **Descripción**: `App.tsx:14` tiene `setTimeout(() => setReady(true), 600)` que fuerza a todos los usuarios a esperar 600ms aunque la app ya cargó. Es puramente cosmético.
-- **Archivos**: `src/App.tsx`
-- **Solución propuesta**: Eliminar el `setTimeout` y usar `setReady(true)` inmediatamente después de hidratar el estado, o usar el estado de hidratación de Zustand (`_hasHydrated`).
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A16. Logger expone errores en producción
-
-- **Descripción**: `logger.ts:14-16` siempre imprime errores a consola, incluso en producción. Podría leakear tokens JWT, datos de usuario, o respuestas de API.
-- **Archivos**: `src/shared/utils/logger.ts`
-- **Solución propuesta**: Condicionar `logger.error` con `import.meta.env.DEV` o enviar a un servicio externo de logging en producción (ej. Sentry) en lugar de `console.error`.
-- **Prioridad**: Media
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A17. Inconsistencia de `zodResolver` vs wrapper `resolved`
-
-- **Descripción**: `ExplorationsPage.tsx:4` y `LoginPage.tsx:5` importan `zodResolver` directamente. Todas las demás páginas usan el wrapper `resolved` de `@/shared/lib/form`. Inconsistencia en convención.
-- **Archivos**: `src/features/explorations/pages/ExplorationsPage.tsx` (import en línea 4), `src/pages/LoginPage.tsx` (import en línea 5)
-- **Solución propuesta**: Cambiar ambos imports a usar `resolved` de `@/shared/lib/form`.
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### A18. Actualizar documentación obsoleta
-
-- **Descripción**: `ENDPOINT_IMPLEMENTATION_WORKFLOW.md` marca `GET /resources`, `GET /professions`, `GET /users` como "pending" cuando ya están implementados. `MILESTONES.md` tiene 0 checkboxes completados. `ROLES_ACCESS.md` aún menciona `travel_lead` cuando el código usa `travel_coordinator`. `README.md` es el template default de Vite sin contenido del proyecto.
-- **Archivos**: `docs/ENDPOINT_IMPLEMENTATION_WORKFLOW.md`, `docs/MILESTONES.md`, `docs/ROLES_ACCESS.md`, `docs/API_CONTRACT.md`, `README.md`
-- **Solución propuesta**:
-  1. Actualizar `ENDPOINT_IMPLEMENTATION_WORKFLOW.md` con el estado real
-  2. Marcar milestones completados que ya están implementados
-  3. Corregir `travel_lead` → `travel_coordinator` en `ROLES_ACCESS.md`
-  4. Reescribir `README.md` con setup instructions, arquitectura y scripts
-- **Prioridad**: Media
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
+- `src/features/transfers/pages/TransfersPage.tsx` (905 líneas) — página monolítica con lógica de creación, workflow, log y diálogos. Riesgo alto de break en refactors.
+- `src/features/explorations/pages/ExplorationsPage.tsx` (816 líneas) — similar, página monolítica con create/update/return/delete.
+- `src/features/rations/pages/RationsPage.tsx` (415 líneas) — aún usa `as Record<string, unknown>` en líneas 44-56.
+- `src/features/inventory/types/inventory.types.ts` — `InventoryAuditEntry` sin campo `resource` join (línea 23).
 
 ---
 
-## Persona B — Páginas de Features, Componentes UI, UX
+# Persona A — Infraestructura, Auth, DevOps, Gamificación, Sistema
 
-**Área**: Todas las páginas de features, componentes visuales, dashboard, login, nuevos componentes faltantes, toasts, manejo de errores en UI.
-
-### Tareas
-
-#### B1. Agregar toasts de feedback en mutaciones sin respuesta al usuario
-
-- **Descripción**: 15+ mutaciones en el proyecto se ejecutan sin toast de éxito o error. El usuario no sabe si la acción se completó o falló.
-  - `InventoryPage.tsx:74-83` — `createAdjustment` sin toast
-  - `ResourcesPage.tsx:78-94` — create, update, delete sin toasts
-  - `TransfersPage.tsx:159-175` — approve, complete, schedule sin toasts
-  - `AdmissionsPage.tsx:60-78` — create, review sin toasts
-  - `ProfessionsPage.tsx:84,96-98` — update, delete sin toasts
-  - `CampsPage.tsx:72-73,87` — errores van a `setCreateError` local, no a toast
-- **Archivos**: `src/features/inventory/pages/InventoryPage.tsx`, `src/features/inventory/pages/ResourcesPage.tsx`, `src/features/resources/pages/ResourcesPage.tsx`, `src/features/transfers/pages/TransfersPage.tsx`, `src/features/admission/pages/AdmissionsPage.tsx`, `src/features/professions/pages/ProfessionsPage.tsx`, `src/features/camps/pages/CampsPage.tsx`
-- **Solución propuesta**: Envolver cada `mutateAsync()` en try-catch y llamar `toast()` en success y error. Usar el sistema de toast existente en `@/shared/lib/toast`.
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja (muchas ubicaciones, pero patrón repetitivo)
-
-#### B2. Try-catch en mutaciones que carecen de manejo de errores
-
-- **Descripción**: Además de los toasts, varias mutaciones llaman `mutateAsync()` sin try-catch, dejando promesas rechazadas sin manejar:
-  - `InventoryPage.tsx:74-83`
-  - `ResourcesPage.tsx:78-94`
-  - `TransfersPage.tsx:159-175`
-  - `AdmissionsPage.tsx:60-78`
-  - `rations/pages/RationsPage.tsx:92-113`
-- **Archivos**: Los mismos que B1 más `src/features/rations/pages/RationsPage.tsx`
-- **Solución propuesta**: Misma que B1 — try-catch + toast.
-- **Prioridad**: Alta
-- **Dependencias**: B1 (se hacen juntos)
-- **Complejidad estimada**: Baja
-
-#### B3. `requested_by: 0` hardcodeado en TransfersPage
-
-- **Descripción**: `TransfersPage.tsx:149` — `requested_by: 0`. El backend espera `z.number().int().positive()`. `0` no es un ID de usuario válido.
-- **Archivos**: `src/features/transfers/pages/TransfersPage.tsx`
-- **Solución propuesta**: Obtener `userId` de `useAuthStore((state) => state.userId)` y usarlo en lugar de `0`.
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B4. `FileInput` sobreescribe campo `identification_code` con data URL
-
-- **Descripción**: `PersonCreatePage.tsx:310-314` — el segundo `<FileInput>` llama `setValue('identification_code', dataUrl)`. `identification_code` es un campo de texto para códigos de identificación ("ID-XXX-###"), pero se sobreescribe con un base64 data URL de `FileReader`. Es un bug de corrupción de datos.
-- **Archivos**: `src/features/people/pages/PersonCreatePage.tsx`
-- **Solución propuesta**: Revisar la lógica de `FileInput`. Probablemente debería ser un campo separado (`photo` o `avatar_url`) o el `setValue` debe asignarse al campo correcto según el propósito del `FileInput`.
-- **Prioridad**: Alta
-- **Dependencias**: Revisar el schema de creación de persona en el backend
-- **Complejidad estimada**: Baja
-
-#### B5. `prompt()` nativo en TransfersPage
-
-- **Descripción**: `TransfersPage.tsx:172` usa `prompt('Delivery date (YYYY-MM-DDTHH:mm):')`. Es un diálogo bloqueante del navegador sin validación ni estilo.
-- **Archivos**: `src/features/transfers/pages/TransfersPage.tsx`
-- **Solución propuesta**: Reemplazar con un `<Dialog>` que contenga un `<input type="datetime-local">` con validación.
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Media
-
-#### B6. AlertDialog sticky en ExplorationsPage sin escape
-
-- **Descripción**: `ExplorationsPage.tsx:755` — `onOpenChange={() => {}}` hace que el AlertDialog de cambio de estado no se pueda cerrar con Escape ni click fuera. Solo se cierra con el botón Cancel.
-- **Archivos**: `src/features/explorations/pages/ExplorationsPage.tsx`
-- **Solución propuesta**: Reemplazar el handler vacío con uno que cierre el diálogo, o usar `onOpenChange={(open) => !open && setStatusTarget(null)}`.
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B7. Filtrado client-side rompe paginación en PeopleListPage
-
-- **Descripción**: `PeopleListPage.tsx` aplica `searchTerm`, `statusFilter`, y `professionFilter` localmente sobre los datos de la página actual. Si hay 100 personas en 5 páginas y el usuario busca, solo ve resultados de la página 1.
-- **Archivos**: `src/features/people/pages/PeopleListPage.tsx`
-- **Solución propuesta**: Enviar los filtros como query params al API o implementar filtrado server-side si el backend lo soporta. Como mínimo, mostrar un mensaje al usuario advirtiendo que la búsqueda es solo en la página actual.
-- **Prioridad**: Alta
-- **Dependencias**: Verificar si el backend soporta filtros en GET /people
-- **Complejidad estimada**: Media
-
-#### B8. RationsPage — arrays vacíos por mal acceso a paginated responses
-
-- **Descripción**: `RationsPage.tsx:45-46` — `Array.isArray(people)` es `false` porque `usePeople` retorna el wrapper `{ data, pagination }`, no un array. Lo mismo para `campsArray` en línea 42. Los `<select>` de persona y campamento siempre están vacíos.
-- **Archivos**: `src/features/rations/pages/RationsPage.tsx`
-- **Solución propuesta**: Acceder a `people.data` o `people?.data` en lugar de `people` directamente. Agregar `Array.isArray()` sobre el array interno.
-- **Prioridad**: Alta
-- **Dependencias**: A5 (tipos de respuesta estandarizados)
-- **Complejidad estimada**: Baja
-
-#### B9. RationsPage — parsing frágil de descripciones
-
-- **Descripción**: `RationsPage.tsx:95,189-195` — los datos de ración se codifican como string formateado en el campo `description`: `RATION: person=NAME person_id=X resource=Y consumed_at=Z notes=NOTES`. Se parsean con regex en tiempo de display:
-  - `desc.match(/person=([^ ]+)/)` — falla si el nombre contiene espacios
-  - `desc.match(/consumed_at=([^ ]+)/)` — falla si la fecha contiene espacios
-- **Archivos**: `src/features/rations/pages/RationsPage.tsx`
-- **Solución propuesta**: Si el backend soporta un endpoint dedicado de rations, usarlo. Si no, mejorar el parsing con delimitadores no ambiguos (ej. usar `|` como separador en lugar de espacios) o separar los campos con JSON en el description.
-- **Prioridad**: Alta
-- **Dependencias**: Verificar endpoint de rations en el backend
-- **Complejidad estimada**: Media
-
-#### B10. Confirmación de acciones destructivas faltante
-
-- **Descripción**: `TransfersPage.tsx:300-354` — Approve, Complete y Schedule se ejecutan sin confirmación. Solo Reject tiene confirmación.
-- **Archivos**: `src/features/transfers/pages/TransfersPage.tsx`
-- **Solución propuesta**: Agregar `AlertDialog` de confirmación para todas las acciones de transferencia, no solo reject.
-- **Prioridad**: Media
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B11. Acción de delete directa sin confirmación
-
-- **Descripción**: `PersonDetailPage.tsx:714` — botón "TERMINATE" posiblemente actúa sin confirmación explícita. `PeopleListPage.tsx` y `TransfersPage.tsx` usan AlertDialog para confirmar.
-- **Archivos**: `src/features/people/pages/PersonDetailPage.tsx`
-- **Solución propuesta**: Verificar que el AlertDialog esté correctamente configurado (la variable `deleteTarget` es `boolean` en lugar de objeto, lo cual es semánticamente confuso pero funcional). Confirmar que el flujo de confirmación existe.
-- **Prioridad**: Media
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B12. Status "DECEASED" vs "DEAD" mismatch en UI
-
-- **Descripción**: `PeopleListPage.tsx:173-174` — el `<option>` muestra "DECEASED" pero el `value` es `"DEAD"`. Confunde al usuario que filtra por lo que lee en el dropdown.
-- **Archivos**: `src/features/people/pages/PeopleListPage.tsx`
-- **Solución propuesta**: Alinear display text con value: ambos "DEAD" o ambos "DECEASED".
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B13. `Date.now()` para business logic en páginas
-
-- **Descripción**: AGENTS.md exige "Server time for business logic, not Date.now()". Los siguientes usan `Date.now()` o `new Date()`:
-  - `PersonCreatePage.tsx:56,67` — `admission_date` default y submit
-  - `PersonDetailPage.tsx:128` — campo `created_at`
-  - `RationsPage.tsx:68` — `consumed_at`
-- **Archivos**: `src/features/people/pages/PersonCreatePage.tsx`, `src/features/people/pages/PersonDetailPage.tsx`, `src/features/rations/pages/RationsPage.tsx`
-- **Solución propuesta**: Usar `getServerNow()` del hook de sistema (depende de que Persona A arregle la sincronización en A1).
-- **Prioridad**: Media
-- **Dependencias**: A1 (tiempo del servidor funcional)
-- **Complejidad estimada**: Baja
-
-#### B14. Placeholder notices en ExplorationsPage
-
-- **Descripción**: `ExplorationsPage.tsx:577-584` — dos cajas de info hardcodeadas: "Resource allocation pending inventory integration" y "Found resources can be recorded when return flow is connected". Son placeholders que deben reemplazarse con funcionalidad real o eliminarse.
-- **Archivos**: `src/features/explorations/pages/ExplorationsPage.tsx`
-- **Solución propuesta**: Implementar la integración real (B15) o reemplazar con UI que indique el estado real de la funcionalidad.
-- **Prioridad**: Media
-- **Dependencias**: B15
-- **Complejidad estimada**: Baja
-
-#### B15. AI Explainability — mostrar `ai_reasoning`, `ai_decision`, `ai_suggested_profession`
-
-- **Descripción**: El backend devuelve campos de AI en el endpoint de admission (`BACKEND_SCHEMAS.md`). Cero matches de `ai_reasoning` o `ai_suggested` en ningún `.tsx`. Se necesita UI para mostrar la decisión de la AI, su razonamiento, y permitir override manual.
-- **Archivos**: `src/features/admission/pages/AdmissionsPage.tsx`, nuevo componente `src/features/admission/components/AIAnalysisPanel.tsx`
-- **Solución propuesta**:
-  1. Crear un componente `AIAnalysisPanel` que muestre `ai_decision`, `ai_reasoning`, `ai_suggested_profession`
-  2. Integrarlo en el flujo de review de admissions
-  3. Permitir al admin aceptar o override la decisión de la AI
-- **Prioridad**: Alta
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Media
-
-#### B16. StatusBadge — variantes con nombres confusos y duplicados
-
-- **Descripción**: `StatusBadge.tsx` mapea `variant='cyan'` a colores rojos y `variant='red'` a los mismos colores rojos (idénticos). `variant='purple'` mapea a ámbar. Los nombres no corresponden a los colores renderizados.
-- **Archivos**: `src/components/cyber/StatusBadge.tsx`
-- **Solución propuesta**: Renombrar variantes para que coincidan con los colores reales (ej. `cyan` → `red`, `purple` → `amber`) o eliminar la variante duplicada. Actualizar todos los usos en páginas.
-- **Prioridad**: Media
-- **Dependencias**: Revisar todos los usos de StatusBadge en features
-- **Complejidad estimada**: Baja
-
-#### B17. Panel — tipo `accent` restrictivo
-
-- **Descripción**: `Panel.tsx:9` — `accent?: 'cyan' | 'purple'` solo acepta dos valores, pero `StatCard` soporta 4. `CampDetailPage.tsx:123` tiene que mapear `green → cyan` para hacerlo funcionar.
-- **Archivos**: `src/components/cyber/Panel.tsx`, `src/features/camps/pages/CampDetailPage.tsx`
-- **Solución propuesta**: Expandir el tipo de `accent` en `Panel` para aceptar los mismos valores que `StatCard` (`'cyan' | 'purple' | 'green' | 'red'`) y actualizar los estilos condicionales.
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B18. `CampDetailPage` — campId NaN en URL inválida
-
-- **Descripción**: `CampDetailPage.tsx:29` — `const campId = Number(id)`. Si el param `:id` es no numérico, `campId` es `NaN`. La línea 80 renderiza `tag={`CAMP.${NaN}`}` que muestra "CAMP.NaN".
-- **Archivos**: `src/features/camps/pages/CampDetailPage.tsx`
-- **Solución propuesta**: Validar que `campId` sea un número finito positivo antes de usarlo. Redirigir a 404 o mostrar mensaje de error si no es válido.
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B19. Índice de array como fallback de React key
-
-- **Descripción**: `PersonDetailPage.tsx:362` — `key={(log.id as number) || i}`. `ExplorationDetailPage.tsx:158,188,221` — mismo patrón. Usar índice de array como fallback causa re-renders innecesarios y puede romper estado de componentes.
-- **Archivos**: `src/features/people/pages/PersonDetailPage.tsx`, `src/features/explorations/pages/ExplorationDetailPage.tsx`
-- **Solución propuesta**: Asegurar que cada item tenga un ID único del backend. Si no, generar uno al mapear con `crypto.randomUUID()` o usar una combinación de campos únicos.
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B20. Eliminar tipos `as Record<string, unknown>` en páginas
-
-- **Descripción**: 15+ páginas usan `as Record<string, unknown>` para acceder a datos de API, ignorando los tipos definidos en `types/`. Esto contradice AGENTS.md ("No any or as any. TypeScript strict.").
-  - `CampsPage.tsx:118-122`
-  - `CampDetailPage.tsx:104-108,216`
-  - `PeopleListPage.tsx:48-56`
-  - `PersonDetailPage.tsx` (múltiples líneas)
-  - `InventoryPage.tsx:205`
-  - `TransfersPage.tsx` (múltiples líneas)
-  - Y más
-- **Archivos**: Todos los archivos de página en `src/features/*/pages/`
-- **Solución propuesta**: Reemplazar todos los `as Record<string, unknown>` con los tipos definidos (`Camp`, `Resource`, `Person`, `Transfer`, etc.) una vez que Persona A complete A5 (tipos de respuesta API).
-- **Prioridad**: Alta
-- **Dependencias**: A5 (`PaginatedResponse<T>` genérico)
-- **Complejidad estimada**: Alta (muchas ubicaciones, requiere A5 completado primero)
-
-#### B21. Dashboard — extraer `useStats` a hook separado
-
-- **Descripción**: `DashboardPage.tsx:23-61` define `useStats` como función privada inline. La convención del proyecto es hooks en archivos separados.
-- **Archivos**: `src/pages/DashboardPage.tsx`, nuevo archivo `src/hooks/useDashboardStats.ts`
-- **Solución propuesta**: Mover `useStats` a `src/hooks/useDashboardStats.ts`.
-- **Prioridad**: Baja
-- **Dependencias**: Ninguna
-- **Complejidad estimada**: Baja
-
-#### B22. Responsive layout — implementar drawer en mobile
-
-- **Descripción**: `use-mobile.tsx` hook existe pero no se usa en `AppShell`. El sidebar es fixed-width (w-64/w-16) sin adaptación mobile.
-- **Archivos**: `src/layouts/AppShell.tsx`, `src/hooks/use-mobile.tsx`
-- **Solución propuesta**: Usar el hook `use-mobile` en `AppShell` y renderizar un drawer/sheet en mobile en lugar del sidebar fijo. Usar `Sheet` de shadcn/ui.
-- **Prioridad**: Baja
-- **Dependencias**: Coordinar con Persona A (AppShell es compartido, pero la modificación es solo de UI responsive)
-- **Complejidad estimada**: Media
+**Área**: LockScreen, session management, dashboard access, tests, CI/CD, deploy, gamification engine, utilidades compartidas, dead code cleanup.
 
 ---
 
-# Separación Técnica Recomendada
+## A1. LockScreen — componente de bloqueo de sesión
 
-## Persona A — Carpetas y archivos
-
-| Área                 | Archivos                                                                                                                                                                                                                               |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Shared API**       | `src/shared/api/axiosInstance.ts`, `src/shared/api/types.ts`                                                                                                                                                                           |
-| **Shared lib**       | `src/shared/lib/queryClient.ts`, `src/shared/lib/form.ts`, `src/shared/lib/motion.ts`, `src/shared/lib/roleGuards.ts`, `src/shared/lib/toast.tsx`                                                                                      |
-| **Shared utils**     | `src/shared/utils/logger.ts`                                                                                                                                                                                                           |
-| **Shared hooks**     | `src/shared/hooks/useServerTime.ts` (eliminar o consolidar)                                                                                                                                                                            |
-| **Shared guards**    | `src/shared/guards/RoleGate.tsx`                                                                                                                                                                                                       |
-| **Auth**             | `src/features/auth/` (todo el módulo)                                                                                                                                                                                                  |
-| **System**           | `src/features/system/` (todo el módulo)                                                                                                                                                                                                |
-| **Routing**          | `src/routes/AppRoutes.tsx`, `src/routes/ProtectedRoute.tsx`, nuevo `ErrorBoundary`                                                                                                                                                     |
-| **Layout**           | `src/layouts/AppShell.tsx` (solo fixes de serverTime + queryClient invalidation)                                                                                                                                                       |
-| **Styles**           | `src/app/styles/globals.css`, `src/app/styles/fonts.css`, `src/app/styles/tokens.css`, `src/app/styles/scanlines.css`                                                                                                                  |
-| **Root**             | `src/App.tsx`, `src/App.css`, `src/main.tsx`, `index.html`                                                                                                                                                                             |
-| **Hooks**            | `src/hooks/useNavItems.ts`, `src/hooks/use-mobile.tsx`                                                                                                                                                                                 |
-| **Lib**              | `src/lib/error-capture.ts`, `src/lib/error-page.ts`, `src/lib/utils.ts`                                                                                                                                                                |
-| **Config**           | `eslint.config.js`, `.prettierrc`, `cspell.json`, `tailwind.config.js`, `vite.config.ts`, `tsconfig.*.json`                                                                                                                            |
-| **Types (features)** | `src/features/camps/types/`, `src/features/camps/api/camps.api.ts` (solo tipos), `src/features/people/api/`, `src/features/explorations/api/`, `src/features/transfers/api/`, `src/features/*/api/` (solo tipado, no lógica de página) |
-| **Dedup**            | Eliminar `src/features/resources/api/` duplicado o `src/features/inventory/api/resources.api.ts` duplicado                                                                                                                             |
-| **Dead code**        | `src/shared/api/system.api.ts`, `temp/`, `src/components/navigation/Navbar.tsx`, `src/components/navigation/DockBar.tsx`                                                                                                               |
-| **Docs**             | `docs/`, `.planning/`, `README.md`                                                                                                                                                                                                     |
-
-## Persona B — Carpetas y archivos
-
-| Área                   | Archivos                                                                                                                                                                                                            |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Camps pages**        | `src/features/camps/pages/CampsPage.tsx`, `src/features/camps/pages/CampDetailPage.tsx`                                                                                                                             |
-| **People pages**       | `src/features/people/pages/PeopleListPage.tsx`, `src/features/people/pages/PersonCreatePage.tsx`, `src/features/people/pages/PersonDetailPage.tsx`                                                                  |
-| **Inventory pages**    | `src/features/inventory/pages/InventoryPage.tsx`, `src/features/inventory/pages/InventoryAuditPage.tsx`, `src/features/inventory/pages/ResourcesPage.tsx`, `src/features/inventory/components/StockAlertBanner.tsx` |
-| **Resources pages**    | `src/features/resources/pages/ResourcesPage.tsx`                                                                                                                                                                    |
-| **Explorations pages** | `src/features/explorations/pages/ExplorationsPage.tsx`, `src/features/explorations/pages/ExplorationDetailPage.tsx`                                                                                                 |
-| **Transfers pages**    | `src/features/transfers/pages/TransfersPage.tsx`                                                                                                                                                                    |
-| **Admission pages**    | `src/features/admission/pages/AdmissionsPage.tsx`                                                                                                                                                                   |
-| **Users pages**        | `src/features/users/pages/UsersPage.tsx`                                                                                                                                                                            |
-| **Professions pages**  | `src/features/professions/pages/ProfessionsPage.tsx`                                                                                                                                                                |
-| **Rations pages**      | `src/features/rations/pages/RationsPage.tsx`                                                                                                                                                                        |
-| **Dashboard**          | `src/pages/DashboardPage.tsx`                                                                                                                                                                                       |
-| **Login**              | `src/pages/LoginPage.tsx`                                                                                                                                                                                           |
-| **Cyber components**   | `src/components/cyber/StatusBadge.tsx`, `src/components/cyber/Panel.tsx`, otros según necesidad                                                                                                                     |
-| **Nuevos componentes** | `src/components/LockScreen.tsx`, `src/features/admission/components/AIAnalysisPanel.tsx`                                                                                                                            |
-| **Hooks**              | `src/hooks/useDashboardStats.ts` (nuevo, extraído de DashboardPage)                                                                                                                                                 |
-
-## Puntos de conflicto potenciales
-
-| Archivo                                         | Riesgo                                           | Mitigación                                                                                                                                                  |
-| ----------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/layouts/AppShell.tsx`                      | Ambas personas pueden necesitar tocarlo          | Persona A solo toca líneas 19, 24-28 (serverTime) y 35 (queryClient). Persona B solo toca la parte de responsive layout (nuevo drawer). Áreas no solapadas. |
-| `src/pages/LoginPage.tsx`                       | Persona B tiene B1 (toasts) y A17 (zodResolver)  | Coordinar: Persona A hace el cambio de `zodResolver` → `resolved` primero. Persona B agrega toasts después.                                                 |
-| `src/features/*/api/` y `src/features/*/types/` | Persona A refactoriza tipos, Persona B usa hooks | Persona A debe completar A5 antes de que Persona B empiece B20. Orden: A5 → B20.                                                                            |
-
-## Recomendaciones para evitar bloqueos
-
-1. **Semana 1-2**: Persona A completa A5 (tipos genéricos), A6 (tipos duplicados), A4 (dedup módulos). Persona B completa B1-B9 (bugs y toasts en páginas, sin depender de nuevos tipos).
-2. **Semana 2-3**: Persona A completa A1-A3, A7-A18. Persona B aplica B20 (reemplazar `as Record`) usando los nuevos tipos de A5.
-3. **Semana 3-4**: Persona A finaliza documentación y cleanup. Persona B completa B10-B22 (componentes nuevos, UI avanzada, responsive).
-4. Usar branches separadas: `fix/infrastructure` y `fix/features-ui`. Merge de `fix/infrastructure` va primero.
-5. Si una tarea de Persona B requiere un tipo que Persona A aún no creó, usar el tipo existente y crear un TODO para actualizar después.
+- **Descripción**: RF-01 exige que al expirar la sesión, el sistema se bloquee y solicite re-autenticación. Actualmente `auth-context.tsx:52-53` llama `lock()` + `logout()`, destruyendo la sesión. `isLocked` state existe pero no hay UI. `unlock()` nunca se invoca.
+- **Archivos involucrados**:
+  - Nuevo: `src/components/LockScreen.tsx`
+  - Modificar: `src/features/auth/auth-context.tsx:52-53` (cambiar `lock()`+`logout()` → solo `lock()`)
+  - Modificar: `src/features/auth/store/auth.store.ts:59-64` (agregar `isLocked` a `partialize`)
+  - Modificar: `src/App.tsx` o `src/routes/ProtectedRoute.tsx` (check `isLocked`, render `<LockScreen />`)
+- **Prioridad**: CRÍTICA
+- **Complejidad**: Media
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Bajo (archivos nuevos + cambios puntuales en auth)
 
 ---
 
-# Problemas Técnicos Detectados
+## A2. Camp change resetea inactivity timer
 
-## Bugs Potenciales
-
-| #   | Bug                                                                   | Ubicación                                             | Impacto                                              |
-| --- | --------------------------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
-| 1   | `useServerTime()` nunca llamado → clock header no muestra hora real   | `shared/hooks/useServerTime.ts`, `AppShell.tsx:156`   | Funcionalidad no operativa                           |
-| 2   | Raza condition en 401 handler — segundo 401 en 2s ignorado            | `axiosInstance.ts:31-47`                              | Usuario se queda en página con requests fallidos     |
-| 3   | JWT decoding sin try-catch                                            | `auth.service.ts:12`                                  | Crash en login con token malformado                  |
-| 4   | `FileInput` sobreescribe `identification_code` con data URL           | `PersonCreatePage.tsx:310-314`                        | Corrupción de datos                                  |
-| 5   | `requested_by: 0` hardcodeado                                         | `TransfersPage.tsx:149`                               | Transferencias inválidas (backend requiere positivo) |
-| 6   | `RationsPage` — selectores vacíos por mal acceso a paginated response | `RationsPage.tsx:42-46`                               | Funcionalidad rota                                   |
-| 7   | Filtrado client-side rompe paginación en PeopleListPage               | `PeopleListPage.tsx`                                  | Resultados de búsqueda incorrectos                   |
-| 8   | `identification_code` sobreescrito por segundo `FileInput`            | `PersonCreatePage.tsx:310-314`                        | Campo incorrecto recibe imagen en base64             |
-| 9   | `Date.now()` para business logic (4+ ubicaciones)                     | `PersonCreatePage`, `PersonDetailPage`, `RationsPage` | Fechas inconsistentes con servidor                   |
-| 10  | `campId` NaN si URL param no es numérico                              | `CampDetailPage.tsx:29,80`                            | UI muestra "CAMP.NaN"                                |
-| 11  | `use-mobile.tsx:14` — eslint-disable sin justificación                | `src/hooks/use-mobile.tsx`                            | Posible infinite loop sin detectar                   |
-| 12  | `NavigationBinder` puede perder ref en StrictMode                     | `AppRoutes.tsx:89-100`                                | 401 redirect falla si el componente se desmonta      |
-| 13  | `_hasHydrated` seteado por mutación directa                           | `auth.store.ts:64-68`                                 | Posible stale state en mismo tick                    |
-
-## Problemas de Rendimiento
-
-| #   | Problema                                        | Ubicación               | Impacto                                     |
-| --- | ----------------------------------------------- | ----------------------- | ------------------------------------------- |
-| 1   | `queryClient.invalidateQueries()` sin filtro    | `AppShell.tsx:35`       | Refetch masivo en cada cambio de campamento |
-| 2   | Event listeners en cada keystroke/mouse move    | `auth-context.tsx:24`   | Actualizaciones de store excesivas          |
-| 3   | `staleTime: 30_000` agresivo                    | `queryClient.ts:6`      | Refetch cada 30s incluso con datos frescos  |
-| 4   | `ReactQueryDevtools` en bundle producción       | `App.tsx:28`            | Bundle size innecesario                     |
-| 5   | 600ms artificial delay                          | `App.tsx:14`            | Experiencia de carga lenta forzada          |
-| 6   | Google Fonts `@import` bloqueante               | `globals.css:1`         | Blocking CSS resource                       |
-| 7   | RationsPage — fetch 200 people solo para select | `RationsPage.tsx:36-38` | Transferencia de datos innecesaria          |
-
-## Problemas de Seguridad
-
-| #   | Problema                                               | Ubicación                  | Riesgo                                        |
-| --- | ------------------------------------------------------ | -------------------------- | --------------------------------------------- |
-| 1   | `logger.error` siempre imprime en producción           | `logger.ts:14-16`          | Leak de tokens JWT, datos de API              |
-| 2   | `lastActivity` no persistido                           | `auth.store.ts:59-63`      | Bypass de session timeout recargando          |
-| 3   | Sin verificación de `/_hasHydrated` antes de servir UI | `auth.store.ts`, `App.tsx` | UI renderiza antes de hidratar auth           |
-| 4   | `canAccess` retorna false para rutas no definidas      | `roleGuards.ts:43-55`      | Nuevas rutas bloqueadas por defecto sin aviso |
-| 5   | Session timeout usa `Date.now()` (client clock)        | `auth-context.tsx:28`      | Bypass cambiando reloj del sistema            |
-| 6   | Sin Content-Security-Policy                            | `index.html`               | Sin protección XSS                            |
-
-## Problemas de Accesibilidad
-
-| #   | Problema                               | Ubicación                     |
-| --- | -------------------------------------- | ----------------------------- |
-| 1   | Sidebar no colapsa en mobile           | `AppShell.tsx`                |
-| 2   | Sin focus management en diálogos       | Varias páginas                |
-| 3   | Sin aria-labels en íconos interactivos | `Sidebar.tsx`, `AppShell.tsx` |
-| 4   | `prompt()` nativo no accesible         | `TransfersPage.tsx:172`       |
-| 5   | Sin skip-to-content link               | `AppShell.tsx`                |
-
-## Problemas de Arquitectura
-
-| #   | Problema                                 | Detalle                                                                    |
-| --- | ---------------------------------------- | -------------------------------------------------------------------------- |
-| 1   | Violación AGENTS.md: API data en Zustand | `camp.store.ts` almacena `serverTime` (dato de API)                        |
-| 2   | Doble source of truth para auth          | Context (`auth-context.tsx`) y Zustand (`auth.store.ts`) — pueden divergir |
-| 3   | Duplicación de módulos API               | `resources.api.ts` x2, `professions.api.ts` x2                             |
-| 4   | `useServerTime` duplicado                | Una implementación en `shared/hooks/` y otra en `features/system/hooks/`   |
-| 5   | Tipos duplicados                         | `CampStatus` x2, `PersonStatus` x3                                         |
-| 6   | Respuesta API inconsistente              | Algunas retornan `res.data`, otras `res.data.data`                         |
-| 7   | Sin `PaginatedResponse<T>` genérico      | Cada página hace casting manual                                            |
-| 8   | Sin ErrorBoundary a nivel app            | Crash en lazy-load no manejado                                             |
-
-## Malas Prácticas Detectadas
-
-| #   | Práctica                                                                     | Evidencia                                 |
-| --- | ---------------------------------------------------------------------------- | ----------------------------------------- |
-| 1   | `as Record<string, unknown>` en 15+ archivos                                 | Contradice TypeScript strict de AGENTS.md |
-| 2   | `prompt()` nativo del navegador                                              | `TransfersPage.tsx:172`                   |
-| 3   | Índice de array como fallback de React key                                   | 3+ archivos                               |
-| 4   | `err.message.toLowerCase().includes('409')` en vez de `err.response?.status` | `PersonDetailPage.tsx:201-202`            |
-| 5   | Validación con `setError` en vez de zod en form                              | `ExplorationsPage.tsx:167-168,172-173`    |
-| 6   | Mutación de form values con `delete payload.password`                        | `UsersPage.tsx:129-130`                   |
-| 7   | `NavigationBinder` — side-effect-only component renderizando `null`          | `AppRoutes.tsx:89-100`                    |
-| 8   | Mix de `zodResolver` directo y wrapper `resolved`                            | `ExplorationsPage.tsx`, `LoginPage.tsx`   |
-| 9   | `_hasHydrated` por mutación directa, no por `set()`                          | `auth.store.ts:64-68`                     |
-| 10  | `eslint-disable-next-line` sin comentario justificativo                      | `use-mobile.tsx:14`                       |
+- **Descripción**: `AppShell.tsx:32-48` `handleCampChange()` no llama `updateActivity()`. RF-01/RF-08 exigen que al cambiar de campamento se reinicie la sesión.
+- **Archivos involucrados**: `src/layouts/AppShell.tsx:32-48` (agregar `useAuthStore.getState().updateActivity()`)
+- **Prioridad**: ALTA
+- **Complejidad**: Baja
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Medio (AppShell es compartido, pero el cambio es 1 línea)
 
 ---
 
-# Recomendaciones
+## A3. Dashboard accesible para worker y travel_coordinator
 
-## Refactors Sugeridos
-
-1. **Extraer `useStats` de `DashboardPage`** → nuevo hook `useDashboardStats.ts`
-2. **Unificar enfoque de time sync** → eliminar implementación con Zustand, usar solo TanStack Query
-3. **Separar `login` de `logout` en auth service** — `logout` no necesita ser async
-4. **Renombrar variantes de `StatusBadge`** para que coincidan con colores reales
-5. **Crear hook `useCampId`** para evitar repetir `Number(id)` + validación en cada página de detalle
-
-## Mejoras de Estructura
-
-1. **Agregar directorio `src/components/` para ErrorBoundary** (no existe actualmente un lugar canónico para componentes de infraestructura)
-2. **Feature `rations/`** necesita `api/` y `hooks/` como los demás módulos
-3. **Extraer `PersonStatus` a tipo compartido** — lo usan 3 features distintas
-4. **Centralizar permisos de rol** en un solo archivo, no dispersos entre `roleGuards.ts`, `useNavItems.ts`, y `auth.service.ts`
-
-## Optimizaciones Posibles
-
-1. Aumentar `staleTime` de 30s a 5min para queries estables (camps, professions, resources)
-2. Usar `placeholderData: (prev) => prev` en paginación para evitar flashes de loading
-3. Agregar `enabled` condicional a queries que dependen de selección de campamento
-4. Implementar `React.lazy` también para componentes pesados (charts, modales con formularios)
-
-## Buenas Prácticas Faltantes
-
-1. Tests automatizados (Playwright E2E + Vitest unit)
-2. CI/CD pipeline (GitHub Actions: lint, spell, build, test en cada PR)
-3. Content-Security-Policy headers
-4. `skip-to-content` link para accesibilidad
-5. Loading skeletons consistentes en todas las páginas
-6. Manejo de estado vacío (empty states) en todas las listas/tablas
-7. Error boundaries por sección, no solo a nivel app
+- **Descripción**: RF-03 dice "Para otros roles: solo se muestran los recursos asignados a esa persona". Actualmente `roleGuards.ts:4` bloquea `/dashboard` a solo `system_admin` y `resource_manager`. Workers y travel_coordinators no pueden ver dashboard.
+- **Archivos involucrados**:
+  - `src/shared/lib/roleGuards.ts:4` (agregar `'worker'`, `'travel_coordinator'`)
+  - `src/hooks/useNavItems.ts:30` (agregar roles al nav item dashboard)
+  - `src/pages/DashboardPage.tsx:42-74` (agregar módulos para worker y travel_coordinator)
+  - `src/hooks/useDashboardStats.ts` (agregar queries específicas por rol)
+- **Prioridad**: ALTA
+- **Complejidad**: Media
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Bajo (área de Persona A)
 
 ---
 
-# Plan Sugerido
+## A4. Dashboard refleja campamento activo
 
-## 1. Crítico (Semana 1)
-
-| Orden | Tarea                                                             | Persona | Dependencias |
-| ----- | ----------------------------------------------------------------- | ------- | ------------ |
-| 1     | A5 — Crear `PaginatedResponse<T>` y tipar API functions           | A       | —            |
-| 2     | A6 — Unificar tipos duplicados (`CampStatus`, `PersonStatus`)     | A       | —            |
-| 3     | A4 — Consolidar módulos API duplicados                            | A       | A5, A6       |
-| 4     | A1 — Arreglar sincronización del tiempo del servidor (serverTime) | A       | —            |
-| 5     | A2 — Corregir raza condition del 401 handler                      | A       | —            |
-| 6     | A3 — JWT decoding con try-catch + usar tipo Role                  | A       | —            |
-| 7     | B1 + B2 — Agregar toasts + try-catch en mutaciones                | B       | —            |
-| 8     | B3 — `requested_by: 0` hardcodeado                                | B       | —            |
-| 9     | B4 — `FileInput` sobreescribe `identification_code`               | B       | —            |
-| 10    | B5 — Reemplazar `prompt()` nativo                                 | B       | —            |
-| 11    | B6 — Arreglar AlertDialog sticky en ExplorationsPage              | B       | —            |
-| 12    | B8 — Arrays vacíos en RationsPage                                 | B       | A5           |
-
-## 2. Importante (Semana 2)
-
-| Orden | Tarea                                                          | Persona | Dependencias |
-| ----- | -------------------------------------------------------------- | ------- | ------------ |
-| 13    | B7 — Filtrado server-side en PeopleListPage                    | B       | —            |
-| 14    | B9 — Parsing frágil de descripciones en RationsPage            | B       | —            |
-| 15    | B15 — AI Explainability UI (admission ai_reasoning)            | B       | —            |
-| 16    | A7 — Error Boundary para lazy-loaded routes                    | A       | —            |
-| 17    | A8 + A9 — Debounce de event listeners + persistir lastActivity | A       | —            |
-| 18    | A12 — Filtro en `queryClient.invalidateQueries()`              | A       | A5           |
-| 19    | B20 — Reemplazar `as Record<string, unknown>` con tipos reales | B       | A5           |
-| 20    | A13 — Centralizar permisos de rol y arreglar useNavItems       | A       | A3           |
-| 21    | A16 — Logger condicional en producción                         | A       | —            |
-
-## 3. Mejoras (Semana 3)
-
-| Orden | Tarea                                                 | Persona | Dependencias |
-| ----- | ----------------------------------------------------- | ------- | ------------ |
-| 22    | A10 — Limpiar archivos vacíos y dead code             | A       | —            |
-| 23    | A11 — Clases CSS vacías en globals.css                | A       | —            |
-| 24    | A17 — Estandarizar `zodResolver` → wrapper `resolved` | A       | —            |
-| 25    | B10 — Confirmación en acciones destructivas           | B       | —            |
-| 26    | B12 — Status "DECEASED" vs "DEAD"                     | B       | —            |
-| 27    | B13 — Reemplazar `Date.now()` por server time         | B       | A1           |
-| 28    | B16 — Renombrar variantes StatusBadge                 | B       | —            |
-| 29    | B17 — Expandir tipo accent en Panel                   | B       | —            |
-| 30    | B18 — Validar campId en CampDetailPage                | B       | —            |
-| 31    | B19 — Arreglar React key con fallback de índice       | B       | —            |
-| 32    | B21 — Extraer useStats a hook separado                | B       | —            |
-
-## 4. Optimización Final (Semana 4)
-
-| Orden | Tarea                                                            | Persona | Dependencias |
-| ----- | ---------------------------------------------------------------- | ------- | ------------ |
-| 33    | A14 — `ReactQueryDevtools` solo en DEV                           | A       | —            |
-| 34    | A15 — Eliminar delay 600ms en App.tsx                            | A       | —            |
-| 35    | A18 — Actualizar documentación obsoleta                          | A       | —            |
-| 36    | B14 — Remover/reemplazar placeholder notices en ExplorationsPage | B       | B15          |
-| 37    | B22 — Responsive layout con drawer mobile                        | B       | —            |
-| 38    | — Crear tests E2E con Playwright (6 escenarios de MILESTONES.md) | A o B   | —            |
-| 39    | — Configurar CI/CD con GitHub Actions                            | A       | —            |
-| 40    | — Actualizar `README.md` con instrucciones de setup              | A       | —            |
+- **Descripción**: `DashboardPage.tsx` nunca importa `useCampStore` ni lee `activeCamp`. Las métricas son globales (todos los camps). RF-03 exige "El dashboard refleja el campamento activo actualmente".
+- **Archivos involucrados**:
+  - `src/pages/DashboardPage.tsx` (importar `useCampStore`, filtrar queries por `activeCamp`)
+  - `src/hooks/useDashboardStats.ts` (aceptar `campId` opcional, filtrar queries)
+- **Prioridad**: ALTA
+- **Complejidad**: Media
+- **Dependencias**: A3 (coordinar acceso al dashboard)
+- **Riesgo de conflicto**: Medio (DashboardPage es compartido)
 
 ---
 
-> **Total de tareas**: 40
-> **Persona A**: 20 tareas | **Persona B**: 20 tareas
-> **Archivos solapados**: 2 (`AppShell.tsx`, `LoginPage.tsx`) con áreas no conflictivas
-> **Tareas bloqueantes**: A5 y A1 deben completarse antes de que B inicie B20 y B13 respectivamente
+## A5. Tests E2E con Playwright
+
+- **Descripción**: RNF-05 exige pruebas automáticas con Playwright cubriendo flujos críticos + CI. Cero tests actualmente.
+- **Archivos involucrados**:
+  - Nuevo: `playwright.config.ts`
+  - Nuevo: `e2e/` directorio con tests de flujos críticos:
+    - Login/logout
+    - Crear campamento + cambiar campamento activo
+    - Crear persona (admission flow)
+    - Crear exploración + retorno
+    - Crear transferencia + aprobación
+    - Navegación por rol
+  - Modificar: `package.json` (agregar `@playwright/test`, scripts `test`, `test:e2e`)
+- **Prioridad**: CRÍTICA
+- **Complejidad**: Alta (6+ escenarios E2E)
+- **Dependencias**: Ninguna (tests validan comportamiento actual)
+- **Riesgo de conflicto**: Ninguno (archivos nuevos)
+
+---
+
+## A6. CI/CD con GitHub Actions
+
+- **Descripción**: RNF-05 exige CI automático. Sin `.github/workflows/`.
+- **Archivos involucrados**:
+  - Nuevo: `.github/workflows/ci.yml` (lint, spell, build, typecheck)
+  - Nuevo: `.github/workflows/playwright.yml` (tests E2E en CI)
+- **Prioridad**: CRÍTICA
+- **Complejidad**: Media
+- **Dependencias**: A5 (Playwright debe estar configurado)
+- **Riesgo de conflicto**: Ninguno (archivos nuevos)
+
+---
+
+## A7. Vercel deployment config
+
+- **Descripción**: RNF-06 exige frontend desplegado en Vercel accesible públicamente. No existe `vercel.json`.
+- **Archivos involucrados**:
+  - Nuevo: `vercel.json` (SPA rewrite rules, build config)
+  - Modificar: `package.json` (verificar build script)
+- **Prioridad**: ALTA
+- **Complejidad**: Baja
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Ninguno (archivos nuevos)
+
+---
+
+## A8. Gamificación — infraestructura y motor
+
+- **Descripción**: RNF-03 exige "Elementos de gamificación funcionales (progreso, niveles, logros, o recompensas visuales)". Cero implementación.
+- **Archivos involucrados**:
+  - Nuevo: `src/features/gamification/types/gamification.types.ts` (tipos: `Achievement`, `UserProgress`, `Level`)
+  - Nuevo: `src/features/gamification/api/gamification.api.ts` (endpoints si existen en backend, o mock/local)
+  - Nuevo: `src/features/gamification/hooks/useGamification.ts` (queries/mutations)
+  - Nuevo: `src/features/gamification/store/gamification.store.ts` (Zustand — client state para progreso)
+  - Nuevo: `src/features/gamification/index.ts`
+- **Prioridad**: ALTA
+- **Complejidad**: Alta
+- **Dependencias**: Ninguna (feature nueva)
+- **Riesgo de conflicto**: Ninguno (feature nueva)
+- **Nota**: La implementación específica de elementos visuales corresponde a Persona B (A8 es solo infraestructura: tipos, store, hooks)
+
+---
+
+## A9. Arreglar `@keyframes drift` bug en WaveBackground
+
+- **Descripción**: `WaveBackground.tsx:11,19,27` referencia animación `drift` pero no existe `@keyframes drift` en ningún CSS.
+- **Archivos involucrados**:
+  - `src/app/styles/globals.css` (agregar `@keyframes drift`)
+  - `src/components/cyber/WaveBackground.tsx` (verificar valores)
+- **Prioridad**: BAJA
+- **Complejidad**: Baja
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Ninguno
+
+---
+
+## A10. Limpiar dead code restante
+
+- **Descripción**: `src/features/inventory/pages/ResourcesPage.tsx` duplicado (idéntico a `src/features/resources/pages/ResourcesPage.tsx`). `src/features/rations/api/rations.api.ts` función `create` con formato key=value obsoleto (no usada por `RationsPage.tsx`). `useCreateRation` hook no usado.
+- **Archivos involucrados**:
+  - Eliminar: `src/features/inventory/pages/ResourcesPage.tsx`
+  - Evaluar: `src/features/rations/api/rations.api.ts:19-36` (función `create` — ¿usarla o eliminarla?)
+  - Evaluar: `src/features/rations/hooks/useRations.ts:16-24` (`useCreateRation` — unused)
+- **Prioridad**: BAJA
+- **Complejidad**: Baja
+- **Dependencias**: Verificar imports antes de eliminar
+- **Riesgo de conflicto**: Bajo
+
+---
+
+## A11. Contribution overrides — crear UI
+
+- **Descripción**: `useCreateContributionOverride` hook y API existen (`people.api.ts:58-59`) pero ninguna página los usa. RF-06 menciona "Formulario para registrar manualmente un cambio en el ingreso (cuando una persona no puede cumplir su objetivo)". El override de contribución implementa exactamente esto.
+- **Archivos involucrados**:
+  - Modificar: `src/features/people/pages/PersonDetailPage.tsx` (agregar sección/dialog para contribution override)
+  - Usar: `src/features/people/hooks/usePeople.ts:101-111` (`useCreateContributionOverride`)
+- **Prioridad**: MEDIA
+- **Complejidad**: Media
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Medio (PersonDetailPage es compartido con Persona B)
+
+---
+
+# Persona B — Features, Páginas, UI/UX, Componentes Visuales
+
+**Área**: Admission AI flow, image uploads, exploraciones, transfers, inventario, gamificación UI, reportes.
+
+---
+
+## B1. Image/ID card upload con FileInput en admission y persona
+
+- **Descripción**: RF-04 exige "Soporte para subir imágenes de la persona" y "Soporte para subir/mostrar tarjeta de identificación". `FileInput.tsx` existe pero NO se usa. `AdmissionsPage` y `PersonCreatePage` usan `<input type="text">` para URLs.
+- **Archivos involucrados**:
+  - `src/features/admission/pages/AdmissionsPage.tsx:337,349` (reemplazar text input por `<FileInput>`)
+  - `src/features/people/pages/PersonCreatePage.tsx:292` (reemplazar text input por `<FileInput>`)
+  - `src/components/cyber/FileInput.tsx` (ya existe, listo para usar)
+- **Prioridad**: ALTA
+- **Complejidad**: Media
+- **Dependencias**: Backend debe aceptar base64 o multipart upload (verificar)
+- **Riesgo de conflicto**: Bajo (cambios locales en formularios)
+
+---
+
+## B2. AI decision correction flow — permitir corregir/override
+
+- **Descripción**: RF-04 exige "El usuario final puede revisar, aceptar o corregir la decisión de la IA". Actualmente solo aceptar/rechazar. Falta UI para:
+  - Override de la profesión sugerida por la AI
+  - Razón de corrección
+  - Envío de la decisión corregida al backend
+- **Archivos involucrados**:
+  - `src/features/admission/pages/AdmissionsPage.tsx:96-105,234-268` (agregar modo "corregir" con campos adicionales)
+  - `src/features/admission/components/AIAnalysisPanel.tsx` (agregar indicador de override)
+  - `src/features/admission/api/admission.api.ts:15-17,42-43` (posiblemente extender DTO con `corrected_profession`, `correction_reason`)
+- **Prioridad**: ALTA
+- **Complejidad**: Media
+- **Dependencias**: Backend debe aceptar campos de corrección en `PATCH /admission/:id/review`
+- **Riesgo de conflicto**: Ninguno (área de Persona B)
+
+---
+
+## B3. Auto-asignar ID y profesión al aceptar admission
+
+- **Descripción**: RF-04 exige "Al aceptar, se asigna automáticamente un ID y un cargo/profesión mediante IA". `ai_suggested_profession` se muestra pero no se actúa. Al hacer clic en "Accept", debería crearse automáticamente la persona con la profesión sugerida.
+- **Archivos involucrados**:
+  - `src/features/admission/pages/AdmissionsPage.tsx:96-105` (al aceptar, llamar endpoint de creación de persona con `ai_suggested_profession`)
+  - Posiblemente nuevo endpoint o modificar `PATCH /admission/:id/review` para que el backend cree la persona
+- **Prioridad**: ALTA
+- **Complejidad**: Media
+- **Dependencias**: Backend debe soportar auto-creación de persona al aceptar admission
+- **Riesgo de conflicto**: Bajo
+
+---
+
+## B4. Reporte de aceptación/rechazo (PDF o descargable)
+
+- **Descripción**: RF-04 menciona "Se genera un reporte de aceptación o rechazo". No existe generación de reportes.
+- **Archivos involucrados**:
+  - Nuevo: componente de reporte (puede ser HTML printable o usar librería como `jsPDF`)
+  - Modificar: `src/features/admission/pages/AdmissionsPage.tsx` (botón "Download Report")
+  - Modificar: `src/features/admission/components/AdmissionDetailPanel.tsx` (agregar datos al reporte)
+- **Prioridad**: MEDIA
+- **Complejidad**: Media
+- **Dependencias**: Puede necesitar librería (`jspdf`, `html2canvas`)
+- **Riesgo de conflicto**: Bajo
+
+---
+
+## B5. Work availability indicators en PeopleListPage y PersonDetailPage
+
+- **Descripción**: RF-05 exige "El estado afecta la disponibilidad laboral de la persona (interfaz lo refleja)". Solo `ExplorationsPage` filtra por AWAY/DEAD. `PeopleListPage` y `PersonDetailPage` no muestran disponibilidad laboral.
+- **Archivos involucrados**:
+  - `src/features/people/pages/PeopleListPage.tsx:216-223` (agregar columna/badge "AVAILABLE" / "UNAVAILABLE")
+  - `src/features/people/pages/PersonDetailPage.tsx:280-283` (agregar indicador de work availability)
+- **Prioridad**: MEDIA
+- **Complejidad**: Baja
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Bajo
+
+---
+
+## B6. auto_daily en formulario de recurso
+
+- **Descripción**: RF-06 exige procesamiento automático diario. El campo `auto_daily` existe en el tipo y API (`resources.api.ts:9`) pero NO está en el formulario create/edit de `ResourcesPage.tsx`.
+- **Archivos involucrados**:
+  - `src/features/resources/pages/ResourcesPage.tsx:29-34` (agregar `auto_daily: z.boolean()` al schema)
+  - `src/features/resources/pages/ResourcesPage.tsx` (agregar checkbox/switch en el formulario de create/edit)
+- **Prioridad**: ALTA
+- **Complejidad**: Baja
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Ninguno
+
+---
+
+## B7. Resource names en InventoryAuditPage
+
+- **Descripción**: `InventoryAuditPage.tsx:115` muestra `String(entry.resource_type_id)` (un número) como nombre del recurso. `InventoryAuditEntry` no tiene join `resource`.
+- **Archivos involucrados**:
+  - `src/features/inventory/types/inventory.types.ts:12-24` (agregar `resource?: { id: number; name: string }` al tipo)
+  - `src/features/inventory/pages/InventoryAuditPage.tsx:115` (usar `entry.resource?.name ?? String(entry.resource_type_id)`)
+- **Prioridad**: MEDIA
+- **Complejidad**: Baja
+- **Dependencias**: Backend debe incluir resource name en la respuesta de audit
+- **Riesgo de conflicto**: Ninguno
+
+---
+
+## B8. Consumo de raciones en exploraciones
+
+- **Descripción**: RF-07 exige "Las exploraciones consumen raciones adicionales (reflejado en bodega)". Cero implementación. Al crear/activar exploración no se deduce nada del inventario.
+- **Archivos involucrados**:
+  - `src/features/explorations/pages/ExplorationsPage.tsx:151-183` (`onSubmitCreate` — agregar envío de `allocated_resources` con raciones por miembro × días)
+  - `src/features/explorations/hooks/useExplorations.ts` (invalidar inventory queries al crear exploración)
+  - Posiblemente: `src/features/rations/` (si se requiere crear ration entries)
+- **Prioridad**: ALTA
+- **Complejidad**: Media
+- **Dependencias**: Backend debe aceptar `allocated_resources` en la creación y deducir inventario
+- **Riesgo de conflicto**: Ninguno (área de Persona B)
+
+---
+
+## B9. Inventory invalidation en transfer mutations
+
+- **Descripción**: RF-09 exige "Si se aprueba: los cambios se reflejan automáticamente en la bodega de ambos campamentos". Las mutaciones de transfer (`approveSource`, `approveTarget`, `complete`) solo invalidan `TRANSFERS_KEY`, nunca queries de inventory.
+- **Archivos involucrados**:
+  - `src/features/transfers/hooks/useTransfers.ts:54-61,66-73,78-85` (agregar `queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'inventory' })` en onSuccess)
+- **Prioridad**: ALTA
+- **Complejidad**: Baja
+- **Dependencias**: Ninguna
+- **Riesgo de conflicto**: Ninguno
+
+---
+
+## B10. Groups feature para envío de personas entre campamentos
+
+- **Descripción**: RF-09 exige "Si implica envío de personas: creación de un grupo con el rol correspondiente + raciones para el viaje". No existe feature `groups/`. `leader_person_id` en schema pero sin UI input.
+- **Archivos involucrados**:
+  - Nuevo: `src/features/groups/types/group.types.ts`
+  - Nuevo: `src/features/groups/api/groups.api.ts`
+  - Nuevo: `src/features/groups/hooks/useGroups.ts`
+  - Nuevo: `src/features/groups/pages/GroupsPage.tsx`
+  - Nuevo: `src/features/groups/index.ts`
+  - Modificar: `src/features/transfers/pages/TransfersPage.tsx:631-787` (agregar `leader_person_id` input; al crear transfer PERSON, crear grupo)
+  - Modificar: `src/routes/AppRoutes.tsx` (agregar ruta `/groups`)
+  - Modificar: `src/shared/lib/roleGuards.ts` (agregar acceso a `/groups`)
+- **Prioridad**: ALTA
+- **Complejidad**: Alta
+- **Dependencias**: Backend debe tener endpoints de groups
+- **Riesgo de conflicto**: Medio (nuevas rutas + modificar roleGuards)
+
+---
+
+## B11. Audit trail inventory↔transfer link
+
+- **Descripción**: RF-09 exige "Registro de auditoría visible para todas las transacciones entre campamentos". El transfer log muestra eventos pero no deltas de inventario. No hay link entre transfer completada y sus inventory audit entries.
+- **Archivos involucrados**:
+  - `src/features/transfers/pages/TransfersPage.tsx:463-628` (agregar desglose de recursos movidos en el transfer log)
+  - `src/features/inventory/pages/InventoryAuditPage.tsx` (opcional: filtro por transfer_id)
+- **Prioridad**: MEDIA
+- **Complejidad**: Media
+- **Dependencias**: Backend debe incluir resource breakdown en respuesta de transfer
+- **Riesgo de conflicto**: Bajo
+
+---
+
+## B12. leader_person_id input en formulario de transferencia
+
+- **Descripción**: `leader_person_id` está en el schema y se envía al API, pero NO hay input en el formulario de creación de transferencia. El usuario nunca puede setearlo.
+- **Archivos involucrados**:
+  - `src/features/transfers/pages/TransfersPage.tsx:631-787` (agregar selector de persona como líder cuando `type === 'PERSON' || type === 'MIXED'`)
+- **Prioridad**: MEDIA
+- **Complejidad**: Baja
+- **Dependencias**: B10 (groups)
+- **Riesgo de conflicto**: Bajo
+
+---
+
+## B13. Gamificación — componentes visuales
+
+- **Descripción**: RNF-03 exige elementos visuales de gamificación. La infraestructura la crea Persona A (A8). Persona B implementa los componentes visuales.
+- **Archivos involucrados**:
+  - Nuevo: `src/features/gamification/components/AchievementBadge.tsx`
+  - Nuevo: `src/features/gamification/components/ProgressBar.tsx` (usar shadcn `Progress`)
+  - Nuevo: `src/features/gamification/components/LevelIndicator.tsx` (usar `RingMeter`)
+  - Nuevo: `src/features/gamification/components/GamificationPanel.tsx` (widget en Dashboard)
+  - Modificar: `src/pages/DashboardPage.tsx` (integrar GamificationPanel)
+  - Modificar: `src/layouts/AppShell.tsx` (mostrar nivel/progreso en sidebar/header)
+- **Prioridad**: ALTA
+- **Complejidad**: Alta
+- **Dependencias**: A8 (tipos y store de gamificación)
+- **Riesgo de conflicto**: Medio (DashboardPage y AppShell son compartidos)
+
+---
+
+## B14. Documentación del modelo AI en UI
+
+- **Descripción**: RNF-07 exige "El uso de IA en el proyecto está documentado" y "Las decisiones asistidas por IA muestran criterios claros y trazables". La AI existe pero no se documenta qué modelo, ni hay confidence scores.
+- **Archivos involucrados**:
+  - `src/features/admission/components/AIAnalysisPanel.tsx` (agregar confidence score si el backend lo provee)
+  - `src/features/admission/pages/AdmissionsPage.tsx` (agregar tooltip/info sobre el modelo AI usado)
+  - Nuevo: `src/features/admission/components/AIModelInfo.tsx` (panel informativo sobre el modelo)
+- **Prioridad**: BAJA
+- **Complejidad**: Baja
+- **Dependencias**: Información del backend sobre el modelo
+- **Riesgo de conflicto**: Ninguno
+
+---
+
+# Tareas Bloqueadas
+
+| Tarea                          | Bloqueada por               | Razón                                                                       |
+| ------------------------------ | --------------------------- | --------------------------------------------------------------------------- |
+| B10 (Groups feature)           | Backend groups endpoints    | Necesita API de grupos para implementar frontend                            |
+| B3 (Auto-asignar ID/profesión) | Backend admission review    | Necesita que el backend cree persona al aceptar                             |
+| B2 (AI correction flow)        | Backend review DTO          | Necesita que el backend acepte `corrected_profession`                       |
+| B8 (Raciones en exploraciones) | Backend allocated_resources | Necesita que el backend deduzca inventario al recibir `allocated_resources` |
+| B13 (Gamificación UI)          | A8 (Gamificación infra)     | Necesita tipos, store y hooks definidos                                     |
+| A5 (Playwright tests)          | —                           | Puede iniciarse ya, pero el CI (A6) depende de A5                           |
+| A6 (CI/CD)                     | A5                          | Necesita Playwright configurado para el workflow de tests                   |
+
+---
+
+# Deuda Técnica Detectada
+
+## Problemas de arquitectura
+
+| #   | Problema                                                  | Ubicación                                 | Impacto                                                                   |
+| --- | --------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
+| 1   | `isLocked`/`lock()`/`unlock()` existen pero son dead code | `auth.store.ts:10,54-55`                  | Funcionalidad de bloqueo incompleta                                       |
+| 2   | `RoleGate` existe pero 0 usos — sin per-action gating     | `src/shared/guards/RoleGate.tsx`          | Botones visibles para roles que no deberían verlos en páginas compartidas |
+| 3   | `ResourcesPage.tsx` duplicado idéntico                    | `inventory/pages/` y `resources/pages/`   | Confusión de mantenimiento                                                |
+| 4   | `useCreateRation` hook + `rationsApi.create` no usados    | `rations/hooks/`, `rations/api/`          | Dead code con formato key=value obsoleto                                  |
+| 5   | `useCreateContributionOverride` existe sin UI             | `people/hooks/usePeople.ts:101`           | API implementada pero inaccesible al usuario                              |
+| 6   | TransfersPage (905 líneas) monolítico                     | `transfers/pages/TransfersPage.tsx`       | Difícil de mantener y extender                                            |
+| 7   | ExplorationsPage (816 líneas) monolítico                  | `explorations/pages/ExplorationsPage.tsx` | Difícil de mantener y extender                                            |
+
+## Inconsistencias de tipos
+
+| #   | Problema                                                     | Ubicación                                  |
+| --- | ------------------------------------------------------------ | ------------------------------------------ |
+| 1   | `InventoryAuditEntry` sin campo `resource` join              | `inventory/types/inventory.types.ts:12-24` |
+| 2   | `RationsPage.tsx:44-56` aún usa `as Record<string, unknown>` | `rations/pages/RationsPage.tsx`            |
+
+## Problemas UX/UI
+
+| #   | Problema                                                 | Ubicación                      |
+| --- | -------------------------------------------------------- | ------------------------------ |
+| 1   | `@keyframes drift` no definido — WaveBackground no anima | `globals.css` (falta keyframe) |
+| 2   | Audit page muestra IDs numéricos como nombres de recurso | `InventoryAuditPage.tsx:115`   |
+| 3   | Sin empty states con acciones sugeridas (solo mensajes)  | Varias páginas de lista        |
+
+## Validaciones faltantes
+
+| #   | Problema                                                    | Ubicación                   |
+| --- | ----------------------------------------------------------- | --------------------------- |
+| 1   | `auto_daily` no está en el schema del formulario de recurso | `ResourcesPage.tsx:29-34`   |
+| 2   | `leader_person_id` sin input en formulario de transferencia | `TransfersPage.tsx:631-787` |
+
+## Loading/error states
+
+| #   | Problema                                                                    | Ubicación |
+| --- | --------------------------------------------------------------------------- | --------- |
+| 1   | Estados de carga y error existen en todas las páginas — sin gaps detectados | —         |
+
+## Problemas de accesibilidad
+
+| #   | Problema                                           | Ubicación      |
+| --- | -------------------------------------------------- | -------------- |
+| 1   | Sin skip-to-content link                           | `AppShell.tsx` |
+| 2   | Sin aria-labels en sidebar toggle y hamburger menu | `AppShell.tsx` |
+
+## Problemas de performance
+
+| #   | Problema                                                            | Ubicación                   |
+| --- | ------------------------------------------------------------------- | --------------------------- |
+| 1   | Transfer log sin paginación — podría ser lento con muchos transfers | `TransfersPage.tsx:463-628` |
+| 2   | RationsPage sin paginación en historial de consumo                  | `RationsPage.tsx:190-278`   |
+
+## Dead code y duplicaciones
+
+| #   | Problema                                           | Ubicación                                        |
+| --- | -------------------------------------------------- | ------------------------------------------------ |
+| 1   | `ResourcesPage.tsx` duplicado                      | `src/features/inventory/pages/ResourcesPage.tsx` |
+| 2   | `useCreateRation` hook no usado                    | `src/features/rations/hooks/useRations.ts:16-24` |
+| 3   | `rationsApi.create` con formato key=value obsoleto | `src/features/rations/api/rations.api.ts:19-36`  |
+| 4   | `RoleGate` componente sin usar                     | `src/shared/guards/RoleGate.tsx`                 |
+
+---
+
+# Plan Recomendado
+
+## Etapa 1 — Crítico (lo que impide cumplir requerimientos)
+
+| Orden | Tarea | Persona | Descripción                                                        |
+| ----- | ----- | ------- | ------------------------------------------------------------------ |
+| 1     | A1    | A       | LockScreen — componente + flujo de bloqueo/desbloqueo              |
+| 2     | A5    | A       | Tests E2E Playwright — instalar, configurar, escribir 6 escenarios |
+| 3     | A6    | A       | CI/CD GitHub Actions — workflows de lint + test                    |
+| 4     | A7    | A       | Vercel deploy config — `vercel.json` + deploy                      |
+| 5     | B8    | B       | Consumo de raciones en exploraciones                               |
+| 6     | B9    | B       | Inventory invalidation en transfer mutations                       |
+| 7     | B1    | B       | Image/ID card upload con FileInput                                 |
+| 8     | B2    | B       | AI decision correction flow                                        |
+| 9     | B3    | B       | Auto-asignar ID/profesión al aceptar admission                     |
+
+## Etapa 2 — Estabilización
+
+| Orden | Tarea | Persona | Descripción                                           |
+| ----- | ----- | ------- | ----------------------------------------------------- |
+| 10    | A2    | A       | Camp change resetea inactivity timer                  |
+| 11    | A3    | A       | Dashboard accesible para worker/travel_coordinator    |
+| 12    | A4    | A       | Dashboard refleja campamento activo                   |
+| 13    | B6    | B       | auto_daily en formulario de recurso                   |
+| 14    | B7    | B       | Resource names en InventoryAuditPage                  |
+| 15    | B5    | B       | Work availability indicators                          |
+| 16    | B12   | B       | leader_person_id input en formulario de transferencia |
+| 17    | A9    | A       | Arreglar `@keyframes drift` en WaveBackground         |
+
+## Etapa 3 — Funcionalidades faltantes
+
+| Orden | Tarea | Persona | Descripción                                         |
+| ----- | ----- | ------- | --------------------------------------------------- |
+| 18    | B10   | B       | Groups feature completa (si backend lo soporta)     |
+| 19    | B11   | B       | Audit trail inventory↔transfer link                 |
+| 20    | A8    | A       | Gamificación — tipos, store, hooks                  |
+| 21    | B13   | B       | Gamificación — componentes visuales (depende de A8) |
+| 22    | B4    | B       | Reporte de aceptación/rechazo (PDF/descargable)     |
+| 23    | A11   | A       | Contribution overrides — crear UI                   |
+
+## Etapa 4 — Polish y optimización
+
+| Orden | Tarea | Persona | Descripción                                                             |
+| ----- | ----- | ------- | ----------------------------------------------------------------------- |
+| 24    | A10   | A       | Limpiar dead code restante (ResourcesPage duplicado, rationsApi.create) |
+| 25    | B14   | B       | Documentación del modelo AI en UI                                       |
+| 26    | —     | A/B     | Agregar skip-to-content link + aria-labels en AppShell                  |
+| 27    | —     | B       | Agregar `RoleGate` usage en páginas compartidas (ej. `/transfers`)      |
+| 28    | —     | A       | Revisar `RationsPage.tsx` casts `Record<string, unknown>` restantes     |
+
+---
+
+> **Total de tareas**: 28 (14 Persona A + 14 Persona B)
+> **Tareas nuevas (no existían en plan anterior)**: 28 (el plan anterior está completado)
+> **Archivos solapados**: `DashboardPage.tsx` (A3, A4, B13), `AppShell.tsx` (A2, A9), `TransfersPage.tsx` (B9, B11, B12)
+> **Estrategia**: Persona A trabaja en `feat/infra-auth-devops`, Persona B en `feat/features-ui-gaps`. Persona A mergea primero por tener cambios en shared/routes.

@@ -18,6 +18,7 @@ import {
 import { useCamp } from '@/features/camps/hooks/useCamps';
 import { useProfessions } from '@/features/professions/hooks/useProfessions';
 import { toast } from '@/shared/lib/toast';
+import type { Profession } from '@/features/professions/types/profession.types';
 import { ArrowLeft, Edit3, Trash2, Activity, Wrench } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -98,6 +99,8 @@ export function PersonDetailPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [reassignOpen, setReassignOpen] = useState(false);
   const [reassignError, setReassignError] = useState<string | null>(null);
+
+  const statusLogs = person?.person_status_log ?? [];
 
   const editForm = useForm<UpdatePersonFormValues>({
     resolver: resolved(updatePersonSchema),
@@ -281,9 +284,7 @@ export function PersonDetailPage() {
             </div>
             <div>
               <span className="text-muted-foreground">PROFESSION: </span>
-              <span className="text-[var(--neon-fuchsia)]">
-                {(person.professions?.name as string) || '—'}
-              </span>
+              <span className="text-[var(--neon-fuchsia)]">{person.professions?.name || '—'}</span>
             </div>
             <div>
               <span className="text-muted-foreground">CAMP: </span>
@@ -453,7 +454,7 @@ export function PersonDetailPage() {
                   PROFESSION //
                 </label>
                 <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
-                  {(person.professions?.name as string) || '—'}
+                  {person.professions?.name || '—'}
                 </div>
               </div>
             </div>
@@ -638,7 +639,7 @@ export function PersonDetailPage() {
                 CURRENT PROFESSION //
               </label>
               <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
-                {(person.professions?.name as string) || '—'}
+                {person.professions?.name || '—'}
               </div>
             </div>
             <div>
@@ -650,13 +651,11 @@ export function PersonDetailPage() {
                 className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
-                {(Array.isArray(professions) ? professions : []).map(
-                  (prof: Record<string, unknown>) => (
-                    <option key={prof.id as number} value={prof.id as number}>
-                      {prof.name as string}
-                    </option>
-                  ),
-                )}
+                {(Array.isArray(professions) ? professions : []).map((prof: Profession) => (
+                  <option key={prof.id} value={prof.id}>
+                    {prof.name}
+                  </option>
+                ))}
               </select>
               {reassignForm.formState.errors.to_profession_id && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">

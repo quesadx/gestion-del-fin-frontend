@@ -15,7 +15,8 @@ import {
   useDeleteUser,
   useRoles,
 } from '@/features/users/hooks/useUsers';
-import type { RoleItem } from '@/features/users/api/users.api';
+import type { RoleItem, UpdateUserDto } from '@/features/users/api/users.api';
+import type { User } from '@/features/users/types/user.types';
 import { toast } from '@/shared/lib/toast';
 import { Shield, Plus, Edit3, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -64,7 +65,7 @@ export function UsersPage() {
   const deleteMutation = useDeleteUser();
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Record<string, unknown> | null>(null);
+  const [editTarget, setEditTarget] = useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; username: string } | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [editError, setEditError] = useState<string | null>(null);
@@ -86,13 +87,13 @@ export function UsersPage() {
     defaultValues: { username: '', password: '', camp_id: 0, role_id: 0, is_active: true },
   });
 
-  const openEdit = (u: Record<string, unknown>) => {
+  const openEdit = (u: User) => {
     editForm.reset({
-      username: u.username as string,
+      username: u.username,
       password: '',
-      camp_id: u.camp_id as number,
-      role_id: u.role_id as number,
-      is_active: u.is_active as boolean,
+      camp_id: u.camp_id,
+      role_id: u.role_id,
+      is_active: u.is_active,
     });
     setEditTarget(u);
   };
@@ -124,12 +125,12 @@ export function UsersPage() {
   const onSubmitEdit = async (values: UpdateFormValues) => {
     if (!editTarget) return;
     setEditError(null);
-    const payload: Record<string, unknown> = { ...values };
+    const payload: Partial<UpdateFormValues> = { ...values };
     if (!payload.password) delete payload.password;
     try {
       await updateMutation.mutateAsync({
-        id: editTarget.id as number,
-        payload: payload as Parameters<typeof updateMutation.mutateAsync>[0]['payload'],
+        id: editTarget.id,
+        payload: payload as UpdateUserDto,
       });
       toast('User updated successfully', 'success');
       setEditTarget(null);
@@ -139,13 +140,11 @@ export function UsersPage() {
     }
   };
 
-  const handleToggleActive = async (u: Record<string, unknown>) => {
+  const handleToggleActive = async (u: User) => {
     try {
       await updateMutation.mutateAsync({
-        id: u.id as number,
-        payload: { is_active: !(u.is_active as boolean) } as Parameters<
-          typeof updateMutation.mutateAsync
-        >[0]['payload'],
+        id: u.id,
+        payload: { is_active: !u.is_active },
       });
       toast(
         u.is_active ? 'User deactivated successfully' : 'User activated successfully',
@@ -233,27 +232,25 @@ export function UsersPage() {
                 <tbody>
                   {usersArray.map((u) => (
                     <tr
-                      key={u.id as number}
+                      key={u.id}
                       className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
                     >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
-                        {u.username as string}
-                      </td>
+                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{u.username}</td>
                       <td className="py-3 px-2 text-muted-foreground">
-                        {campMap.get(u.camp_id as number) || (u.camp_id as string)}
+                        {campMap.get(u.camp_id) || String(u.camp_id)}
                       </td>
                       <td className="py-3 px-2">
-                        <StatusBadge status={roleLabel(u.role_id as number)} variant="amber" />
+                        <StatusBadge status={roleLabel(u.role_id)} variant="amber" />
                       </td>
                       <td className="py-3 px-2">
                         <StatusBadge
                           status={u.is_active ? 'ACTIVE' : 'INACTIVE'}
-                          variant={getBadgeVariant(u.is_active as boolean)}
+                          variant={getBadgeVariant(u.is_active)}
                         />
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
                         {u.last_activity
-                          ? format(new Date(u.last_activity as string), 'dd/MM/yyyy HH:mm')
+                          ? format(new Date(u.last_activity), 'dd/MM/yyyy HH:mm')
                           : '—'}
                       </td>
                       <td className="py-3 px-2">
@@ -281,8 +278,8 @@ export function UsersPage() {
                             type="button"
                             onClick={() =>
                               setDeleteTarget({
-                                id: u.id as number,
-                                username: u.username as string,
+                                id: u.id,
+                                username: u.username,
                               })
                             }
                             className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
