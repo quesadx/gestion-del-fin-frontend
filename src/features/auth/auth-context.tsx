@@ -50,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const elapsed = getServerNow() - useAuthStore.getState().lastActivity;
       if (elapsed >= SESSION_TIMEOUT_MS) {
         lock();
-        logout();
       }
     }, 10_000);
 
@@ -58,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearInterval(interval);
       events.forEach((ev) => document.removeEventListener(ev, handleActivity));
     };
-  }, [token, isLocked, lock, logout, updateActivity]);
+  }, [token, isLocked, lock, updateActivity]);
 
   const value = useMemo(
     () => ({

@@ -3,9 +3,11 @@ import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { canAccess, ROLE_LANDING } from '@/shared/lib/roleGuards';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { LockScreen } from '@/components/LockScreen';
 
 export function ProtectedRoute() {
   const { isAuthenticated, isInitializing } = useAuth();
+  const isLocked = useAuthStore((state) => state.isLocked);
   const role = useAuthStore((state) => state.role);
   const location = useLocation();
 
@@ -15,6 +17,10 @@ export function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (isLocked) {
+    return <LockScreen />;
   }
 
   const path = location.pathname;
