@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cpu, ArrowUpRight, ChevronRight } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/store/auth.store';
+import { useCampStore } from '@/features/camps/store/camp.store';
 import { useServerTime, getServerNow } from '@/features/system/hooks/useServerTime';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
@@ -21,9 +22,17 @@ export function DashboardPage() {
   const navigate = useNavigate();
   const role = useAuthStore((state) => state.role);
   const userName = useAuthStore((state) => state.user?.username);
+  const activeCamp = useCampStore((state) => state.activeCamp);
 
-  const { isLoading, campCount, activeCamps, resourceCount, camps, autoDailyCount } =
-    useDashboardStats(role);
+  const {
+    isLoading,
+    campCount,
+    activeCamps,
+    resourceCount,
+    camps,
+    autoDailyCount,
+    activeCampName,
+  } = useDashboardStats(role, activeCamp?.id);
 
   const [serverTime, setServerTime] = useState<string>('');
   const { data: timeData } = useServerTime();
@@ -99,6 +108,11 @@ export function DashboardPage() {
             <p className="font-mono text-text-muted max-w-2xl leading-relaxed">
               System operational. All subsystems nominal. Select a module to execute operations.
             </p>
+            {activeCampName && (
+              <p className="font-mono-sm text-accent-primary mt-2">
+                ACTIVE CAMP: {activeCampName.toUpperCase()}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-4 font-mono-sm text-text-muted">
             <Cpu className="h-3.5 w-3.5 text-accent-primary" />
