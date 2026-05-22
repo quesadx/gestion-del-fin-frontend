@@ -27,7 +27,7 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Dashboard',
     to: '/dashboard',
     icon: LayoutGrid,
-    roles: ['system_admin', 'resource_manager'],
+    roles: ['system_admin', 'resource_manager', 'worker', 'travel_coordinator'],
   },
   {
     label: 'Camps',

@@ -5,16 +5,16 @@ import type { Camp } from '@/features/camps/types/camp.types';
 import type { Resource } from '@/features/resources/types/resource.types';
 
 export function useDashboardStats(role: Role | null) {
-  const showStock = role === 'system_admin' || role === 'resource_manager';
+  const showStock = role === 'system_admin' || role === 'resource_manager' || role === 'worker';
+  const showCamps = role === 'system_admin';
   const campsQuery = useCamps({
-    enabled: role === 'system_admin',
+    enabled: showCamps,
   });
   const resourcesQuery = useResources({
     enabled: showStock,
   });
 
-  const isLoading =
-    (role === 'system_admin' && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
+  const isLoading = (showCamps && campsQuery.isLoading) || (showStock && resourcesQuery.isLoading);
 
   const campsArray: Camp[] = campsQuery.data?.data ?? [];
   const resourcesArray: Resource[] = resourcesQuery.data ?? [];
@@ -26,9 +26,8 @@ export function useDashboardStats(role: Role | null) {
     camps: campsArray,
     resources: resourcesQuery.data,
     resourcesArray,
-    campCount: role === 'system_admin' ? campsArray.length : null,
-    activeCamps:
-      role === 'system_admin' ? campsArray.filter((c) => c.status === 'ACTIVE').length : null,
+    campCount: showCamps ? campsArray.length : null,
+    activeCamps: showCamps ? campsArray.filter((c) => c.status === 'ACTIVE').length : null,
     resourceCount: showStock ? resourcesArray.length : null,
     autoDailyCount: showStock ? autoDailyCount : null,
   };
