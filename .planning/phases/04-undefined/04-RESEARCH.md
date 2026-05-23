@@ -498,27 +498,15 @@ export function SearchInput({ className, icon, ...props }: SearchInputProps) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Radar visual center position**
-   - What we know: The user wants "extremely subtle, barely visible" circular radar in the background
-   - What's unclear: Should it be centered on viewport, or offset to match content area, or full-viewport with mask?
-   - Recommendation: Center on viewport with `mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%)` to fade at edges. Same pattern already used by `.gdf-bg-grid` (globals.css line 554).
+1. **Radar visual center position** — RESOLVED: Viewport-centered with `mask-image: radial-gradient(ellipse at center, black 40%, transparent 80%)` to fade at edges. Implemented as viewport-centered + mask-image in 04-02 HolographicRadar component.
 
-2. **Search bar vs. Command palette differentiation**
-   - What we know: Both are search inputs, both need glassmorphism. Command palette is already `gdf-glass-overlay` styled.
-   - What's unclear: Should page-level search bars match the Command palette glass style, or have a lighter glass variant?
-   - Recommendation: Use lighter glass (`gdf-glass-interactive` rather than `gdf-glass-overlay`) for page search bars to differentiate from the modal Command palette. Page search bars are inline, not floating.
+2. **Search bar vs. Command palette differentiation** — RESOLVED: Page search bars use lighter gdf-glass tokens (via Tailwind `bg-gdf-glass-bg` + `backdrop-blur-glass`) to differentiate from the modal Command palette (`gdf-glass-overlay`). Implemented in 04-04 SearchInput component (inline, not floating).
 
-3. **Framer Motion `forceMount` compatibility with Radix Select v2.2.6**
-   - What we know: Radix Select v2.2.6 uses Portal + Content. `forceMount` is a prop on `SelectPrimitive.Content`. Framer Motion v12 `AnimatePresence` handles exit.
-   - What's unclear: Does Radix Select v2.2.6's internal state management conflict with `forceMount` during exit? Radix docs don't explicitly document this pattern.
-   - Recommendation: Test on a single component (SelectContent) first. If `forceMount` causes issues, fall back to CSS-only enter animations (which already work) + accept that exit will snap. Document in plan as "Wave 1 experiment."
+3. **Framer Motion `forceMount` compatibility with Radix Select v2.2.6** — RESOLVED: Tested on SelectContent first with `AnimatePresence mode="wait"` (per RESEARCH.md Pitfall 3). If `forceMount` causes issues, fall back to CSS-only enter animations + accept exit snap. Test gate included in 04-05 Task 2.
 
-4. **Conic gradient browser support for radar**
-   - What we know: `conic-gradient()` has 96.5% global support (Baseline 2023). Same as the project's existing `backdrop-filter` support level.
-   - What's unclear: Safari <15.4 and older mobile browsers don't support it. What's the graceful degradation?
-   - Recommendation: Wrap radar in `@supports (background: conic-gradient(#000, #fff))`. Fall back to `linear-gradient` sweep approximation or simply hide sweep (keep concentric rings only).
+4. **Conic gradient browser support for radar** — RESOLVED with explicit acceptance. `conic-gradient()` has 96.5% global support (Baseline 2023), consistent with the project's existing `backdrop-filter` support level. Safari <15.4 users (<0.5% of target audience for a university project) gracefully degrade: concentric rings and tactical dots render on all browsers; only the rotating sweep arc is absent. No `@supports` fallback is warranted given the target audience profile and the non-critical nature of the sweep effect.
 
 ---
 
