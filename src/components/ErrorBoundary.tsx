@@ -38,19 +38,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 p-8">
-          <div className="text-red-400 text-5xl font-bold font-mono">/// SYSTEM FAULT ///</div>
-          <div className="text-zinc-400 text-lg font-mono-data max-w-lg text-center">
-            A critical render error was intercepted. The application has been contained.
+          <div className="text-gdf-status-danger text-5xl font-bold font-mono">
+            /// TACTICAL FAULT ///
           </div>
-          <pre className="mt-2 max-w-2xl overflow-auto rounded border border-zinc-800 bg-zinc-950 p-4 text-xs text-red-300 font-mono whitespace-pre-wrap">
+          <div className="text-gdf-text-secondary text-lg font-mono-data max-w-lg text-center">
+            A critical render error was intercepted. The interface has been contained.
+          </div>
+          <pre className="mt-2 max-w-2xl overflow-auto rounded border border-gdf-border-subtle bg-gdf-surface-base p-4 text-xs text-gdf-status-danger/80 font-mono whitespace-pre-wrap">
             {this.state.error?.message}
           </pre>
           <div className="flex gap-3">
             <TacticalButton variant="ghost" onClick={this.handleGoHome}>
-              RETURN TO BASE
+              RETURN TO DASHBOARD
             </TacticalButton>
             <TacticalButton variant="primary" onClick={this.handleRetry}>
-              RECOVER
+              RETRY
             </TacticalButton>
           </div>
         </div>
