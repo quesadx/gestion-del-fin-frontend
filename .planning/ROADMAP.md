@@ -45,4 +45,24 @@ Plans:
 
 ---
 
-### Phase 03: [To be planned]
+### Phase 03: Holographic UI Elevation
+
+**Goal:** Cinematic holographic tactical OS — rounded corners, multilayer depth, advanced motion, dynamic backgrounds, deep emotional UI, premium microinteractions, legacy component audit.
+
+**Requirements:** RNF-03, RNF-04
+
+**Plans:** 7 plans
+
+Plans:
+
+- [ ] 03-01-PLAN.md — Rounded corners system (6px/10px/14px radius tokens)
+- [ ] 03-02-PLAN.md — Multilayer depth with floating panels + parallax
+- [ ] 03-03-PLAN.md — Advanced motion system (page transitions, hover glow, focus rings, ripple)
+- [ ] 03-04-PLAN.md — Dynamic background overhaul (waves, grid, nebula, 60 particles)
+- [ ] 03-05-PLAN.md — Deep emotional UI (border glow, critical overlay, wave color shifts)
+- [ ] 03-06-PLAN.md — Premium microinteractions (spring toast, motion dialog, staggered select)
+- [ ] 03-07-PLAN.md — Legacy component audit + final validation + ROADMAP update
+
+---
+
+### Phase 04: [To be planned]
