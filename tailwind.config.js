@@ -63,11 +63,14 @@ export default {
         'glass-heavy': 'var(--gdf-glass-blur-heavy)',
       },
       keyframes: {
-        'float-panel': 'float-panel 4s ease-in-out infinite alternate',
-      'ripple': { '0%': { transform: 'scale(0)', opacity: '0.4' }, '100%': { transform: 'scale(4)', opacity: '0' } },
-      'ripple': 'ripple 0.6s ease-out forwards',
-      'grid-drift': { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '60px 60px' } },
-      'grid-drift': 'grid-drift 30s linear infinite',
+        ripple: {
+          '0%': { transform: 'scale(0)', opacity: '0.4' },
+          '100%': { transform: 'scale(4)', opacity: '0' },
+        },
+        'grid-drift': {
+          '0%': { backgroundPosition: '0 0' },
+          '100%': { backgroundPosition: '60px 60px' },
+        },
         'fade-in': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
@@ -85,12 +88,6 @@ export default {
           '50%': { opacity: '0.3' },
         },
         'float-panel': {
-      'ripple': { '0%': { transform: 'scale(0)', opacity: '0.4' }, '100%': { transform: 'scale(4)', opacity: '0' } },
-          '0%': { transform: 'translateY(0)' },
-          '100%': { transform: 'translateY(3px)' },
-        },
-        'float-panel': {
-      'ripple': { '0%': { transform: 'scale(0)', opacity: '0.4' }, '100%': { transform: 'scale(4)', opacity: '0' } },
           '0%': { transform: 'translateY(0)' },
           '100%': { transform: 'translateY(3px)' },
         },
@@ -125,8 +122,8 @@ export default {
       },
       animation: {
         'float-panel': 'float-panel 4s ease-in-out infinite alternate',
-      'ripple': { '0%': { transform: 'scale(0)', opacity: '0.4' }, '100%': { transform: 'scale(4)', opacity: '0' } },
-      'ripple': 'ripple 0.6s ease-out forwards',
+        ripple: 'ripple 0.6s ease-out forwards',
+        'grid-drift': 'grid-drift 30s linear infinite',
         'fade-in': 'fade-in 0.3s ease-out forwards',
         'slide-up': 'slide-up 0.35s ease-out forwards',
         'slide-in-right': 'slide-in-right 0.3s ease-out forwards',

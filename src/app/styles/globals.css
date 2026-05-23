@@ -272,25 +272,6 @@
     border-bottom: 1px solid;
     border-right: 1px solid;
   }
-  .gdf-depth-float {
-    will-change: transform;
-    animation: float-panel 4s ease-in-out infinite alternate;
-  }
-  .gdf-depth-layer {
-    box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.3),
-      0 8px 24px rgba(0, 0, 0, 0.2);
-  }
-  .gdf-parallax-sidebar {
-    transform: translateY(var(--gdf-scroll-offset, 0px));
-    transition: transform 0.1s linear;
-    will-change: transform;
-  }
-  .gdf-parallax-content {
-    transform: translateY(calc(var(--gdf-scroll-offset, 0px) * -0.3));
-    transition: transform 0.1s linear;
-    will-change: transform;
-  }
   .gdf-glass-overlay {
     background: var(--gdf-glass-bg-heavy);
     border: 1px solid var(--gdf-glass-border);
