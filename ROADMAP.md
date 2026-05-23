@@ -4,10 +4,11 @@
 
 ## Phases
 
-| #   | Phase                     | Goal                                                                                                        | Status   |
-| --- | ------------------------- | ----------------------------------------------------------------------------------------------------------- | -------- |
-| 01  | Tactical UI Redesign      | Complete visual transformation: migrate from brutalist/cyberpunk to holographic tactical OS UI              | Complete |
-| 02  | Tactical UI Consolidation | Migrate remaining shadcn/ui components to glass styling, standardize interactive elements, deepen immersion | Complete |
+| #   | Phase                     | Goal                                                                                                                                                        | Status   |
+| --- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| 01  | Tactical UI Redesign      | Complete visual transformation: migrate from brutalist/cyberpunk to holographic tactical OS UI                                                              | Complete |
+| 02  | Tactical UI Consolidation | Migrate remaining shadcn/ui components to glass styling, standardize interactive elements, deepen immersion                                                 | Complete |
+| 03  | Holographic UI Elevation  | Cinematic depth: rounded corners, multilayer translucency, advanced motion system, dynamic ambient background, deep emotional UI, premium microinteractions | Pending  |
 
 ## Phase 01 — Tactical UI Redesign
 
@@ -70,3 +71,32 @@ Phase 01 established the design token foundation, created core glass primitives,
 - No data model changes
 - No API contract changes
 - No new npm packages unless justified by accessibility tooling audits
+
+## Phase 03 — Holographic UI Elevation
+
+**Status:** Pending
+**Goal:** Elevate the UI from "modern dashboard" to "cinematic holographic tactical OS" through rounded corners, multilayer translucency, advanced motion, dynamic ambient backgrounds, deep emotional UI integration, and premium microinteractions.
+
+**Depends on:** Phase 02
+
+### What
+
+- Rounded corners system: increase border-radius across design system (md→lg scale)
+- Multilayer translucency: stacked glass panels with parallax depth
+- Advanced motion system: page transitions, hover animations, floating panels, scanner effects
+- Dynamic ambient background: more visible holographic waves, grid lines, nebula gradients, particles
+- Deep emotional UI: atmospheric shifts during alert/critical states, color bleeding, ambient transformations
+- Premium microinteractions: hover glow, focus rings, smooth state transitions, ripple effects
+- Legacy component migration: audit and modernize remaining non-tactical components
+- Background performance optimization: GPU-composited layers, reduced-motion support
+
+### Why
+
+Phases 01-02 established the design token foundation and migrated all 64 shadcn/ui components to glass styling. However, the interface still feels like a "modern dashboard" rather than a living holographic system. The corners are too angular, motion is limited, the background is too subtle, and emotional states don't transform the atmosphere enough. This phase bridges the gap from "consistent" to "immersive."
+
+### Out of Scope
+
+- No backend changes
+- No API contract changes
+- No new feature pages
+- No data model changes

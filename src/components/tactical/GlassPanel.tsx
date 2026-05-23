@@ -49,10 +49,12 @@ const ACCENT_CLASSES: Record<
 };
 
 const VARIANT_CLASSES: Record<string, string> = {
-  default: 'backdrop-blur-glass bg-gdf-glass-bg border border-gdf-glass-border rounded-md',
+  default:
+    'backdrop-blur-glass bg-gdf-glass-bg border border-gdf-glass-border rounded-lg gdf-depth-layer animate-float-panel',
   heavy:
-    'backdrop-blur-glass-heavy bg-gdf-glass-bg-heavy border border-gdf-glass-border rounded-md',
-  subtle: 'backdrop-blur-glass bg-gdf-glass-bg/40 border border-gdf-glass-border rounded-md',
+    'backdrop-blur-glass-heavy bg-gdf-glass-bg-heavy border border-gdf-glass-border rounded-lg gdf-depth-layer animate-float-panel',
+  subtle:
+    'backdrop-blur-glass bg-gdf-glass-bg/40 border border-gdf-glass-border rounded-lg gdf-depth-layer ',
 };
 
 export function GlassPanel({
@@ -71,7 +73,7 @@ export function GlassPanel({
   return (
     <div
       className={cn(
-        'relative p-6 transition-all duration-200',
+        'relative p-6 transition-colors duration-200 gdf-depth-float',
         variantClass,
         a.border,
         bracketed && 'gdf-glass-bracketed',
@@ -84,7 +86,8 @@ export function GlassPanel({
             {tag && (
               <span
                 className={cn(
-                  'font-mono-sm tracking-[0.15em] px-2.5 py-1 border rounded-md font-bold uppercase',
+                  'gdf-depth-float',
+                  'font-mono-sm tracking-[0.15em] px-2.5 py-1 border rounded-lg gdf-depth-layer animate-float-panel font-bold uppercase',
                   a.bg,
                   a.text,
                   a.tagBorder,
@@ -100,8 +103,10 @@ export function GlassPanel({
             )}
           </div>
           {status && (
-            <div className={cn('flex items-center gap-2 font-mono-sm', a.text)}>
-              <span className={cn('w-1.5 h-1.5 animate-blink rounded-full', a.dot)} />
+            <div className={cn('gdf-depth-float', 'flex items-center gap-2 font-mono-sm', a.text)}>
+              <span
+                className={cn('gdf-depth-float', 'w-1.5 h-1.5 animate-blink rounded-full', a.dot)}
+              />
               {status}
             </div>
           )}
