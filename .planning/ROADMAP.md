@@ -77,7 +77,7 @@ Plans:
 
 - [x] 04-01-PLAN.md — CSS foundation (deduplication, new tokens, keyframes, depth system)
 - [x] 04-02-PLAN.md — Holographic radar background (HolographicRadar component)
-- [ ] 04-03-PLAN.md — Diffuse cursor glow + enhanced background layers
+- [x] 04-03-PLAN.md — Diffuse cursor glow + enhanced background layers
 - [x] 04-04-PLAN.md — SearchInput glass component + page migration (CampsPage, PeopleListPage)
 - [x] 04-05-PLAN.md — Dropdown/select/popover cinematic overhaul (Framer Motion spring)
 - [x] 04-06-PLAN.md — Command palette + dialog spring polish
