@@ -85,6 +85,9 @@ export function TacticalBackground() {
           />
         ))}
       </div>
+      <div className="gdf-diffuse-glow-1" aria-hidden="true" />
+      <div className="gdf-diffuse-glow-2" aria-hidden="true" />
+      <div className="gdf-diffuse-glow-3" aria-hidden="true" />
     </div>
   );
 }
