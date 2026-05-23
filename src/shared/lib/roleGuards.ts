@@ -1,7 +1,7 @@
 import type { Role } from '@/features/auth/types/auth.types';
 
 export const ROLE_ACCESS: Record<string, Role[]> = {
-  '/dashboard': ['system_admin', 'resource_manager'],
+  '/dashboard': ['system_admin', 'resource_manager', 'worker', 'travel_coordinator'],
   '/camps': ['system_admin'],
   '/camps/:id': ['system_admin'],
   '/people': ['system_admin'],

@@ -1,0 +1,7 @@
+{
+  "rewrites": [{ "source": "/((?!api).*)", "destination": "/index.html" }],
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "installCommand": "pnpm install --frozen-lockfile"
+}

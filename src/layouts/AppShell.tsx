@@ -38,6 +38,7 @@ export function AppShell() {
       setActiveCamp(null);
     }
     setMobileOpen(false);
+    useAuthStore.getState().updateActivity();
     queryClient.invalidateQueries({
       predicate: (query) => {
         const key = query.queryKey;
