@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
 import {
@@ -142,9 +142,9 @@ export function RationsPage() {
 
   return (
     <div className="space-y-6">
-      <Panel title="RATION MANAGEMENT" tag="RTN.01" status="ONLINE" accent="cyan">
+      <GlassPanel title="RATION MANAGEMENT" tag="RTN.01" status="ONLINE" accent="cyan">
         {campsLoading ? (
-          <ScreenLoader />
+          <HoloLoader />
         ) : (
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -164,27 +164,27 @@ export function RationsPage() {
             </select>
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
       {!selectedCampId ? (
-        <Panel accent="purple">
+        <GlassPanel accent="amber">
           <div className="flex flex-col items-center gap-4 py-8">
             <Utensils className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">
               SELECT A CAMP TO MANAGE RATIONS
             </p>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : (
         <>
-          <Panel title="ISSUE RATION" tag={`RTN.${campId}`} status="READY" accent="cyan">
+          <GlassPanel title="ISSUE RATION" tag={`RTN.${campId}`} status="READY" accent="cyan">
             <div className="mb-4">
-              <GlitchButton variant="primary" onClick={() => setDialogOpen(true)}>
+              <TacticalButton variant="primary" onClick={() => setDialogOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
                   NEW RATION ENTRY
                 </span>
-              </GlitchButton>
+              </TacticalButton>
             </div>
 
             <div className="mt-6">
@@ -275,7 +275,7 @@ export function RationsPage() {
                 </div>
               )}
             </div>
-          </Panel>
+          </GlassPanel>
         </>
       )}
 
@@ -393,7 +393,7 @@ export function RationsPage() {
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -402,10 +402,10 @@ export function RationsPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={adjustMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={adjustMutation.isPending}>
                 {adjustMutation.isPending ? 'SAVING...' : 'SAVE RATION'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>

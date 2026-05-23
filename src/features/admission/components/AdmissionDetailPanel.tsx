@@ -1,4 +1,4 @@
-import { Panel } from '@/components/cyber/Panel';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
 import { format } from 'date-fns';
 import { User, Calendar, Heart, FileText, Briefcase, Brain } from 'lucide-react';
 
@@ -24,7 +24,7 @@ export function AdmissionDetailPanel({
   createdAt,
 }: AdmissionDetailProps) {
   return (
-    <Panel title={applicantName} tag="ADM.DETAIL" accent="cyan">
+    <GlassPanel title={applicantName} tag="ADM.DETAIL" accent="cyan">
       <div className="space-y-3 font-mono-data text-xs">
         <div className="flex items-center gap-2">
           <Calendar className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
@@ -118,6 +118,6 @@ export function AdmissionDetailPanel({
           </div>
         )}
       </div>
-    </Panel>
+    </GlassPanel>
   );
 }

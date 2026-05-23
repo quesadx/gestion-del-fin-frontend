@@ -4,9 +4,9 @@ import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import {
   usePerson,
@@ -155,19 +155,19 @@ export function PersonDetailPage() {
     setEditOpen(true);
   };
 
-  if (isLoading) return <ScreenLoader />;
+  if (isLoading) return <HoloLoader />;
 
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag={`PPL.${personId}`} status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" tag={`PPL.${personId}`} status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load person'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       </div>
     );
   }
@@ -175,11 +175,16 @@ export function PersonDetailPage() {
   if (!person) {
     return (
       <div className="space-y-6">
-        <Panel title="PERSON NOT FOUND" tag={`PPL.${personId}`} status="OFFLINE" accent="purple">
+        <GlassPanel
+          title="PERSON NOT FOUND"
+          tag={`PPL.${personId}`}
+          status="OFFLINE"
+          accent="amber"
+        >
           <p className="text-sm text-muted-foreground font-mono-data">
             Requested person does not exist.
           </p>
-        </Panel>
+        </GlassPanel>
       </div>
     );
   }
@@ -290,14 +295,14 @@ export function PersonDetailPage() {
 
   return (
     <div className="space-y-6">
-      <GlitchButton variant="ghost" onClick={() => navigate('/people')}>
+      <TacticalButton variant="ghost" onClick={() => navigate('/people')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
           BACK
         </span>
-      </GlitchButton>
+      </TacticalButton>
 
-      <Panel
+      <GlassPanel
         title={person.full_name as string}
         tag={`PPL.${personId}`}
         status={person.status as string}
@@ -363,27 +368,27 @@ export function PersonDetailPage() {
           </div>
         )}
         <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
-          <GlitchButton variant="ghost" onClick={handleOpenEdit}>
+          <TacticalButton variant="ghost" onClick={handleOpenEdit}>
             <Edit3 className="h-3.5 w-3.5 mr-1" />
             EDIT
-          </GlitchButton>
-          <GlitchButton variant="ghost" onClick={() => setStatusLogOpen(true)}>
+          </TacticalButton>
+          <TacticalButton variant="ghost" onClick={() => setStatusLogOpen(true)}>
             <Activity className="h-3.5 w-3.5 mr-1" />
             CHANGE STATUS
-          </GlitchButton>
-          <GlitchButton variant="ghost" onClick={() => setReassignOpen(true)}>
+          </TacticalButton>
+          <TacticalButton variant="ghost" onClick={() => setReassignOpen(true)}>
             <Wrench className="h-3.5 w-3.5 mr-1" />
             REASSIGN PROFESSION
-          </GlitchButton>
-          <GlitchButton variant="warning" onClick={() => setDeleteTarget(true)}>
+          </TacticalButton>
+          <TacticalButton variant="warning" onClick={() => setDeleteTarget(true)}>
             <Trash2 className="h-3.5 w-3.5 mr-1" />
             DELETE
-          </GlitchButton>
-          <GlitchButton variant="ghost" onClick={() => setContributionOpen(true)}>
+          </TacticalButton>
+          <TacticalButton variant="ghost" onClick={() => setContributionOpen(true)}>
             CONTRIB OVERRIDE
-          </GlitchButton>
+          </TacticalButton>
         </div>
-      </Panel>
+      </GlassPanel>
 
       {statusLogs && statusLogs.length > 0 ? (
         (() => {
@@ -393,7 +398,7 @@ export function PersonDetailPage() {
           const skipped = statusLogs.length - validLogs.length;
 
           return (
-            <Panel
+            <GlassPanel
               title="STATUS HISTORY"
               tag={`PPL.${personId}.LOGS`}
               status={`${statusLogs.length} RECORDS`}
@@ -442,20 +447,20 @@ export function PersonDetailPage() {
                   </tbody>
                 </table>
               </div>
-            </Panel>
+            </GlassPanel>
           );
         })()
       ) : (
-        <Panel
+        <GlassPanel
           title="STATUS HISTORY"
           tag={`PPL.${personId}.LOGS`}
           status="0 RECORDS"
-          accent="purple"
+          accent="amber"
         >
           <p className="font-mono-data text-xs text-muted-foreground py-4 text-center">
             NO STATUS CHANGES RECORDED
           </p>
-        </Panel>
+        </GlassPanel>
       )}
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -605,12 +610,12 @@ export function PersonDetailPage() {
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton variant="ghost" type="button" onClick={() => setEditOpen(false)}>
+              <TacticalButton variant="ghost" type="button" onClick={() => setEditOpen(false)}>
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={updateMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? 'SAVING...' : 'SAVE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>
@@ -655,7 +660,7 @@ export function PersonDetailPage() {
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -664,10 +669,14 @@ export function PersonDetailPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={statusLogMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton
+                variant="primary"
+                type="submit"
+                disabled={statusLogMutation.isPending}
+              >
                 {statusLogMutation.isPending ? 'LOGGING...' : 'LOG'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>
@@ -748,7 +757,7 @@ export function PersonDetailPage() {
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -757,10 +766,10 @@ export function PersonDetailPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={reassignMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={reassignMutation.isPending}>
                 {reassignMutation.isPending ? 'REASSIGNING...' : 'REASSIGN'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>
@@ -873,7 +882,7 @@ export function PersonDetailPage() {
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -882,14 +891,14 @@ export function PersonDetailPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton
+              </TacticalButton>
+              <TacticalButton
                 variant="primary"
                 type="submit"
                 disabled={contributionOverrideMutation.isPending}
               >
                 {contributionOverrideMutation.isPending ? 'SENDING...' : 'OVERRIDE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>

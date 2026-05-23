@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useInventoryAudit } from '@/features/inventory/hooks/useInventory';
@@ -26,21 +26,21 @@ export function InventoryAuditPage() {
 
   return (
     <div className="space-y-6">
-      <GlitchButton variant="ghost" onClick={() => navigate('/inventory')}>
+      <TacticalButton variant="ghost" onClick={() => navigate('/inventory')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
           BACK TO INVENTORY
         </span>
-      </GlitchButton>
+      </TacticalButton>
 
-      <Panel
+      <GlassPanel
         title="INVENTORY AUDIT"
         tag="INV.AUDIT"
         status={selectedCampId ? 'ONLINE' : 'AWAITING'}
         accent="cyan"
       >
         {campsLoading ? (
-          <ScreenLoader />
+          <HoloLoader />
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <Warehouse className="h-8 w-8 text-[var(--neon-cyan)]/40" />
@@ -65,35 +65,35 @@ export function InventoryAuditPage() {
             </select>
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
       {!selectedCampId ? (
-        <Panel accent="purple">
+        <GlassPanel accent="amber">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardList className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : auditLoading ? (
-        <ScreenLoader />
+        <HoloLoader />
       ) : auditError ? (
-        <Panel title="ERROR" status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(auditErr as Error)?.message || 'Failed to load audit'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       ) : auditArray.length === 0 ? (
-        <Panel accent="cyan">
+        <GlassPanel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardList className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">NO AUDIT RECORDS</p>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : (
-        <Panel
+        <GlassPanel
           title="AUDIT LOG"
           tag={`INV.AUDIT.${selectedCampId}`}
           status={`${auditArray.length} RECORDS`}
@@ -139,7 +139,7 @@ export function InventoryAuditPage() {
               </tbody>
             </table>
           </div>
-        </Panel>
+        </GlassPanel>
       )}
     </div>
   );

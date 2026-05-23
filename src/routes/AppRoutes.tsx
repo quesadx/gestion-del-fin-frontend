@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-route
 import { LoginPage } from '@/pages/LoginPage';
 import { AppShell } from '@/layouts/AppShell';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { navigationRef } from '@/shared/api/axiosInstance';
 
@@ -82,7 +82,7 @@ const RationsPage = lazy(() =>
 function LazyFallback() {
   return (
     <div className="flex items-center justify-center h-full min-h-[40vh]">
-      <ScreenLoader />
+      <HoloLoader />
     </div>
   );
 }

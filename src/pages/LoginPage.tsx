@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { ROLE_LANDING } from '@/shared/lib/roleGuards';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
 import { ShieldAlert } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -50,24 +52,24 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-base">
+    <div className="min-h-screen flex items-center justify-center bg-transparent relative">
       <div className="w-full max-w-md animate-fade-in">
-        <div className="bg-surface-raised border border-zinc-800 p-8">
+        <GlassPanel accent="cyan" variant="heavy" bracketed className="p-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-brand-primary mb-4">
-              <ShieldAlert size={24} className="text-surface-base" />
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-gdf-accent-primary mb-4">
+              <ShieldAlert size={24} className="text-gdf-text-inverse" />
             </div>
-            <h1 className="font-sans text-2xl font-black tracking-tighter uppercase text-white">
+            <h1 className="font-sans text-2xl font-black tracking-tighter uppercase text-gdf-text-primary">
               End Management
             </h1>
-            <p className="font-mono text-[10px] text-zinc-500 uppercase tracking-widest mt-2">
-              Authentication Required
+            <p className="font-mono text-[10px] text-gdf-text-muted uppercase tracking-widest mt-2">
+              TACTICAL COMMAND // AUTHENTICATION
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-zinc-400">
+              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-gdf-text-secondary">
                 Operator ID
               </label>
               <input
@@ -75,17 +77,17 @@ export function LoginPage() {
                 type="text"
                 autoComplete="username"
                 placeholder="Enter your operator ID"
-                className="w-full bg-surface-base border border-zinc-700 text-zinc-200 font-mono text-sm py-2.5 px-3 placeholder:text-zinc-600 outline-none focus:border-brand-primary transition-colors"
+                className="w-full bg-gdf-surface-base/50 border border-gdf-border-subtle text-gdf-text-primary font-mono text-sm p-3 focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 outline-none rounded-md placeholder:text-gdf-text-muted"
               />
               {errors.username && (
-                <p className="mt-1.5 font-mono text-[10px] text-brand-primary">
+                <p className="mt-1.5 font-mono text-[10px] text-gdf-status-danger">
                   {errors.username.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-zinc-400">
+              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-gdf-text-secondary">
                 Cipher Key
               </label>
               <input
@@ -93,37 +95,33 @@ export function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 placeholder="Enter your cipher key"
-                className="w-full bg-surface-base border border-zinc-700 text-zinc-200 font-mono text-sm py-2.5 px-3 placeholder:text-zinc-600 outline-none focus:border-brand-primary transition-colors"
+                className="w-full bg-gdf-surface-base/50 border border-gdf-border-subtle text-gdf-text-primary font-mono text-sm p-3 focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 outline-none rounded-md placeholder:text-gdf-text-muted"
               />
               {errors.password && (
-                <p className="mt-1.5 font-mono text-[10px] text-brand-primary">
+                <p className="mt-1.5 font-mono text-[10px] text-gdf-status-danger">
                   {errors.password.message}
                 </p>
               )}
             </div>
 
             {authError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-3 font-mono text-[11px] text-red-400 animate-slide-up">
-                AUTH FAILURE: {authError}
+              <div className="border border-gdf-status-danger/30 bg-gdf-status-danger/10 p-3 font-mono text-[11px] text-gdf-status-danger animate-slide-up rounded-md">
+                INVALID CREDENTIALS
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full font-sans text-sm font-black uppercase tracking-widest px-5 py-3 bg-brand-primary text-surface-base hover:bg-brand-primary/90 active:bg-brand-primary/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'AUTHENTICATING...' : 'AUTHORIZE'}
-            </button>
+            <TacticalButton variant="primary" type="submit" disabled={isLoading} className="w-full">
+              {isLoading ? 'AUTHENTICATING...' : 'AUTHENTICATE'}
+            </TacticalButton>
 
-            <div className="pt-4 border-t border-zinc-800 flex items-center justify-between font-mono text-[10px] text-zinc-600 uppercase">
+            <div className="pt-4 border-t border-gdf-glass-border flex items-center justify-between font-mono text-[10px] text-gdf-text-muted uppercase">
               <span>ENC: AES-256</span>
               <span>SEC LEVEL: 02</span>
             </div>
           </form>
-        </div>
+        </GlassPanel>
 
-        <p className="mt-6 text-center font-mono text-[9px] text-zinc-700 tracking-[0.1em] uppercase">
+        <p className="mt-6 text-center font-mono text-[9px] text-gdf-text-muted tracking-[0.1em] uppercase">
           Unauthorized access will be prosecuted
         </p>
       </div>

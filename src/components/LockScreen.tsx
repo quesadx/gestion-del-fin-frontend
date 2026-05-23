@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { authApi } from '@/features/auth/api/auth.api';
 import { toast } from '@/shared/lib/toast';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
 
 export function LockScreen() {
   const user = useAuthStore((state) => state.user);
@@ -11,18 +13,21 @@ export function LockScreen() {
 
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!password.trim() || !user) return;
 
     setLoading(true);
+    setError(null);
     try {
       await authApi.login({ username: user.username, password });
       unlock();
       updateActivity();
       setPassword('');
     } catch {
+      setError('Invalid password');
       toast('Invalid password', 'error');
     } finally {
       setLoading(false);
@@ -32,27 +37,21 @@ export function LockScreen() {
   if (!isLocked) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-sm flex items-center justify-center">
-      <div className="brutalist-border bg-surface-raised p-8 w-full max-w-sm">
+    <div className="fixed inset-0 z-[9999] bg-gdf-surface-root/80 backdrop-blur-sm flex items-center justify-center">
+      <GlassPanel variant="heavy" bracketed accent="cyan" className="w-full max-w-sm p-8">
         <div className="text-center mb-6">
-          <svg
-            className="w-12 h-12 mx-auto mb-4 text-brand-primary"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-            />
-          </svg>
-          <h2 className="text-lg font-semibold text-white font-mono-data tracking-wider">
+          <div className="w-12 h-12 bg-gdf-accent-primary flex items-center justify-center mx-auto mb-4">
+            <span className="font-mono font-bold text-xs text-gdf-text-inverse">GF</span>
+          </div>
+          <h2 className="text-lg font-semibold text-gdf-text-primary font-mono-data tracking-wider">
             SESSION LOCKED
           </h2>
-          <p className="text-zinc-400 text-sm mt-2">Enter your password to unlock</p>
-          {user && <p className="text-zinc-500 text-xs mt-1 font-mono-data">{user.username}</p>}
+          <p className="text-gdf-text-muted text-sm mt-2">Enter your password to unlock</p>
+          {user && (
+            <p className="font-mono-data text-xs text-gdf-accent-primary mt-1">
+              USER: {user.username.toUpperCase()}
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -64,18 +63,21 @@ export function LockScreen() {
             autoFocus
             autoComplete="current-password"
             disabled={loading}
-            className="w-full bg-surface-overlay border border-zinc-700 text-white px-3 py-2 font-mono-data text-sm focus:outline-none focus:border-brand-primary disabled:opacity-50"
+            className="w-full bg-gdf-surface-base border border-gdf-border-subtle text-gdf-text-primary px-3 py-2 font-mono-data text-sm focus:outline-none focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 disabled:opacity-50 rounded-md"
           />
 
-          <button
+          {error && <p className="text-gdf-status-danger text-xs font-mono-data">{error}</p>}
+
+          <TacticalButton
+            variant="primary"
             type="submit"
             disabled={loading || !password.trim()}
-            className="w-full bg-brand-primary text-white py-2 font-mono-data text-sm tracking-wider hover:bg-red-600 disabled:opacity-50 transition-colors"
+            className="w-full"
           >
             {loading ? 'UNLOCKING...' : 'UNLOCK'}
-          </button>
+          </TacticalButton>
         </form>
-      </div>
+      </GlassPanel>
     </div>
   );
 }

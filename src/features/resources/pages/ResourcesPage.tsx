@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import {
   useResources,
   useCreateResource,
@@ -113,19 +113,19 @@ export function ResourcesPage() {
     }
   };
 
-  if (isLoading) return <ScreenLoader />;
+  if (isLoading) return <HoloLoader />;
 
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag="RSC.ERR" status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" tag="RSC.ERR" status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load resources'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       </div>
     );
   }
@@ -136,14 +136,14 @@ export function ResourcesPage() {
 
   return (
     <div className="space-y-6">
-      <Panel title="RESOURCE_CATALOG" tag="RSC.01" status="ONLINE" accent="cyan">
+      <GlassPanel title="RESOURCE_CATALOG" tag="RSC.01" status="ONLINE" accent="cyan">
         {items.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
             <Package className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">NO RESOURCES REGISTERED</p>
-            <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
+            <TacticalButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
               NEW RESOURCE
-            </GlitchButton>
+            </TacticalButton>
           </div>
         ) : (
           <>
@@ -208,16 +208,16 @@ export function ResourcesPage() {
               </table>
             </div>
             <div className="mt-4 flex justify-end">
-              <GlitchButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
+              <TacticalButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
                   NEW RESOURCE
                 </span>
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </>
         )}
-      </Panel>
+      </GlassPanel>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
@@ -298,7 +298,7 @@ export function ResourcesPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -307,10 +307,10 @@ export function ResourcesPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'CREATING...' : 'CREATE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>
@@ -386,12 +386,12 @@ export function ResourcesPage() {
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>
+              <TacticalButton variant="ghost" type="button" onClick={() => setEditTarget(null)}>
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={updateMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? 'SAVING...' : 'SAVE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>

@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { toast } from '@/shared/lib/toast';
 import { useCamps } from '@/features/camps/hooks/useCamps';
@@ -106,14 +106,14 @@ export function AdmissionsPage() {
 
   return (
     <div className="space-y-6">
-      <Panel
+      <GlassPanel
         title="ADMISSION REQUESTS"
         tag="ADM.01"
         status={selectedCampId ? 'ONLINE' : 'AWAITING'}
         accent="cyan"
       >
         {campsLoading ? (
-          <ScreenLoader />
+          <HoloLoader />
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <ClipboardCheck className="h-8 w-8 text-[var(--neon-cyan)]/40" />
@@ -138,53 +138,53 @@ export function AdmissionsPage() {
             </select>
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
       {!selectedCampId ? (
-        <Panel accent="purple">
+        <GlassPanel accent="amber">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardCheck className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : admLoading ? (
-        <ScreenLoader />
+        <HoloLoader />
       ) : admError ? (
-        <Panel title="ERROR" status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(admErr as Error)?.message || 'Failed to load requests'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       ) : admArray.length === 0 ? (
-        <Panel accent="cyan">
+        <GlassPanel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
             <FileText className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">NO ADMISSION REQUESTS</p>
-            <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
+            <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <UserPlus className="h-3.5 w-3.5" />
                 NEW ADMISSION REQUEST
               </span>
-            </GlitchButton>
+            </TacticalButton>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : (
-        <Panel
+        <GlassPanel
           title="REQUESTS"
           tag={`ADM.${selectedCampId}`}
           status={`${admArray.length} RECORDS`}
           accent="cyan"
         >
           <div className="mb-4 flex justify-end">
-            <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
+            <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <UserPlus className="h-3.5 w-3.5" />
                 NEW REQUEST
               </span>
-            </GlitchButton>
+            </TacticalButton>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
@@ -272,7 +272,7 @@ export function AdmissionsPage() {
               </tbody>
             </table>
           </div>
-        </Panel>
+        </GlassPanel>
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -364,7 +364,7 @@ export function AdmissionsPage() {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -373,10 +373,10 @@ export function AdmissionsPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'CREATING...' : 'CREATE REQUEST'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>

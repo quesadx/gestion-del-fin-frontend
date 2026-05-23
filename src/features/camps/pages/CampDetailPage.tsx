@@ -4,9 +4,9 @@ import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamp, useUpdateCamp } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
@@ -75,33 +75,33 @@ export function CampDetailPage() {
   if (!isValidId) {
     return (
       <div className="space-y-6">
-        <Panel title="INVALID CAMP ID" tag="CAMP.ERR" status="ERROR" accent="purple">
+        <GlassPanel title="INVALID CAMP ID" tag="CAMP.ERR" status="ERROR" accent="amber">
           <p className="text-sm text-muted-foreground font-mono-data">
             The camp ID in the URL is not valid.
           </p>
           <div className="mt-4">
-            <GlitchButton variant="ghost" onClick={() => navigate('/camps')}>
+            <TacticalButton variant="ghost" onClick={() => navigate('/camps')}>
               BACK TO CAMPS
-            </GlitchButton>
+            </TacticalButton>
           </div>
-        </Panel>
+        </GlassPanel>
       </div>
     );
   }
 
-  if (isLoading) return <ScreenLoader />;
+  if (isLoading) return <HoloLoader />;
 
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag={`CAMP.${campId}`} status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" tag={`CAMP.${campId}`} status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load camp'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       </div>
     );
   }
@@ -109,11 +109,11 @@ export function CampDetailPage() {
   if (!camp) {
     return (
       <div className="space-y-6">
-        <Panel title="CAMP NOT FOUND" tag={`CAMP.${campId}`} status="OFFLINE" accent="purple">
+        <GlassPanel title="CAMP NOT FOUND" tag={`CAMP.${campId}`} status="OFFLINE" accent="amber">
           <p className="text-sm text-muted-foreground font-mono-data">
             Requested camp does not exist.
           </p>
-        </Panel>
+        </GlassPanel>
       </div>
     );
   }
@@ -124,14 +124,14 @@ export function CampDetailPage() {
 
   return (
     <div className="space-y-6">
-      <GlitchButton variant="ghost" onClick={() => navigate('/camps')}>
+      <TacticalButton variant="ghost" onClick={() => navigate('/camps')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
           BACK
         </span>
-      </GlitchButton>
+      </TacticalButton>
 
-      <Panel
+      <GlassPanel
         title={camp.name as string}
         tag={`CAMP.${campId}`}
         status={camp.status as string}
@@ -160,12 +160,12 @@ export function CampDetailPage() {
             </div>
           </div>
           <div className="flex justify-end items-start">
-            <GlitchButton variant="ghost" onClick={openEdit}>
+            <TacticalButton variant="ghost" onClick={openEdit}>
               <span className="flex items-center gap-2">
                 <Edit3 className="h-3.5 w-3.5" />
                 EDIT
               </span>
-            </GlitchButton>
+            </TacticalButton>
           </div>
         </div>
         <div className="mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
@@ -182,10 +182,10 @@ export function CampDetailPage() {
             </div>
           )}
         </div>
-      </Panel>
+      </GlassPanel>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Panel accent="cyan">
+        <GlassPanel accent="cyan">
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-[var(--neon-cyan)]" />
             <div>
@@ -195,10 +195,10 @@ export function CampDetailPage() {
               </p>
             </div>
           </div>
-        </Panel>
+        </GlassPanel>
       </div>
 
-      <Panel
+      <GlassPanel
         title="PEOPLE IN CAMP"
         tag={`CAMP.${campId}.PEOPLE`}
         status={peopleLoading ? 'LOADING' : 'ONLINE'}
@@ -266,16 +266,16 @@ export function CampDetailPage() {
               </table>
             </div>
             <div className="mt-3 flex justify-end">
-              <GlitchButton variant="ghost" onClick={() => navigate(`/people?campId=${campId}`)}>
+              <TacticalButton variant="ghost" onClick={() => navigate(`/people?campId=${campId}`)}>
                 <span className="flex items-center gap-1.5">
                   <ExternalLink className="h-3 w-3" />
                   VIEW ALL PEOPLE
                 </span>
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </>
         )}
-      </Panel>
+      </GlassPanel>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-w-[95vw] sm:max-w-lg">
@@ -349,12 +349,20 @@ export function CampDetailPage() {
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton variant="ghost" type="button" onClick={() => setEditDialogOpen(false)}>
+              <TacticalButton
+                variant="ghost"
+                type="button"
+                onClick={() => setEditDialogOpen(false)}
+              >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={updateCampMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton
+                variant="primary"
+                type="submit"
+                disabled={updateCampMutation.isPending}
+              >
                 {updateCampMutation.isPending ? 'SAVING...' : 'SAVE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>

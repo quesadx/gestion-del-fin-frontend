@@ -1,4 +1,4 @@
-import { Panel } from '@/components/cyber/Panel';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { AlertTriangle } from 'lucide-react';
 import type { StockAlerts } from '@/features/inventory/hooks/useStockAlerts';
@@ -7,11 +7,11 @@ export function StockAlertBanner({ alerts }: { alerts: StockAlerts }) {
   if (!alerts.hasAlerts) return null;
 
   return (
-    <Panel
+    <GlassPanel
       title="STOCK ALERTS"
       tag={`ALR.${alerts.campId}`}
       status={`${alerts.totalCritical} CRITICAL`}
-      accent="purple"
+      accent="amber"
     >
       <div className="space-y-3">
         <div className="flex items-center gap-2 font-mono-data text-xs text-[var(--neon-yellow)]">
@@ -59,6 +59,6 @@ export function StockAlertBanner({ alerts }: { alerts: StockAlerts }) {
           </table>
         </div>
       </div>
-    </Panel>
+    </GlassPanel>
   );
 }

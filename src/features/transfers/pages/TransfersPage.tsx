@@ -3,9 +3,9 @@ import { useForm, useWatch } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import {
   useTransfers,
@@ -275,26 +275,26 @@ export function TransfersPage() {
       });
   }, [transfersArray]);
 
-  if (isLoading) return <ScreenLoader />;
+  if (isLoading) return <HoloLoader />;
 
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag="TRN.ERR" status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" tag="TRN.ERR" status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load transfers'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Panel
+      <GlassPanel
         title="CAMP-TO-CAMP TRANSFERS"
         tag="TRN.01"
         status={transfersArray.length.toString()}
@@ -304,22 +304,22 @@ export function TransfersPage() {
           <div className="flex flex-col items-center gap-4 py-8">
             <ArrowRightLeft className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">NO TRANSFERS REGISTERED</p>
-            <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
+            <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
                 NEW TRANSFER
               </span>
-            </GlitchButton>
+            </TacticalButton>
           </div>
         ) : (
           <>
             <div className="mb-4 flex justify-end">
-              <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
+              <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
                   NEW TRANSFER
                 </span>
-              </GlitchButton>
+              </TacticalButton>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left font-mono-data text-xs">
@@ -458,14 +458,14 @@ export function TransfersPage() {
             </div>
           </>
         )}
-      </Panel>
+      </GlassPanel>
 
       {historyTransfers.length > 0 && (
-        <Panel
+        <GlassPanel
           title="TRANSFER LOG"
           tag="TRN.HIST"
           status={`${historyTransfers.length} RECORDS`}
-          accent="purple"
+          accent="amber"
         >
           <div className="space-y-3">
             <div className="flex items-center gap-2 font-mono-data text-xs text-muted-foreground">
@@ -624,7 +624,7 @@ export function TransfersPage() {
               </details>
             )}
           </div>
-        </Panel>
+        </GlassPanel>
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -768,7 +768,7 @@ export function TransfersPage() {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -777,10 +777,10 @@ export function TransfersPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'CREATING...' : 'CREATE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>
@@ -808,7 +808,7 @@ export function TransfersPage() {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -817,15 +817,15 @@ export function TransfersPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton
+              </TacticalButton>
+              <TacticalButton
                 variant="danger"
                 type="button"
                 onClick={handleReject}
                 disabled={!rejectTarget?.reason || rejectMutation.isPending}
               >
                 {rejectMutation.isPending ? 'REJECTING...' : 'REJECT'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </div>
         </DialogContent>
@@ -851,7 +851,7 @@ export function TransfersPage() {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -860,15 +860,15 @@ export function TransfersPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton
+              </TacticalButton>
+              <TacticalButton
                 variant="primary"
                 type="button"
                 onClick={handleScheduleConfirm}
                 disabled={!scheduleDate || scheduleMutation.isPending}
               >
                 {scheduleMutation.isPending ? 'SCHEDULING...' : 'SCHEDULE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </div>
         </DialogContent>

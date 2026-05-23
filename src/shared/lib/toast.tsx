@@ -40,21 +40,21 @@ const typeStyles: Record<
   { border: string; bg: string; text: string; icon: typeof AlertTriangle }
 > = {
   error: {
-    border: 'border-[var(--neon-fuchsia)]/30',
-    bg: 'bg-[oklch(0.12_0.05_340_/_0.95)]',
-    text: 'text-[var(--neon-fuchsia)]',
+    border: 'border-gdf-status-danger/30',
+    bg: 'bg-gdf-glass-bg-heavy backdrop-blur-glass-heavy',
+    text: 'text-gdf-status-danger',
     icon: AlertTriangle,
   },
   success: {
-    border: 'border-[var(--neon-cyan)]/30',
-    bg: 'bg-[oklch(0.12_0.05_210_/_0.95)]',
-    text: 'text-[var(--neon-cyan)]',
+    border: 'border-gdf-accent-secondary/30',
+    bg: 'bg-gdf-glass-bg-heavy backdrop-blur-glass-heavy',
+    text: 'text-gdf-accent-secondary',
     icon: CheckCircle,
   },
   info: {
-    border: 'border-[var(--neon-violet)]/30',
-    bg: 'bg-[oklch(0.12_0.05_280_/_0.95)]',
-    text: 'text-[var(--neon-violet)]',
+    border: 'border-gdf-accent-primary/30',
+    bg: 'bg-gdf-glass-bg-heavy backdrop-blur-glass-heavy',
+    text: 'text-gdf-accent-primary',
     icon: Info,
   },
 };
@@ -71,16 +71,17 @@ export function ToastContainer() {
           return (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, x: 50, scale: 0.95 }}
+              initial={{ opacity: 0, x: 60, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
               exit={{ opacity: 0, x: 50, scale: 0.95 }}
-              className={`pointer-events-auto border backdrop-blur-md rounded-sm px-4 py-3 flex items-start gap-3 shadow-lg ${style.border} ${style.bg}`}
+              className={`pointer-events-auto border rounded-md px-4 py-3 flex items-start gap-3 shadow-lg ${style.border} ${style.bg}`}
             >
               <Icon size={16} className={`mt-0.5 shrink-0 ${style.text}`} />
-              <p className="text-xs font-mono-data text-foreground flex-1">{t.message}</p>
+              <p className="text-xs font-mono-data text-gdf-text-primary flex-1">{t.message}</p>
               <button
                 onClick={() => dismiss(t.id)}
-                className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+                className="text-gdf-text-muted hover:text-gdf-text-primary shrink-0 transition-colors"
               >
                 <X size={14} />
               </button>

@@ -1,4 +1,4 @@
-import { Panel } from '@/components/cyber/Panel';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { Brain, Lightbulb, Target } from 'lucide-react';
 
@@ -30,7 +30,7 @@ export function AIAnalysisPanel({
 
   if (!hasData) {
     return (
-      <Panel title="AI ANALYSIS" tag="AI.EVAL" accent="purple">
+      <GlassPanel title="AI ANALYSIS" tag="AI.EVAL" accent="amber">
         <div className="flex flex-col items-center gap-3 py-6">
           <Brain className="h-8 w-8 text-[var(--neon-fuchsia)]/30" />
           <p className="font-mono-data text-xs text-muted-foreground text-center">
@@ -40,12 +40,12 @@ export function AIAnalysisPanel({
             The AI may still be processing or the backend did not include evaluation fields.
           </p>
         </div>
-      </Panel>
+      </GlassPanel>
     );
   }
 
   return (
-    <Panel title="AI ANALYSIS" tag="AI.EVAL" accent="purple">
+    <GlassPanel title="AI ANALYSIS" tag="AI.EVAL" accent="amber">
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <Target className="h-4 w-4 text-[var(--neon-fuchsia)]" />
@@ -84,6 +84,6 @@ export function AIAnalysisPanel({
           </div>
         )}
       </div>
-    </Panel>
+    </GlassPanel>
   );
 }
