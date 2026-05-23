@@ -119,6 +119,10 @@ export default {
           '0%': { transform: 'translate(0, 0) scale(1)' },
           '100%': { transform: 'translate(-4%, 2%) scale(1.08)' },
         },
+        'radar-sweep-rotate': {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
       },
       animation: {
         'float-panel': 'float-panel 4s ease-in-out infinite alternate',
@@ -134,6 +138,7 @@ export default {
         'glitch-shift': 'glitch-shift 0.3s ease-in-out',
         'ambient-drift-1': 'ambient-drift-1 20s ease-in-out infinite alternate',
         'ambient-drift-2': 'ambient-drift-2 25s ease-in-out infinite alternate-reverse',
+        'radar-sweep-rotate': 'radar-sweep-rotate 12s linear infinite',
       },
     },
   },
