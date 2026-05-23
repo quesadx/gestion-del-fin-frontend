@@ -1,17 +1,19 @@
-# AGENT.md — Gestión del Fin · Frontend Core Context
+# AGENT CONTEXT — Gestión del Fin · Tactical Command Interface
 
-> Always read this file. Load additional context docs based on your current task.
+> Updated 2026-05-23 — Phase 01 Tactical UI Redesign
+
+Always read this file. Load additional context docs based on your current task.
 
 ---
 
 ## CONTEXT LOADING GUIDE
 
-| Working on... | Load |
-|---|---|
-| Any UI component, styles, animations | `@DESIGN_SYSTEM.md` |
-| API calls, queries, mutations, stores | `@API_CONTRACT.md` |
-| Auth, guards, roles, session | `@ROLES_ACCESS.md` |
-| Planning, checklist, deliverables | `@MILESTONES.md` |
+| Working on...                         | Load                |
+| ------------------------------------- | ------------------- |
+| Any UI component, styles, animations  | `@DESIGN_SYSTEM.md` |
+| API calls, queries, mutations, stores | `@API_CONTRACT.md`  |
+| Auth, guards, roles, session          | `@ROLES_ACCESS.md`  |
+| Planning, checklist, deliverables     | `@MILESTONES.md`    |
 
 ---
 
@@ -19,10 +21,12 @@
 
 **Name:** Gestión del Fin
 **Type:** Multi-camp zombie apocalypse resource management web app
+**Visual:** Holographic tactical command center interface
 **Language:** TypeScript — strict mode, no `any`
 **Context:** University final project, EIF209 Programming IV, Universidad Nacional de Costa Rica 2026
 
 ### Domain glossary
+
 - **Camp** — one isolated tenant. Like a "company" in a multi-tenant system.
 - **Survivor** — a person in the camp. Has a role/profession and a condition.
 - **Condition** — `healthy | injured | sick | away`. Affects work capacity.
@@ -35,32 +39,35 @@
 
 ## TECH STACK
 
-| Layer | Technology | Version | Purpose |
-|---|---|---|---|
-| Framework | React | 18 | UI rendering |
-| Language | TypeScript | 5.x strict | Type safety |
-| Build | Vite | 5.x | Dev server + bundler |
-| Routing | React Router DOM | 6.x | Client-side routing |
-| Styling | TailwindCSS | 3.x | Utility-first CSS |
-| UI Components | Shadcn/ui | latest | Accessible primitives |
-| Animations | Framer Motion | 11.x | Page + micro animations |
-| Charts | Recharts | 2.x | Dashboard metrics |
-| Client state | Zustand | 4.x | Auth, camp, UI state only |
-| Server state | TanStack Query | 5.x | API cache, loading, errors |
-| HTTP transport | Axios | 1.x | HTTP client + JWT interceptors |
-| Forms | React Hook Form + Zod | latest | Validation + type-safe forms |
-| Testing | Playwright | latest | E2E tests |
-| Linting | ESLint + Prettier + CSpell | — | Code quality |
-| Deployment | Vercel | — | Hosting |
+| Layer          | Technology                 | Version    | Purpose                        |
+| -------------- | -------------------------- | ---------- | ------------------------------ |
+| Framework      | React                      | 18         | UI rendering                   |
+| Language       | TypeScript                 | 5.x strict | Type safety                    |
+| Build          | Vite                       | 5.x        | Dev server + bundler           |
+| Routing        | React Router DOM           | 6.x        | Client-side routing            |
+| Styling        | TailwindCSS                | 3.x        | Utility-first CSS              |
+| UI Components  | Shadcn/ui                  | latest     | Accessible primitives          |
+| Animations     | Framer Motion              | 11.x       | Page + micro animations        |
+| Charts         | Recharts                   | 2.x        | Dashboard metrics              |
+| Client state   | Zustand                    | 4.x        | Auth, camp, UI state only      |
+| Server state   | TanStack Query             | 5.x        | API cache, loading, errors     |
+| HTTP transport | Axios                      | 1.x        | HTTP client + JWT interceptors |
+| Forms          | React Hook Form + Zod      | latest     | Validation + type-safe forms   |
+| Testing        | Playwright                 | latest     | E2E tests                      |
+| Linting        | ESLint + Prettier + CSpell | —          | Code quality                   |
+| Deployment     | Vercel                     | —          | Hosting                        |
 
 ### State management split — critical rule
+
 ```
-Zustand  → client state only: auth session, active camp, UI (modals, sidebar)
+Zustand  → client state only: auth session, active camp, UI (modals, sidebar, emotional)
 TanStack Query → server state: survivors, resources, explorations, transfers, dashboard data
 ```
+
 Never store API response data in Zustand. Never fetch data inside Zustand actions.
 
 ### Environment variables
+
 ```bash
 VITE_API_URL=http://localhost:3000/api
 VITE_APP_NAME="Gestión del Fin"
@@ -68,15 +75,22 @@ VITE_SESSION_TIMEOUT_MS=1200000
 ```
 
 ### Path alias
+
 - `@/` → `src/`
 
 ---
 
 ## VISUAL CONCEPT (summary)
 
-The entire UI lives inside a **wrist-mounted Cold War military terminal** — think PIP-Boy meets Soviet ELORG hardware. The device bezel is always visible. The screen inside is monochromatic phosphor green with pixelated fonts and CRT scanlines.
+The entire UI is a holographic tactical command center interface — glass panels, cyan/blue
+accents, dynamic ambient backgrounds with cursor-reactive glow and scanner sweeps. The
+interface feels alive, reactive, and technologically sophisticated.
 
-→ Full tokens, fonts, and animation specs in `@DESIGN_SYSTEM.md`
+Supports dark mode (default) and light mode via a toggle. The interface reacts emotionally
+to camp health: stable (cyan/blue, calm), alert (amber accents, faster scanners), critical
+(red accents, subtle glitch overlay).
+
+→ Full tokens, components, and animation specs in `@DESIGN_SYSTEM.md`
 
 ---
 
@@ -86,217 +100,72 @@ The entire UI lives inside a **wrist-mounted Cold War military terminal** — th
 src/
 │
 ├── app/                            # Global configuration
-│   ├── App.tsx                     # Root component
+│   ├── App.tsx                     # Root component — TacticalBackground + ThemeToggle
 │   ├── AppRouter.tsx               # Route definitions
 │   ├── providers.tsx               # QueryClientProvider + other providers
 │   └── styles/
-│       ├── tokens.css              # CSS custom properties (design tokens)
-│       ├── fonts.css               # @font-face imports
-│       ├── scanlines.css           # CRT overlay effect
-│       └── globals.css             # Tailwind directives + base resets
+│       ├── tokens.css              # --gdf-* CSS custom properties (design tokens)
+│       └── globals.css             # Tailwind directives + base resets + components
+│
+├── components/                     # Reusable UI components
+│   ├── tactical/                   # NEW — glass holographic components
+│   │   ├── GlassPanel.tsx          # Glass card wrapper
+│   │   ├── TacticalButton.tsx      # 4-variant button system
+│   │   ├── HoloLoader.tsx          # Holographic loading spinner
+│   │   ├── TacticalBackground.tsx  # Dynamic ambient background
+│   │   └── ThemeToggle.tsx         # Dark/light mode toggle
+│   ├── cyber/                      # LEGACY — being migrated to tactical/
+│   │   ├── Panel.tsx               # → GlassPanel
+│   │   ├── GlitchButton.tsx        # → TacticalButton
+│   │   ├── StatusBadge.tsx         # Restyled in-place
+│   │   ├── ScreenLoader.tsx        # → HoloLoader
+│   │   └── ... (8 unused, scheduled for deletion)
+│   ├── ui/                         # shadcn/ui primitives
+│   └── navigation/                 # LEGACY — unused, scheduled for deletion
 │
 ├── features/                       # Business domain modules
-│   │
+│   ├── ui/                         # UI state (emotional, theme)
+│   │   ├── store/emotional.store.ts
+│   │   ├── hooks/useEmotionalSyncer.ts
+│   │   └── index.ts
 │   ├── auth/
-│   │   ├── api/
-│   │   │   └── auth.api.ts         # login, logout, verifySession (plain Axios fns)
-│   │   ├── components/
-│   │   │   ├── LoginForm.tsx
-│   │   │   └── LockScreen.tsx
-│   │   ├── hooks/
-│   │   │   └── useInactivity.ts    # 20-min idle timer
-│   │   ├── pages/
-│   │   │   └── LoginPage.tsx
-│   │   ├── store/
-│   │   │   └── auth.store.ts       # Zustand: user, token, role, isLocked
-│   │   ├── types/
-│   │   │   └── auth.types.ts
-│   │   └── index.ts                # Barrel export
-│   │
 │   ├── camps/
-│   │   ├── api/
-│   │   │   ├── camps.api.ts
-│   │   │   └── transfers.api.ts
-│   │   ├── components/
-│   │   │   ├── CampCard.tsx
-│   │   │   └── TransferRequestForm.tsx
-│   │   ├── hooks/
-│   │   │   ├── useCamps.ts         # useQuery: list camps
-│   │   │   └── useTransfers.ts     # useQuery + useMutation: transfers
-│   │   ├── pages/
-│   │   │   ├── CampsPage.tsx
-│   │   │   └── TransfersPage.tsx
-│   │   ├── store/
-│   │   │   └── camp.store.ts       # Zustand: activeCamp, serverTime only
-│   │   ├── types/
-│   │   │   └── camp.types.ts
-│   │   └── index.ts
-│   │
 │   ├── people/
-│   │   ├── api/
-│   │   │   └── people.api.ts
-│   │   ├── components/
-│   │   │   ├── SurvivorCard.tsx
-│   │   │   ├── ConditionBadge.tsx
-│   │   │   └── AIAnalysisPanel.tsx # AI decision + reasoning display
-│   │   ├── hooks/
-│   │   │   ├── usePeople.ts        # useQuery: list + detail survivors
-│   │   │   └── useAIDecision.ts    # useMutation: trigger AI evaluation
-│   │   ├── pages/
-│   │   │   ├── PeopleListPage.tsx
-│   │   │   ├── PersonDetailPage.tsx
-│   │   │   └── PersonIngressPage.tsx
-│   │   ├── types/
-│   │   │   └── person.types.ts
-│   │   └── index.ts
-│   │
 │   ├── inventory/
-│   │   ├── api/
-│   │   │   └── resources.api.ts
-│   │   ├── components/
-│   │   │   ├── InventoryTable.tsx
-│   │   │   ├── LowStockAlert.tsx   # Derived from query data, not store
-│   │   │   └── ResourceEntryForm.tsx
-│   │   ├── hooks/
-│   │   │   └── useResources.ts     # useQuery + useMutation: inventory
-│   │   ├── pages/
-│   │   │   ├── InventoryPage.tsx
-│   │   │   └── ResourceDetailPage.tsx
-│   │   ├── types/
-│   │   │   └── resource.types.ts
-│   │   └── index.ts
-│   │
 │   ├── explorations/
-│   │   ├── api/
-│   │   │   └── explorations.api.ts
-│   │   ├── components/
-│   │   │   ├── ExplorationCard.tsx
-│   │   │   └── ExplorationTimeline.tsx
-│   │   ├── hooks/
-│   │   │   └── useExplorations.ts  # useQuery + useMutation
-│   │   ├── pages/
-│   │   │   └── ExplorationsPage.tsx
-│   │   ├── types/
-│   │   │   └── exploration.types.ts
-│   │   └── index.ts
-│   │
 │   └── dashboard/
-│       ├── components/
-│       │   ├── ResourceChart.tsx
-│       │   ├── SurvivorStats.tsx
-│       │   └── RationTracker.tsx
-│       ├── hooks/
-│       │   └── useDashboard.ts     # useQuery: aggregated metrics
-│       ├── pages/
-│       │   └── DashboardPage.tsx   # system_admin + resource_manager only
-│       └── index.ts
+│
+├── hooks/                          # Shared hooks
+│   ├── useTheme.ts                 # Dark/light mode toggle
+│   └── useNavItems.ts
+│
+├── layouts/
+│   └── AppShell.tsx                # Glass sidebar + header + Outlet
+│
+├── routes/
+│   └── AppRoutes.tsx
 │
 └── shared/                         # Truly cross-cutting code
-    │
     ├── api/
     │   └── axiosInstance.ts        # Base Axios client + JWT interceptors
-    │
-    ├── ui/                         # Design system primitives
-    │   ├── device/
-    │   │   ├── DeviceFrame.tsx
-    │   │   ├── ScreenSurface.tsx
-    │   │   └── StatusBar.tsx
-    │   ├── PixelButton.tsx
-    │   ├── TerminalText.tsx
-    │   ├── PhosphorBadge.tsx
-    │   ├── TacticalTable.tsx
-    │   └── AlertBanner.tsx
-    │
-    ├── guards/
-    │   ├── PrivateRoute.tsx
-    │   ├── RoleGate.tsx
-    │   └── SessionGuard.tsx
-    │
-    ├── hooks/
-    │   ├── useServerTime.ts
-    │   └── useRoleAccess.ts
-    │
     ├── lib/
-    │   ├── motion.ts               # Framer Motion animation constants
-    │   ├── queryClient.ts          # TanStack QueryClient instance + config
-    │   └── roleGuards.ts           # Role → allowed routes map
-    │
+    │   ├── motion.ts               # Framer Motion animation variants
+    │   ├── queryClient.ts          # TanStack QueryClient
+    │   └── roleGuards.ts
     └── utils/
-        ├── time.utils.ts
-        ├── role.utils.ts
-        └── logger.ts               # No console.log in production
-```
-
-### Feature barrel export pattern
-```typescript
-// features/inventory/index.ts
-export { InventoryPage } from './pages/InventoryPage'
-export { LowStockAlert } from './components/LowStockAlert'
-export { useResources } from './hooks/useResources'
-export type { Resource, ResourceType } from './types/resource.types'
-```
-```typescript
-// Usage anywhere in the app
-import { LowStockAlert, useResources } from '@/features/inventory'
 ```
 
 ### Where does new code go?
+
 - **Only exists because of one feature?** → `features/[feature]/`
 - **Used by 2+ features?** → `shared/`
 - **Global config, routing, providers?** → `app/`
+- **New tactical visual component?** → `components/tactical/`
 
 ---
 
-## CODE CONVENTIONS
+## CODE CONVENTIONS (unchanged)
 
-### Language — English ONLY
-All source code must be written in **English**:
-- Variable, function, and type names
-- Comments and docstrings
-- Commit messages
-- File and folder names
-
-**Exception:** UI text displayed to users can be localized (Spanish, etc.), but code infrastructure is always English.
-
-### Good practices checklist
-Before writing any code:
-- [ ] No `any` or `as any` — use explicit types
-- [ ] No `console.log` — use `shared/utils/logger.ts`
-- [ ] No magic numbers — extract to named constants
-- [ ] Functions have single responsibility (max 20 lines)
-- [ ] Error handling in all async functions
-- [ ] Imports organized: react | libraries | features | shared | local
-- [ ] Components use named exports only
-- [ ] Types at top of file, component below
-- [ ] No unused variables or imports
-
-### Component file structure
-```typescript
-// 1. Imports — group: react | libraries | @/features | @/shared | ./local
-// 2. Types / interfaces
-// 3. Component as named function declaration (not arrow function)
-// 4. Order inside: hooks → derived state/memos → handlers → return
-
-export function SurvivorCard({ survivorId, onSelect }: Props) {
-  // hooks first
-  // derived state
-  // handlers
-  // JSX
-}
-```
-
-### Naming
-| Thing | Convention | Example |
-|---|---|---|
-| Components | PascalCase | `SurvivorCard.tsx` |
-| Hooks | camelCase + `use` prefix | `useResources.ts` |
-| Query hooks | `use[Resource]` | `usePeople.ts`, `useResources.ts` |
-| Stores | camelCase + `.store` suffix | `auth.store.ts` |
-| API files | camelCase + `.api` suffix | `people.api.ts` |
-| Types | PascalCase | `Survivor`, `Resource` |
-| Constants | SCREAMING_SNAKE_CASE | `TIMEOUT_MS` |
-
-### Hard rules
 - No `any`. No `as any`. TypeScript strict always on.
 - No `console.log` — use `shared/utils/logger.ts`
 - No raw `fetch` or `axios` calls in components — use query hooks
@@ -305,54 +174,4 @@ export function SurvivorCard({ survivorId, onSelect }: Props) {
 - All forms: `react-hook-form` + `zod` resolver
 - Named exports for components, never default exports
 - All async functions have explicit error handling
-
----
-
-## TOOLING SETUP
-
-### ESLint + Prettier + CSpell scripts (`package.json`)
-```json
-{
-  "scripts": {
-    "dev":      "vite",
-    "build":    "tsc -b && vite build",
-    "lint":     "eslint . --max-warnings 0",
-    "lint:fix": "eslint . --fix",
-    "format":   "prettier --write src/",
-    "spell":    "cspell 'src/**/*.{ts,tsx}'",
-    "check":    "npm run lint && npm run spell && npm run build"
-  }
-}
-```
-
-Run `npm run check` before every commit.
-
-→ Full ESLint, Prettier and CSpell config files in `@TOOLING.md`
-
----
-
-## GAMIFICATION ELEMENTS
-
-- **Threat Level** — sidebar widget (0–5) derived from low-stock query data + survivor conditions
-- **Days Survived** — counter in StatusBar since camp creation
-- **Achievement toasts** — `[ACHIEVEMENT UNLOCKED] — SUPPLY HOARDER` terminal style
-- **Survivor proficiency** — XP badge on survivor cards (days active + tasks)
-- **Camp health score** — aggregate metric in dashboard
-
----
-
-## DO / DON'T
-
-| DO | DON'T |
-|---|---|
-| Use TanStack Query for all server data | Store API responses in Zustand |
-| Keep Zustand for auth, camp, UI state only | Use Zustand for inventory, people, explorations |
-| Use `invalidateQueries` after mutations | Manually update Zustand after API calls |
-| Call `queryClient.clear()` on camp switch | Manually reset each store on camp switch |
-| Use server time for business logic timestamps | Use `Date.now()` / `new Date()` |
-| Keep API functions in `features/[x]/api/` | Call Axios directly from components |
-| Use `react-hook-form` + `zod` for forms | Use plain `useState` for form fields |
-| Named exports for all components | Default exports for components |
-| Run `npm run check` before committing | Skip linting |
-| Show AI reasoning, let admin override | Auto-apply AI decisions |
-| Animate every page transition | Render pages without transitions |
+- `pnpm check` before every commit
