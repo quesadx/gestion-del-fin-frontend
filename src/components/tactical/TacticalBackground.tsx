@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 
 function createParticles() {
-  return Array.from({ length: 24 }).map(() => ({
+  return Array.from({ length: 60 }).map(() => ({
     left: Math.random() * 100,
     top: Math.random() * 100,
     duration: 2.5 + Math.random() * 4,
@@ -52,8 +52,13 @@ export function TacticalBackground() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[-10] overflow-hidden" aria-hidden="true">
+      <div className="gdf-bg-grid animate-grid-drift" />
       <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.12),transparent_55%)] blur-[80px] animate-ambient-drift-1" />
       <div className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.10),transparent_55%)] blur-[90px] animate-ambient-drift-2" />
+      <div
+        className="absolute -top-[30%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.08),transparent_55%)] blur-[100px] animate-ambient-drift-1"
+        style={{ animationDuration: '30s', animationDirection: 'alternate-reverse' }}
+      />
       <div
         className="fixed top-0 left-0 right-0 h-[2px] animate-scanner-sweep"
         style={{

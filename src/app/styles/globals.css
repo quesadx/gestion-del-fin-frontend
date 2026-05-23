@@ -246,7 +246,9 @@
     animation: float-panel 4s ease-in-out infinite alternate;
   }
   .gdf-depth-layer {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.2);
   }
   .gdf-parallax-sidebar {
     transform: translateY(var(--gdf-scroll-offset, 0px));
@@ -275,7 +277,9 @@
     animation: float-panel 4s ease-in-out infinite alternate;
   }
   .gdf-depth-layer {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.2);
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.2);
   }
   .gdf-parallax-sidebar {
     transform: translateY(var(--gdf-scroll-offset, 0px));
@@ -489,17 +493,27 @@
 }
 
 @keyframes float-panel {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(3px); }
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(3px);
+  }
 }
 
 @keyframes depth-drift {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-2px); }
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-2px);
+  }
 }
 
 .gdf-hover-glow {
-  transition: box-shadow var(--gdf-transition-fast), border-color var(--gdf-transition-fast);
+  transition:
+    box-shadow var(--gdf-transition-fast),
+    border-color var(--gdf-transition-fast);
 }
 .gdf-hover-glow:hover {
   box-shadow: 0 0 12px var(--gdf-accent-primary-glow);
@@ -510,11 +524,41 @@
   transition: box-shadow 0.15s ease-out;
 }
 .gdf-focus-ring-animate:focus-visible {
-  box-shadow: 0 0 0 1px var(--gdf-surface-root), 0 0 0 3px var(--gdf-accent-primary);
+  box-shadow:
+    0 0 0 1px var(--gdf-surface-root),
+    0 0 0 3px var(--gdf-accent-primary);
   outline: none;
 }
 
 @keyframes ripple {
-  0% { transform: scale(0); opacity: 0.4; }
-  100% { transform: scale(4); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.gdf-bg-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -5;
+  opacity: 0.04;
+  background-image:
+    linear-gradient(rgba(6, 182, 212, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+}
+
+@keyframes grid-drift {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 60px 60px;
+  }
 }

@@ -66,6 +66,8 @@ export default {
         'float-panel': 'float-panel 4s ease-in-out infinite alternate',
       'ripple': { '0%': { transform: 'scale(0)', opacity: '0.4' }, '100%': { transform: 'scale(4)', opacity: '0' } },
       'ripple': 'ripple 0.6s ease-out forwards',
+      'grid-drift': { '0%': { backgroundPosition: '0 0' }, '100%': { backgroundPosition: '60px 60px' } },
+      'grid-drift': 'grid-drift 30s linear infinite',
         'fade-in': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
