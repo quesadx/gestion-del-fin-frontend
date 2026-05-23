@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
@@ -76,9 +76,9 @@ export function PeopleListPage() {
 
   return (
     <div className="space-y-6">
-      <Panel title="PEOPLE_DIRECTORY" tag="PPL.01" status="ONLINE" accent="cyan">
+      <GlassPanel title="PEOPLE_DIRECTORY" tag="PPL.01" status="ONLINE" accent="cyan">
         {campsLoading ? (
-          <ScreenLoader />
+          <HoloLoader />
         ) : campsError ? (
           <p className="text-sm text-red-400 font-mono-data">Failed to load camps.</p>
         ) : campsArray.length === 0 ? (
@@ -108,42 +108,42 @@ export function PeopleListPage() {
             </select>
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
       {!selectedCampId ? (
-        <Panel accent="purple">
+        <GlassPanel accent="amber">
           <div className="flex flex-col items-center gap-4 py-8">
             <Users className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground text-center">
               SELECT A CAMP
             </p>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : peopleLoading ? (
-        <ScreenLoader />
+        <HoloLoader />
       ) : peopleError ? (
-        <Panel title="ERROR" status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(peopleErr as Error)?.message || 'Failed to load people'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetchPeople()}>
+          <TacticalButton variant="warning" onClick={() => refetchPeople()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       ) : campIsEmpty ? (
-        <Panel accent="cyan">
+        <GlassPanel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
             <Users className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">
               NO PEOPLE REGISTERED IN THIS CAMP
             </p>
-            <GlitchButton variant="primary" onClick={() => navigate('/people/new')}>
+            <TacticalButton variant="primary" onClick={() => navigate('/people/new')}>
               REGISTER PERSON
-            </GlitchButton>
+            </TacticalButton>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : (
-        <Panel title="PEOPLE LIST" tag={`PPL.${selectedCampId}`} status="ONLINE" accent="cyan">
+        <GlassPanel title="PEOPLE LIST" tag={`PPL.${selectedCampId}`} status="ONLINE" accent="cyan">
           <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]/50" />
@@ -180,19 +180,19 @@ export function PeopleListPage() {
               ))}
             </select>
             {hasActiveFilters && (
-              <GlitchButton variant="ghost" onClick={clearFilters}>
+              <TacticalButton variant="ghost" onClick={clearFilters}>
                 <span className="flex items-center gap-1.5">
                   <FilterX className="h-3 w-3" />
                   CLEAR
                 </span>
-              </GlitchButton>
+              </TacticalButton>
             )}
-            <GlitchButton variant="primary" onClick={() => navigate('/people/new')}>
+            <TacticalButton variant="primary" onClick={() => navigate('/people/new')}>
               <span className="flex items-center gap-2">
                 <UserPlus className="h-3.5 w-3.5" />
                 REGISTER
               </span>
-            </GlitchButton>
+            </TacticalButton>
           </div>
 
           {hasActiveFilters && peoplePagination && peoplePagination.totalPages > 1 && (
@@ -277,26 +277,26 @@ export function PeopleListPage() {
 
           {peoplePagination && peoplePagination.totalPages > 1 && (
             <div className="flex justify-center gap-3 mt-4">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 PREVIOUS
-              </GlitchButton>
+              </TacticalButton>
               <span className="flex items-center font-mono-data text-xs text-muted-foreground">
                 PAGE {peoplePagination.page} OF {peoplePagination.totalPages}
               </span>
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 disabled={!peoplePagination.hasNextPage}
                 onClick={() => setPage((p) => p + 1)}
               >
                 NEXT
-              </GlitchButton>
+              </TacticalButton>
             </div>
           )}
-        </Panel>
+        </GlassPanel>
       )}
     </div>
   );

@@ -3,7 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { AppRoutes } from '@/routes/AppRoutes';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { TacticalBackground } from '@/components/tactical/TacticalBackground';
 import { ThemeToggle } from '@/components/tactical/ThemeToggle';
 import { ToastContainer } from '@/shared/lib/toast';
@@ -28,7 +28,7 @@ function AppBootstrap({ children }: { children: React.ReactNode }) {
   }, [hasHydrated, token]);
 
   if (!hasHydrated) {
-    return <ScreenLoader />;
+    return <HoloLoader />;
   }
 
   return <>{children}</>;

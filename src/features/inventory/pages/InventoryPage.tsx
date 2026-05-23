@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { StockBarChart } from '@/components/cyber/StockBarChart';
 import type { StockBarEntry } from '@/components/cyber/StockBarChart';
@@ -89,14 +89,14 @@ export function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <Panel
+      <GlassPanel
         title="INVENTORY"
         tag="INV.01"
         status={selectedCampId ? 'ONLINE' : 'AWAITING'}
         accent="cyan"
       >
         {campsLoading ? (
-          <ScreenLoader />
+          <HoloLoader />
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
             <Warehouse className="h-8 w-8 text-[var(--neon-cyan)]/40" />
@@ -121,35 +121,35 @@ export function InventoryPage() {
             </select>
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
       {!selectedCampId ? (
-        <Panel accent="purple">
+        <GlassPanel accent="amber">
           <div className="flex flex-col items-center gap-4 py-8">
             <Warehouse className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : invLoading ? (
-        <ScreenLoader />
+        <HoloLoader />
       ) : invError ? (
-        <Panel title="ERROR" status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(invErr as Error)?.message || 'Failed to load inventory'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       ) : invArray.length === 0 ? (
-        <Panel accent="cyan">
+        <GlassPanel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
             <ClipboardList className="h-10 w-10 text-[var(--neon-cyan)]/40" />
             <p className="font-mono-data text-sm text-muted-foreground">INVENTORY IS EMPTY</p>
           </div>
-        </Panel>
+        </GlassPanel>
       ) : (
-        <Panel
+        <GlassPanel
           title="CURRENT STOCK"
           tag={`INV.${selectedCampId}`}
           status={
@@ -177,18 +177,18 @@ export function InventoryPage() {
           )}
 
           <div className="flex flex-wrap gap-3 mb-4 mt-4">
-            <GlitchButton variant="primary" onClick={() => setAdjustOpen(true)}>
+            <TacticalButton variant="primary" onClick={() => setAdjustOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
                 MANUAL ADJUSTMENT
               </span>
-            </GlitchButton>
-            <GlitchButton variant="ghost" onClick={() => navigate('/inventory/audit')}>
+            </TacticalButton>
+            <TacticalButton variant="ghost" onClick={() => navigate('/inventory/audit')}>
               <span className="flex items-center gap-2">
                 <ClipboardList className="h-3.5 w-3.5" />
                 AUDIT
               </span>
-            </GlitchButton>
+            </TacticalButton>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
@@ -228,7 +228,7 @@ export function InventoryPage() {
               </tbody>
             </table>
           </div>
-        </Panel>
+        </GlassPanel>
       )}
 
       <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
@@ -294,7 +294,7 @@ export function InventoryPage() {
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -303,10 +303,10 @@ export function InventoryPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={createAdjustment.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={createAdjustment.isPending}>
                 {createAdjustment.isPending ? 'PROCESSING...' : 'APPLY ADJUSTMENT'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>

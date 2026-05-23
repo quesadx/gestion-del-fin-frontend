@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useExploration } from '@/features/explorations/hooks/useExplorations';
 import { ArrowLeft, Users, Package, Gift } from 'lucide-react';
@@ -21,19 +21,19 @@ export function ExplorationDetailPage() {
 
   const { data: exp, isLoading, isError, error, refetch } = useExploration(explorationId);
 
-  if (isLoading) return <ScreenLoader />;
+  if (isLoading) return <HoloLoader />;
 
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag={`EXP.${explorationId}`} status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" tag={`EXP.${explorationId}`} status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load exploration'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       </div>
     );
   }
@@ -41,25 +41,25 @@ export function ExplorationDetailPage() {
   if (!exp) {
     return (
       <div className="space-y-6">
-        <Panel title="NOT FOUND" tag={`EXP.${explorationId}`} status="OFFLINE" accent="purple">
+        <GlassPanel title="NOT FOUND" tag={`EXP.${explorationId}`} status="OFFLINE" accent="amber">
           <p className="text-sm text-muted-foreground font-mono-data">
             Requested exploration does not exist.
           </p>
-        </Panel>
+        </GlassPanel>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <GlitchButton variant="ghost" onClick={() => navigate('/explorations')}>
+      <TacticalButton variant="ghost" onClick={() => navigate('/explorations')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
           BACK TO EXPLORATIONS
         </span>
-      </GlitchButton>
+      </TacticalButton>
 
-      <Panel title={exp.destination} tag={`EXP.${exp.id}`} status={exp.status} accent="cyan">
+      <GlassPanel title={exp.destination} tag={`EXP.${exp.id}`} status={exp.status} accent="cyan">
         <div className="space-y-2 font-mono-data text-xs mb-4">
           <div>
             <span className="text-muted-foreground">STATUS: </span>
@@ -114,9 +114,9 @@ export function ExplorationDetailPage() {
             </p>
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
-      <Panel title="EXPEDITION MEMBERS" tag={`EXP.${exp.id}.MEMBERS`} accent="cyan">
+      <GlassPanel title="EXPEDITION MEMBERS" tag={`EXP.${exp.id}.MEMBERS`} accent="cyan">
         {exp.members && exp.members.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
@@ -145,9 +145,9 @@ export function ExplorationDetailPage() {
               : 'No members assigned'}
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
-      <Panel title="ALLOCATED RESOURCES" tag={`EXP.${exp.id}.ALLOC`} accent="cyan">
+      <GlassPanel title="ALLOCATED RESOURCES" tag={`EXP.${exp.id}.ALLOC`} accent="cyan">
         {exp.allocated_resources && exp.allocated_resources.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono-data text-xs">
@@ -178,9 +178,9 @@ export function ExplorationDetailPage() {
               : 'No allocated resources'}
           </div>
         )}
-      </Panel>
+      </GlassPanel>
 
-      <Panel title="FOUND RESOURCES" tag={`EXP.${exp.id}.FOUND`} accent="cyan">
+      <GlassPanel title="FOUND RESOURCES" tag={`EXP.${exp.id}.FOUND`} accent="cyan">
         {exp.found_resources && exp.found_resources.length > 0 ? (
           (() => {
             const valid = exp.found_resources.filter((r) => r.resource_type_id != null);
@@ -228,7 +228,7 @@ export function ExplorationDetailPage() {
               : 'No found resources recorded'}
           </div>
         )}
-      </Panel>
+      </GlassPanel>
     </div>
   );
 }

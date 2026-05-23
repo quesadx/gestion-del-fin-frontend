@@ -6,7 +6,7 @@ interface TerminalLineProps {
   delay?: number;
   className?: string;
   prefix?: string;
-  accent?: 'cyan' | 'purple' | 'green';
+  accent?: 'cyan' | 'amber' | 'green';
 }
 
 export function TerminalLine({
@@ -21,7 +21,7 @@ export function TerminalLine({
   const [done, setDone] = useState(false);
 
   const accentColor =
-    accent === 'purple'
+    accent === 'amber'
       ? 'text-accent-secondary'
       : accent === 'green'
         ? 'text-status-green'

@@ -15,7 +15,7 @@ interface ModuleCard {
   to: string;
   metric?: string;
   metricValue?: string | number;
-  accent: 'cyan' | 'purple' | 'green';
+  accent: 'cyan' | 'amber' | 'green';
 }
 
 export function DashboardPage() {
@@ -60,10 +60,10 @@ export function DashboardPage() {
       metricValue: `${activeCamps ?? 0} / ${campCount ?? 0}`,
       accent: 'cyan',
     });
-    modules.push({ label: 'PEOPLE', to: '/people', accent: 'purple' });
+    modules.push({ label: 'PEOPLE', to: '/people', accent: 'amber' });
     modules.push({ label: 'ADMISSIONS', to: '/admissions', accent: 'green' });
     modules.push({ label: 'USERS', to: '/users', accent: 'cyan' });
-    modules.push({ label: 'PROFESSIONS', to: '/professions', accent: 'purple' });
+    modules.push({ label: 'PROFESSIONS', to: '/professions', accent: 'amber' });
     modules.push({ label: 'EXPLORATIONS', to: '/explorations', accent: 'green' });
   }
   if (role === 'resource_manager') {
@@ -75,14 +75,14 @@ export function DashboardPage() {
       accent: 'cyan',
     });
     modules.push({ label: 'INVENTORY', to: '/inventory', accent: 'green' });
-    modules.push({ label: 'AUDIT', to: '/inventory/audit', accent: 'purple' });
+    modules.push({ label: 'AUDIT', to: '/inventory/audit', accent: 'amber' });
   }
   if (role === 'worker') {
     modules.push({ label: 'INVENTORY', to: '/inventory', accent: 'cyan' });
-    modules.push({ label: 'RATIONS', to: '/rations', accent: 'purple' });
+    modules.push({ label: 'RATIONS', to: '/rations', accent: 'amber' });
   }
   if (role === 'travel_coordinator') {
-    modules.push({ label: 'EXPEDITIONS', to: '/explorations', accent: 'purple' });
+    modules.push({ label: 'EXPEDITIONS', to: '/explorations', accent: 'amber' });
   }
 
   if (isLoading) return <ScreenLoader />;
@@ -281,12 +281,12 @@ export function DashboardPage() {
           >
             <div className="flex items-start justify-between mb-3">
               <span
-                className={`font-mono-sm tracking-[0.12em] uppercase font-semibold ${mod.accent === 'cyan' ? 'text-accent-primary' : mod.accent === 'purple' ? 'text-accent-secondary' : 'text-status-green'}`}
+                className={`font-mono-sm tracking-[0.12em] uppercase font-semibold ${mod.accent === 'cyan' ? 'text-accent-primary' : mod.accent === 'amber' ? 'text-accent-secondary' : 'text-status-green'}`}
               >
                 {mod.label}
               </span>
               <ArrowUpRight
-                className={`h-4 w-4 transition-all duration-200 opacity-0 group-hover:opacity-100 -translate-y-1 translate-x-1 group-hover:translate-y-0 group-hover:translate-x-0 ${mod.accent === 'cyan' ? 'text-accent-primary' : mod.accent === 'purple' ? 'text-accent-secondary' : 'text-status-green'}`}
+                className={`h-4 w-4 transition-all duration-200 opacity-0 group-hover:opacity-100 -translate-y-1 translate-x-1 group-hover:translate-y-0 group-hover:translate-x-0 ${mod.accent === 'cyan' ? 'text-accent-primary' : mod.accent === 'amber' ? 'text-accent-secondary' : 'text-status-green'}`}
                 strokeWidth={2}
               />
             </div>
@@ -304,7 +304,7 @@ export function DashboardPage() {
               </span>
             )}
             <span
-              className={`absolute bottom-0 left-0 right-0 h-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${mod.accent === 'cyan' ? 'bg-accent-primary' : mod.accent === 'purple' ? 'bg-accent-secondary' : 'bg-status-green'}`}
+              className={`absolute bottom-0 left-0 right-0 h-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${mod.accent === 'cyan' ? 'bg-accent-primary' : mod.accent === 'amber' ? 'bg-accent-secondary' : 'bg-status-green'}`}
             />
           </button>
         ))}
@@ -320,7 +320,7 @@ export function DashboardPage() {
         </div>
         <div className="space-y-2">
           <TerminalLine text="TERMINAL BOOT SEQUENCE COMPLETE" delay={0} accent="cyan" />
-          <TerminalLine text="GLASS INTERFACE v2.0 INITIALIZED" delay={300} accent="purple" />
+          <TerminalLine text="GLASS INTERFACE v2.0 INITIALIZED" delay={300} accent="amber" />
           {campCount !== null && (
             <TerminalLine
               text={`CAMP NETWORK: ${campCount} nodes detected`}
@@ -340,7 +340,7 @@ export function DashboardPage() {
             delay={1200}
             accent="cyan"
           />
-          <TerminalLine text="AWAITING OPERATOR INPUT" delay={1500} accent="purple" />
+          <TerminalLine text="AWAITING OPERATOR INPUT" delay={1500} accent="amber" />
         </div>
         {camps && Array.isArray(camps) && camps.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border/10 flex flex-wrap gap-2">

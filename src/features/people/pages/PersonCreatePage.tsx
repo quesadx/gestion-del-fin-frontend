@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { useProfessions } from '@/features/professions/hooks/useProfessions';
 import { useCreatePerson } from '@/features/people/hooks/usePeople';
@@ -82,14 +82,14 @@ export function PersonCreatePage() {
 
   return (
     <div className="space-y-6">
-      <GlitchButton variant="ghost" onClick={() => navigate('/people')}>
+      <TacticalButton variant="ghost" onClick={() => navigate('/people')}>
         <span className="flex items-center gap-2">
           <ArrowLeft className="h-3.5 w-3.5" />
           BACK
         </span>
-      </GlitchButton>
+      </TacticalButton>
 
-      <Panel title="REGISTER PERSON" tag="PPL.NEW" status="INPUT" accent="cyan">
+      <GlassPanel title="REGISTER PERSON" tag="PPL.NEW" status="INPUT" accent="cyan">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
@@ -114,7 +114,7 @@ export function PersonCreatePage() {
               </label>
               {campsLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
-                  <ScreenLoader />
+                  <HoloLoader />
                 </div>
               ) : campsError ? (
                 <p className="text-red-400 font-mono-data text-xs">Failed to load camps</p>
@@ -149,7 +149,7 @@ export function PersonCreatePage() {
               </label>
               {profsLoading ? (
                 <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
-                  <ScreenLoader />
+                  <HoloLoader />
                 </div>
               ) : profsError ? (
                 <p className="text-red-400 font-mono-data text-xs">Failed to load professions</p>
@@ -308,10 +308,10 @@ export function PersonCreatePage() {
           )}
 
           <div className="flex justify-end gap-3 pt-4 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
-            <GlitchButton variant="ghost" type="button" onClick={() => navigate('/people')}>
+            <TacticalButton variant="ghost" type="button" onClick={() => navigate('/people')}>
               CANCEL
-            </GlitchButton>
-            <GlitchButton variant="primary" type="submit" disabled={isPending}>
+            </TacticalButton>
+            <TacticalButton variant="primary" type="submit" disabled={isPending}>
               {isPending ? (
                 'REGISTERING...'
               ) : (
@@ -320,10 +320,10 @@ export function PersonCreatePage() {
                   REGISTER
                 </span>
               )}
-            </GlitchButton>
+            </TacticalButton>
           </div>
         </form>
-      </Panel>
+      </GlassPanel>
     </div>
   );
 }

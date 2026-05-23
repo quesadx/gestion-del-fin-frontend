@@ -2,13 +2,13 @@ interface RingMeterProps {
   value: number;
   label: string;
   sublabel?: string;
-  color?: 'cyan' | 'purple' | 'yellow';
+  color?: 'cyan' | 'amber' | 'yellow';
   size?: number;
 }
 
 const colorMap = {
   cyan: 'var(--accent-primary)',
-  purple: 'var(--accent-secondary)',
+  amber: 'var(--accent-secondary)',
   yellow: '#ffab00',
 };
 

@@ -2,7 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/useAuth';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { canAccess, ROLE_LANDING } from '@/shared/lib/roleGuards';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { LockScreen } from '@/components/LockScreen';
 
 export function ProtectedRoute() {
@@ -12,7 +12,7 @@ export function ProtectedRoute() {
   const location = useLocation();
 
   if (isInitializing) {
-    return <ScreenLoader />;
+    return <HoloLoader />;
   }
 
   if (!isAuthenticated) {

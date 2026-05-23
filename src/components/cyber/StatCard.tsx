@@ -5,7 +5,7 @@ interface StatCardProps {
   label: string;
   value: string | number;
   icon: LucideIcon;
-  accent?: 'cyan' | 'purple' | 'green' | 'red';
+  accent?: 'cyan' | 'amber' | 'green' | 'red';
   trend?: { value: string; up: boolean } | null;
   className?: string;
 }
@@ -16,7 +16,7 @@ const accentMap = {
     bg: 'bg-accent-primary/8',
     border: 'border-accent-primary/15',
   },
-  purple: {
+  amber: {
     text: 'text-accent-secondary',
     bg: 'bg-accent-secondary/8',
     border: 'border-accent-secondary/15',

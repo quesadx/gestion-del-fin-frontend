@@ -4,9 +4,9 @@ import { useForm, useWatch } from 'react-hook-form';
 import { resolved } from '@/shared/lib/form';
 import { z } from 'zod';
 import { format } from 'date-fns';
-import { Panel } from '@/components/cyber/Panel';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
-import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { GlassPanel } from '@/components/tactical/GlassPanel';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
+import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import {
   useExplorations,
@@ -250,26 +250,26 @@ export function ExplorationsPage() {
     }
   };
 
-  if (isLoading) return <ScreenLoader />;
+  if (isLoading) return <HoloLoader />;
 
   if (isError) {
     return (
       <div className="space-y-6">
-        <Panel title="ERROR" tag="EXP.01" status="ERROR" accent="purple">
+        <GlassPanel title="ERROR" tag="EXP.01" status="ERROR" accent="amber">
           <p className="text-sm text-red-400 font-mono-data mb-4">
             {(error as Error)?.message || 'Failed to load explorations'}
           </p>
-          <GlitchButton variant="warning" onClick={() => refetch()}>
+          <TacticalButton variant="warning" onClick={() => refetch()}>
             RETRY
-          </GlitchButton>
-        </Panel>
+          </TacticalButton>
+        </GlassPanel>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <Panel
+      <GlassPanel
         title="EXPLORATION LOG"
         tag="EXP.01"
         status={isLoading ? 'LOADING' : expArray.length.toString()}
@@ -281,12 +281,12 @@ export function ExplorationsPage() {
             <p className="font-mono-data text-sm text-muted-foreground">
               NO EXPLORATIONS REGISTERED
             </p>
-            <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
+            <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
                 NEW EXPLORATION
               </span>
-            </GlitchButton>
+            </TacticalButton>
           </div>
         ) : (
           <>
@@ -315,19 +315,19 @@ export function ExplorationsPage() {
                 <option value="CANCELLED">CANCELLED</option>
               </select>
               {hasActiveFilters && (
-                <GlitchButton variant="ghost" onClick={clearFilters}>
+                <TacticalButton variant="ghost" onClick={clearFilters}>
                   <span className="flex items-center gap-1.5">
                     <FilterX className="h-3 w-3" />
                     CLEAR
                   </span>
-                </GlitchButton>
+                </TacticalButton>
               )}
-              <GlitchButton variant="primary" onClick={() => setCreateOpen(true)}>
+              <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
                 <span className="flex items-center gap-2">
                   <Plus className="h-3.5 w-3.5" />
                   NEW EXPLORATION
                 </span>
-              </GlitchButton>
+              </TacticalButton>
             </div>
 
             {filterIsEmpty ? (
@@ -336,9 +336,9 @@ export function ExplorationsPage() {
                 <p className="font-mono-data text-sm text-muted-foreground">
                   NO EXPLORATIONS MATCH SELECTED FILTERS
                 </p>
-                <GlitchButton variant="ghost" onClick={clearFilters}>
+                <TacticalButton variant="ghost" onClick={clearFilters}>
                   CLEAR FILTERS
-                </GlitchButton>
+                </TacticalButton>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -426,7 +426,7 @@ export function ExplorationsPage() {
             )}
           </>
         )}
-      </Panel>
+      </GlassPanel>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
@@ -574,7 +574,7 @@ export function ExplorationsPage() {
               </div>
             )}
             <div className="flex justify-end gap-3 pt-2">
-              <GlitchButton
+              <TacticalButton
                 variant="ghost"
                 type="button"
                 onClick={() => {
@@ -584,10 +584,10 @@ export function ExplorationsPage() {
                 }}
               >
                 CANCEL
-              </GlitchButton>
-              <GlitchButton variant="primary" type="submit" disabled={createMutation.isPending}>
+              </TacticalButton>
+              <TacticalButton variant="primary" type="submit" disabled={createMutation.isPending}>
                 {createMutation.isPending ? 'CREATING...' : 'CREATE'}
-              </GlitchButton>
+              </TacticalButton>
             </div>
           </form>
         </DialogContent>
@@ -713,7 +713,7 @@ export function ExplorationsPage() {
               )}
 
               <div className="flex justify-end gap-3 pt-2">
-                <GlitchButton
+                <TacticalButton
                   variant="ghost"
                   type="button"
                   onClick={() => {
@@ -724,15 +724,15 @@ export function ExplorationsPage() {
                   }}
                 >
                   CANCEL
-                </GlitchButton>
-                <GlitchButton
+                </TacticalButton>
+                <TacticalButton
                   variant="primary"
                   type="button"
                   onClick={handleReturnSubmit}
                   disabled={updateStatusMutation.isPending}
                 >
                   {updateStatusMutation.isPending ? 'PROCESSING...' : 'CONFIRM RETURN'}
-                </GlitchButton>
+                </TacticalButton>
               </div>
             </div>
           </DialogContent>

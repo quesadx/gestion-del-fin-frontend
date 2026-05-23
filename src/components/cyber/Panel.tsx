@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-type AccentColor = 'cyan' | 'purple' | 'green' | 'red';
+type AccentColor = 'cyan' | 'amber' | 'green' | 'red';
 
 interface PanelProps {
   title?: string;
@@ -39,7 +39,7 @@ const ACCENT_CLASSES: Record<
     tagBorder: 'border-accent-primary/20',
     dot: 'bg-accent-primary',
   },
-  purple: {
+  amber: {
     text: 'text-accent-secondary',
     bg: 'bg-accent-secondary/10',
     border: 'border-accent-secondary/5',

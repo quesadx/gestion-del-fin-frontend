@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { GlitchButton } from '@/components/cyber/GlitchButton';
+import { TacticalButton } from '@/components/tactical/TacticalButton';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -46,12 +46,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             {this.state.error?.message}
           </pre>
           <div className="flex gap-3">
-            <GlitchButton variant="ghost" onClick={this.handleGoHome}>
+            <TacticalButton variant="ghost" onClick={this.handleGoHome}>
               RETURN TO BASE
-            </GlitchButton>
-            <GlitchButton variant="primary" onClick={this.handleRetry}>
+            </TacticalButton>
+            <TacticalButton variant="primary" onClick={this.handleRetry}>
               RECOVER
-            </GlitchButton>
+            </TacticalButton>
           </div>
         </div>
       );
