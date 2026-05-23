@@ -217,6 +217,6 @@
   --gdf-glass-bg: rgba(255, 255, 255, 0.65);
   --gdf-glass-bg-hover: rgba(255, 255, 255, 0.8);
   --gdf-glass-bg-heavy: rgba(255, 255, 255, 0.85);
-  --gdf-glass-border: rgba(59, 130, 246, 0.1);
-  --gdf-glass-border-hover: rgba(59, 130, 246, 0.18);
+  --gdf-glass-border: rgba(59, 130, 246, 0.15);
+  --gdf-glass-border-hover: rgba(59, 130, 246, 0.25);
 }
