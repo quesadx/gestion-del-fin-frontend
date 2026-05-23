@@ -8,7 +8,8 @@ import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import { usePeople } from '@/features/people/hooks/usePeople';
 import { useProfessions } from '@/features/professions/hooks/useProfessions';
-import { Users, UserPlus, Search, FilterX } from 'lucide-react';
+import { SearchInput } from '@/components/tactical/SearchInput';
+import { Users, UserPlus, FilterX } from 'lucide-react';
 
 const PAGE_SIZE = 20;
 
@@ -145,16 +146,11 @@ export function PeopleListPage() {
       ) : (
         <GlassPanel title="PEOPLE LIST" tag={`PPL.${selectedCampId}`} status="ONLINE" accent="cyan">
           <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
-            <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]/50" />
-              <input
-                type="text"
-                placeholder="SEARCH BY NAME..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
-              />
-            </div>
+            <SearchInput
+              placeholder="SEARCH BY NAME..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}

@@ -9,8 +9,9 @@ import { TacticalButton } from '@/components/tactical/TacticalButton';
 import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
 import { useCamps, useCreateCamp, useDeleteCamp } from '@/features/camps/hooks/useCamps';
+import { SearchInput } from '@/components/tactical/SearchInput';
 import { toast } from '@/shared/lib/toast';
-import { MapPin, Plus, Trash2, Eye, Search, FilterX } from 'lucide-react';
+import { MapPin, Plus, Trash2, Eye, FilterX } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -151,16 +152,11 @@ export function CampsPage() {
         ) : (
           <>
             <div className="flex flex-col sm:flex-row gap-3 mb-4 flex-wrap">
-              <div className="relative flex-1 min-w-[180px]">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--neon-cyan)]/50" />
-                <input
-                  type="text"
-                  placeholder="SEARCH BY NAME..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
-                />
-              </div>
+              <SearchInput
+                placeholder="SEARCH BY NAME..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
