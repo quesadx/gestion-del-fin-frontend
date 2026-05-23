@@ -44,6 +44,18 @@
   --glass-shadow-heavy: none;
   --glass-shadow-light: none;
 
+  --popover: var(--gdf-glass-bg-heavy);
+  --popover-foreground: var(--gdf-text-primary);
+  --accent: var(--gdf-accent-primary);
+  --accent-foreground: var(--gdf-text-inverse);
+  --secondary: var(--gdf-surface-overlay);
+  --secondary-foreground: var(--gdf-text-secondary);
+  --ring: var(--gdf-accent-primary);
+  --destructive: var(--gdf-status-danger);
+  --destructive-foreground: var(--gdf-text-inverse);
+
+  --glass-bg-popover: var(--gdf-glass-bg-heavy);
+
   --background: var(--gdf-surface-root);
   --foreground: var(--gdf-text-primary);
   --muted: var(--gdf-surface-overlay);
@@ -293,6 +305,28 @@
     right: 0;
     border-bottom: 1px solid;
     border-right: 1px solid;
+  }
+  .gdf-glass-overlay {
+    background: var(--gdf-glass-bg-heavy);
+    border: 1px solid var(--gdf-glass-border);
+    backdrop-filter: blur(var(--gdf-glass-blur-heavy));
+    -webkit-backdrop-filter: blur(var(--gdf-glass-blur-heavy));
+    border-radius: var(--gdf-radius-md);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+  .gdf-interactive-hover {
+    transition:
+      background var(--gdf-transition-fast),
+      color var(--gdf-transition-fast);
+  }
+  .gdf-interactive-hover:hover {
+    background: var(--gdf-surface-hover);
+    opacity: 0.5;
+  }
+  .gdf-focus-ring {
+    box-shadow:
+      0 0 0 2px var(--gdf-surface-root),
+      0 0 0 4px var(--gdf-accent-primary);
   }
   .gdf-scanner-sweep {
     position: fixed;
