@@ -12,6 +12,7 @@ interface GlassPanelProps {
   accent?: AccentColor;
   variant?: 'default' | 'heavy' | 'subtle';
   bracketed?: boolean;
+  depth?: 1 | 2 | 3 | 4 | 5;
 }
 
 const ACCENT_CLASSES: Record<
@@ -50,11 +51,19 @@ const ACCENT_CLASSES: Record<
 
 const VARIANT_CLASSES: Record<string, string> = {
   default:
-    'backdrop-blur-glass bg-gdf-glass-bg border border-gdf-glass-border rounded-lg gdf-depth-layer animate-float-panel',
+    'backdrop-blur-glass bg-gdf-glass-bg border border-gdf-glass-border rounded-lg gdf-depth-2',
   heavy:
-    'backdrop-blur-glass-heavy bg-gdf-glass-bg-heavy border border-gdf-glass-border rounded-lg gdf-depth-layer animate-float-panel',
+    'backdrop-blur-glass-heavy bg-gdf-glass-bg-heavy border border-gdf-glass-border rounded-lg gdf-depth-4',
   subtle:
-    'backdrop-blur-glass bg-gdf-glass-bg/40 border border-gdf-glass-border rounded-lg gdf-depth-layer ',
+    'backdrop-blur-glass bg-gdf-glass-bg/40 border border-gdf-glass-border rounded-lg gdf-depth-1',
+};
+
+const DEPTH_CLASSES: Record<number, string> = {
+  1: 'gdf-depth-1',
+  2: 'gdf-depth-2',
+  3: 'gdf-depth-3',
+  4: 'gdf-depth-4',
+  5: 'gdf-depth-5',
 };
 
 export function GlassPanel({
@@ -66,9 +75,11 @@ export function GlassPanel({
   accent = 'cyan',
   variant = 'default',
   bracketed = false,
+  depth,
 }: GlassPanelProps) {
   const a = ACCENT_CLASSES[accent];
-  const variantClass = VARIANT_CLASSES[variant];
+  const baseClass = VARIANT_CLASSES[variant];
+  const variantClass = depth ? baseClass.replace(/gdf-depth-\d/g, DEPTH_CLASSES[depth]) : baseClass;
 
   return (
     <div
