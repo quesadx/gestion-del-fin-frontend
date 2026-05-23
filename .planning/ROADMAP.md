@@ -65,4 +65,20 @@ Plans:
 
 ---
 
-### Phase 04: [To be planned]
+### Phase 04: Cinematic Holographic UI Expansion
+
+**Goal:** Push the interface from "modern tactical dashboard" to "living holographic tactical operating system" — glass search inputs, holographic radar background, diffuse cursor glow, cinematic dropdown animations, 5-tier depth shadows, spring button physics, and polished overlay animations.
+
+**Requirements:** RNF-03, RNF-04
+
+**Plans:** 7 plans
+
+Plans:
+
+- [ ] 04-01-PLAN.md — CSS foundation (deduplication, new tokens, keyframes, depth system)
+- [ ] 04-02-PLAN.md — Holographic radar background (HolographicRadar component)
+- [ ] 04-03-PLAN.md — Diffuse cursor glow + enhanced background layers
+- [ ] 04-04-PLAN.md — SearchInput glass component + page migration (CampsPage, PeopleListPage)
+- [ ] 04-05-PLAN.md — Dropdown/select/popover cinematic overhaul (Framer Motion spring)
+- [ ] 04-06-PLAN.md — Command palette + dialog spring polish
+- [ ] 04-07-PLAN.md — Final polish (GlassPanel shadows, TacticalButton springs, rounded corners audit, validation)
