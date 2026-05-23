@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '@/features/auth/store/auth.store';
 import { ROLE_LANDING } from '@/shared/lib/roleGuards';
 import { useNavItems } from '@/hooks/useNavItems';
@@ -20,6 +22,7 @@ export function AppShell() {
   const role = useAuthStore((state) => state.role);
   const items = useNavItems(role);
   const { data: camps } = useCamps();
+  const location = useLocation();
   const { activeCamp, setActiveCamp } = useCampStore();
   const { data: serverTimeData } = useServerTime();
   const [collapsed, setCollapsed] = useState(false);
@@ -206,7 +209,17 @@ export function AppShell() {
           </header>
 
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-            <Outlet />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
           </main>
         </div>
       </div>
