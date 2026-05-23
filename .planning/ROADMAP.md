@@ -75,7 +75,7 @@ Plans:
 
 Plans:
 
-- [ ] 04-01-PLAN.md — CSS foundation (deduplication, new tokens, keyframes, depth system)
+- [x] 04-01-PLAN.md — CSS foundation (deduplication, new tokens, keyframes, depth system)
 - [ ] 04-02-PLAN.md — Holographic radar background (HolographicRadar component)
 - [ ] 04-03-PLAN.md — Diffuse cursor glow + enhanced background layers
 - [ ] 04-04-PLAN.md — SearchInput glass component + page migration (CampsPage, PeopleListPage)
