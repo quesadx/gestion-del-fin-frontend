@@ -3,6 +3,8 @@
 import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { Check, ChevronRight, Circle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { dropdownEnter, staggerDropdownItems } from '@/shared/lib/motion';
 
 import { cn } from '@/lib/utils';
 
@@ -43,32 +45,54 @@ const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
 >(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.SubContent
-    ref={ref}
-    className={cn(
-      'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-dropdown-menu-content-transform-origin)',
-      className,
-    )}
-    {...props}
-  />
+  <DropdownMenuPrimitive.Portal>
+    <AnimatePresence mode="wait">
+      <DropdownMenuPrimitive.SubContent ref={ref} asChild forceMount {...props}>
+        <motion.div
+          variants={dropdownEnter}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          className={cn(
+            'z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg',
+            className,
+          )}
+        />
+      </DropdownMenuPrimitive.SubContent>
+    </AnimatePresence>
+  </DropdownMenuPrimitive.Portal>
 ));
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
 
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+>(({ className, sideOffset = 4, children, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      className={cn(
-        'z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden gdf-glass-overlay p-1',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-(--radix-dropdown-menu-content-transform-origin)',
-        className,
-      )}
-      {...props}
-    />
+    <AnimatePresence mode="wait">
+      <DropdownMenuPrimitive.Content
+        ref={ref}
+        asChild
+        forceMount
+        sideOffset={sideOffset}
+        {...props}
+      >
+        <motion.div
+          variants={dropdownEnter}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          className={cn(
+            'z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-[8rem] overflow-y-auto overflow-x-hidden gdf-glass-overlay p-1',
+            className,
+          )}
+        >
+          <motion.div variants={staggerDropdownItems} initial="hidden" animate="visible">
+            {children}
+          </motion.div>
+        </motion.div>
+      </DropdownMenuPrimitive.Content>
+    </AnimatePresence>
   </DropdownMenuPrimitive.Portal>
 ));
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
