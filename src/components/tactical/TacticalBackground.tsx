@@ -1,5 +1,17 @@
 import { useEffect, useCallback, useRef } from 'react';
 
+function createParticles() {
+  return Array.from({ length: 24 }).map(() => ({
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    duration: 2.5 + Math.random() * 4,
+    delay: Math.random() * 5,
+    opacity: 0.3 + Math.random() * 0.4,
+  }));
+}
+
+const staticParticles = createParticles();
+
 export function TacticalBackground() {
   const rafRef = useRef<number>(0);
   const lastUpdateRef = useRef<number>(0);
@@ -43,20 +55,29 @@ export function TacticalBackground() {
       <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.12),transparent_55%)] blur-[80px] animate-ambient-drift-1" />
       <div className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.10),transparent_55%)] blur-[90px] animate-ambient-drift-2" />
       <div
-        className="hidden md:block fixed inset-0 transition-opacity duration-300"
-        style={{
-          background:
-            'radial-gradient(600px circle at var(--gdf-cursor-x, 50%) var(--gdf-cursor-y, 50%), rgba(59,130,246,0.06), transparent 60%)',
-        }}
-      />
-      <div
-        className="fixed top-0 left-0 right-0 h-[2px] opacity-[0.15] animate-scanner-sweep"
+        className="fixed top-0 left-0 right-0 h-[2px] animate-scanner-sweep"
         style={{
           background:
             'linear-gradient(90deg, transparent, var(--gdf-accent-secondary), transparent)',
           animationDuration: '8s',
+          opacity: 'var(--gdf-scanner-opacity, 0.15)',
         }}
       />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        {staticParticles.map((p, i) => (
+          <div
+            key={i}
+            className="absolute w-[2px] h-[2px] bg-gdf-accent-secondary/30 rounded-full animate-pulse-glow"
+            style={{
+              left: `${p.left}%`,
+              top: `${p.top}%`,
+              animationDuration: `${p.duration}s`,
+              animationDelay: `${p.delay}s`,
+              opacity: p.opacity,
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

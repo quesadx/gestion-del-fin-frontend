@@ -471,7 +471,7 @@
 
 :root[data-emotional-state='critical'] .gdf-critical-glitch {
   display: block;
-  opacity: 0.03;
+  opacity: 0.08;
   background: linear-gradient(
     0deg,
     transparent 0%,

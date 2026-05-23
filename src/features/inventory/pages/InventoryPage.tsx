@@ -7,8 +7,8 @@ import { GlassPanel } from '@/components/tactical/GlassPanel';
 import { TacticalButton } from '@/components/tactical/TacticalButton';
 import { HoloLoader } from '@/components/tactical/HoloLoader';
 import { StatusBadge } from '@/components/cyber/StatusBadge';
-import { StockBarChart } from '@/components/cyber/StockBarChart';
-import type { StockBarEntry } from '@/components/cyber/StockBarChart';
+import { StockBarChart } from '@/components/tactical/StockBarChart';
+import type { StockBarEntry } from '@/components/tactical/StockBarChart';
 import { useCamps } from '@/features/camps/hooks/useCamps';
 import {
   useInventory,
