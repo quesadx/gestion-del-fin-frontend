@@ -4,6 +4,8 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { AppRoutes } from '@/routes/AppRoutes';
 import { ScreenLoader } from '@/components/cyber/ScreenLoader';
+import { TacticalBackground } from '@/components/tactical/TacticalBackground';
+import { ThemeToggle } from '@/components/tactical/ThemeToggle';
 import { ToastContainer } from '@/shared/lib/toast';
 import { queryClient } from '@/shared/lib/queryClient';
 import { useServerTime } from '@/features/system/hooks/useServerTime';
@@ -35,6 +37,8 @@ function AppBootstrap({ children }: { children: React.ReactNode }) {
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <TacticalBackground />
+      <ThemeToggle />
       <AuthProvider>
         <AppBootstrap>
           <ServerTimeSync />

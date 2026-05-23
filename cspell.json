@@ -49,7 +49,8 @@
     "OPERATOR",
     "MGMT",
     "HoloLoader",
-    "ThemeToggle"
+    "ThemeToggle",
+    "Syncer"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md", "neon-nova-dashboard", "temp"]
 }

@@ -401,3 +401,60 @@
 .animate-blink {
   animation: blink 1.2s step-end infinite;
 }
+
+/* Emotional UI State Overrides */
+:root {
+  transition:
+    --gdf-accent-primary 0.8s ease-in-out,
+    --gdf-accent-secondary 0.8s ease-in-out,
+    --gdf-accent-primary-glow 0.8s ease-in-out,
+    --gdf-accent-secondary-glow 0.8s ease-in-out;
+}
+
+:root[data-emotional-state='alert'] {
+  --gdf-accent-secondary: #f59e0b;
+  --gdf-accent-secondary-glow: rgba(245, 158, 11, 0.4);
+  --gdf-scanner-opacity: 0.25;
+}
+
+:root[data-emotional-state='critical'] {
+  --gdf-accent-primary: #ef4444;
+  --gdf-accent-primary-glow: rgba(239, 68, 68, 0.5);
+  --gdf-accent-secondary: #ef4444;
+  --gdf-accent-secondary-glow: rgba(239, 68, 68, 0.5);
+  --gdf-status-warning: #ef4444;
+  --gdf-scanner-opacity: 0.4;
+  --gdf-glitch-intensity: 1;
+}
+
+.gdf-critical-glitch {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+}
+
+:root[data-emotional-state='critical'] .gdf-critical-glitch {
+  display: block;
+  opacity: 0.03;
+  background: linear-gradient(
+    0deg,
+    transparent 0%,
+    rgba(239, 68, 68, 0.1) 25%,
+    transparent 50%,
+    rgba(239, 68, 68, 0.05) 75%,
+    transparent 100%
+  );
+  background-size: 100% 4px;
+  animation: critical-scan 0.1s linear infinite;
+}
+
+@keyframes critical-scan {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
