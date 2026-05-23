@@ -1667,32 +1667,22 @@ If the optional `@fontsource/inter` and `@fontsource/jetbrains-mono` packages ar
 | A6  | The 8 unused cyber/ components (WaveBackground, CyberGrid, RingMeter, StatCard, DataChart, SkeletonTable, SkeletonCard, FileInput) have zero runtime imports and can be safely deleted. | §1.3    | LOW — verified by grep. No `from '@/components/cyber/{component}'` for any of these 8 found.                                                                                          |
 | A7  | Framer Motion `motion.ts` file does not exist as a separate file — animation constants are inline in components and CSS. A new `motion.ts` will be created for shared variants.         | §1.5    | LOW — verified by file existence check. Creating it is additive, not breaking.                                                                                                        |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Font self-hosting vs CDN**
-   - What we know: Current Google Fonts CDN import works. `@fontsource` npm packages exist for Inter and JetBrains Mono.
-   - What's unclear: Is CDN dependency acceptable for production? Or should fonts be self-hosted for offline/PWA readiness?
-   - Recommendation: Keep CDN for now. Migrate to `@fontsource` in a later optimization phase if PWA/offline support is needed.
+1. **Font self-hosting vs CDN** — RESOLVED: Keep CDN for now. Migrate to `@fontsource` in a later optimization phase if PWA/offline support is needed.
+   - Decision lock: Plan 01-01 keeps `@import` in globals.css, removes redundant `<link>` from index.html. No `@fontsource` packages installed.
 
-2. **Light mode default behavior**
-   - What we know: CONTEXT.md specifies dark mode as primary/default. Light mode is secondary.
-   - What's unclear: Should light mode be auto-detected from `prefers-color-scheme` on first visit, or always default to dark?
-   - Recommendation: Default to dark. Add a manual toggle. Respect `prefers-color-scheme` only if the user hasn't manually set a preference (stored in localStorage).
+2. **Light mode default behavior** — RESOLVED: Default to dark. Add manual toggle via `useTheme` Zustand store. Respect `prefers-color-scheme` only if user hasn't manually set a preference (stored in localStorage).
+   - Decision lock: Plan 01-03 implements `useTheme` store with `mode: 'dark' | 'light' | 'system'`, default `'dark'`.
 
-3. **Scanner sweep visibility**
-   - What we know: Scanner effect described as "horizontal, subtle" in CONTEXT.md.
-   - What's unclear: Should scanner sweep be always-on ambient, or only visible on certain pages (dashboard)?
-   - Recommendation: Always-on but very subtle (opacity 0.08-0.15). Can be toggled per-page via prop if needed.
+3. **Scanner sweep visibility** — RESOLVED: Always-on but very subtle (opacity 0.08-0.15). Can be toggled per-page via the `TacticalBackground` component prop `scannerEnabled`.
+   - Decision lock: Plan 01-03 implements `.gdf-scanner-sweep` CSS class as fixed overlay in `TacticalBackground`.
 
-4. **Canvas particles: include or defer?**
-   - What we know: CONTEXT.md says "optional, subtle." Canvas 2D is lightweight.
-   - What's unclear: Is the added complexity worth the visual impact? 30 particles at 30fps on cursor trail is minimal code but adds maintenance burden.
-   - Recommendation: DEFER particles to Wave 2+ (after background + scanner are working). Ship without particles initially; add as enhancement.
+4. **Canvas particles: include or defer?** — RESOLVED: DEFER particles to Wave 2+ (after background + scanner are working). Ship without particles initially; add as enhancement.
+   - Decision lock: Plan 01-03 explicitly notes "no particles in initial implementation" in TacticalBackground component spec.
 
-5. **ErrorBoundary GlitchButton dependency during migration**
-   - What we know: ErrorBoundary imports GlitchButton for its fallback UI buttons.
-   - What's unclear: If GlitchButton is deleted in Wave 6 before ErrorBoundary is migrated, the build breaks.
-   - Recommendation: ErrorBoundary migration MUST happen in Wave 3 (before Wave 6 cleanup). Verified in §7.1 migration order.
+5. **ErrorBoundary GlitchButton dependency during migration** — RESOLVED: ErrorBoundary migration MUST happen in Wave 3/Wave 4 (before Wave 5 cleanup). Plan 01-06 (Wave 4) migrates ErrorBoundary GlitchButton→TacticalButton. Plan 01-07 (Wave 5) deletes GlitchButton only after verifying zero remaining imports.
+   - Decision lock: Verified in §7.1 migration order. Plan 01-06 Task 2 PART B handles ErrorBoundary migration. Plan 01-07 Task 1 deletes GlitchButton with grep audit gate.
 
 ## Sources
 
