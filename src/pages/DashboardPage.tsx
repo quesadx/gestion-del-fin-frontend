@@ -32,6 +32,9 @@ export function DashboardPage() {
     camps,
     autoDailyCount,
     activeCampName,
+    peopleInCamp,
+    inventoryItemCount,
+    activeExplorationsInCamp,
   } = useDashboardStats(role, activeCamp?.id);
 
   const [serverTime, setServerTime] = useState<string>('');
@@ -202,6 +205,71 @@ export function DashboardPage() {
           )}
         </div>
       )}
+
+      {activeCampName &&
+        (peopleInCamp !== null ||
+          inventoryItemCount !== null ||
+          activeExplorationsInCamp !== null) && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {peopleInCamp !== null && (
+              <div className="glass p-5 rounded-none border border-border/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+                    People
+                  </span>
+                  <span className="w-1.5 h-1.5 bg-accent-secondary animate-pulse-glow" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className="font-sans text-3xl font-bold text-accent-secondary"
+                    style={{ textShadow: '0 0 16px var(--accent-secondary)' }}
+                  >
+                    {peopleInCamp}
+                  </span>
+                  <span className="font-mono-sm text-text-muted">registered</span>
+                </div>
+              </div>
+            )}
+            {inventoryItemCount !== null && (
+              <div className="glass p-5 rounded-none border border-border/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+                    Stock Items
+                  </span>
+                  <span className="w-1.5 h-1.5 bg-status-green animate-pulse" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className="font-sans text-3xl font-bold text-status-green"
+                    style={{ textShadow: '0 0 16px #00e676' }}
+                  >
+                    {inventoryItemCount}
+                  </span>
+                  <span className="font-mono-sm text-text-muted">in stock</span>
+                </div>
+              </div>
+            )}
+            {activeExplorationsInCamp !== null && (
+              <div className="glass p-5 rounded-none border border-border/20">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-mono-sm tracking-[0.12em] uppercase text-text-muted">
+                    Explorations
+                  </span>
+                  <span className="w-1.5 h-1.5 bg-accent-primary animate-blink" />
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span
+                    className="font-sans text-3xl font-bold text-accent-primary"
+                    style={{ textShadow: '0 0 16px var(--accent-primary)' }}
+                  >
+                    {activeExplorationsInCamp}
+                  </span>
+                  <span className="font-mono-sm text-text-muted">ongoing</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {modules.map((mod) => (
