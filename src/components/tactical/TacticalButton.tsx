@@ -25,7 +25,7 @@ export function TacticalButton({
   return (
     <button
       className={cn(
-        'font-mono text-xs tracking-wider uppercase px-5 py-2.5 rounded-md transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100',
+        'font-mono text-xs tracking-wider uppercase px-5 py-2.5 rounded-md transition-all duration-150 gdf-btn-press disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100',
         VARIANT_CLASSES[variant],
         className,
       )}

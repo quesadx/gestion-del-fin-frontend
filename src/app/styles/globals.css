@@ -600,3 +600,16 @@
 :root[data-emotional-state='critical'] .gdf-emotional-sidebar {
   box-shadow: inset 0 0 30px var(--gdf-emotional-glow);
 }
+
+.gdf-btn-press {
+  transition: transform var(--gdf-transition-fast);
+}
+.gdf-btn-press:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gdf-btn-press:active {
+    transform: none;
+  }
+}

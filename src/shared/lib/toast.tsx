@@ -71,8 +71,9 @@ export function ToastContainer() {
           return (
             <motion.div
               key={t.id}
-              initial={{ opacity: 0, x: 50, scale: 0.95 }}
+              initial={{ opacity: 0, x: 60, scale: 0.9 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
               exit={{ opacity: 0, x: 50, scale: 0.95 }}
               className={`pointer-events-auto border rounded-md px-4 py-3 flex items-start gap-3 shadow-lg ${style.border} ${style.bg}`}
             >
