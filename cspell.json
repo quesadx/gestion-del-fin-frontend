@@ -33,7 +33,7 @@
     "HoloLoader",
     "ThemeToggle",
     "Syncer",
-    "Emotional"
+    "Emotional",
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md"]
 }
