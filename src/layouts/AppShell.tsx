@@ -167,7 +167,7 @@ export function AppShell() {
       <div className="flex h-screen bg-transparent">
         {!isMobile && (
           <aside
-            className={`${collapsed ? 'w-16' : 'w-64'} bg-gdf-surface-raised backdrop-blur-glass border-r border-gdf-glass-border flex flex-col transition-all duration-200 shrink-0`}
+            className={`${collapsed ? 'w-16' : 'w-64'} bg-gdf-surface-raised backdrop-blur-glass border-r border-gdf-glass-border flex flex-col transition-all duration-200 shrink-0 gdf-emotional-sidebar`}
           >
             {sidebarContent}
           </aside>
@@ -208,6 +208,7 @@ export function AppShell() {
             </div>
           </header>
 
+          <div className="gdf-critical-overlay" />
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             <AnimatePresence mode="wait">
               <motion.div
