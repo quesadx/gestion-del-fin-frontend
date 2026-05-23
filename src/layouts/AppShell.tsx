@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Outlet, useNavigate, NavLink } from 'react-router-dom';
+import { useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,8 +11,9 @@ import { useCampStore } from '@/features/camps/store/camp.store';
 import { useServerTime } from '@/features/system/hooks/useServerTime';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEmotionalSyncer } from '@/features/ui';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { LayoutGrid, Tent, LogOut, Clock, PanelLeftClose, PanelLeft, Menu } from 'lucide-react';
+import { Tent, LogOut, Clock } from 'lucide-react';
+import Aurora from '@/components/Aurora';
+import Dock from '@/components/Dock';
 
 export function AppShell() {
   const navigate = useNavigate();
@@ -21,18 +21,15 @@ export function AppShell() {
   const { user, logout } = useAuth();
   const role = useAuthStore((state) => state.role);
   const items = useNavItems(role);
-  const { data: camps } = useCamps();
   const location = useLocation();
   const { activeCamp, setActiveCamp } = useCampStore();
   const { data: serverTimeData } = useServerTime();
-  const [collapsed, setCollapsed] = useState(false);
   const [localCampId, setLocalCampId] = useState<number | null>(activeCamp?.id ?? null);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const isMobile = useIsMobile();
-  const showLabels = isMobile || !collapsed;
 
   useEmotionalSyncer({ campId: activeCamp?.id ?? null });
 
+  const { data: camps } = useCamps();
   const campsArray = camps?.data ?? [];
 
   const handleCampChange = (id: number | null) => {
@@ -43,7 +40,6 @@ export function AppShell() {
     } else {
       setActiveCamp(null);
     }
-    setMobileOpen(false);
     useAuthStore.getState().updateActivity();
     queryClient.invalidateQueries({
       predicate: (query) => {
@@ -61,175 +57,137 @@ export function AppShell() {
     navigate('/login', { replace: true });
   }, [logout, queryClient, navigate]);
 
-  const sidebarContent = (
-    <>
-      <div className="px-4 py-5 border-b border-gdf-glass-border">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gdf-accent-primary flex items-center justify-center shrink-0">
-            <span className="font-sans font-black italic text-sm text-gdf-text-inverse">GF</span>
-          </div>
-          {showLabels && (
-            <div className="text-[10px] font-mono text-gdf-text-muted uppercase leading-tight">
-              <div>END TIMES</div>
-              <div>MGMT</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto py-3 space-y-1 px-2">
-        {items.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              onClick={() => setMobileOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 text-xs font-mono font-bold uppercase tracking-wider transition-all ${
-                  isActive
-                    ? 'bg-gdf-surface-hover text-gdf-accent-primary border-r-2 border-gdf-accent-secondary'
-                    : 'text-gdf-text-muted border-r-2 border-transparent hover:text-gdf-text-secondary hover:bg-gdf-surface-hover/50'
-                }`
-              }
-            >
-              {Icon && <Icon size={16} />}
-              {showLabels && <span>{item.label}</span>}
-            </NavLink>
-          );
-        })}
-      </nav>
-
-      <div className="border-t border-gdf-glass-border p-3">
-        {showLabels && (
-          <div className="space-y-2">
-            <label className="text-[9px] font-mono text-gdf-text-muted uppercase tracking-wider flex items-center gap-1.5">
-              <Tent size={10} />
-              ACTIVE CAMP
-            </label>
-            <select
-              value={localCampId ?? ''}
-              onChange={(e) => handleCampChange(e.target.value ? Number(e.target.value) : null)}
-              className="w-full bg-gdf-surface-base border border-gdf-border-subtle text-gdf-text-secondary font-mono text-[11px] py-1.5 px-2 focus:border-gdf-accent-primary outline-none"
-            >
-              <option value="">ALL CAMPS</option>
-              {campsArray.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div className="mt-3 pt-3 border-t border-gdf-glass-border flex items-center gap-2">
-          <div className="w-6 h-6 bg-gdf-surface-hover flex items-center justify-center shrink-0">
-            <span className="font-mono text-[10px] font-bold text-gdf-accent-secondary">
-              {(user?.username || 'U')[0].toUpperCase()}
-            </span>
-          </div>
-          {showLabels && (
-            <div className="flex-1 min-w-0">
-              <div className="text-[10px] font-mono text-gdf-text-primary truncate">
-                {user?.username?.toUpperCase() || 'USER'}
-              </div>
-              <div className="text-[8px] font-mono text-gdf-text-muted uppercase">
-                {role || 'OPERATOR'}
-              </div>
-            </div>
-          )}
-          {!isMobile && (
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className="text-gdf-text-muted hover:text-gdf-text-secondary shrink-0"
-              title={collapsed ? 'Expand' : 'Collapse'}
-            >
-              {collapsed ? <PanelLeft size={14} /> : <PanelLeftClose size={14} />}
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="p-2 border-t border-gdf-glass-border">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-[10px] font-mono text-gdf-text-muted hover:text-gdf-status-danger hover:bg-gdf-surface-hover/50 transition-colors uppercase tracking-wider"
-        >
-          <LogOut size={12} />
-          {showLabels && <span>LOGOUT</span>}
-        </button>
-      </div>
-    </>
-  );
+  const dockItems = items.map((item) => {
+    const Icon = item.icon;
+    const isActive = location.pathname === item.to;
+    return {
+      icon: Icon ? (
+        <Icon
+          size={isMobile ? 18 : 22}
+          className={`${isActive ? 'text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.7)]' : 'text-zinc-400 group-hover:text-zinc-200'}`}
+        />
+      ) : null,
+      label: item.label,
+      onClick: () => {
+        navigate(item.to);
+        useAuthStore.getState().updateActivity();
+      },
+      className: isActive
+        ? 'border-red-500 bg-red-950/40 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+        : 'hover:border-zinc-500 hover:bg-zinc-800/40',
+    };
+  });
 
   return (
-    <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-      <div className="flex h-screen bg-transparent">
-        {!isMobile && (
-          <aside
-            className={`${collapsed ? 'w-16' : 'w-64'} bg-gdf-surface-raised backdrop-blur-glass border-r border-gdf-glass-border flex flex-col transition-all duration-200 shrink-0 gdf-emotional-sidebar`}
-          >
-            {sidebarContent}
-          </aside>
-        )}
+    <div className="min-h-screen w-screen flex flex-col bg-transparent text-gdf-text-primary relative overflow-hidden select-none">
+      {/* 1. Set Up Aurora Background */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <Aurora
+          colorStops={['#020202', '#180707', '#020202']}
+          amplitude={1.2}
+          blend={0.55}
+          speed={0.4}
+        />
+      </div>
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 bg-gdf-glass-bg-heavy backdrop-blur-glass-heavy border-b border-gdf-glass-border flex items-center justify-between px-4 md:px-6 shrink-0">
-            <div className="flex items-center gap-3">
-              {isMobile && (
-                <SheetTrigger asChild>
-                  <button
-                    className="p-1.5 text-gdf-text-muted hover:text-gdf-text-secondary"
-                    title="Menu"
-                  >
-                    <Menu size={18} />
-                  </button>
-                </SheetTrigger>
-              )}
-              <LayoutGrid size={14} className="text-gdf-text-muted hidden sm:block" />
-              <span className="text-[9px] font-mono text-gdf-text-muted uppercase tracking-widest">
-                OPERATIONAL SECTOR 04 // ONLINE
+      {/* Global scanline and emotional state overlay */}
+      <div className="gdf-critical-overlay z-1" />
+
+      {/* Sticky/Fixed top header */}
+      <header className="h-16 bg-gdf-surface-raised/30 backdrop-blur-md border-b border-gdf-glass-border flex items-center justify-between px-4 md:px-6 shrink-0 relative z-20">
+        {/* Left side: logo and text status */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gdf-accent-primary flex items-center justify-center shrink-0 border border-gdf-border-subtle">
+            <span className="font-sans font-black italic text-sm text-gdf-text-inverse">GF</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-mono font-bold text-gdf-text-primary tracking-wider uppercase leading-none">
+              GESTIÓN DEL FIN
+            </span>
+            <span className="text-[8px] font-mono text-gdf-text-muted uppercase tracking-widest mt-0.5">
+              OPERATIONAL SECTOR 04 // ONLINE
+            </span>
+          </div>
+        </div>
+
+        {/* Center side: camp selector */}
+        <div className="flex items-center gap-2">
+          <label className="text-[9px] font-mono text-gdf-text-muted uppercase tracking-wider hidden sm:flex items-center gap-1.5 shrink-0">
+            <Tent size={10} />
+            CAMP
+          </label>
+          <select
+            value={localCampId ?? ''}
+            onChange={(e) => handleCampChange(e.target.value ? Number(e.target.value) : null)}
+            className="bg-gdf-surface-base/40 backdrop-blur-sm border border-gdf-border-subtle text-gdf-text-secondary font-mono text-[11px] py-1 px-2 focus:border-gdf-accent-primary outline-none cursor-pointer rounded uppercase"
+          >
+            <option value="">ALL CAMPS</option>
+            {campsArray.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Right side: clocks, user info, system status */}
+        <div className="flex items-center gap-4">
+          {serverTimeData && (
+            <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-gdf-text-secondary">
+              <Clock size={12} className="text-gdf-text-muted" />
+              <span>{new Date(serverTimeData.now).toISOString()}</span>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 border-l border-gdf-glass-border pl-4">
+            <div className="flex flex-col text-right">
+              <span className="text-[9.5px] font-mono text-gdf-text-primary font-bold">
+                {user?.username?.toUpperCase() || 'USER'}
+              </span>
+              <span className="text-[8px] font-mono text-gdf-text-muted uppercase">
+                {role || 'OPERATOR'}
               </span>
             </div>
 
-            <div className="flex items-center gap-4">
-              {serverTimeData && (
-                <div className="flex items-center gap-2 text-[10px] font-mono text-gdf-text-secondary">
-                  <Clock size={12} className="text-gdf-text-muted" />
-                  <span>{new Date(serverTimeData.now).toISOString()}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-gdf-status-success animate-breathe rounded-full" />
-                <span className="text-[9px] font-mono font-bold text-gdf-status-success uppercase tracking-widest">
-                  SYSTEM NOMINAL
-                </span>
-              </div>
-            </div>
-          </header>
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-gdf-text-muted hover:text-gdf-status-danger hover:bg-gdf-status-danger/10 border border-transparent hover:border-gdf-status-danger/20 transition-all rounded"
+              title="LOGOUT"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
 
-          <div className="gdf-critical-overlay" />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-              >
-                <Outlet />
-              </motion.div>
-            </AnimatePresence>
-          </main>
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-gdf-status-success animate-breathe rounded-full" />
+          </div>
         </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 relative z-10 pb-28">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* 2. Dock Navigation Integration */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-auto">
+        <Dock
+          items={dockItems}
+          baseItemSize={isMobile ? 38 : 50}
+          magnification={isMobile ? 52 : 72}
+          distance={isMobile ? 120 : 200}
+        />
       </div>
-      <SheetContent
-        side="left"
-        className="w-64 p-0 bg-gdf-surface-raised border-r border-gdf-glass-border flex flex-col"
-      >
-        {sidebarContent}
-      </SheetContent>
-    </Sheet>
+    </div>
   );
 }
