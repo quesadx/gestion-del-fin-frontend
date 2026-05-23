@@ -47,15 +47,9 @@
     "silverhand",
     "vaul",
     "OPERATOR",
-    "MGMT"
+    "MGMT",
+    "HoloLoader",
+    "ThemeToggle"
   ],
-  "ignorePaths": [
-    "node_modules",
-    "dist",
-    "*.lock",
-    "*.json",
-    "*.md",
-    "neon-nova-dashboard",
-    "temp"
-  ]
+  "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md", "neon-nova-dashboard", "temp"]
 }
