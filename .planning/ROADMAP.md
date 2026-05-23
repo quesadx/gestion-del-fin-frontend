@@ -25,6 +25,24 @@ Plans:
 
 ---
 
-### Phase 02: [To be planned]
+### Phase 02: Tactical UI Consolidation
+
+**Goal:** Restyle all shadcn/ui primitives with gdf-\* glass tokens, standardize interactive element behavior (hover/focus/borders), deepen emotional UI, migrate LockScreen to glass, relocate StockBarChart to tactical/, refine TacticalBackground with particle layer, and perform dark/light mode audit.
+
+**Requirements:** RNF-03, RNF-04
+
+**Plans:** 7 plans
+
+Plans:
+
+- [ ] 02-01-PLAN.md — CSS foundation (shadcn variable mappings, glass overlay utilities, light mode border fixes)
+- [ ] 02-02-PLAN.md — Dialog + Sheet + AlertDialog glass overlay restyle (P0-P1)
+- [ ] 02-03-PLAN.md — DropdownMenu + Select + Popover glass overlay restyle (P0-P1)
+- [ ] 02-04-PLAN.md — Command + Tooltip + HoverCard + Input + Textarea + Toggle glass restyle (P1-P2)
+- [ ] 02-05-PLAN.md — Remaining shadcn/ui components gdf token unification (P3-P6)
+- [ ] 02-06-PLAN.md — LockScreen glass migration + StockBarChart relocation + emotional UI deepening + particle layer
+- [ ] 02-07-PLAN.md — Dark/light mode audit + responsive refinement + legacy CSS removal + final validation
+
+---
 
 ### Phase 03: [To be planned]
