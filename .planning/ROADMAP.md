@@ -80,5 +80,5 @@ Plans:
 - [ ] 04-03-PLAN.md — Diffuse cursor glow + enhanced background layers
 - [x] 04-04-PLAN.md — SearchInput glass component + page migration (CampsPage, PeopleListPage)
 - [x] 04-05-PLAN.md — Dropdown/select/popover cinematic overhaul (Framer Motion spring)
-- [ ] 04-06-PLAN.md — Command palette + dialog spring polish
+- [x] 04-06-PLAN.md — Command palette + dialog spring polish
 - [ ] 04-07-PLAN.md — Final polish (GlassPanel shadows, TacticalButton springs, rounded corners audit, validation)
