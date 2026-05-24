@@ -17,9 +17,9 @@ import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
-import { Camp } from '../types';
+import { Camp, InventoryItem, Resource } from '../types';
 import { cn } from '../lib/utils';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
@@ -94,6 +94,42 @@ export default function DashboardLayout() {
       return unwrapList<Camp>(res.data);
     },
   });
+
+  // ── Inventory alerts (shared query key — reused by nav dot) ─────────
+  const { data: inventoryAlerts } = useQuery({
+    queryKey: ['inventory-alerts', currentCampId],
+    queryFn: async () => {
+      const [invRes, resRes] = await Promise.all([
+        apiClient.get(`/inventory/${currentCampId}`),
+        apiClient.get('/resources'),
+      ]);
+      const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
+      const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
+
+      const criticalNames: string[] = [];
+      let lowCount = 0;
+
+      items.forEach((item) => {
+        const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
+        const qty = item.quantity ?? 0;
+        const minStock = rt?.minimum_stock ?? 0;
+        const name = rt?.name ?? `Resource #${item.resource_type_id}`;
+
+        if (qty < minStock / 2) {
+          criticalNames.push(name);
+        } else if (qty < minStock) {
+          lowCount++;
+        }
+      });
+
+      return { criticalCount: criticalNames.length, criticalNames, lowCount };
+    },
+    enabled: !!currentCampId && can(user?.role, 'inventory.read'),
+    refetchInterval: 30_000,
+  });
+
+  // Session-only dismiss for the alert banner.
+  const [alertDismissed, setAlertDismissed] = useState(false);
 
   // Auto-select the user's home camp on first load.
   useEffect(() => {
@@ -231,6 +267,56 @@ export default function DashboardLayout() {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      {/* ── Stock alert banner ──────────────────────────────────────────── */}
+      <AnimatePresence>
+        {currentCampId &&
+          !alertDismissed &&
+          inventoryAlerts &&
+          (inventoryAlerts.criticalCount > 0 || inventoryAlerts.lowCount > 0) &&
+          can(user?.role, 'inventory.read') && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="shrink-0 overflow-hidden"
+            >
+              {inventoryAlerts.criticalCount > 0 ? (
+                <div className="bg-red-950/60 border-b border-red-500/30 px-6 py-2.5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                    <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider truncate">
+                      CRITICAL STOCK: {inventoryAlerts.criticalNames.join(', ')}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setAlertDismissed(true)}
+                    className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-amber-950/60 border-b border-amber-500/30 px-6 py-2.5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                    <p className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+                      LOW STOCK: {inventoryAlerts.lowCount} resource
+                      {inventoryAlerts.lowCount !== 1 ? 's' : ''} below minimum
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setAlertDismissed(true)}
+                    className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
