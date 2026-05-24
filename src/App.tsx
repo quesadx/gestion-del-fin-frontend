@@ -18,6 +18,7 @@ import CampManagement from './features/camps/CampManagement';
 import TransferList from './features/transfers/TransferList';
 import ResourcesPage from './features/resources/ResourcesPage';
 import ProfessionsPage from './features/professions/ProfessionsPage';
+import UsersPage from './features/users/UsersPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -148,6 +149,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <ProfessionsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <ProtectedRoute roles={['system_admin']}>
+                  <UsersPage />
                 </ProtectedRoute>
               }
             />
