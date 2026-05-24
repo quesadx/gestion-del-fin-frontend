@@ -99,6 +99,15 @@ export interface Profession {
   description?: string;
 }
 
+export interface ResourceAllocation {
+  resource_type_id: number;
+  amount: number;
+}
+
+export interface ExplorationMember {
+  person_id: number;
+}
+
 export interface Expedition {
   id: number;
   camp_id: number;
@@ -110,6 +119,10 @@ export interface Expedition {
   departure_date: string;
   expected_return_date?: string;
   max_return_date?: string;
+  actual_return_date?: string;
   notes?: string | null;
   created_at?: string;
+  members?: ExplorationMember[];
+  allocated_resources?: ResourceAllocation[];
+  found_resources?: ResourceAllocation[];
 }
