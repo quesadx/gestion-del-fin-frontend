@@ -25,6 +25,10 @@ import {
   MapPin,
   User,
   Award,
+  Clock,
+  DollarSign,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
@@ -78,6 +82,14 @@ export default function PersonDetail() {
     queryKey: ['professions'],
     queryFn: async () => {
       const res = await apiClient.get('/professions');
+      return unwrapList<{ id: number; name: string }>(res.data);
+    },
+  });
+
+  const { data: resources } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ['resources'],
+    queryFn: async () => {
+      const res = await apiClient.get('/resources');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
   });
@@ -141,6 +153,98 @@ export default function PersonDetail() {
     },
   });
 
+  // ── Status log mutation ────────────────────────────────────────────────
+
+  const statusLogMutation = useMutation({
+    mutationFn: async ({ newStatus, reason }: { newStatus: string; reason: string }) => {
+      await apiClient.post(`/camps/${currentCampId}/people/status-log`, {
+        person_id: personId,
+        new_status: newStatus,
+        reason: reason || undefined,
+        changed_by: user?.id ?? 1,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['person', currentCampId, personId] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      setShowStatusLogModal(false);
+      setStatusReason('');
+      setStatusNewStatus('HEALTHY');
+    },
+  });
+
+  // ── Reassign mutation ──────────────────────────────────────────────────
+
+  const reassignMutation = useMutation({
+    mutationFn: async ({
+      toProfessionId,
+      reason,
+      startDate,
+      endDate,
+    }: {
+      toProfessionId: number;
+      reason: string;
+      startDate: string;
+      endDate: string;
+    }) => {
+      await apiClient.post(`/camps/${currentCampId}/people/profession-reassignments`, {
+        person_id: personId,
+        to_profession_id: toProfessionId,
+        reason: reason || undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        changed_by: user?.id ?? 1,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['person', currentCampId, personId] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      setShowReassignModal(false);
+      setReassignProfessionId(null);
+      setReassignReason('');
+      setReassignStartDate('');
+      setReassignEndDate('');
+    },
+  });
+
+  // ── Override mutation ──────────────────────────────────────────────────
+
+  const overrideMutation = useMutation({
+    mutationFn: async ({
+      resourceTypeId,
+      amount,
+      reason,
+      startDate,
+      endDate,
+    }: {
+      resourceTypeId: number;
+      amount: number;
+      reason: string;
+      startDate: string;
+      endDate: string;
+    }) => {
+      await apiClient.post(`/camps/${currentCampId}/people/contribution-overrides`, {
+        person_id: personId,
+        resource_type_id: resourceTypeId,
+        amount,
+        reason,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        changed_by: user?.id ?? 1,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['person', currentCampId, personId] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      setShowOverrideModal(false);
+      setOverrideResourceTypeId(null);
+      setOverrideAmount('');
+      setOverrideReason('');
+      setOverrideStartDate('');
+      setOverrideEndDate('');
+    },
+  });
+
   // ── Edit modal state ───────────────────────────────────────────────────
 
   const [editingPerson, setEditingPerson] = useState(false);
@@ -195,6 +299,26 @@ export default function PersonDetail() {
   // ── Delete confirm state ───────────────────────────────────────────────
 
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // ── Status log modal state ─────────────────────────────────────────────
+  const [showStatusLogModal, setShowStatusLogModal] = useState(false);
+  const [statusNewStatus, setStatusNewStatus] = useState<string>('HEALTHY');
+  const [statusReason, setStatusReason] = useState('');
+
+  // ── Reassign modal state ───────────────────────────────────────────────
+  const [showReassignModal, setShowReassignModal] = useState(false);
+  const [reassignProfessionId, setReassignProfessionId] = useState<number | null>(null);
+  const [reassignReason, setReassignReason] = useState('');
+  const [reassignStartDate, setReassignStartDate] = useState('');
+  const [reassignEndDate, setReassignEndDate] = useState('');
+
+  // ── Override modal state ───────────────────────────────────────────────
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [overrideResourceTypeId, setOverrideResourceTypeId] = useState<number | null>(null);
+  const [overrideAmount, setOverrideAmount] = useState('');
+  const [overrideReason, setOverrideReason] = useState('');
+  const [overrideStartDate, setOverrideStartDate] = useState('');
+  const [overrideEndDate, setOverrideEndDate] = useState('');
 
   // ── Status badge helper ────────────────────────────────────────────────
 
@@ -510,6 +634,39 @@ export default function PersonDetail() {
         </button>
       </div>
 
+      {/* Personnel Actions */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-4">
+          Personnel Actions
+        </h2>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={() => {
+              setStatusNewStatus(person?.status || 'HEALTHY');
+              setShowStatusLogModal(true);
+            }}
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-purple-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-purple-500 transition-all"
+          >
+            <Clock size={16} />
+            LOG STATUS CHANGE
+          </button>
+          <button
+            onClick={() => setShowReassignModal(true)}
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-brand-secondary/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-brand-secondary transition-all"
+          >
+            <RefreshCw size={16} />
+            REASSIGN PROFESSION
+          </button>
+          <button
+            onClick={() => setShowOverrideModal(true)}
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-blue-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-blue-500 transition-all"
+          >
+            <DollarSign size={16} />
+            OVERRIDE CONTRIBUTION
+          </button>
+        </div>
+      </div>
+
       {/* ── Edit Modal ──────────────────────────────────────────────────── */}
       <AnimatePresence>
         {editingPerson && (
@@ -706,6 +863,385 @@ export default function PersonDetail() {
                   {transferMutation.isPending ? 'AUTHORIZING...' : 'CONFIRM TRANSFER'}
                 </button>
               </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ── Status Log Modal ───────────────────────────────────────────── */}
+        {showStatusLogModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                    Log Status Change
+                  </h3>
+                  <p className="text-xs text-zinc-500 font-mono">
+                    SURVIVOR-{person.id} &middot; {person.full_name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowStatusLogModal(false)}
+                  className="p-1.5 text-zinc-500 hover:text-white rounded-lg transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  statusLogMutation.mutate({
+                    newStatus: statusNewStatus,
+                    reason: statusReason,
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    New Status
+                  </label>
+                  <select
+                    required
+                    value={statusNewStatus}
+                    onChange={(e) => setStatusNewStatus(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-mono uppercase cursor-pointer"
+                  >
+                    <option value="HEALTHY">HEALTHY</option>
+                    <option value="SICK">SICK</option>
+                    <option value="INJURED">INJURED</option>
+                    <option value="WOUNDED">WOUNDED</option>
+                    <option value="AWAY">AWAY</option>
+                    <option value="MISSING">MISSING</option>
+                    <option value="DEAD">DEAD</option>
+                    <option value="DECEASED">DECEASED</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Reason (Optional)
+                  </label>
+                  <textarea
+                    value={statusReason}
+                    onChange={(e) => setStatusReason(e.target.value)}
+                    rows={3}
+                    placeholder="e.g. sustained injury during patrol, showing symptoms of illness..."
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-mono resize-none"
+                  />
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setShowStatusLogModal(false)}
+                    className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 rounded hover:bg-zinc-900 transition-colors uppercase"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={statusLogMutation.isPending}
+                    className="flex-2 py-2.5 bg-purple-600 text-white text-xs font-bold uppercase rounded hover:bg-purple-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {statusLogMutation.isPending ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" /> LOGGING...
+                      </>
+                    ) : (
+                      'LOG STATUS CHANGE'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ── Reassign Profession Modal ──────────────────────────────────── */}
+        {showReassignModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                    Reassign Profession
+                  </h3>
+                  <p className="text-xs text-zinc-500 font-mono">
+                    SURVIVOR-{person.id} &middot; {person.full_name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowReassignModal(false)}
+                  className="p-1.5 text-zinc-500 hover:text-white rounded-lg transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (reassignProfessionId == null) return;
+                  reassignMutation.mutate({
+                    toProfessionId: reassignProfessionId,
+                    reason: reassignReason,
+                    startDate: reassignStartDate,
+                    endDate: reassignEndDate,
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Current Profession
+                  </label>
+                  <p className="text-xs font-mono text-zinc-400">
+                    {person.profession_name || 'UNASSIGNED'}
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    New Profession
+                  </label>
+                  <select
+                    required
+                    value={reassignProfessionId ?? ''}
+                    onChange={(e) =>
+                      setReassignProfessionId(e.target.value ? Number(e.target.value) : null)
+                    }
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono uppercase cursor-pointer"
+                  >
+                    <option value="">— Select profession —</option>
+                    {professions?.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Reason (Optional)
+                  </label>
+                  <textarea
+                    value={reassignReason}
+                    onChange={(e) => setReassignReason(e.target.value)}
+                    rows={2}
+                    placeholder="e.g. reassigned to medical unit due to background"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                      Start Date (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      value={reassignStartDate}
+                      onChange={(e) => setReassignStartDate(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                      End Date (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      value={reassignEndDate}
+                      onChange={(e) => setReassignEndDate(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setShowReassignModal(false)}
+                    className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 rounded hover:bg-zinc-900 transition-colors uppercase"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={reassignProfessionId == null || reassignMutation.isPending}
+                    className="flex-2 py-2.5 bg-brand-secondary text-black text-xs font-bold uppercase rounded hover:bg-amber-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {reassignMutation.isPending ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" /> REASSIGNING...
+                      </>
+                    ) : (
+                      'CONFIRM REASSIGNMENT'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* ── Contribution Override Modal ─────────────────────────────────── */}
+        {showOverrideModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                    Override Contribution
+                  </h3>
+                  <p className="text-xs text-zinc-500 font-mono">
+                    SURVIVOR-{person.id} &middot; {person.full_name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowOverrideModal(false)}
+                  className="p-1.5 text-zinc-500 hover:text-white rounded-lg transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (overrideResourceTypeId == null || !overrideAmount || !overrideReason) return;
+                  overrideMutation.mutate({
+                    resourceTypeId: overrideResourceTypeId,
+                    amount: Number(overrideAmount),
+                    reason: overrideReason,
+                    startDate: overrideStartDate,
+                    endDate: overrideEndDate,
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Resource Type
+                  </label>
+                  <select
+                    required
+                    value={overrideResourceTypeId ?? ''}
+                    onChange={(e) =>
+                      setOverrideResourceTypeId(e.target.value ? Number(e.target.value) : null)
+                    }
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono uppercase cursor-pointer"
+                  >
+                    <option value="">— Select resource —</option>
+                    {resources?.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Amount
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={overrideAmount}
+                    onChange={(e) => setOverrideAmount(e.target.value)}
+                    placeholder="0.00"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Reason
+                  </label>
+                  <textarea
+                    required
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                    rows={2}
+                    placeholder="e.g. adjusted contribution due to special circumstances"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                      Start Date (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      value={overrideStartDate}
+                      onChange={(e) => setOverrideStartDate(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+                      End Date (Optional)
+                    </label>
+                    <input
+                      type="date"
+                      value={overrideEndDate}
+                      onChange={(e) => setOverrideEndDate(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setShowOverrideModal(false)}
+                    className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 rounded hover:bg-zinc-900 transition-colors uppercase"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      overrideResourceTypeId == null ||
+                      !overrideAmount ||
+                      !overrideReason ||
+                      overrideMutation.isPending
+                    }
+                    className="flex-2 py-2.5 bg-blue-600 text-white text-xs font-bold uppercase rounded hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {overrideMutation.isPending ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin" /> SAVING...
+                      </>
+                    ) : (
+                      'CONFIRM OVERRIDE'
+                    )}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}

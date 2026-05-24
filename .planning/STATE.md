@@ -4,9 +4,9 @@
 
 ## Current Phase
 
-- **Phase:** 04 (Rations Mgmt)
-- **Status:** Complete ✓
-- **Plans Complete:** 1/1
+- **Phase:** 09 (Person Flows)
+- **Status:** In Progress
+- **Plans Complete:** 0/1
 
 ## Progress
 
@@ -20,11 +20,10 @@
 | 06    | ✓      | 1/1   | 100%     |
 | 07    | ✓      | 1/1   | 100%     |
 | 08    | ✓      | 1/1   | 100%     |
-| 09    | ○      | —     | 0%       |
+| 09    | ◐      | 0/1   | 0%       |
 | 10    | ○      | —     | 0%       |
 
 ## Last Activity
 
-- Created RationsPage with history table and ration create form
-- Added /rations route and nav item with Sandwich icon
 - Phase 04 (Rations Management) — Complete
+- Phase 09 (Person Flows) — Started

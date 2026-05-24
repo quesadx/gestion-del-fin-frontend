@@ -63,6 +63,15 @@ export default function ExpeditionDetail() {
   const resourceMap = new Map<number, { name: string; unit: string }>();
   (resources ?? []).forEach((r) => resourceMap.set(r.id, { name: r.name, unit: r.unit }));
 
+  const expeditionMembers = ((expedition as any)?.expedition_members ?? expedition?.members) ?? [];
+  const expeditionAllocatedResources = ((expedition as any)?.expedition_allocated_resources ?? expedition?.allocated_resources) ?? [];
+  const expeditionFoundResources = ((expedition as any)?.expedition_found_resources ?? expedition?.found_resources) ?? [];
+
+  const formatAmount = (value: string | number | null | undefined) => {
+    if (value == null || value === '') return '0';
+    return Number(value).toLocaleString();
+  };
+
   // Status mutation (deploy squad, mark lost)
   const updateStatusMutation = useMutation({
     mutationFn: async ({
@@ -325,7 +334,7 @@ export default function ExpeditionDetail() {
           Expedition Members
         </h2>
         <div className="bg-surface-raised brutalist-border rounded-xl overflow-hidden">
-          {expedition.members && expedition.members.length > 0 ? (
+          {expeditionMembers && expeditionMembers.length > 0 ? (
             <table className="w-full text-left font-mono text-xs">
               <thead>
                 <tr className="border-b border-zinc-900 text-zinc-500">
@@ -336,13 +345,13 @@ export default function ExpeditionDetail() {
                 </tr>
               </thead>
               <tbody>
-                {expedition.members.map((m, i) => (
+                {expeditionMembers.map((m: any, i: number) => (
                   <tr
                     key={m.person_id ?? i}
                     className="border-b border-zinc-900/50 last:border-0 hover:bg-zinc-900/20 transition-colors"
                   >
-                    <td className="py-3 px-4 text-zinc-300">{m.person_id}</td>
-                    <td className="py-3 px-4 text-zinc-500">Scout</td>
+                    <td className="py-3 px-4 text-zinc-300">{m.person_id ?? '—'}</td>
+                    <td className="py-3 px-4 text-zinc-500">{m.role ?? 'Assigned'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -350,7 +359,7 @@ export default function ExpeditionDetail() {
           ) : (
             <div className="flex items-center gap-2 py-6 px-4 text-xs text-zinc-500 font-mono">
               <Users size={14} />
-              {expedition.members === undefined
+              {(expedition as any).expedition_members === undefined && (expedition as any).members === undefined
                 ? 'Member data not included in response'
                 : 'No members assigned'}
             </div>
@@ -365,7 +374,7 @@ export default function ExpeditionDetail() {
           Allocated Resources
         </h2>
         <div className="bg-surface-raised brutalist-border rounded-xl overflow-hidden">
-          {expedition.allocated_resources && expedition.allocated_resources.length > 0 ? (
+          {expeditionAllocatedResources && expeditionAllocatedResources.length > 0 ? (
             <table className="w-full text-left font-mono text-xs">
               <thead>
                 <tr className="border-b border-zinc-900 text-zinc-500">
@@ -378,7 +387,7 @@ export default function ExpeditionDetail() {
                 </tr>
               </thead>
               <tbody>
-                {expedition.allocated_resources.map((r, i) => (
+                {expeditionAllocatedResources.map((r: any, i: number) => (
                   <tr
                     key={r.resource_type_id ?? i}
                     className="border-b border-zinc-900/50 last:border-0 hover:bg-zinc-900/20 transition-colors"
@@ -388,7 +397,7 @@ export default function ExpeditionDetail() {
                         `Resource #${r.resource_type_id}`}
                     </td>
                     <td className="py-3 px-4 text-zinc-300 text-right font-bold">
-                      {r.amount}{' '}
+                      {formatAmount(r.amount)}{' '}
                       <span className="text-zinc-600 font-normal">
                         {resourceMap.get(r.resource_type_id)?.unit ?? ''}
                       </span>
@@ -400,8 +409,8 @@ export default function ExpeditionDetail() {
           ) : (
             <div className="flex items-center gap-2 py-6 px-4 text-xs text-zinc-500 font-mono">
               <Package size={14} />
-              {expedition.allocated_resources === undefined
-                ? 'Resource data not included in response'
+              {(expedition as any).expedition_allocated_resources === undefined && (expedition as any).allocated_resources === undefined
+                ? 'Allocated resource data not included in response'
                 : 'No allocated resources'}
             </div>
           )}
@@ -416,7 +425,7 @@ export default function ExpeditionDetail() {
             Found Resources
           </h2>
           <div className="bg-surface-raised brutalist-border rounded-xl overflow-hidden">
-            {expedition.found_resources && expedition.found_resources.length > 0 ? (
+            {expeditionFoundResources && expeditionFoundResources.length > 0 ? (
               <table className="w-full text-left font-mono text-xs">
                 <thead>
                   <tr className="border-b border-zinc-900 text-zinc-500">
@@ -429,7 +438,7 @@ export default function ExpeditionDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {expedition.found_resources.map((r, i) => (
+                  {expeditionFoundResources.map((r: any, i: number) => (
                     <tr
                       key={r.resource_type_id ?? i}
                       className="border-b border-zinc-900/50 last:border-0 hover:bg-zinc-900/20 transition-colors"
@@ -439,7 +448,7 @@ export default function ExpeditionDetail() {
                           `Resource #${r.resource_type_id}`}
                       </td>
                       <td className="py-3 px-4 text-zinc-300 text-right font-bold">
-                        {r.amount}{' '}
+                        {formatAmount(r.amount)}{' '}
                         <span className="text-zinc-600 font-normal">
                           {resourceMap.get(r.resource_type_id)?.unit ?? ''}
                         </span>
@@ -451,15 +460,14 @@ export default function ExpeditionDetail() {
             ) : (
               <div className="flex items-center gap-2 py-6 px-4 text-xs text-zinc-500 font-mono">
                 <Gift size={14} />
-                {expedition.found_resources === undefined
-                  ? 'Resource data not included in response'
+                {(expedition as any).expedition_found_resources === undefined && expedition.found_resources === undefined
+                  ? 'Found resource data not included in response'
                   : 'No found resources recorded'}
               </div>
             )}
           </div>
         </div>
       )}
-
       {/* ── Return Modal ─────────────────────────────────────────────────── */}
       {showReturnModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
