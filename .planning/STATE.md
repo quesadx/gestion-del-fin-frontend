@@ -4,8 +4,8 @@
 
 ## Current Phase
 
-- **Phase:** 08 (Person Detail + New Person)
-- **Status:** Complete
+- **Phase:** 04 (Rations Mgmt)
+- **Status:** Complete ✓
 - **Plans Complete:** 1/1
 
 ## Progress
@@ -15,7 +15,7 @@
 | 01    | ✓      | 1/1   | 100%     |
 | 02    | ✓      | 1/1   | 100%     |
 | 03    | ✓      | 1/1   | 100%     |
-| 04    | ○      | —     | 0%       |
+| 04    | ✓      | 1/1   | 100%     |
 | 05    | ✓      | 1/1   | 100%     |
 | 06    | ✓      | 1/1   | 100%     |
 | 07    | ✓      | 1/1   | 100%     |
@@ -25,8 +25,6 @@
 
 ## Last Activity
 
-- Created PersonDetail page (`/population/:id`) with profile card, status badge, stats, edit/delete/transfer actions
-- Created NewPersonPage (`/population/new`) with react-hook-form + zod validation
-- Added optional identification_code, blood_type, admitted_at fields to Person type
-- Added "View Profile" links and "NEW SURVIVOR" button in PopulationRoster
-- Added routes for both pages in App.tsx (new before :id to avoid route conflict)
+- Created RationsPage with history table and ration create form
+- Added /rations route and nav item with Sandwich icon
+- Phase 04 (Rations Management) — Complete

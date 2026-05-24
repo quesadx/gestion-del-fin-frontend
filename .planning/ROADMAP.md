@@ -8,11 +8,11 @@
 | --- | ------------------- | ------------------------------------------------------------------------- | --------------------- |
 | 01  | Resources CRUD      | Resource types page — create/edit/delete resource definitions             | Complete (2026-05-24) |
 | 02  | Professions CRUD    | Profession types page — create/edit/delete professions                    | Complete (2026-05-24) |
-| 03  | Users CRUD          | System users management page — create/edit/delete users + role assignment | Pending               |
-| 04  | Rations Mgmt        | Ration disbursement tracking page — history + create                      | Pending               |
-| 05  | Inventory Audit     | Dedicated inventory audit page — full chronological event log             | Pending               |
-| 06  | Camp Detail         | `/camps/:id` detail page — camp-specific stats + sub-entities             | Pending               |
-| 07  | Exploration Detail  | `/expeditions/:id` detail page — full expedition view                     | Pending               |
+| 03  | Users CRUD          | System users management page — create/edit/delete users + role assignment | Complete (2026-05-24) |
+| 04  | Rations Mgmt        | Ration disbursement tracking page — history + create                      | Complete (2026-05-24) |
+| 05  | Inventory Audit     | Dedicated inventory audit page — full chronological event log             | Complete (2026-05-24) |
+| 06  | Camp Detail         | `/camps/:id` detail page — camp-specific stats + sub-entities             | Complete (2026-05-24) |
+| 07  | Exploration Detail  | `/expeditions/:id` detail page — full expedition view                     | Complete (2026-05-24) |
 | 08  | Person Detail + New | `/population/:id` profile + `/population/new` add person form             | Pending               |
 | 09  | Person Flows        | Status logging, profession reassignment, contribution overrides           | Pending               |
 | 10  | Resource Alerts     | Prominent stock alerts system — critical/low banners + nav indicator      | Pending               |
