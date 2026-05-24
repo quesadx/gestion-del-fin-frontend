@@ -4,6 +4,7 @@ import { useAuthStore } from './store';
 import { ReactNode, Suspense, lazy, useEffect } from 'react';
 import { Skeleton } from './components/Skeleton';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Toaster } from './components/Toaster';
 
 // Layouts (lazy)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -96,6 +97,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <Toaster />
         <ErrorBoundary>
           <Suspense fallback={<PageLoader />}>
             <Routes>
