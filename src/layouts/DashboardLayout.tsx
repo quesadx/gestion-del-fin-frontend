@@ -9,6 +9,7 @@ import {
   Tent,
   ArrowLeftRight,
   Package,
+  Wrench,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
@@ -52,6 +53,7 @@ const NAV_ITEMS = [
   { to: '/transfers', icon: ArrowLeftRight, label: 'Transfers' },
   { to: '/camps', icon: Tent, label: 'Refuges' },
   { to: '/resources', icon: Package, label: 'Resources' },
+  { to: '/professions', icon: Wrench, label: 'Professions' },
 ] as const;
 
 // Permission required to see each nav item
@@ -64,6 +66,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/transfers': 'transfers.read',
   '/camps': 'camps.read',
   '/resources': 'resources.*',
+  '/professions': 'professions.read',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
