@@ -19,12 +19,7 @@ import { Skeleton, SkeletonList } from '../../components/Skeleton';
 const getAdmissionDecisionStatus = (
   admission?: Partial<Admission> | null,
 ): 'PENDING' | 'ACCEPTED' | 'REJECTED' => {
-  const rawStatus = (
-    admission?.final_decision ??
-    admission?.status ??
-    admission?.ai_decision ??
-    'PENDING'
-  )
+  const rawStatus = (admission?.final_decision ?? admission?.ai_decision ?? 'PENDING')
     .toString()
     .toUpperCase();
 
@@ -309,9 +304,7 @@ export default function AdmissionList() {
                     <div className="bg-zinc-950 p-2 border border-zinc-800 rounded flex gap-4">
                       <div className="text-center px-4 border-r border-zinc-800">
                         <p className="text-[10px] font-bold text-zinc-500 uppercase">Age</p>
-                        <p className="font-mono font-bold text-lg">
-                          {details.applicant_age || details.details?.age || 25}
-                        </p>
+                        <p className="font-mono font-bold text-lg">{details.applicant_age || 25}</p>
                       </div>
                       <div className="text-center px-4">
                         <p className="text-[10px] font-bold text-zinc-500 uppercase">Risk</p>
@@ -326,7 +319,7 @@ export default function AdmissionList() {
                         Detected Skills
                       </p>
                       <p className="text-xs font-medium leading-relaxed">
-                        {details.applicant_skills || details.details?.skills}
+                        {details.applicant_skills || '—'}
                       </p>
                     </div>
                     <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
@@ -334,7 +327,7 @@ export default function AdmissionList() {
                         Medical Condition
                       </p>
                       <p className="text-xs font-medium leading-relaxed">
-                        {details.health_notes || details.details?.medical_data}
+                        {details.health_notes || '—'}
                       </p>
                     </div>
                   </div>
@@ -402,14 +395,14 @@ export default function AdmissionList() {
                           Automated Judgment v.9.4
                         </div>
                         <p className="text-sm font-bold leading-relaxed text-zinc-200">
-                          "{details.ai_reasoning || details.ai_analysis}"
+                          "{details.ai_reasoning || '—'}"
                         </p>
                         <div className="pt-4 border-t border-zinc-900">
                           <p className="text-[10px] font-bold text-zinc-600 uppercase mb-2">
                             Detailed Reasoning
                           </p>
                           <p className="text-xs text-zinc-400 italic">
-                            "{details.details?.reasoning}"
+                            "{details.ai_reasoning || 'No detailed reasoning available'}"
                           </p>
                         </div>
                       </div>

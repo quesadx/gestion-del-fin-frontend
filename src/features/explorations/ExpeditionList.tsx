@@ -291,9 +291,9 @@ export default function ExpeditionList() {
                 <div
                   className={cn(
                     'w-full lg:w-2 py-4 lg:py-0',
-                    exp.status === 'ONGOING' || exp.status === 'ACTIVE'
+                    exp.status === 'ONGOING'
                       ? 'bg-amber-500 shadow-[2px_0_10px_rgba(245,158,11,0.3)]'
-                      : exp.status === 'PLANNED' || exp.status === 'PLANNING'
+                      : exp.status === 'PLANNED'
                         ? 'bg-zinc-700'
                         : exp.status === 'RETURNED'
                           ? 'bg-emerald-500'
@@ -307,11 +307,11 @@ export default function ExpeditionList() {
                       <span
                         className={cn(
                           'text-[9px] font-black uppercase px-2 py-0.5 rounded border',
-                          exp.status === 'ONGOING' || exp.status === 'ACTIVE'
+                          exp.status === 'ONGOING'
                             ? 'bg-amber-950/20 text-amber-500 border-amber-500/30'
                             : exp.status === 'RETURNED'
                               ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
-                              : exp.status === 'CANCELLED' || exp.status === 'LOST'
+                              : exp.status === 'CANCELLED'
                                 ? 'bg-red-950/20 text-red-500 border-red-500/30'
                                 : 'bg-zinc-950/20 text-zinc-500 border-zinc-700/50',
                         )}
@@ -355,7 +355,7 @@ export default function ExpeditionList() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-zinc-900 lg:pl-6">
-                    {(exp.status === 'PLANNED' || exp.status === 'PLANNING') && (
+                    {exp.status === 'PLANNED' && (
                       <button
                         onClick={() =>
                           updateStatusMutation.mutate({
@@ -369,7 +369,7 @@ export default function ExpeditionList() {
                         DEPLOY SQUAD
                       </button>
                     )}
-                    {(exp.status === 'ONGOING' || exp.status === 'ACTIVE') && (
+                    {exp.status === 'ONGOING' && (
                       <>
                         <button
                           onClick={() => {
@@ -416,7 +416,7 @@ export default function ExpeditionList() {
                 </div>
               </div>
 
-              {(exp.status === 'ONGOING' || exp.status === 'ACTIVE') && (
+              {exp.status === 'ONGOING' && (
                 <div className="px-6 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-1 bg-zinc-900 rounded-full overflow-hidden">

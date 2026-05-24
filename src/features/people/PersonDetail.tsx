@@ -159,7 +159,6 @@ export default function PersonDetail() {
         person_id: personId,
         new_status: newStatus,
         reason: reason || undefined,
-        changed_by: user?.id ?? 1,
       });
     },
     onSuccess: () => {
@@ -187,11 +186,11 @@ export default function PersonDetail() {
     }) => {
       await apiClient.post(`/camps/${currentCampId}/people/profession-reassignments`, {
         person_id: personId,
+        from_profession_id: person?.profession_id,
         to_profession_id: toProfessionId,
         reason: reason || undefined,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
-        changed_by: user?.id ?? 1,
       });
     },
     onSuccess: () => {
@@ -228,7 +227,6 @@ export default function PersonDetail() {
         reason,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
-        changed_by: user?.id ?? 1,
       });
     },
     onSuccess: () => {
@@ -262,10 +260,10 @@ export default function PersonDetail() {
     let norm = 'HEALTHY';
     const s = (person.status || '').toUpperCase();
     if (s === 'HEALTHY') norm = 'HEALTHY';
-    else if (s === 'WOUNDED' || s === 'INJURED') norm = 'INJURED';
+    else if (s === 'INJURED') norm = 'INJURED';
     else if (s === 'SICK') norm = 'SICK';
-    else if (s === 'MISSING' || s === 'AWAY') norm = 'AWAY';
-    else if (s === 'DECEASED' || s === 'DEAD') norm = 'DEAD';
+    else if (s === 'AWAY') norm = 'AWAY';
+    else if (s === 'DEAD') norm = 'DEAD';
 
     setEditStatus(norm);
     setEditProfessionId(person.profession_id ?? null);
@@ -327,15 +325,12 @@ export default function PersonDetail() {
   const renderStatusBadge = (status: string) => {
     const s = (status || '').toUpperCase();
     const isHealthy = s === 'HEALTHY';
-    const isWounded = s === 'WOUNDED' || s === 'INJURED';
     const isSick = s === 'SICK';
-    const isMissing = s === 'MISSING' || s === 'AWAY';
-    const isDeceased = s === 'DECEASED' || s === 'DEAD';
+    const isInjured = s === 'INJURED';
+    const isAway = s === 'AWAY';
+    const isDeceased = s === 'DEAD';
 
-    let label = s;
-    if (isWounded) label = 'WOUNDED';
-    else if (isMissing) label = 'MISSING';
-    else if (isDeceased) label = 'DECEASED';
+    const label = s;
 
     return (
       <div
@@ -343,17 +338,17 @@ export default function PersonDetail() {
           'inline-flex items-center gap-2 px-3 py-1 rounded text-[10px] font-black uppercase tracking-wider border',
           isHealthy
             ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
-            : isWounded
+            : isInjured
               ? 'bg-amber-950/20 text-amber-500 border-amber-500/30'
               : isSick
                 ? 'bg-orange-950/20 text-orange-500 border-orange-500/30'
-                : isMissing
+                : isAway
                   ? 'bg-blue-950/20 text-blue-400 border-blue-400/30'
                   : 'bg-zinc-950/20 text-zinc-500 border-zinc-500/30',
         )}
       >
         {isHealthy && <Heart size={12} />}
-        {isWounded && <Activity size={12} />}
+        {isInjured && <Activity size={12} />}
         {isDeceased && <Skull size={12} />}
         {label}
       </div>
@@ -918,11 +913,8 @@ export default function PersonDetail() {
                     <option value="HEALTHY">HEALTHY</option>
                     <option value="SICK">SICK</option>
                     <option value="INJURED">INJURED</option>
-                    <option value="WOUNDED">WOUNDED</option>
                     <option value="AWAY">AWAY</option>
-                    <option value="MISSING">MISSING</option>
                     <option value="DEAD">DEAD</option>
-                    <option value="DECEASED">DECEASED</option>
                   </select>
                 </div>
 
