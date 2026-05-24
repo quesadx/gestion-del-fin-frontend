@@ -16,6 +16,7 @@ import InventoryAudit from './features/inventory/InventoryAudit';
 import AdmissionList from './features/admission/AdmissionList';
 import ExpeditionList from './features/explorations/ExpeditionList';
 import CampManagement from './features/camps/CampManagement';
+import CampDetail from './features/camps/CampDetail';
 import TransferList from './features/transfers/TransferList';
 import ResourcesPage from './features/resources/ResourcesPage';
 import ProfessionsPage from './features/professions/ProfessionsPage';
@@ -134,6 +135,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <TransferList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="camps/:id"
+              element={
+                <ProtectedRoute>
+                  <CampDetail />
                 </ProtectedRoute>
               }
             />
