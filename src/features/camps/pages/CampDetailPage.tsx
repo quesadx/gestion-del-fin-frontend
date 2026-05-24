@@ -76,7 +76,7 @@ export function CampDetailPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="INVALID CAMP ID" tag="CAMP.ERR" status="ERROR" accent="amber">
-          <p className="text-sm text-muted-foreground font-mono-data">
+          <p className="text-sm text-muted-foreground font-sans text-xs">
             The camp ID in the URL is not valid.
           </p>
           <div className="mt-4">
@@ -95,7 +95,7 @@ export function CampDetailPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="ERROR" tag={`CAMP.${campId}`} status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(error as Error)?.message || 'Failed to load camp'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -110,7 +110,7 @@ export function CampDetailPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="CAMP NOT FOUND" tag={`CAMP.${campId}`} status="OFFLINE" accent="amber">
-          <p className="text-sm text-muted-foreground font-mono-data">
+          <p className="text-sm text-muted-foreground font-sans text-xs">
             Requested camp does not exist.
           </p>
         </GlassPanel>
@@ -139,15 +139,15 @@ export function CampDetailPage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2 font-mono-data text-xs">
-              <MapPin className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+            <div className="flex items-center gap-2 font-sans text-xs text-xs">
+              <MapPin className="h-3.5 w-3.5 text-gdf-accent-secondary" />
               <span className="text-muted-foreground">LOCATION:</span>
               <span className="text-foreground">
                 {(camp.location as string) || 'NOT SPECIFIED'}
               </span>
             </div>
-            <div className="flex items-center gap-2 font-mono-data text-xs">
-              <Calendar className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+            <div className="flex items-center gap-2 font-sans text-xs text-xs">
+              <Calendar className="h-3.5 w-3.5 text-gdf-accent-secondary" />
               <span className="text-muted-foreground">CREATED:</span>
               <span className="text-foreground">
                 {camp.created_at
@@ -155,7 +155,7 @@ export function CampDetailPage() {
                   : '—'}
               </span>
             </div>
-            <div className="flex items-center gap-2 font-mono-data text-xs">
+            <div className="flex items-center gap-2 font-sans text-xs text-xs">
               <StatusBadge status={camp.status as string} variant={statusVariant} />
             </div>
           </div>
@@ -170,14 +170,14 @@ export function CampDetailPage() {
         </div>
         <div className="mt-4 pt-3 border-t border-[oklch(0.68_0.32_340_/_0.2)]">
           {(camp.ai_context_prompt as string) ? (
-            <div className="p-3 bg-zinc-800/50 border border-zinc-700 font-mono-data text-xs">
+            <div className="p-3 bg-zinc-800/50 border border-zinc-700 font-sans text-xs text-xs">
               <p className="text-muted-foreground mb-1">AI CONTEXT PROMPT:</p>
               <p className="text-foreground whitespace-pre-wrap">
                 {camp.ai_context_prompt as string}
               </p>
             </div>
           ) : (
-            <div className="p-3 bg-zinc-800/50 border border-zinc-700 font-mono-data text-xs">
+            <div className="p-3 bg-zinc-800/50 border border-zinc-700 font-sans text-xs text-xs">
               <p className="text-muted-foreground">AI CONTEXT PROMPT: NO AI CONTEXT CONFIGURED</p>
             </div>
           )}
@@ -187,9 +187,9 @@ export function CampDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <GlassPanel accent="cyan">
           <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-[var(--neon-cyan)]" />
+            <Users className="h-6 w-6 text-gdf-accent-secondary" />
             <div>
-              <p className="font-mono-data text-[10px] text-muted-foreground">PEOPLE</p>
+              <p className="font-sans text-xs text-[10px] text-muted-foreground">PEOPLE</p>
               <p className="font-display text-lg text-glow-cyan">
                 {peopleTotal ?? peopleArray.length}
               </p>
@@ -205,22 +205,24 @@ export function CampDetailPage() {
         accent="cyan"
       >
         {peopleLoading ? (
-          <p className="text-sm text-muted-foreground font-mono-data">Loading people...</p>
+          <p className="text-sm text-muted-foreground font-sans text-xs">Loading people...</p>
         ) : peopleError ? (
           <div className="flex flex-col items-center gap-4 py-4">
-            <p className="text-sm text-red-400 font-mono-data">Failed to load people</p>
+            <p className="text-sm text-red-400 font-sans text-xs">Failed to load people</p>
           </div>
         ) : peopleArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
-            <Users className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO PEOPLE IN THIS CAMP</p>
+            <Users className="h-8 w-8 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">
+              NO PEOPLE IN THIS CAMP
+            </p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono-data text-xs">
+              <table className="w-full text-left font-sans text-xs text-xs">
                 <thead>
-                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                  <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                     <th className="py-3 px-2 font-semibold">NAME</th>
                     <th className="py-3 px-2 font-semibold">PROFESSION</th>
                     <th className="py-3 px-2 font-semibold">STATUS</th>
@@ -231,9 +233,9 @@ export function CampDetailPage() {
                   {peopleArray.slice(0, 10).map((person) => (
                     <tr
                       key={person.id as number}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                      className="border-b border-gdf-border-subtle hover:bg-gdf-surface-hover transition-colors"
                     >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                      <td className="py-3 px-2 text-gdf-accent-primary">
                         {person.full_name as string}
                       </td>
                       <td className="py-3 px-2 text-muted-foreground">
@@ -278,73 +280,73 @@ export function CampDetailPage() {
       </GlassPanel>
 
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-w-[95vw] sm:max-w-lg">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground max-w-[95vw] sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               EDIT CAMP
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NAME //
               </label>
               <input
                 {...register('name')}
                 type="text"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-gdf-accent-primary font-sans text-xs"
               />
               {errors.name && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1.5 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.name.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 LOCATION //
               </label>
               <input
                 {...register('location')}
                 type="text"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {errors.location && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1.5 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.location.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 STATUS //
               </label>
               <select
                 {...register('status')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="ABANDONED">ABANDONED</option>
               </select>
               {errors.status && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1.5 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.status.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 AI CONTEXT PROMPT //
               </label>
               <textarea
                 {...register('ai_context_prompt')}
                 rows={4}
                 placeholder="Camp rules for AI admission evaluation..."
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data resize-y"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-gdf-accent-primary font-sans text-xs resize-y"
               />
             </div>
             {editError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {editError}
               </div>
             )}

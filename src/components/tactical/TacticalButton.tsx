@@ -40,7 +40,7 @@ export function TacticalButton({
       onClick={onClick}
       type={type}
       className={cn(
-        'font-mono text-xs tracking-wider uppercase px-5 py-2.5 rounded-lg gdf-btn-press disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100',
+        'font-sans text-[0.8125rem] text-xs tracking-normal uppercase px-5 py-2.5 rounded-lg gdf-btn-press disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100',
         VARIANT_CLASSES[variant],
         className,
       )}

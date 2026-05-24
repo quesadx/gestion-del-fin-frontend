@@ -126,10 +126,6 @@
 }
 
 @layer components {
-  .font-mono-data {
-    font-family: 'Inter', monospace;
-    font-size: 0.75rem;
-  }
   .font-display {
     font-family: 'Inter', sans-serif;
     font-weight: 800;
@@ -138,24 +134,14 @@
 
   .text-glow-fuchsia,
   .text-glow-cyan {
-    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    text-shadow: 0 0 6px rgba(59, 130, 246, 0.15);
   }
   .text-glow-yellow {
-    text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    text-shadow: 0 0 6px rgba(245, 158, 11, 0.15);
   }
 
-  .font-mono {
-    font-family: 'Inter', monospace;
-    font-size: 0.8125rem;
-    letter-spacing: 0;
-  }
-  .font-mono-sm {
-    font-family: 'Inter', monospace;
-    font-size: 0.6875rem;
-    letter-spacing: 0;
-  }
   .text-glow {
-    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    text-shadow: none;
   }
 
   .animate-pulse-glow {
@@ -507,7 +493,6 @@
     border-color var(--gdf-transition-fast);
 }
 .gdf-hover-glow:hover {
-  box-shadow: 0 0 12px var(--gdf-accent-primary-glow);
   border-color: var(--gdf-accent-primary);
 }
 

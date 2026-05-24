@@ -14,7 +14,7 @@ export function StockAlertBanner({ alerts }: { alerts: StockAlerts }) {
       accent="amber"
     >
       <div className="space-y-3">
-        <div className="flex items-center gap-2 font-mono-data text-xs text-[var(--neon-yellow)]">
+        <div className="flex items-center gap-2 font-sans text-xs text-xs text-gdf-status-warning">
           <AlertTriangle className="h-4 w-4" />
           <span>
             {alerts.totalCritical} resource{alerts.totalCritical > 1 ? 's' : ''} below minimum
@@ -23,9 +23,9 @@ export function StockAlertBanner({ alerts }: { alerts: StockAlerts }) {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left font-mono-data text-xs">
+          <table className="w-full text-left font-sans text-xs text-xs">
             <thead>
-              <tr className="border-b border-[oklch(0.68_0.32_340_/_0.15)] text-muted-foreground">
+              <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                 <th className="py-2 px-2 font-semibold">RESOURCE</th>
                 <th className="py-2 px-2 font-semibold text-right">CURRENT</th>
                 <th className="py-2 px-2 font-semibold text-right">MINIMUM</th>
@@ -39,8 +39,8 @@ export function StockAlertBanner({ alerts }: { alerts: StockAlerts }) {
                   key={item.resource_type_id}
                   className="border-b border-[oklch(0.68_0.32_340_/_0.08)]"
                 >
-                  <td className="py-2 px-2 text-[var(--neon-fuchsia)]">{item.resourceName}</td>
-                  <td className="py-2 px-2 text-right text-[var(--neon-yellow)] font-bold tabular-nums">
+                  <td className="py-2 px-2 text-gdf-accent-primary">{item.resourceName}</td>
+                  <td className="py-2 px-2 text-right text-gdf-status-warning font-bold tabular-nums">
                     {item.currentStock}
                   </td>
                   <td className="py-2 px-2 text-right text-muted-foreground tabular-nums">

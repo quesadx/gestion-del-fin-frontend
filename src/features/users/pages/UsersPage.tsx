@@ -175,7 +175,7 @@ export function UsersPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="ERROR" tag="USR.01" status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(error as Error)?.message || 'Failed to load users'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -198,8 +198,8 @@ export function UsersPage() {
       >
         {usersArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Shield className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO USERS REGISTERED</p>
+            <Shield className="h-10 w-10 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">NO USERS REGISTERED</p>
             <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
@@ -218,9 +218,9 @@ export function UsersPage() {
               </TacticalButton>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono-data text-xs">
+              <table className="w-full text-left font-sans text-xs text-xs">
                 <thead>
-                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                  <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                     <th className="py-3 px-2">USER</th>
                     <th className="py-3 px-2">CAMP</th>
                     <th className="py-3 px-2">ROLE</th>
@@ -233,9 +233,9 @@ export function UsersPage() {
                   {usersArray.map((u) => (
                     <tr
                       key={u.id}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                      className="border-b border-gdf-border-subtle hover:bg-gdf-surface-hover transition-colors"
                     >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{u.username}</td>
+                      <td className="py-3 px-2 text-gdf-accent-primary">{u.username}</td>
                       <td className="py-3 px-2 text-muted-foreground">
                         {campMap.get(u.camp_id) || String(u.camp_id)}
                       </td>
@@ -258,7 +258,7 @@ export function UsersPage() {
                           <button
                             type="button"
                             onClick={() => handleToggleActive(u)}
-                            className="p-1.5 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
+                            className="p-1.5 rounded-md text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                             title={u.is_active ? 'Deactivate' : 'Activate'}
                           >
                             {u.is_active ? (
@@ -270,7 +270,7 @@ export function UsersPage() {
                           <button
                             type="button"
                             onClick={() => openEdit(u)}
-                            className="p-1.5 rounded-md text-[var(--neon-yellow)] hover:bg-[var(--neon-yellow)]/10 transition-colors"
+                            className="p-1.5 rounded-md text-gdf-status-warning hover:bg-[var(--neon-yellow)]/10 transition-colors"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
                           </button>
@@ -298,49 +298,49 @@ export function UsersPage() {
       </GlassPanel>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               NEW USER
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={createForm.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 USERNAME //
               </label>
               <input
                 {...createForm.register('username')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               />
               {createForm.formState.errors.username && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {createForm.formState.errors.username.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 PASSWORD //
               </label>
               <input
                 {...createForm.register('password')}
                 type="password"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {createForm.formState.errors.password && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {createForm.formState.errors.password.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 CAMP //
               </label>
               <select
                 {...createForm.register('camp_id')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="">SELECT...</option>
                 {campsArray.map((c) => (
@@ -350,18 +350,18 @@ export function UsersPage() {
                 ))}
               </select>
               {createForm.formState.errors.camp_id && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {createForm.formState.errors.camp_id.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 ROLE //
               </label>
               <select
                 {...createForm.register('role_id')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="">SELECT...</option>
                 {rolesArray.map((r) => (
@@ -371,13 +371,13 @@ export function UsersPage() {
                 ))}
               </select>
               {createForm.formState.errors.role_id && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {createForm.formState.errors.role_id.message}
                 </p>
               )}
             </div>
             {createError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {createError}
               </div>
             )}
@@ -401,44 +401,44 @@ export function UsersPage() {
       </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={(o) => !o && setEditTarget(null)}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-cyan">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-cyan">
               EDIT USER
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 USERNAME //
               </label>
               <input
                 {...editForm.register('username')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {editForm.formState.errors.username && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.username.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NEW PASSWORD (OPTIONAL) //
               </label>
               <input
                 {...editForm.register('password')}
                 type="password"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 CAMP //
               </label>
               <select
                 {...editForm.register('camp_id')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               >
                 <option value="">SELECT...</option>
                 {campsArray.map((c) => (
@@ -448,18 +448,18 @@ export function UsersPage() {
                 ))}
               </select>
               {editForm.formState.errors.camp_id && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.camp_id.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 ROLE //
               </label>
               <select
                 {...editForm.register('role_id')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               >
                 {rolesArray.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -468,13 +468,13 @@ export function UsersPage() {
                 ))}
               </select>
               {editForm.formState.errors.role_id && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.role_id.message}
                 </p>
               )}
             </div>
             {editError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {editError}
               </div>
             )}
@@ -491,30 +491,29 @@ export function UsersPage() {
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <AlertDialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+            <AlertDialogTitle className="font-display text-sm tracking-normal text-gdf-status-warning">
               CONFIRM DELETE
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              Delete user{' '}
-              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.username}</span>? This
-              action cannot be undone.
+            <AlertDialogDescription className="font-sans text-xs text-xs text-muted-foreground">
+              Delete user <span className="text-gdf-accent-primary">{deleteTarget?.username}</span>?
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && (
-            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
               {deleteError}
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-sans text-xs text-xs">
               CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs"
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-sans text-xs text-xs"
             >
               {deleteMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>

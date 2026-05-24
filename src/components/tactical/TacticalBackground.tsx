@@ -2,12 +2,12 @@ import { useEffect, useCallback, useRef } from 'react';
 import { HolographicRadar } from './HolographicRadar';
 
 function createParticles() {
-  return Array.from({ length: 60 }).map(() => ({
+  return Array.from({ length: 12 }).map(() => ({
     left: Math.random() * 100,
     top: Math.random() * 100,
-    duration: 2.5 + Math.random() * 4,
-    delay: Math.random() * 5,
-    opacity: 0.3 + Math.random() * 0.4,
+    duration: 4 + Math.random() * 6,
+    delay: Math.random() * 8,
+    opacity: 0.1 + Math.random() * 0.15,
   }));
 }
 
@@ -53,12 +53,12 @@ export function TacticalBackground() {
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[-10] overflow-hidden" aria-hidden="true">
-      <div className="gdf-bg-grid animate-grid-drift" />
+      <div className="gdf-bg-grid" />
       <HolographicRadar />
-      <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.12),transparent_55%)] blur-[80px] animate-ambient-drift-1" />
-      <div className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.10),transparent_55%)] blur-[90px] animate-ambient-drift-2" />
+      <div className="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.04),transparent_55%)] blur-[80px] animate-ambient-drift-1" />
+      <div className="absolute -bottom-[20%] -right-[10%] w-[60vw] h-[60vw] rounded-full bg-[radial-gradient(circle,rgba(59,130,246,0.03),transparent_55%)] blur-[90px] animate-ambient-drift-2" />
       <div
-        className="absolute -top-[30%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.08),transparent_55%)] blur-[100px] animate-ambient-drift-1"
+        className="absolute -top-[30%] left-[20%] w-[50vw] h-[50vw] rounded-full bg-[radial-gradient(circle,rgba(99,102,241,0.03),transparent_55%)] blur-[100px] animate-ambient-drift-1"
         style={{ animationDuration: '30s', animationDirection: 'alternate-reverse' }}
       />
       <div
@@ -67,7 +67,7 @@ export function TacticalBackground() {
           background:
             'linear-gradient(90deg, transparent, var(--gdf-accent-secondary), transparent)',
           animationDuration: '8s',
-          opacity: 'var(--gdf-scanner-opacity, 0.15)',
+          opacity: 'var(--gdf-scanner-opacity, 0.04)',
         }}
       />
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">

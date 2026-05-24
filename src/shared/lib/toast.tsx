@@ -78,7 +78,7 @@ export function ToastContainer() {
               className={`pointer-events-auto border rounded-md px-4 py-3 flex items-start gap-3 shadow-lg ${style.border} ${style.bg}`}
             >
               <Icon size={16} className={`mt-0.5 shrink-0 ${style.text}`} />
-              <p className="text-xs font-mono-data text-gdf-text-primary flex-1">{t.message}</p>
+              <p className="text-xs font-sans text-xs text-gdf-text-primary flex-1">{t.message}</p>
               <button
                 onClick={() => dismiss(t.id)}
                 className="text-gdf-text-muted hover:text-gdf-text-primary shrink-0 transition-colors"

@@ -20,7 +20,7 @@ export function SearchInput({ className, icon, ...props }: SearchInputProps) {
           'rounded-md',
           'text-sm text-gdf-text-primary',
           'placeholder:text-gdf-text-muted',
-          'font-mono-data',
+          'font-sans text-xs',
           'focus-visible:outline-none focus-visible:border-gdf-accent-secondary/50',
           'focus-visible:ring-1 focus-visible:ring-gdf-accent-secondary/20',
           'focus-visible:shadow-[0_0_12px_var(--gdf-accent-secondary-glow)]',

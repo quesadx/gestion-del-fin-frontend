@@ -281,7 +281,7 @@ export function TransfersPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="ERROR" tag="TRN.ERR" status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(error as Error)?.message || 'Failed to load transfers'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -302,8 +302,10 @@ export function TransfersPage() {
       >
         {transfersArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
-            <ArrowRightLeft className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO TRANSFERS REGISTERED</p>
+            <ArrowRightLeft className="h-10 w-10 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">
+              NO TRANSFERS REGISTERED
+            </p>
             <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
               <span className="flex items-center gap-2">
                 <Plus className="h-3.5 w-3.5" />
@@ -322,9 +324,9 @@ export function TransfersPage() {
               </TacticalButton>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono-data text-xs">
+              <table className="w-full text-left font-sans text-xs text-xs">
                 <thead>
-                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                  <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                     <th className="py-3 px-2">TYPE</th>
                     <th className="py-3 px-2">SOURCE → DESTINATION</th>
                     <th className="py-3 px-2">STATUS</th>
@@ -345,7 +347,7 @@ export function TransfersPage() {
                     return (
                       <tr
                         key={t.id as number}
-                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                        className="border-b border-gdf-border-subtle hover:bg-gdf-surface-hover transition-colors"
                       >
                         <td className="py-3 px-2">
                           <StatusBadge
@@ -354,9 +356,9 @@ export function TransfersPage() {
                           />
                         </td>
                         <td className="py-3 px-2">
-                          <span className="text-[var(--neon-fuchsia)]">{requesting}</span>
+                          <span className="text-gdf-accent-primary">{requesting}</span>
                           <span className="text-muted-foreground mx-1">→</span>
-                          <span className="text-[var(--neon-cyan)]">{target}</span>
+                          <span className="text-gdf-accent-secondary">{target}</span>
                         </td>
                         <td className="py-3 px-2">
                           <StatusBadge
@@ -377,7 +379,7 @@ export function TransfersPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleSchedule(t.id as number)}
-                                  className="p-1 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] text-[10px]"
+                                  className="p-1 rounded-md text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] text-[10px]"
                                   title="Schedule delivery"
                                 >
                                   <Truck className="h-3 w-3" />
@@ -437,7 +439,7 @@ export function TransfersPage() {
                                   });
                                   setConfirmDialogOpen(true);
                                 }}
-                                className="p-1 rounded-md bg-[var(--neon-fuchsia)]/10 text-[var(--neon-fuchsia)] hover:bg-[var(--neon-fuchsia)]/20 text-[10px] px-2"
+                                className="p-1 rounded-md bg-[var(--neon-fuchsia)]/10 text-gdf-accent-primary hover:bg-[var(--neon-fuchsia)]/20 text-[10px] px-2"
                               >
                                 COMPLETE
                               </button>
@@ -468,14 +470,14 @@ export function TransfersPage() {
           accent="amber"
         >
           <div className="space-y-3">
-            <div className="flex items-center gap-2 font-mono-data text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 font-sans text-xs text-xs text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />
               <span>Completed and rejected transfers</span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono-data text-xs">
+              <table className="w-full text-left font-sans text-xs text-xs">
                 <thead>
-                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.15)] text-muted-foreground">
+                  <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                     <th className="py-2 px-2">TYPE</th>
                     <th className="py-2 px-2">SOURCE → DESTINATION</th>
                     <th className="py-2 px-2">RESULT</th>
@@ -555,7 +557,7 @@ export function TransfersPage() {
                     return (
                       <tr
                         key={t.id as number}
-                        className="border-b border-[oklch(0.68_0.32_340_/_0.08)] hover:bg-[oklch(0.68_0.32_340_/_0.05)]"
+                        className="border-b border-[oklch(0.68_0.32_340_/_0.08)] hover:bg-gdf-surface-hover"
                       >
                         <td className="py-2 px-2">
                           <StatusBadge
@@ -564,9 +566,9 @@ export function TransfersPage() {
                           />
                         </td>
                         <td className="py-2 px-2">
-                          <span className="text-[var(--neon-fuchsia)]">{requesting}</span>
+                          <span className="text-gdf-accent-primary">{requesting}</span>
                           <span className="text-muted-foreground mx-1">→</span>
-                          <span className="text-[var(--neon-cyan)]">{target}</span>
+                          <span className="text-gdf-accent-secondary">{target}</span>
                         </td>
                         <td className="py-2 px-2">
                           <StatusBadge
@@ -602,7 +604,7 @@ export function TransfersPage() {
             </div>
             {historyTransfers.some((t) => t.status === 'REJECTED' && t.notes) && (
               <details className="mt-3">
-                <summary className="font-mono-data text-[10px] text-muted-foreground cursor-pointer hover:text-[var(--neon-yellow)]">
+                <summary className="font-sans text-xs text-[10px] text-muted-foreground cursor-pointer hover:text-gdf-status-warning">
                   SHOW REJECTION NOTES
                 </summary>
                 <div className="mt-2 space-y-1">
@@ -614,7 +616,7 @@ export function TransfersPage() {
                       return (
                         <div
                           key={tid}
-                          className="font-mono-data text-xs text-red-400/80 pl-4 border-l border-red-400/20"
+                          className="font-sans text-xs text-xs text-red-400/80 pl-4 border-l border-red-400/20"
                         >
                           #{tid}: {tnotes}
                         </div>
@@ -628,21 +630,21 @@ export function TransfersPage() {
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-w-lg max-h-[80vh] overflow-y-auto">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-cyan">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-cyan">
               NEW TRANSFER
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   SOURCE CAMP //
                 </label>
                 <select
                   {...formCreate.register('requesting_camp')}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
                 >
                   <option value="0">SELECT...</option>
                   {campsArray.map((c) => (
@@ -653,12 +655,12 @@ export function TransfersPage() {
                 </select>
               </div>
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   DESTINATION CAMP //
                 </label>
                 <select
                   {...formCreate.register('target_camp')}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 >
                   <option value="0">SELECT...</option>
                   {campsArray.map((c) => (
@@ -670,12 +672,12 @@ export function TransfersPage() {
               </div>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 TYPE //
               </label>
               <select
                 {...formCreate.register('type')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="RESOURCE">RESOURCES</option>
                 <option value="PERSON">PEOPLE</option>
@@ -683,7 +685,7 @@ export function TransfersPage() {
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 ITEMS //
               </label>
               <div className="space-y-2">
@@ -697,7 +699,7 @@ export function TransfersPage() {
                         <label className="text-[9px] text-muted-foreground">TYPE</label>
                         <select
                           {...formCreate.register(`items.${index}.item_type`)}
-                          className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                          className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-1.5 text-xs text-foreground outline-none font-sans text-xs"
                         >
                           <option value="RESOURCE">RESOURCE</option>
                           <option value="PERSON">PERSON</option>
@@ -711,7 +713,7 @@ export function TransfersPage() {
                               {...formCreate.register(`items.${index}.resource_type_id`)}
                               type="number"
                               min={1}
-                              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-1.5 text-xs text-foreground outline-none font-sans text-xs"
                             />
                           </div>
                           <div>
@@ -721,7 +723,7 @@ export function TransfersPage() {
                               type="number"
                               min={0.01}
                               step="0.01"
-                              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-1.5 text-xs text-foreground outline-none font-sans text-xs"
                             />
                           </div>
                         </>
@@ -732,7 +734,7 @@ export function TransfersPage() {
                             {...formCreate.register(`items.${index}.person_id`)}
                             type="number"
                             min={1}
-                            className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                            className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-1.5 text-xs text-foreground outline-none font-sans text-xs"
                           />
                         </div>
                       )}
@@ -752,19 +754,19 @@ export function TransfersPage() {
               <button
                 type="button"
                 onClick={addItem}
-                className="mt-2 text-[10px] text-[var(--neon-cyan)] hover:text-[var(--neon-fuchsia)] font-mono-data"
+                className="mt-2 text-[10px] text-gdf-accent-secondary hover:text-gdf-accent-primary font-sans text-xs"
               >
                 + ADD ITEM
               </button>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NOTES //
               </label>
               <textarea
                 {...formCreate.register('notes')}
                 rows={2}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -787,15 +789,15 @@ export function TransfersPage() {
       </Dialog>
 
       <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+            <DialogTitle className="font-display text-sm tracking-normal text-gdf-status-warning">
               REJECT TRANSFER
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 REASON //
               </label>
               <textarea
@@ -804,7 +806,7 @@ export function TransfersPage() {
                   setRejectTarget((p) => (p ? { ...p, reason: e.target.value } : null))
                 }
                 rows={3}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-yellow)] font-mono-data resize-none"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-yellow)] font-sans text-xs resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -832,22 +834,22 @@ export function TransfersPage() {
       </Dialog>
 
       <Dialog open={scheduleDialogOpen} onOpenChange={setScheduleDialogOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-[var(--neon-cyan)]">
+            <DialogTitle className="font-display text-sm tracking-normal text-gdf-accent-secondary">
               SCHEDULE DELIVERY
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 DELIVERY DATE //
               </label>
               <input
                 type="datetime-local"
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data [color-scheme:dark]"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs [color-scheme:dark]"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -875,25 +877,25 @@ export function TransfersPage() {
       </Dialog>
 
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <AlertDialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+            <AlertDialogTitle className="font-display text-sm tracking-normal text-gdf-status-warning">
               CONFIRM ACTION
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
+            <AlertDialogDescription className="font-sans text-xs text-xs text-muted-foreground">
               {confirmAction?.label} — Transfer #{confirmAction?.id}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => setConfirmAction(null)}
-              className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs"
+              className="bg-transparent border border-[var(--neon-cyan)] text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-sans text-xs text-xs"
             >
               CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmAction}
-              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-sans text-xs text-xs hover:bg-[var(--neon-yellow)]/80"
             >
               CONFIRM
             </AlertDialogAction>

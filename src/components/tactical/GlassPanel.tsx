@@ -98,7 +98,7 @@ export function GlassPanel({
               <span
                 className={cn(
                   'gdf-depth-float',
-                  'font-mono-sm tracking-[0.15em] px-2.5 py-1 border rounded-lg gdf-depth-layer animate-float-panel font-bold uppercase',
+                  'font-sans text-[0.6875rem] tracking-normal px-2.5 py-1 border rounded-lg gdf-depth-layer animate-float-panel font-bold uppercase',
                   a.bg,
                   a.text,
                   a.tagBorder,
@@ -114,7 +114,13 @@ export function GlassPanel({
             )}
           </div>
           {status && (
-            <div className={cn('gdf-depth-float', 'flex items-center gap-2 font-mono-sm', a.text)}>
+            <div
+              className={cn(
+                'gdf-depth-float',
+                'flex items-center gap-2 font-sans text-[0.6875rem]',
+                a.text,
+              )}
+            >
               <span
                 className={cn('gdf-depth-float', 'w-1.5 h-1.5 animate-blink rounded-full', a.dot)}
               />

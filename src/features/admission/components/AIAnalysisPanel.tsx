@@ -32,11 +32,11 @@ export function AIAnalysisPanel({
     return (
       <GlassPanel title="AI ANALYSIS" tag="AI.EVAL" accent="amber">
         <div className="flex flex-col items-center gap-3 py-6">
-          <Brain className="h-8 w-8 text-[var(--neon-fuchsia)]/30" />
-          <p className="font-mono-data text-xs text-muted-foreground text-center">
+          <Brain className="h-8 w-8 text-gdf-accent-primary/30" />
+          <p className="font-sans text-xs text-xs text-muted-foreground text-center">
             AI evaluation data is not available for this request.
           </p>
-          <p className="font-mono-data text-[10px] text-muted-foreground/60 text-center">
+          <p className="font-sans text-xs text-[10px] text-muted-foreground/60 text-center">
             The AI may still be processing or the backend did not include evaluation fields.
           </p>
         </div>
@@ -48,8 +48,8 @@ export function AIAnalysisPanel({
     <GlassPanel title="AI ANALYSIS" tag="AI.EVAL" accent="amber">
       <div className="space-y-4">
         <div className="flex items-center gap-3">
-          <Target className="h-4 w-4 text-[var(--neon-fuchsia)]" />
-          <span className="font-mono-data text-[10px] tracking-[0.2em] text-muted-foreground">
+          <Target className="h-4 w-4 text-gdf-accent-primary" />
+          <span className="font-sans text-xs text-[10px] tracking-normal text-muted-foreground">
             DECISION //
           </span>
           <StatusBadge
@@ -60,24 +60,26 @@ export function AIAnalysisPanel({
 
         {aiSuggestedProfession && (
           <div className="flex items-center gap-3">
-            <Lightbulb className="h-4 w-4 text-[var(--neon-cyan)]" />
-            <span className="font-mono-data text-[10px] tracking-[0.2em] text-muted-foreground">
+            <Lightbulb className="h-4 w-4 text-gdf-accent-secondary" />
+            <span className="font-sans text-xs text-[10px] tracking-normal text-muted-foreground">
               SUGGESTED PROFESSION //
             </span>
-            <span className="font-mono-data text-xs text-foreground">{aiSuggestedProfession}</span>
+            <span className="font-sans text-xs text-xs text-foreground">
+              {aiSuggestedProfession}
+            </span>
           </div>
         )}
 
         {aiReasoning && (
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Brain className="h-4 w-4 text-[var(--neon-cyan)]" />
-              <span className="font-mono-data text-[10px] tracking-[0.2em] text-muted-foreground">
+              <Brain className="h-4 w-4 text-gdf-accent-secondary" />
+              <span className="font-sans text-xs text-[10px] tracking-normal text-muted-foreground">
                 REASONING //
               </span>
             </div>
-            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-3 bg-[oklch(0.15_0.05_320_/_0.5)]">
-              <p className="font-mono-data text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap">
+            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-3 bg-gdf-surface-overlay/50">
+              <p className="font-sans text-xs text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap">
                 {aiReasoning}
               </p>
             </div>

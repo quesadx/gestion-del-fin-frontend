@@ -25,15 +25,15 @@ export function AdmissionDetailPanel({
 }: AdmissionDetailProps) {
   return (
     <GlassPanel title={applicantName} tag="ADM.DETAIL" accent="cyan">
-      <div className="space-y-3 font-mono-data text-xs">
+      <div className="space-y-3 font-sans text-xs text-xs">
         <div className="flex items-center gap-2">
-          <Calendar className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+          <Calendar className="h-3.5 w-3.5 text-gdf-accent-secondary" />
           <span className="text-muted-foreground">AGE:</span>
           <span className="text-foreground">{applicantAge ?? '—'}</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Calendar className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+          <Calendar className="h-3.5 w-3.5 text-gdf-accent-secondary" />
           <span className="text-muted-foreground">CREATED:</span>
           <span className="text-foreground">
             {createdAt ? format(new Date(createdAt), 'dd/MM/yyyy HH:mm') : '—'}
@@ -43,10 +43,10 @@ export function AdmissionDetailPanel({
         {applicantSkills && (
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Briefcase className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+              <Briefcase className="h-3.5 w-3.5 text-gdf-accent-secondary" />
               <span className="text-muted-foreground">SKILLS:</span>
             </div>
-            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-2 bg-[oklch(0.15_0.05_320_/_0.5)]">
+            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-2 bg-gdf-surface-overlay/50">
               <p className="text-foreground/80">{applicantSkills}</p>
             </div>
           </div>
@@ -55,10 +55,10 @@ export function AdmissionDetailPanel({
         {healthNotes && (
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Heart className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+              <Heart className="h-3.5 w-3.5 text-gdf-accent-secondary" />
               <span className="text-muted-foreground">HEALTH NOTES:</span>
             </div>
-            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-2 bg-[oklch(0.15_0.05_320_/_0.5)]">
+            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-2 bg-gdf-surface-overlay/50">
               <p className="text-foreground/80">{healthNotes}</p>
             </div>
           </div>
@@ -67,10 +67,10 @@ export function AdmissionDetailPanel({
         {backgroundNotes && (
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <FileText className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+              <FileText className="h-3.5 w-3.5 text-gdf-accent-secondary" />
               <span className="text-muted-foreground">BACKGROUND:</span>
             </div>
-            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-2 bg-[oklch(0.15_0.05_320_/_0.5)]">
+            <div className="border border-[oklch(0.68_0.32_340_/_0.2)] p-2 bg-gdf-surface-overlay/50">
               <p className="text-foreground/80">{backgroundNotes}</p>
             </div>
           </div>
@@ -78,7 +78,7 @@ export function AdmissionDetailPanel({
 
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <User className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+            <User className="h-3.5 w-3.5 text-gdf-accent-secondary" />
             <span className="text-muted-foreground">PHOTO:</span>
           </div>
           {photoUrl ? (
@@ -94,7 +94,7 @@ export function AdmissionDetailPanel({
 
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <FileText className="h-3.5 w-3.5 text-[var(--neon-cyan)]" />
+            <FileText className="h-3.5 w-3.5 text-gdf-accent-secondary" />
             <span className="text-muted-foreground">ID CARD:</span>
           </div>
           {idCardUrl ? (
@@ -102,7 +102,7 @@ export function AdmissionDetailPanel({
               href={idCardUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--neon-cyan)] underline text-[10px]"
+              className="text-gdf-accent-secondary underline text-[10px]"
             >
               View ID card
             </a>

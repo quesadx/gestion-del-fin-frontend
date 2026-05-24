@@ -19,9 +19,9 @@ export function HoloLoader() {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 font-mono text-xs text-gdf-text-muted">
+      <div className="flex items-center gap-2 font-sans text-[0.8125rem] text-xs text-gdf-text-muted">
         <span className="animate-blink text-gdf-accent-secondary">&#9654;</span>
-        <span className="tracking-[0.2em] uppercase">SYSTEM ONLINE</span>
+        <span className="tracking-normal uppercase">SYSTEM ONLINE</span>
         <span className="animate-blink text-gdf-accent-secondary">&#9654;</span>
       </div>
     </div>

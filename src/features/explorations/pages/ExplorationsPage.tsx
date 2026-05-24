@@ -256,7 +256,7 @@ export function ExplorationsPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="ERROR" tag="EXP.01" status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(error as Error)?.message || 'Failed to load explorations'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -277,8 +277,8 @@ export function ExplorationsPage() {
       >
         {campIsEmpty ? (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Compass className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
+            <Compass className="h-10 w-10 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">
               NO EXPLORATIONS REGISTERED
             </p>
             <TacticalButton variant="primary" onClick={() => setCreateOpen(true)}>
@@ -294,7 +294,7 @@ export function ExplorationsPage() {
               <select
                 value={campFilter}
                 onChange={(e) => setCampFilter(e.target.value)}
-                className="rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               >
                 <option value="">ALL CAMPS</option>
                 {campsArray.map((c) => (
@@ -306,7 +306,7 @@ export function ExplorationsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               >
                 <option value="">ALL STATUS</option>
                 <option value="PLANNED">PLANNED</option>
@@ -332,8 +332,8 @@ export function ExplorationsPage() {
 
             {filterIsEmpty ? (
               <div className="flex flex-col items-center gap-4 py-8">
-                <FilterX className="h-8 w-8 text-[var(--neon-cyan)]/30" />
-                <p className="font-mono-data text-sm text-muted-foreground">
+                <FilterX className="h-8 w-8 text-gdf-accent-secondary/30" />
+                <p className="font-sans text-xs text-sm text-muted-foreground">
                   NO EXPLORATIONS MATCH SELECTED FILTERS
                 </p>
                 <TacticalButton variant="ghost" onClick={clearFilters}>
@@ -342,9 +342,9 @@ export function ExplorationsPage() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-left font-mono-data text-xs">
+                <table className="w-full text-left font-sans text-xs text-xs">
                   <thead>
-                    <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                    <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                       <th className="py-3 px-2">DESTINATION</th>
                       <th className="py-3 px-2">STATUS</th>
                       <th className="py-3 px-2">DEPARTURE</th>
@@ -358,10 +358,10 @@ export function ExplorationsPage() {
                     {filteredExps.map((exp) => (
                       <tr
                         key={exp.id as number}
-                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] cursor-pointer transition-colors"
+                        className="border-b border-gdf-border-subtle hover:bg-gdf-surface-hover cursor-pointer transition-colors"
                         onClick={() => navigate(`/explorations/${exp.id}`)}
                       >
-                        <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                        <td className="py-3 px-2 text-gdf-accent-primary">
                           {exp.destination as string}
                         </td>
                         <td className="py-3 px-2">
@@ -395,7 +395,7 @@ export function ExplorationsPage() {
                                 e.target.value,
                               )
                             }
-                            className="rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-1 text-[10px] text-foreground outline-none font-mono-data"
+                            className="rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-1 text-[10px] text-foreground outline-none font-sans text-xs"
                           >
                             <option value="PLANNED">PLANNED</option>
                             <option value="ONGOING">ONGOING</option>
@@ -429,36 +429,36 @@ export function ExplorationsPage() {
       </GlassPanel>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               NEW EXPLORATION
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 DESTINATION //
               </label>
               <input
                 {...formCreate.register('destination')}
                 type="text"
                 placeholder="AREA 7G"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-gdf-accent-primary font-sans text-xs"
               />
               {formCreate.formState.errors.destination && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {formCreate.formState.errors.destination.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 CAMP //
               </label>
               <select
                 {...formCreate.register('camp_id', { valueAsNumber: true })}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               >
                 <option value="0">SELECT...</option>
                 {campsArray.map((c) => (
@@ -470,63 +470,63 @@ export function ExplorationsPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   DEPARTURE //
                 </label>
                 <input
                   {...formCreate.register('departure_date')}
                   type="datetime-local"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-2 text-xs text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
                 />
               </div>
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   EXPECTED RETURN //
                 </label>
                 <input
                   {...formCreate.register('expected_return_date')}
                   type="datetime-local"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-2 text-xs text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 />
               </div>
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   LATEST RETURN //
                 </label>
                 <input
                   {...formCreate.register('max_return_date')}
                   type="datetime-local"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-2 py-2 text-xs text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
                 />
               </div>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NOTES //
               </label>
               <textarea
                 {...formCreate.register('notes')}
                 rows={2}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs resize-none"
               />
             </div>
             {watchedCampId > 0 && (
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   MEMBERS //
                 </label>
                 {availablePeople.length === 0 ? (
-                  <p className="text-xs text-muted-foreground font-mono-data">
+                  <p className="text-xs text-muted-foreground font-sans text-xs">
                     No available people in selected camp
                     {unavailableCount > 0 && ` (${unavailableCount} unavailable)`}
                   </p>
                 ) : (
                   <>
-                    <div className="max-h-40 overflow-y-auto border border-[oklch(0.68_0.32_340_/_0.4)] rounded-md">
+                    <div className="max-h-40 overflow-y-auto border border-gdf-border-default rounded-md">
                       {availablePeople.map((person) => (
                         <label
                           key={person.id as number}
-                          className="flex items-center gap-2 px-3 py-1.5 hover:bg-[oklch(0.15_0.05_320_/_0.5)] cursor-pointer font-mono-data text-xs"
+                          className="flex items-center gap-2 px-3 py-1.5 hover:bg-gdf-surface-overlay/50 cursor-pointer font-sans text-xs text-xs"
                         >
                           <input
                             type="checkbox"
@@ -548,28 +548,28 @@ export function ExplorationsPage() {
                   </>
                 )}
                 {selectedMembers.length > 0 && (
-                  <p className="mt-1 text-[10px] text-muted-foreground font-mono-data">
+                  <p className="mt-1 text-[10px] text-muted-foreground font-sans text-xs">
                     {selectedMembers.length} member{selectedMembers.length > 1 ? 's' : ''} selected
                   </p>
                 )}
               </div>
             )}
             {!watchedCampId && (
-              <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 p-3 border border-zinc-700 font-sans text-xs text-xs text-muted-foreground">
                 <Users className="h-3.5 w-3.5" />
                 Select a camp to choose members
               </div>
             )}
-            <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 p-3 border border-zinc-700 font-sans text-xs text-xs text-muted-foreground">
               <Package className="h-3.5 w-3.5" />
               Resource allocation is configured in the expedition return flow
             </div>
-            <div className="flex items-center gap-2 p-3 border border-zinc-700 font-mono-data text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 p-3 border border-zinc-700 font-sans text-xs text-xs text-muted-foreground">
               <Gift className="h-3.5 w-3.5" />
               Found resources are recorded when marking the expedition as returned
             </div>
             {createError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {createError}
               </div>
             )}
@@ -595,27 +595,27 @@ export function ExplorationsPage() {
 
       {statusTarget?.newStatus === 'RETURNED' ? (
         <Dialog open={!!statusTarget} onOpenChange={() => setStatusTarget(null)}>
-          <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground max-w-lg max-h-[80vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="font-display text-sm tracking-widest text-glow-cyan">
+              <DialogTitle className="font-display text-sm tracking-normal text-glow-cyan">
                 RETURN INTAKE — {statusTarget.destination}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   ACTUAL RETURN DATE //
                 </label>
                 <input
                   type="datetime-local"
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
                 />
               </div>
 
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   RESOURCES RECOVERED //
                 </label>
                 <div className="space-y-2">
@@ -636,7 +636,7 @@ export function ExplorationsPage() {
                             };
                             setReturnResources(updated);
                           }}
-                          className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                          className="w-full rounded-md bg-gdf-surface-overlay/50 border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-sans text-xs"
                         >
                           <option value={0}>SELECT...</option>
                           {resourcesArray.map((res) => (
@@ -661,7 +661,7 @@ export function ExplorationsPage() {
                             };
                             setReturnResources(updated);
                           }}
-                          className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                          className="w-full rounded-md bg-gdf-surface-overlay/50 border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-sans text-xs"
                         />
                       </div>
                       {returnResources.length > 1 && (
@@ -683,31 +683,31 @@ export function ExplorationsPage() {
                   onClick={() =>
                     setReturnResources((prev) => [...prev, { resource_type_id: 0, amount: 0 }])
                   }
-                  className="mt-2 text-[10px] text-brand-primary hover:text-brand-primary/80 font-mono-data"
+                  className="mt-2 text-[10px] text-brand-primary hover:text-brand-primary/80 font-sans text-xs"
                 >
                   + ADD RESOURCE
                 </button>
               </div>
 
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   NOTES //
                 </label>
                 <textarea
                   value={returnNotes}
                   onChange={(e) => setReturnNotes(e.target.value)}
                   rows={2}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-zinc-700 px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs resize-none"
                 />
               </div>
 
               {returnError && (
-                <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                   {returnError}
                 </div>
               )}
               {statusConfirmError && (
-                <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+                <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                   {statusConfirmError}
                 </div>
               )}
@@ -739,15 +739,15 @@ export function ExplorationsPage() {
         </Dialog>
       ) : (
         <AlertDialog open={!!statusTarget} onOpenChange={(open) => !open && setStatusTarget(null)}>
-          <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+          <AlertDialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
             <AlertDialogHeader>
-              <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+              <AlertDialogTitle className="font-display text-sm tracking-normal text-gdf-status-warning">
                 CONFIRM STATUS CHANGE
               </AlertDialogTitle>
-              <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground space-y-1.5">
+              <AlertDialogDescription className="font-sans text-xs text-xs text-muted-foreground space-y-1.5">
                 <div>
                   Change status of expedition to{' '}
-                  <span className="text-[var(--neon-fuchsia)]">{statusTarget?.destination}</span>?
+                  <span className="text-gdf-accent-primary">{statusTarget?.destination}</span>?
                 </div>
                 <div>
                   <StatusBadge status={statusTarget?.currentStatus || ''} variant="red" />
@@ -760,18 +760,18 @@ export function ExplorationsPage() {
               </AlertDialogDescription>
             </AlertDialogHeader>
             {statusConfirmError && (
-              <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {statusConfirmError}
               </div>
             )}
             <AlertDialogFooter>
-              <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+              <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-sans text-xs text-xs">
                 CANCEL
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmStatusChange}
                 disabled={updateStatusMutation.isPending}
-                className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+                className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-sans text-xs text-xs hover:bg-[var(--neon-yellow)]/80"
               >
                 {updateStatusMutation.isPending ? 'UPDATING...' : 'CONFIRM'}
               </AlertDialogAction>
@@ -781,30 +781,30 @@ export function ExplorationsPage() {
       )}
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <AlertDialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+            <AlertDialogTitle className="font-display text-sm tracking-normal text-gdf-status-warning">
               CONFIRM DELETE
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
+            <AlertDialogDescription className="font-sans text-xs text-xs text-muted-foreground">
               Delete expedition to{' '}
-              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.destination}</span>? This
+              <span className="text-gdf-accent-primary">{deleteTarget?.destination}</span>? This
               action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && (
-            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
               {deleteError}
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-sans text-xs text-xs">
               CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs"
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-sans text-xs text-xs"
             >
               {deleteMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>

@@ -69,14 +69,12 @@ export function LoginPage() {
                 className="text-2xl font-black tracking-tighter uppercase"
               />
             </h1>
-            <p className="font-mono text-[10px] text-gdf-text-muted uppercase tracking-widest mt-2">
-              TACTICAL COMMAND // AUTHENTICATION
-            </p>
+            <p className="text-xs text-gdf-text-muted mt-2">Sign in to continue</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
-              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-gdf-text-secondary">
+              <label className="block mb-2 text-xs font-bold tracking-normal uppercase text-gdf-text-secondary">
                 Operator ID
               </label>
               <input
@@ -84,17 +82,15 @@ export function LoginPage() {
                 type="text"
                 autoComplete="username"
                 placeholder="Enter your operator ID"
-                className="w-full bg-gdf-surface-base/50 border border-gdf-border-subtle text-gdf-text-primary font-mono text-sm p-3 focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 outline-none rounded-md placeholder:text-gdf-text-muted"
+                className="w-full bg-gdf-surface-base/50 border border-gdf-border-subtle text-gdf-text-primary text-sm p-3 focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 outline-none rounded-md placeholder:text-gdf-text-muted"
               />
               {errors.username && (
-                <p className="mt-1.5 font-mono text-[10px] text-gdf-status-danger">
-                  {errors.username.message}
-                </p>
+                <p className="mt-1.5 text-xs text-gdf-status-danger">{errors.username.message}</p>
               )}
             </div>
 
             <div>
-              <label className="block mb-2 font-mono text-[10px] font-bold tracking-widest uppercase text-gdf-text-secondary">
+              <label className="block mb-2 text-xs font-bold tracking-normal uppercase text-gdf-text-secondary">
                 Cipher Key
               </label>
               <input
@@ -102,17 +98,15 @@ export function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 placeholder="Enter your cipher key"
-                className="w-full bg-gdf-surface-base/50 border border-gdf-border-subtle text-gdf-text-primary font-mono text-sm p-3 focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 outline-none rounded-md placeholder:text-gdf-text-muted"
+                className="w-full bg-gdf-surface-base/50 border border-gdf-border-subtle text-gdf-text-primary text-sm p-3 focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 outline-none rounded-md placeholder:text-gdf-text-muted"
               />
               {errors.password && (
-                <p className="mt-1.5 font-mono text-[10px] text-gdf-status-danger">
-                  {errors.password.message}
-                </p>
+                <p className="mt-1.5 text-xs text-gdf-status-danger">{errors.password.message}</p>
               )}
             </div>
 
             {authError && (
-              <div className="border border-gdf-status-danger/30 bg-gdf-status-danger/10 p-3 font-mono text-[11px] text-gdf-status-danger animate-slide-up rounded-md">
+              <div className="border border-gdf-status-danger/30 bg-gdf-status-danger/10 p-3 text-xs text-gdf-status-danger animate-slide-up rounded-md">
                 INVALID CREDENTIALS
               </div>
             )}
@@ -121,16 +115,12 @@ export function LoginPage() {
               {isLoading ? 'AUTHENTICATING...' : 'AUTHENTICATE'}
             </TacticalButton>
 
-            <div className="pt-4 border-t border-gdf-glass-border flex items-center justify-between font-mono text-[10px] text-gdf-text-muted uppercase">
-              <span>ENC: AES-256</span>
-              <span>SEC LEVEL: 02</span>
+            <div className="pt-4 border-t border-gdf-glass-border flex items-center justify-between text-xs text-gdf-text-muted">
+              <span>v2.0</span>
+              <span>Gestin del Fin</span>
             </div>
           </form>
         </GlassPanel>
-
-        <p className="mt-6 text-center font-mono text-[9px] text-gdf-text-muted tracking-[0.1em] uppercase">
-          Unauthorized access will be prosecuted
-        </p>
       </div>
     </div>
   );

@@ -99,18 +99,18 @@ export function InventoryPage() {
           <HoloLoader />
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
-            <Warehouse className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
+            <Warehouse className="h-8 w-8 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
           </div>
         ) : (
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+            <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
               CAMP //
             </label>
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
             >
               <option value="">SELECT A CAMP</option>
               {campsArray.map((c) => (
@@ -126,15 +126,15 @@ export function InventoryPage() {
       {!selectedCampId ? (
         <GlassPanel accent="amber">
           <div className="flex flex-col items-center gap-4 py-8">
-            <Warehouse className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
+            <Warehouse className="h-10 w-10 text-gdf-accent-primary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">SELECT A CAMP</p>
           </div>
         </GlassPanel>
       ) : invLoading ? (
         <HoloLoader />
       ) : invError ? (
         <GlassPanel title="ERROR" status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(invErr as Error)?.message || 'Failed to load inventory'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -144,8 +144,8 @@ export function InventoryPage() {
       ) : invArray.length === 0 ? (
         <GlassPanel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
-            <ClipboardList className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">INVENTORY IS EMPTY</p>
+            <ClipboardList className="h-10 w-10 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">INVENTORY IS EMPTY</p>
           </div>
         </GlassPanel>
       ) : (
@@ -163,7 +163,7 @@ export function InventoryPage() {
 
           {stockChartData.length > 0 && (
             <div className="mt-4 mb-4">
-              <div className="flex items-center gap-2 mb-2 font-mono-data text-[10px] text-muted-foreground">
+              <div className="flex items-center gap-2 mb-2 font-sans text-xs text-[10px] text-muted-foreground">
                 <span className="w-1.5 h-1.5 bg-[var(--neon-cyan)] animate-pulse" />
                 STOCK DISTRIBUTION
               </div>
@@ -191,9 +191,9 @@ export function InventoryPage() {
             </TacticalButton>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono-data text-xs">
+            <table className="w-full text-left font-sans text-xs text-xs">
               <thead>
-                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                   <th className="py-3 px-2 font-semibold">RESOURCE</th>
                   <th className="py-3 px-2 font-semibold">CURRENT STOCK</th>
                   <th className="py-3 px-2 font-semibold">MINIMUM</th>
@@ -209,9 +209,9 @@ export function InventoryPage() {
                   return (
                     <tr
                       key={item.id as number}
-                      className={`border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors ${!aboveMin ? 'bg-red-400/5' : ''}`}
+                      className={`border-b border-gdf-border-subtle hover:bg-gdf-surface-hover transition-colors ${!aboveMin ? 'bg-red-400/5' : ''}`}
                     >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">
+                      <td className="py-3 px-2 text-gdf-accent-primary">
                         {resourceName as string}
                       </td>
                       <td className="py-3 px-2 text-foreground font-bold">{current}</td>
@@ -232,20 +232,20 @@ export function InventoryPage() {
       )}
 
       <Dialog open={adjustOpen} onOpenChange={setAdjustOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               MANUAL INVENTORY ADJUSTMENT
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={adjForm.handleSubmit(onSubmitAdjust)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 RESOURCE //
               </label>
               <select
                 {...adjForm.register('resource_type_id')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="">SELECT...</option>
                 {invArray.map((item) => (
@@ -260,37 +260,37 @@ export function InventoryPage() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   TYPE //
                 </label>
                 <select
                   {...adjForm.register('type')}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 >
                   <option value="MANUAL_IN">IN</option>
                   <option value="MANUAL_OUT">OUT</option>
                 </select>
               </div>
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   QUANTITY //
                 </label>
                 <input
                   {...adjForm.register('quantity')}
                   type="number"
                   min={1}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 />
               </div>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 DESCRIPTION //
               </label>
               <textarea
                 {...adjForm.register('description')}
                 rows={3}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">

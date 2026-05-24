@@ -43,18 +43,18 @@ export function InventoryAuditPage() {
           <HoloLoader />
         ) : campsArray.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-6">
-            <Warehouse className="h-8 w-8 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
+            <Warehouse className="h-8 w-8 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">NO CAMPS AVAILABLE</p>
           </div>
         ) : (
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+            <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
               CAMP //
             </label>
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
             >
               <option value="">SELECT A CAMP</option>
               {campsArray.map((c) => (
@@ -70,15 +70,15 @@ export function InventoryAuditPage() {
       {!selectedCampId ? (
         <GlassPanel accent="amber">
           <div className="flex flex-col items-center gap-4 py-8">
-            <ClipboardList className="h-10 w-10 text-[var(--neon-fuchsia)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">SELECT A CAMP</p>
+            <ClipboardList className="h-10 w-10 text-gdf-accent-primary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">SELECT A CAMP</p>
           </div>
         </GlassPanel>
       ) : auditLoading ? (
         <HoloLoader />
       ) : auditError ? (
         <GlassPanel title="ERROR" status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(auditErr as Error)?.message || 'Failed to load audit'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -88,8 +88,8 @@ export function InventoryAuditPage() {
       ) : auditArray.length === 0 ? (
         <GlassPanel accent="cyan">
           <div className="flex flex-col items-center gap-4 py-8">
-            <ClipboardList className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">NO AUDIT RECORDS</p>
+            <ClipboardList className="h-10 w-10 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">NO AUDIT RECORDS</p>
           </div>
         </GlassPanel>
       ) : (
@@ -100,9 +100,9 @@ export function InventoryAuditPage() {
           accent="cyan"
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono-data text-xs">
+            <table className="w-full text-left font-sans text-xs text-xs">
               <thead>
-                <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                   <th className="py-3 px-2 font-semibold">RESOURCE</th>
                   <th className="py-3 px-2 font-semibold">TYPE</th>
                   <th className="py-3 px-2 font-semibold">QUANTITY</th>
@@ -118,9 +118,9 @@ export function InventoryAuditPage() {
                   return (
                     <tr
                       key={entry.id}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                      className="border-b border-gdf-border-subtle hover:bg-gdf-surface-hover transition-colors"
                     >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)]">{resourceName}</td>
+                      <td className="py-3 px-2 text-gdf-accent-primary">{resourceName}</td>
                       <td className="py-3 px-2">
                         <StatusBadge status={typeLabel} variant={typeVariant} />
                       </td>

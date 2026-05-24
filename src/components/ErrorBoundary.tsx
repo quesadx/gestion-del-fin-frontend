@@ -38,13 +38,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 p-8">
-          <div className="text-gdf-status-danger text-5xl font-bold font-mono">
+          <div className="text-gdf-status-danger text-5xl font-bold font-sans text-[0.8125rem]">
             /// TACTICAL FAULT ///
           </div>
-          <div className="text-gdf-text-secondary text-lg font-mono-data max-w-lg text-center">
+          <div className="text-gdf-text-secondary text-lg font-sans text-xs max-w-lg text-center">
             A critical render error was intercepted. The interface has been contained.
           </div>
-          <pre className="mt-2 max-w-2xl overflow-auto rounded border border-gdf-border-subtle bg-gdf-surface-base p-4 text-xs text-gdf-status-danger/80 font-mono whitespace-pre-wrap">
+          <pre className="mt-2 max-w-2xl overflow-auto rounded border border-gdf-border-subtle bg-gdf-surface-base p-4 text-xs text-gdf-status-danger/80 font-sans text-[0.8125rem] whitespace-pre-wrap">
             {this.state.error?.message}
           </pre>
           <div className="flex gap-3">

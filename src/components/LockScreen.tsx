@@ -41,14 +41,16 @@ export function LockScreen() {
       <GlassPanel variant="heavy" bracketed accent="cyan" className="w-full max-w-sm p-8">
         <div className="text-center mb-6">
           <div className="w-12 h-12 bg-gdf-accent-primary flex items-center justify-center mx-auto mb-4">
-            <span className="font-mono font-bold text-xs text-gdf-text-inverse">GF</span>
+            <span className="font-sans text-[0.8125rem] font-bold text-xs text-gdf-text-inverse">
+              GF
+            </span>
           </div>
-          <h2 className="text-lg font-semibold text-gdf-text-primary font-mono-data tracking-wider">
+          <h2 className="text-lg font-semibold text-gdf-text-primary font-sans text-xs tracking-normal">
             SESSION LOCKED
           </h2>
           <p className="text-gdf-text-muted text-sm mt-2">Enter your password to unlock</p>
           {user && (
-            <p className="font-mono-data text-xs text-gdf-accent-primary mt-1">
+            <p className="font-sans text-xs text-xs text-gdf-accent-primary mt-1">
               USER: {user.username.toUpperCase()}
             </p>
           )}
@@ -63,10 +65,10 @@ export function LockScreen() {
             autoFocus
             autoComplete="current-password"
             disabled={loading}
-            className="w-full bg-gdf-surface-base border border-gdf-border-subtle text-gdf-text-primary px-3 py-2 font-mono-data text-sm focus:outline-none focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 disabled:opacity-50 rounded-md"
+            className="w-full bg-gdf-surface-base border border-gdf-border-subtle text-gdf-text-primary px-3 py-2 font-sans text-xs text-sm focus:outline-none focus:border-gdf-accent-primary focus:ring-1 focus:ring-gdf-accent-primary/20 disabled:opacity-50 rounded-md"
           />
 
-          {error && <p className="text-gdf-status-danger text-xs font-mono-data">{error}</p>}
+          {error && <p className="text-gdf-status-danger text-xs font-sans text-xs">{error}</p>}
 
           <TacticalButton
             variant="primary"

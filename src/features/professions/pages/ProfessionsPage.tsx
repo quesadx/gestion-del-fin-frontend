@@ -110,7 +110,7 @@ export function ProfessionsPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="ERROR" tag="PRF.ERR" status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(error as Error)?.message || 'Failed to load professions'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -128,8 +128,8 @@ export function ProfessionsPage() {
       <GlassPanel title="PROFESSION_CATALOG" tag="PRF.01" status="ONLINE" accent="cyan">
         {items.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-8">
-            <Wrench className="h-10 w-10 text-[var(--neon-cyan)]/40" />
-            <p className="font-mono-data text-sm text-muted-foreground">
+            <Wrench className="h-10 w-10 text-gdf-accent-secondary/40" />
+            <p className="font-sans text-xs text-sm text-muted-foreground">
               NO PROFESSIONS REGISTERED
             </p>
             <TacticalButton variant="primary" onClick={() => setCreateDialogOpen(true)}>
@@ -139,9 +139,9 @@ export function ProfessionsPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono-data text-xs">
+              <table className="w-full text-left font-sans text-xs text-xs">
                 <thead>
-                  <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                  <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                     <th className="py-3 px-2 font-semibold">NAME</th>
                     <th className="py-3 px-2 font-semibold">DESCRIPTION</th>
                     <th className="py-3 px-2 font-semibold text-right">ACTIONS</th>
@@ -151,11 +151,9 @@ export function ProfessionsPage() {
                   {items.map((item: Profession) => (
                     <tr
                       key={item.id}
-                      className="border-b border-[oklch(0.68_0.32_340_/_0.1)] hover:bg-[oklch(0.68_0.32_340_/_0.05)] transition-colors"
+                      className="border-b border-gdf-border-subtle hover:bg-gdf-surface-hover transition-colors"
                     >
-                      <td className="py-3 px-2 text-[var(--neon-fuchsia)] font-bold">
-                        {item.name}
-                      </td>
+                      <td className="py-3 px-2 text-gdf-accent-primary font-bold">{item.name}</td>
                       <td className="py-3 px-2 text-muted-foreground">{item.description || '—'}</td>
                       <td className="py-3 px-2">
                         <div className="flex justify-end gap-2">
@@ -168,7 +166,7 @@ export function ProfessionsPage() {
                                 description: item.description,
                               })
                             }
-                            className="p-1.5 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
+                            className="p-1.5 rounded-md text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                             title="Edit"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
@@ -201,47 +199,47 @@ export function ProfessionsPage() {
       </GlassPanel>
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               NEW PROFESSION
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formCreate.handleSubmit(onSubmitCreate)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NAME //
               </label>
               <input
                 {...formCreate.register('name')}
                 type="text"
                 placeholder="ENGINEER"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-gdf-accent-primary font-sans text-xs"
               />
               {formCreate.formState.errors.name && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1.5 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {formCreate.formState.errors.name.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 DESCRIPTION //
               </label>
               <textarea
                 {...formCreate.register('description')}
                 placeholder="PROFESSION DESCRIPTION"
                 rows={3}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-gdf-accent-secondary font-sans text-xs resize-none"
               />
               {formCreate.formState.errors.description && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1.5 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {formCreate.formState.errors.description.message}
                 </p>
               )}
             </div>
             {createError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {createError}
               </div>
             )}
@@ -270,45 +268,45 @@ export function ProfessionsPage() {
           if (!open) setEditTarget(null);
         }}
       >
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               EDIT PROFESSION
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={formEdit.handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NAME //
               </label>
               <input
                 {...formEdit.register('name')}
                 type="text"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-gdf-accent-primary font-sans text-xs"
               />
               {formEdit.formState.errors.name && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1.5 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {formEdit.formState.errors.name.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 DESCRIPTION //
               </label>
               <textarea
                 {...formEdit.register('description')}
                 rows={3}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-gdf-accent-secondary font-sans text-xs resize-none"
               />
               {formEdit.formState.errors.description && (
-                <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1.5 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {formEdit.formState.errors.description.message}
                 </p>
               )}
             </div>
             {editError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {editError}
               </div>
             )}
@@ -325,30 +323,30 @@ export function ProfessionsPage() {
       </Dialog>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <AlertDialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+            <AlertDialogTitle className="font-display text-sm tracking-normal text-gdf-status-warning">
               CONFIRM DELETE
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
+            <AlertDialogDescription className="font-sans text-xs text-xs text-muted-foreground">
               Delete profession{' '}
-              <span className="text-[var(--neon-fuchsia)]">{deleteTarget?.name}</span>? This action
+              <span className="text-gdf-accent-primary">{deleteTarget?.name}</span>? This action
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && (
-            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
               {deleteError}
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-sans text-xs text-xs">
               CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-sans text-xs text-xs hover:bg-[var(--neon-yellow)]/80"
             >
               {deleteMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>

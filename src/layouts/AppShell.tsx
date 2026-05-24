@@ -41,7 +41,7 @@ export function AppShell() {
         <div className="w-8 h-8 bg-gdf-accent-primary flex items-center justify-center shrink-0 rounded-md border border-gdf-border-subtle">
           <span className="font-sans font-black italic text-sm text-gdf-text-inverse">GF</span>
         </div>
-        <span className="text-sm font-mono font-bold tracking-wider">GESTIÓN DEL FIN</span>
+        <span className="text-sm font-semibold tracking-normal">GESTIÓN DEL FIN</span>
       </div>
       <div className="flex flex-col gap-2">
         {items.map((item) => (
@@ -54,7 +54,7 @@ export function AppShell() {
             className={`flex items-center gap-3 px-3 py-2 rounded-md ${location.pathname === item.to ? 'bg-gdf-accent-primary/20 text-white' : 'text-zinc-400 hover:bg-zinc-800'}`}
           >
             {item.icon && <item.icon size={18} />}
-            <span className="text-sm font-mono">{item.label}</span>
+            <span className="text-sm font-sans text-[0.8125rem]">{item.label}</span>
           </button>
         ))}
       </div>
@@ -109,10 +109,10 @@ export function AppShell() {
         {/* Aurora background – fixed, z-index 0 */}
         <div className="fixed inset-0 z-0 pointer-events-none">
           <Aurora
-            colorStops={['#ef4444', '#f59e0b', '#10b981']}
-            amplitude={1.2}
-            blend={0.55}
-            speed={0.4}
+            colorStops={['#1e293b', '#1e3a5f', '#0f172a']}
+            amplitude={0.6}
+            blend={0.4}
+            speed={0.2}
           />
         </div>
 
@@ -131,26 +131,22 @@ export function AppShell() {
                   </button>
                 </SheetTrigger>
               )}
-              <LayoutGrid size={14} className="text-gdf-text-muted hidden sm:block" />
-              <span className="text-[9px] font-mono text-gdf-text-muted uppercase tracking-widest">
-                OPERATIONAL SECTOR 04 // ONLINE
-              </span>
+              <LayoutGrid size={14} className="text-gdf-text-secondary hidden sm:block" />
+              <span className="text-xs text-gdf-text-secondary">Gestión del Fin</span>
             </div>
             <div className="flex items-center gap-4">
               {serverTimeData && (
-                <div className="hidden md:flex items-center gap-2 text-[10px] font-mono text-gdf-text-secondary">
+                <div className="hidden md:flex items-center gap-2 text-xs text-gdf-text-secondary">
                   <Clock size={12} className="text-gdf-text-muted" />
-                  <span>{new Date(serverTimeData.now).toISOString()}</span>
+                  <span>{new Date(serverTimeData.now).toLocaleTimeString()}</span>
                 </div>
               )}
               <div className="flex items-center gap-3 border-l border-gdf-glass-border pl-4">
                 <div className="flex flex-col text-right">
-                  <span className="text-[9.5px] font-mono text-gdf-text-primary font-bold">
+                  <span className="text-xs text-gdf-text-primary font-semibold">
                     {user?.username?.toUpperCase() || 'USER'}
                   </span>
-                  <span className="text-[8px] font-mono text-gdf-text-muted uppercase">
-                    {role || 'OPERATOR'}
-                  </span>
+                  <span className="text-[10px] text-gdf-text-muted">{role || 'OPERATOR'}</span>
                 </div>
                 <button
                   onClick={handleLogout}

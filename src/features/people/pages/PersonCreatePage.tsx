@@ -92,16 +92,16 @@ export function PersonCreatePage() {
       <GlassPanel title="REGISTER PERSON" tag="PPL.NEW" status="INPUT" accent="cyan">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+            <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
               FULL NAME //
             </label>
             <input
               {...register('full_name')}
               placeholder="JOHN DOE"
-              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-gdf-accent-primary font-sans text-xs"
             />
             {errors.full_name && (
-              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+              <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                 {errors.full_name.message}
               </p>
             )}
@@ -109,24 +109,24 @@ export function PersonCreatePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 CAMP //
               </label>
               {campsLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground font-sans text-xs text-xs">
                   <HoloLoader />
                 </div>
               ) : campsError ? (
-                <p className="text-red-400 font-mono-data text-xs">Failed to load camps</p>
+                <p className="text-red-400 font-sans text-xs text-xs">Failed to load camps</p>
               ) : campsArray.length === 0 ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground font-sans text-xs text-xs">
                   <Building2 className="h-3.5 w-3.5" />
                   NO CAMPS AVAILABLE
                 </div>
               ) : (
                 <select
                   {...register('camp_id')}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
                 >
                   <option value="">SELECT...</option>
                   {campsArray.map((c) => (
@@ -137,31 +137,31 @@ export function PersonCreatePage() {
                 </select>
               )}
               {errors.camp_id && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.camp_id.message}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 PROFESSION //
               </label>
               {profsLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground font-sans text-xs text-xs">
                   <HoloLoader />
                 </div>
               ) : profsError ? (
-                <p className="text-red-400 font-mono-data text-xs">Failed to load professions</p>
+                <p className="text-red-400 font-sans text-xs text-xs">Failed to load professions</p>
               ) : professionsArray.length === 0 ? (
-                <div className="flex items-center gap-2 text-muted-foreground font-mono-data text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground font-sans text-xs text-xs">
                   <Wrench className="h-3.5 w-3.5" />
                   NO PROFESSIONS AVAILABLE
                 </div>
               ) : (
                 <select
                   {...register('profession_id')}
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 >
                   <option value="">SELECT...</option>
                   {professionsArray.map((p) => (
@@ -172,7 +172,7 @@ export function PersonCreatePage() {
                 </select>
               )}
               {errors.profession_id && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.profession_id.message}
                 </p>
               )}
@@ -181,12 +181,12 @@ export function PersonCreatePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 STATUS //
               </label>
               <select
                 {...register('status')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="HEALTHY">HEALTHY</option>
                 <option value="SICK">SICK</option>
@@ -195,23 +195,23 @@ export function PersonCreatePage() {
                 <option value="DEAD">DECEASED</option>
               </select>
               {errors.status && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.status.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 AGE //
               </label>
               <input
                 {...register('age')}
                 type="number"
                 placeholder="30"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {errors.age && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.age.message}
                 </p>
               )}
@@ -219,16 +219,16 @@ export function PersonCreatePage() {
           </div>
 
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+            <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
               ADMISSION DATE //
             </label>
             <input
               {...register('admitted_at')}
               type="datetime-local"
-              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
             />
             {errors.admitted_at && (
-              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+              <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                 {errors.admitted_at.message}
               </p>
             )}
@@ -236,31 +236,31 @@ export function PersonCreatePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 ID CODE //
               </label>
               <input
                 {...register('identification_code')}
                 placeholder="ID-XXX-###"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {errors.identification_code && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.identification_code.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 BLOOD TYPE //
               </label>
               <input
                 {...register('blood_type')}
                 placeholder="O+"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {errors.blood_type && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {errors.blood_type.message}
                 </p>
               )}
@@ -268,41 +268,41 @@ export function PersonCreatePage() {
           </div>
 
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+            <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
               SKILLS //
             </label>
             <textarea
               {...register('skills_summary')}
               rows={3}
               placeholder="First aid, basic mechanics..."
-              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-gdf-accent-secondary font-sans text-xs"
             />
             {errors.skills_summary && (
-              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+              <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                 {errors.skills_summary.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+            <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
               PHOTO URL //
             </label>
             <input
               {...register('photo_url')}
               type="text"
               placeholder="https://..."
-              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-gdf-accent-secondary font-sans text-xs"
             />
             {errors.photo_url && (
-              <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+              <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                 {errors.photo_url.message}
               </p>
             )}
           </div>
 
           {createError && (
-            <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+            <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
               {createError}
             </div>
           )}

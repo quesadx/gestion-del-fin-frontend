@@ -161,7 +161,7 @@ export function PersonDetailPage() {
     return (
       <div className="space-y-6">
         <GlassPanel title="ERROR" tag={`PPL.${personId}`} status="ERROR" accent="amber">
-          <p className="text-sm text-red-400 font-mono-data mb-4">
+          <p className="text-sm text-red-400 font-sans text-xs mb-4">
             {(error as Error)?.message || 'Failed to load person'}
           </p>
           <TacticalButton variant="warning" onClick={() => refetch()}>
@@ -181,7 +181,7 @@ export function PersonDetailPage() {
           status="OFFLINE"
           accent="amber"
         >
-          <p className="text-sm text-muted-foreground font-mono-data">
+          <p className="text-sm text-muted-foreground font-sans text-xs">
             Requested person does not exist.
           </p>
         </GlassPanel>
@@ -308,7 +308,9 @@ export function PersonDetailPage() {
         status={person.status as string}
         accent="cyan"
       >
-        <div className="text-[10px] font-mono text-zinc-500 mb-3">ID: {personId}</div>
+        <div className="text-[10px] font-sans text-[0.8125rem] text-zinc-500 mb-3">
+          ID: {personId}
+        </div>
         <div className="flex items-start gap-4 mb-4">
           {(person.photo_url as string) ? (
             <img
@@ -318,12 +320,12 @@ export function PersonDetailPage() {
             />
           ) : (
             <div className="w-16 h-16 rounded-md bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-700">
-              <span className="font-mono text-xl font-bold text-zinc-500">
+              <span className="font-sans text-[0.8125rem] text-xl font-bold text-zinc-500">
                 {(person.full_name as string)?.[0]?.toUpperCase() || '?'}
               </span>
             </div>
           )}
-          <div className="flex-1 space-y-2 font-mono-data text-xs">
+          <div className="flex-1 space-y-2 font-sans text-xs text-xs">
             <div>
               <span className="text-muted-foreground">STATUS: </span>
               <StatusBadge
@@ -333,7 +335,7 @@ export function PersonDetailPage() {
             </div>
             <div>
               <span className="text-muted-foreground">PROFESSION: </span>
-              <span className="text-[var(--neon-fuchsia)]">{person.professions?.name || '—'}</span>
+              <span className="text-gdf-accent-primary">{person.professions?.name || '—'}</span>
             </div>
             <div>
               <span className="text-muted-foreground">CAMP: </span>
@@ -347,7 +349,7 @@ export function PersonDetailPage() {
             </div>
           </div>
         </div>
-        <div className="space-y-2 font-mono-data text-xs mb-4">
+        <div className="space-y-2 font-sans text-xs text-xs mb-4">
           <div>
             <span className="text-muted-foreground">AGE: </span>
             {(person.age as number) ?? '—'}
@@ -362,7 +364,7 @@ export function PersonDetailPage() {
           </div>
         </div>
         {(person.skills_summary as string) && (
-          <div className="font-mono-data text-xs">
+          <div className="font-sans text-xs text-xs">
             <span className="text-muted-foreground">SKILLS: </span>
             {person.skills_summary as string}
           </div>
@@ -405,14 +407,14 @@ export function PersonDetailPage() {
               accent="cyan"
             >
               {skipped > 0 && (
-                <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-mono-data text-[10px] text-amber-400">
+                <div className="mb-3 border border-amber-500/30 bg-amber-950/20 p-2 font-sans text-xs text-[10px] text-amber-400">
                   {skipped} record(s) missing required identifiers and not shown
                 </div>
               )}
               <div className="overflow-x-auto">
-                <table className="w-full text-left font-mono-data text-xs">
+                <table className="w-full text-left font-sans text-xs text-xs">
                   <thead>
-                    <tr className="border-b border-[oklch(0.68_0.32_340_/_0.25)] text-muted-foreground">
+                    <tr className="border-b border-gdf-border-subtle text-muted-foreground">
                       <th className="py-2 px-2">STATUS</th>
                       <th className="py-2 px-2">DATE</th>
                       <th className="py-2 px-2">REASON</th>
@@ -426,7 +428,7 @@ export function PersonDetailPage() {
                             ? String(log.id)
                             : `${log.new_status}-${log.changed_at}-${(log.reason as string) ?? ''}`
                         }
-                        className="border-b border-[oklch(0.68_0.32_340_/_0.1)]"
+                        className="border-b border-gdf-border-subtle"
                       >
                         <td className="py-2 px-2">
                           <StatusBadge
@@ -457,66 +459,66 @@ export function PersonDetailPage() {
           status="0 RECORDS"
           accent="amber"
         >
-          <p className="font-mono-data text-xs text-muted-foreground py-4 text-center">
+          <p className="font-sans text-xs text-xs text-muted-foreground py-4 text-center">
             NO STATUS CHANGES RECORDED
           </p>
         </GlassPanel>
       )}
 
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               EDIT PERSON
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={editForm.handleSubmit(onSubmitEdit)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NAME //
               </label>
               <input
                 {...editForm.register('full_name')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               />
               {editForm.formState.errors.full_name && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.full_name.message}
                 </p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   AGE //
                 </label>
                 <input
                   {...editForm.register('age')}
                   type="number"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 />
                 {editForm.formState.errors.age && (
-                  <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                  <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                     {editForm.formState.errors.age.message}
                   </p>
                 )}
               </div>
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   PROFESSION //
                 </label>
-                <div className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
+                <div className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-muted-foreground font-sans text-xs">
                   {person.professions?.name || '—'}
                 </div>
               </div>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 STATUS //
               </label>
               <select
                 {...editForm.register('status')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="HEALTHY">HEALTHY</option>
                 <option value="SICK">SICK</option>
@@ -525,87 +527,87 @@ export function PersonDetailPage() {
                 <option value="DEAD">DECEASED</option>
               </select>
               {editForm.formState.errors.status && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.status.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 ADMITTED //
               </label>
               <input
                 {...editForm.register('admitted_at')}
                 type="datetime-local"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {editForm.formState.errors.admitted_at && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.admitted_at.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 ID CODE //
               </label>
               <input
                 {...editForm.register('identification_code')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {editForm.formState.errors.identification_code && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.identification_code.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 BLOOD TYPE //
               </label>
               <input
                 {...editForm.register('blood_type')}
                 placeholder="A+, O-, etc."
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {editForm.formState.errors.blood_type && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.blood_type.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 SKILLS //
               </label>
               <textarea
                 {...editForm.register('skills_summary')}
                 rows={3}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {editForm.formState.errors.skills_summary && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.skills_summary.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 PHOTO URL //
               </label>
               <input
                 {...editForm.register('photo_url')}
                 placeholder="https://example.com/photo.jpg"
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
               {editForm.formState.errors.photo_url && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {editForm.formState.errors.photo_url.message}
                 </p>
               )}
             </div>
             {editError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {editError}
               </div>
             )}
@@ -622,20 +624,20 @@ export function PersonDetailPage() {
       </Dialog>
 
       <Dialog open={statusLogOpen} onOpenChange={setStatusLogOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               LOG STATUS CHANGE
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={statusLogForm.handleSubmit(onSubmitStatusLog)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NEW STATUS //
               </label>
               <select
                 {...statusLogForm.register('new_status')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="HEALTHY">HEALTHY</option>
                 <option value="SICK">SICK</option>
@@ -645,17 +647,17 @@ export function PersonDetailPage() {
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 REASON //
               </label>
               <textarea
                 {...statusLogForm.register('reason')}
                 rows={3}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
             </div>
             {statusLogError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {statusLogError}
               </div>
             )}
@@ -683,28 +685,28 @@ export function PersonDetailPage() {
       </Dialog>
 
       <Dialog open={reassignOpen} onOpenChange={setReassignOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               REASSIGN PROFESSION
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={reassignForm.handleSubmit(onSubmitReassign)} className="space-y-4">
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 CURRENT PROFESSION //
               </label>
-              <div className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
+              <div className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-muted-foreground font-sans text-xs">
                 {person.professions?.name || '—'}
               </div>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 NEW PROFESSION //
               </label>
               <select
                 {...reassignForm.register('to_profession_id')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value="">SELECT...</option>
                 {(Array.isArray(professions) ? professions : []).map((prof: Profession) => (
@@ -714,45 +716,45 @@ export function PersonDetailPage() {
                 ))}
               </select>
               {reassignForm.formState.errors.to_profession_id && (
-                <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
+                <p className="mt-1 text-[10px] text-gdf-status-warning font-sans text-xs">
                   {reassignForm.formState.errors.to_profession_id.message}
                 </p>
               )}
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 REASON //
               </label>
               <textarea
                 {...reassignForm.register('reason')}
                 rows={2}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   START DATE //
                 </label>
                 <input
                   {...reassignForm.register('start_date')}
                   type="date"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 />
               </div>
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   END DATE //
                 </label>
                 <input
                   {...reassignForm.register('end_date')}
                   type="date"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 />
               </div>
             </div>
             {reassignError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {reassignError}
               </div>
             )}
@@ -776,30 +778,29 @@ export function PersonDetailPage() {
       </Dialog>
 
       <AlertDialog open={deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(false)}>
-        <AlertDialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground">
+        <AlertDialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-sm tracking-widest text-[var(--neon-yellow)]">
+            <AlertDialogTitle className="font-display text-sm tracking-normal text-gdf-status-warning">
               CONFIRM DELETE
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-mono-data text-xs text-muted-foreground">
-              Delete{' '}
-              <span className="text-[var(--neon-fuchsia)]">{person.full_name as string}</span>? This
-              action cannot be undone.
+            <AlertDialogDescription className="font-sans text-xs text-xs text-muted-foreground">
+              Delete <span className="text-gdf-accent-primary">{person.full_name as string}</span>?
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           {deleteError && (
-            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+            <div className="mx-6 mb-2 border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
               {deleteError}
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-mono-data text-xs">
+            <AlertDialogCancel className="bg-transparent border border-[var(--neon-cyan)] text-gdf-accent-secondary hover:bg-[oklch(0.85_0.22_200_/_0.1)] font-sans text-xs text-xs">
               CANCEL
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-mono-data text-xs hover:bg-[var(--neon-yellow)]/80"
+              className="bg-[var(--neon-yellow)] text-[var(--charcoal)] font-sans text-xs text-xs hover:bg-[var(--neon-yellow)]/80"
             >
               {deleteMutation.isPending ? 'DELETING...' : 'DELETE'}
             </AlertDialogAction>
@@ -808,9 +809,9 @@ export function PersonDetailPage() {
       </AlertDialog>
 
       <Dialog open={contributionOpen} onOpenChange={setContributionOpen}>
-        <DialogContent className="bg-[oklch(0.1_0.03_320_/_0.95)] border border-[oklch(0.68_0.32_340_/_0.3)] text-foreground max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-gdf-surface-overlay/95 border border-gdf-border-default text-foreground max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display text-sm tracking-widest text-glow-fuchsia">
+            <DialogTitle className="font-display text-sm tracking-normal text-glow-fuchsia">
               CONTRIBUTION OVERRIDE
             </DialogTitle>
           </DialogHeader>
@@ -819,12 +820,12 @@ export function PersonDetailPage() {
             className="space-y-4"
           >
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 RESOURCE TYPE //
               </label>
               <select
                 {...contributionForm.register('resource_type_id')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-primary font-sans text-xs"
               >
                 <option value={0}>Select a resource...</option>
                 {(resources ?? []).map((r) => (
@@ -835,49 +836,49 @@ export function PersonDetailPage() {
               </select>
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 AMOUNT //
               </label>
               <input
                 {...contributionForm.register('amount')}
                 type="number"
                 min={0}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
             </div>
             <div>
-              <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+              <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                 REASON //
               </label>
               <input
                 {...contributionForm.register('reason')}
-                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   START DATE //
                 </label>
                 <input
                   {...contributionForm.register('start_date')}
                   type="date"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 />
               </div>
               <div>
-                <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
+                <label className="block mb-1.5 text-[10px] tracking-normal text-gdf-accent-secondary/60 font-sans text-xs">
                   END DATE //
                 </label>
                 <input
                   {...contributionForm.register('end_date')}
                   type="date"
-                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-gdf-surface-overlay/50 border border-gdf-border-default px-3 py-2.5 text-sm text-foreground outline-none focus:border-gdf-accent-secondary font-sans text-xs"
                 />
               </div>
             </div>
             {contributionError && (
-              <div className="border border-red-500/30 bg-red-950/30 p-2 font-mono-data text-[10px] text-red-400">
+              <div className="border border-red-500/30 bg-red-950/30 p-2 font-sans text-xs text-[10px] text-red-400">
                 {contributionError}
               </div>
             )}

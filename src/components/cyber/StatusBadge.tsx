@@ -23,7 +23,7 @@ export function StatusBadge({ status, variant = 'red', className = '' }: StatusB
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 border px-2.5 py-0.5 font-mono-sm font-bold uppercase tracking-[0.1em] rounded-md',
+        'inline-flex items-center gap-1.5 border px-2.5 py-0.5 font-sans text-[0.6875rem] font-bold uppercase tracking-normal rounded-md',
         'bg-gdf-surface-overlay/50',
         STATUS_CLASSES[variant],
         className,
@@ -37,7 +37,7 @@ export function StatusBadge({ status, variant = 'red', className = '' }: StatusB
         speed={50}
         maxIterations={8}
         animateOn="view"
-        className={cn('font-bold uppercase tracking-[0.1em]', STATUS_CLASSES[variant])}
+        className={cn('font-bold uppercase tracking-normal', STATUS_CLASSES[variant])}
       />
     </span>
   );
