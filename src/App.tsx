@@ -1,42 +1,59 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store';
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, Suspense, lazy, useEffect } from 'react';
+import { Skeleton } from './components/Skeleton';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Toaster } from './components/Toaster';
 
-// Layouts
-import DashboardLayout from './layouts/DashboardLayout';
-import AuthLayout from './layouts/AuthLayout';
+// Layouts (lazy)
+const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
+const AuthLayout = lazy(() => import('./layouts/AuthLayout'));
 
-// Pages
-import LoginPage from './features/auth/LoginPage';
-import DashboardOverview from './features/dashboard/DashboardOverview';
-import PopulationRoster from './features/people/PopulationRoster';
-import PersonDetail from './features/people/PersonDetail';
-import NewPersonPage from './features/people/NewPersonPage';
-import InventoryList from './features/inventory/InventoryList';
-import InventoryAudit from './features/inventory/InventoryAudit';
-import AdmissionList from './features/admission/AdmissionList';
-import ExpeditionList from './features/explorations/ExpeditionList';
-import ExpeditionDetail from './features/explorations/ExpeditionDetail';
-import CampManagement from './features/camps/CampManagement';
-import CampDetail from './features/camps/CampDetail';
-import TransferList from './features/transfers/TransferList';
-import ResourcesPage from './features/resources/ResourcesPage';
-import RationsPage from './features/rations/RationsPage';
-import ProfessionsPage from './features/professions/ProfessionsPage';
-import UsersPage from './features/users/UsersPage';
-import RolesPage from './features/roles/RolesPage';
-import PermissionsPage from './features/permissions/PermissionsPage';
+// Pages (lazy)
+const LoginPage = lazy(() => import('./features/auth/LoginPage'));
+const DashboardOverview = lazy(() => import('./features/dashboard/DashboardOverview'));
+const PopulationRoster = lazy(() => import('./features/people/PopulationRoster'));
+const PersonDetail = lazy(() => import('./features/people/PersonDetail'));
+const NewPersonPage = lazy(() => import('./features/people/NewPersonPage'));
+const InventoryList = lazy(() => import('./features/inventory/InventoryList'));
+const InventoryAudit = lazy(() => import('./features/inventory/InventoryAudit'));
+const AdmissionList = lazy(() => import('./features/admission/AdmissionList'));
+const ExpeditionList = lazy(() => import('./features/explorations/ExpeditionList'));
+const ExpeditionDetail = lazy(() => import('./features/explorations/ExpeditionDetail'));
+const CampManagement = lazy(() => import('./features/camps/CampManagement'));
+const CampDetail = lazy(() => import('./features/camps/CampDetail'));
+const TransferList = lazy(() => import('./features/transfers/TransferList'));
+const ResourcesPage = lazy(() => import('./features/resources/ResourcesPage'));
+const RationsPage = lazy(() => import('./features/rations/RationsPage'));
+const ProfessionsPage = lazy(() => import('./features/professions/ProfessionsPage'));
+const UsersPage = lazy(() => import('./features/users/UsersPage'));
+const RolesPage = lazy(() => import('./features/roles/RolesPage'));
+const PermissionsPage = lazy(() => import('./features/permissions/PermissionsPage'));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+    <div className="space-y-8 w-full max-w-md px-8">
+      <Skeleton className="h-8 w-48 mx-auto" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-3/4" />
+      <div className="pt-4 space-y-4">
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
+      </div>
+    </div>
+  </div>
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      // Never retry network-level failures (server unreachable / ERR_CONNECTION_REFUSED).
-      // Retry other transient errors (e.g. 5xx) once.
       retry: (failureCount, error: unknown) => {
         const axiosError = error as { response?: unknown } | null;
-        if (!axiosError?.response) return false; // no response = network error
+        if (!axiosError?.response) return false;
         return failureCount < 1;
       },
     },
@@ -53,7 +70,6 @@ const ProtectedRoute = ({ children, roles }: { children: ReactNode; roles?: stri
 export default function App() {
   const { logout } = useAuthStore();
 
-  // Inactivity tracking (20 minutes)
   useEffect(() => {
     let timeout: NodeJS.Timeout;
     const resetTimer = () => {
@@ -81,161 +97,166 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          <Route element={<AuthLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-          </Route>
+        <Toaster />
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route element={<AuthLayout />}>
+                <Route path="/login" element={<LoginPage />} />
+              </Route>
 
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardOverview />} />
-            <Route
-              path="population"
-              element={
-                <ProtectedRoute>
-                  <PopulationRoster />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="population/new"
-              element={
-                <ProtectedRoute roles={['system_admin']}>
-                  <NewPersonPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="population/:id"
-              element={
-                <ProtectedRoute>
-                  <PersonDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="inventory"
-              element={
-                <ProtectedRoute>
-                  <InventoryList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="inventory/audit"
-              element={
-                <ProtectedRoute>
-                  <InventoryAudit />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="admission"
-              element={
-                <ProtectedRoute>
-                  <AdmissionList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="expeditions/:id"
-              element={
-                <ProtectedRoute>
-                  <ExpeditionDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="expeditions"
-              element={
-                <ProtectedRoute>
-                  <ExpeditionList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="transfers"
-              element={
-                <ProtectedRoute>
-                  <TransferList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="camps/:id"
-              element={
-                <ProtectedRoute>
-                  <CampDetail />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="camps"
-              element={
-                <ProtectedRoute>
-                  <CampManagement />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="resources"
-              element={
-                <ProtectedRoute roles={['system_admin', 'resource_manager']}>
-                  <ResourcesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="rations"
-              element={
-                <ProtectedRoute>
-                  <RationsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="professions"
-              element={
-                <ProtectedRoute>
-                  <ProfessionsPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="users"
-              element={
-                <ProtectedRoute roles={['system_admin']}>
-                  <UsersPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="roles"
-              element={
-                <ProtectedRoute roles={['system_admin']}>
-                  <RolesPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="permissions"
-              element={
-                <ProtectedRoute roles={['system_admin']}>
-                  <PermissionsPage />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardOverview />} />
+                <Route
+                  path="population"
+                  element={
+                    <ProtectedRoute>
+                      <PopulationRoster />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="population/new"
+                  element={
+                    <ProtectedRoute roles={['system_admin']}>
+                      <NewPersonPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="population/:id"
+                  element={
+                    <ProtectedRoute>
+                      <PersonDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="inventory"
+                  element={
+                    <ProtectedRoute>
+                      <InventoryList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="inventory/audit"
+                  element={
+                    <ProtectedRoute>
+                      <InventoryAudit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="admission"
+                  element={
+                    <ProtectedRoute>
+                      <AdmissionList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="expeditions/:id"
+                  element={
+                    <ProtectedRoute>
+                      <ExpeditionDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="expeditions"
+                  element={
+                    <ProtectedRoute>
+                      <ExpeditionList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="transfers"
+                  element={
+                    <ProtectedRoute>
+                      <TransferList />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="camps/:id"
+                  element={
+                    <ProtectedRoute>
+                      <CampDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="camps"
+                  element={
+                    <ProtectedRoute>
+                      <CampManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="resources"
+                  element={
+                    <ProtectedRoute roles={['system_admin', 'resource_manager']}>
+                      <ResourcesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="rations"
+                  element={
+                    <ProtectedRoute>
+                      <RationsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="professions"
+                  element={
+                    <ProtectedRoute>
+                      <ProfessionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="users"
+                  element={
+                    <ProtectedRoute roles={['system_admin']}>
+                      <UsersPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="roles"
+                  element={
+                    <ProtectedRoute roles={['system_admin']}>
+                      <RolesPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="permissions"
+                  element={
+                    <ProtectedRoute roles={['system_admin']}>
+                      <PermissionsPage />
+                    </ProtectedRoute>
+                  }
+                />
+              </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </BrowserRouter>
     </QueryClientProvider>
   );

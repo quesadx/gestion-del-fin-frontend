@@ -15,6 +15,9 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton, SkeletonList } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 15;
 
 const getAdmissionDecisionStatus = (
   admission?: Partial<Admission> | null,
@@ -32,6 +35,7 @@ export default function AdmissionList() {
   const { currentCampId } = useCampStore();
   const queryClient = useQueryClient();
   const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   // Form states for register intake
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -53,6 +57,9 @@ export default function AdmissionList() {
     },
     enabled: !!currentCampId,
   });
+
+  const totalPages = Math.max(1, Math.ceil((admissions?.length ?? 0) / PAGE_SIZE));
+  const paginatedAdmissions = (admissions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const { data: details, isLoading: detailsLoading } = useQuery({
     queryKey: ['admission-details', selectedAdmissionId],
@@ -168,7 +175,7 @@ export default function AdmissionList() {
             </h3>
             <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
               {admissions?.filter((a) => getAdmissionDecisionStatus(a) === 'PENDING').length || 0}{' '}
-              QUEUE
+              QUEUE · PAGE {page}/{totalPages}
             </span>
           </div>
           <div className="flex-1 overflow-auto divide-y divide-zinc-900">
@@ -184,7 +191,7 @@ export default function AdmissionList() {
                 </p>
               </div>
             ) : (
-              admissions?.map((admission) => {
+              paginatedAdmissions.map((admission) => {
                 const decisionStatus = getAdmissionDecisionStatus(admission);
 
                 return (
@@ -239,6 +246,10 @@ export default function AdmissionList() {
                 );
               })
             )}
+          </div>
+
+          <div className="p-3 border-t border-zinc-900 flex justify-center">
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
 

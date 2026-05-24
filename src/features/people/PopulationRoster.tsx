@@ -23,6 +23,9 @@ import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 20;
 
 export default function PopulationRoster() {
   const { currentCampId } = useCampStore();
@@ -31,6 +34,7 @@ export default function PopulationRoster() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [page, setPage] = useState(1);
   const [transferringPerson, setTransferringPerson] = useState<Person | null>(null);
   const [targetCampId, setTargetCampId] = useState<number | null>(null);
   const [confirmDeletePerson, setConfirmDeletePerson] = useState<Person | null>(null);
@@ -183,6 +187,9 @@ export default function PopulationRoster() {
     return personStatus === filterVal;
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredSurvivors.length / PAGE_SIZE));
+  const paginatedSurvivors = filteredSurvivors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6 relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -216,7 +223,10 @@ export default function PopulationRoster() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="FILTER BY NAME OR PROFESSION..."
             className="w-full bg-surface-raised border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-sm font-mono focus:outline-none focus:border-brand-primary"
           />
@@ -224,7 +234,10 @@ export default function PopulationRoster() {
         <div className="flex items-center gap-2">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="bg-surface-raised border border-zinc-800 rounded-lg px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-brand-primary appearance-none cursor-pointer"
           >
             <option value="ALL">ALL STATUS</option>
@@ -317,7 +330,7 @@ export default function PopulationRoster() {
                 </td>
               </tr>
             ) : (
-              filteredSurvivors.map((person: Person) => (
+              paginatedSurvivors.map((person: Person) => (
                 <tr key={person.id} className="hover:bg-white/5 transition-colors group">
                   <td className="px-6 py-4">
                     <button
@@ -613,22 +626,10 @@ export default function PopulationRoster() {
 
       <div className="pt-4 flex items-center justify-between">
         <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
-          Total active personnel: {filteredSurvivors.length} units
+          Total active personnel: {filteredSurvivors.length} · Showing {paginatedSurvivors.length}{' '}
+          on page {page} of {totalPages}
         </p>
-        <div className="flex gap-2">
-          <button
-            disabled
-            className="px-3 py-1.5 brutalist-border rounded text-xs font-bold disabled:opacity-30"
-          >
-            PREV
-          </button>
-          <button
-            disabled
-            className="px-3 py-1.5 brutalist-border rounded text-xs font-bold disabled:opacity-30"
-          >
-            NEXT
-          </button>
-        </div>
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </div>
   );

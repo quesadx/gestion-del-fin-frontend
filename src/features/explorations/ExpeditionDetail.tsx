@@ -99,7 +99,7 @@ export default function ExpeditionDetail() {
       actual_return_date?: string;
       resources_to_return?: ResourceAllocation[];
     }) => {
-      const body: Record<string, string | ResourceAllocation[] | undefined> = {
+      const body: Record<string, number | string | ResourceAllocation[] | undefined> = {
         status,
         changed_by: actorId,
       };
@@ -111,7 +111,7 @@ export default function ExpeditionDetail() {
         return res.data;
       } catch (error) {
         const axiosError = error as { response?: { status?: number } };
-        if (![404, 405].includes(axiosError.response?.status)) {
+        if (![404, 405].includes(axiosError.response?.status ?? -1)) {
           throw error;
         }
         const legacyRes = await apiClient.put(`/expeditions/${expeditionId}`, {
@@ -367,7 +367,9 @@ export default function ExpeditionDetail() {
                     className="border-b border-zinc-900/50 last:border-0 hover:bg-zinc-900/20 transition-colors"
                   >
                     <td className="py-3 px-4 text-zinc-300">{m.person_id ?? '—'}</td>
-                    <td className="py-3 px-4 text-zinc-500">{m.role ?? 'Assigned'}</td>
+                    <td className="py-3 px-4 text-zinc-500">
+                      {(m as { role?: string }).role ?? 'Assigned'}
+                    </td>
                   </tr>
                 ))}
               </tbody>

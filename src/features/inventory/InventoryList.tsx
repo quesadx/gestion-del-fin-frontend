@@ -17,6 +17,9 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 12;
 
 export default function InventoryList() {
   const { currentCampId } = useCampStore();
@@ -25,6 +28,7 @@ export default function InventoryList() {
 
   // Modals
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Form states for manual adjustment
   const [selectedResourceId, setSelectedResourceId] = useState<number>(1);
@@ -63,6 +67,9 @@ export default function InventoryList() {
     },
     enabled: !!currentCampId,
   });
+
+  const totalPages = Math.max(1, Math.ceil((inventory?.length ?? 0) / PAGE_SIZE));
+  const paginatedInventory = (inventory ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const adjustMutation = useMutation({
     mutationFn: async (payload: {
@@ -168,7 +175,7 @@ export default function InventoryList() {
                 </div>
               </div>
             ))
-          : inventory?.map((item) => (
+          : paginatedInventory.map((item) => (
               <motion.div
                 key={item.resource_id}
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -286,6 +293,10 @@ export default function InventoryList() {
                 </div>
               </motion.div>
             ))}
+
+        <div className="pt-6 flex justify-center">
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </div>
       </div>
 
       <AnimatePresence>

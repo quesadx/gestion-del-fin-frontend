@@ -20,6 +20,9 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function ExpeditionList() {
   const { currentCampId } = useCampStore();
@@ -29,6 +32,7 @@ export default function ExpeditionList() {
   // --- Confirm dialogs ---
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   // --- Create form state ---
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,6 +68,9 @@ export default function ExpeditionList() {
     },
     enabled: !!currentCampId,
   });
+
+  const totalPages = Math.max(1, Math.ceil((expeditions?.length ?? 0) / PAGE_SIZE));
+  const paginatedExpeditions = (expeditions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const { data: resources } = useQuery<{ id: number; name: string; unit: string }[]>({
     queryKey: ['resources'],
@@ -135,7 +142,7 @@ export default function ExpeditionList() {
     }) => {
       const body: Record<
         string,
-        string | { resource_type_id: number; amount: number }[] | undefined
+        number | string | { resource_type_id: number; amount: number }[] | undefined
       > = {
         status,
         changed_by: actorId,
@@ -149,7 +156,7 @@ export default function ExpeditionList() {
         return res.data;
       } catch (error) {
         const apiError = error as { response?: { status?: number } };
-        if (![404, 405].includes(apiError.response?.status)) {
+        if (![404, 405].includes(apiError.response?.status ?? -1)) {
           throw error;
         }
 
@@ -279,7 +286,7 @@ export default function ExpeditionList() {
             </p>
           </div>
         ) : (
-          expeditions?.map((exp, i) => (
+          paginatedExpeditions.map((exp, i) => (
             <motion.div
               key={exp.id}
               initial={{ opacity: 0, x: -20 }}
@@ -440,6 +447,10 @@ export default function ExpeditionList() {
             </motion.div>
           ))
         )}
+
+        <div className="pt-6 flex justify-center">
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </div>
       </div>
 
       <div className="p-6 bg-red-950/10 border border-red-500/20 rounded-xl flex items-start gap-4">
