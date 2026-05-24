@@ -5,8 +5,8 @@
 ## Current Phase
 
 - **Phase:** 09 (Person Flows)
-- **Status:** In Progress
-- **Plans Complete:** 0/1
+- **Status:** Complete
+- **Plans Complete:** 1/1
 
 ## Progress
 
@@ -20,10 +20,9 @@
 | 06    | ✓      | 1/1   | 100%     |
 | 07    | ✓      | 1/1   | 100%     |
 | 08    | ✓      | 1/1   | 100%     |
-| 09    | ◐      | 0/1   | 0%       |
+| 09    | ✓      | 1/1   | 100%     |
 | 10    | ○      | —     | 0%       |
 
 ## Last Activity
 
-- Phase 04 (Rations Management) — Complete
-- Phase 09 (Person Flows) — Started
+- Phase 09 (Person Flows) — Complete
