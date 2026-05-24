@@ -61,6 +61,9 @@ export interface Person {
   status: 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD' | 'WOUNDED' | 'MISSING' | 'DECEASED';
   camp_id: number;
   photo_url?: string | null;
+  identification_code?: string | null;
+  blood_type?: string | null;
+  admitted_at?: string | null;
 }
 
 export interface Admission {
