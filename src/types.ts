@@ -139,6 +139,26 @@ export interface Profession {
   description?: string;
 }
 
+export interface Permission {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+  is_system?: boolean;
+  permissions?: Permission[];
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+}
+
 export interface ResourceAllocation {
   resource_type_id: number;
   amount: number;

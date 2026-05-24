@@ -47,19 +47,19 @@ export default function InventoryList() {
       return items.map((item) => {
         const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
         const qty = item.quantity ?? 0;
-        const minStock = rt?.minimum_stock ?? 0;
+        const minStock = Number(rt?.minimum_stock ?? 0);
         return {
           resource_id: item.resource_type_id,
           resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
           unit: rt?.unit ?? '',
           quantity: qty,
           minimum_stock: minStock,
-          daily_ration: rt?.daily_ration ?? 0,
+          daily_ration: Number(rt?.daily_ration ?? 0),
           daily_usage: 0,
           projection_days: null,
-          status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OPTIMAL',
-        };
-      });
+          status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK',
+        } satisfies InventorySnapshot;
+      }) as InventorySnapshot[];
     },
     enabled: !!currentCampId,
   });

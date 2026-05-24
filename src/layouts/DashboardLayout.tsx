@@ -12,6 +12,8 @@ import {
   Sandwich,
   Wrench,
   Shield,
+  Lock,
+  Key,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
@@ -58,6 +60,8 @@ const NAV_ITEMS = [
   { to: '/resources', icon: Package, label: 'Resources' },
   { to: '/professions', icon: Wrench, label: 'Professions' },
   { to: '/users', icon: Shield, label: 'Users' },
+  { to: '/roles', icon: Lock, label: 'Roles' },
+  { to: '/permissions', icon: Key, label: 'Permissions' },
 ] as const;
 
 // Permission required to see each nav item
@@ -73,6 +77,8 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/resources': 'resources.*',
   '/professions': 'professions.read',
   '/users': 'users.read',
+  '/roles': 'roles.read',
+  '/permissions': 'permissions.read',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -112,7 +118,7 @@ export default function DashboardLayout() {
       items.forEach((item) => {
         const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
         const qty = item.quantity ?? 0;
-        const minStock = rt?.minimum_stock ?? 0;
+        const minStock = Number(rt?.minimum_stock ?? 0);
         const name = rt?.name ?? `Resource #${item.resource_type_id}`;
 
         if (qty < minStock / 2) {

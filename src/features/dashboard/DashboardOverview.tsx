@@ -75,8 +75,8 @@ export default function DashboardOverview() {
       return items.map((item) => {
         const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
         const qty = item.quantity ?? 0;
-        const minStock = rt?.minimum_stock ?? 0;
-        const dailyRation = rt?.daily_ration ?? 0;
+        const minStock = Number(rt?.minimum_stock ?? 0);
+        const dailyRation = Number(rt?.daily_ration ?? 0);
         const dailyUsage = dailyRation * survivorCount;
         const projectionDays = dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
         return {
@@ -88,12 +88,12 @@ export default function DashboardOverview() {
           daily_ration: dailyRation,
           daily_usage: dailyUsage,
           projection_days: projectionDays,
-          status: (qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OPTIMAL') as
-            | 'OPTIMAL'
+          status: (qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK') as
+            | 'OK'
             | 'LOW'
             | 'CRITICAL',
-        };
-      });
+        } satisfies InventorySnapshot;
+      }) as InventorySnapshot[];
     },
     enabled: !!currentCampId,
   });
