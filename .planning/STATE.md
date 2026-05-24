@@ -4,7 +4,7 @@
 
 ## Current Phase
 
-- **Phase:** 02 (Professions CRUD)
+- **Phase:** 08 (Person Detail + New Person)
 - **Status:** Complete
 - **Plans Complete:** 1/1
 
@@ -14,16 +14,19 @@
 | ----- | ------ | ----- | -------- |
 | 01    | ✓      | 1/1   | 100%     |
 | 02    | ✓      | 1/1   | 100%     |
-| 03    | ○      | —     | 0%       |
+| 03    | ✓      | 1/1   | 100%     |
 | 04    | ○      | —     | 0%       |
-| 05    | ○      | —     | 0%       |
-| 06    | ○      | —     | 0%       |
-| 07    | ○      | —     | 0%       |
-| 08    | ○      | —     | 0%       |
+| 05    | ✓      | 1/1   | 100%     |
+| 06    | ✓      | 1/1   | 100%     |
+| 07    | ✓      | 1/1   | 100%     |
+| 08    | ✓      | 1/1   | 100%     |
 | 09    | ○      | —     | 0%       |
 | 10    | ○      | —     | 0%       |
 
 ## Last Activity
 
-- Created ProfessionsPage with full CRUD (Profession type, list, create/edit/delete modals)
-- Added /professions route and nav item with permission gating
+- Created PersonDetail page (`/population/:id`) with profile card, status badge, stats, edit/delete/transfer actions
+- Created NewPersonPage (`/population/new`) with react-hook-form + zod validation
+- Added optional identification_code, blood_type, admitted_at fields to Person type
+- Added "View Profile" links and "NEW SURVIVOR" button in PopulationRoster
+- Added routes for both pages in App.tsx (new before :id to avoid route conflict)
