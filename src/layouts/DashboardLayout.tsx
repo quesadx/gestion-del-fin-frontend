@@ -346,7 +346,12 @@ export default function DashboardLayout() {
                 )
               }
             >
-              <item.icon size={15} />
+              <div className="relative">
+                <item.icon size={15} />
+                {item.to === '/inventory' && (inventoryAlerts?.criticalCount ?? 0) > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+                )}
+              </div>
               <span className="hidden md:inline tracking-tight uppercase text-[10px]">
                 {item.label}
               </span>
