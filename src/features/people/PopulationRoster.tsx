@@ -86,10 +86,10 @@ export default function PopulationRoster() {
     let norm: 'HEALTHY' | 'INJURED' | 'SICK' | 'AWAY' | 'DEAD' = 'HEALTHY';
     const s = (person.status || '').toUpperCase();
     if (s === 'HEALTHY') norm = 'HEALTHY';
-    else if (s === 'WOUNDED' || s === 'INJURED') norm = 'INJURED';
     else if (s === 'SICK') norm = 'SICK';
-    else if (s === 'MISSING' || s === 'AWAY') norm = 'AWAY';
-    else if (s === 'DECEASED' || s === 'DEAD') norm = 'DEAD';
+    else if (s === 'INJURED') norm = 'INJURED';
+    else if (s === 'AWAY') norm = 'AWAY';
+    else if (s === 'DEAD') norm = 'DEAD';
 
     setEditStatus(norm);
     setEditProfessionId(person.profession_id ?? null);
@@ -180,15 +180,6 @@ export default function PopulationRoster() {
     const personStatus = (s.status || '').toUpperCase();
     const filterVal = statusFilter.toUpperCase();
 
-    if (filterVal === 'HEALTHY' && personStatus === 'HEALTHY') return true;
-    if (filterVal === 'WOUNDED' && (personStatus === 'WOUNDED' || personStatus === 'INJURED'))
-      return true;
-    if (filterVal === 'SICK' && personStatus === 'SICK') return true;
-    if (filterVal === 'MISSING' && (personStatus === 'MISSING' || personStatus === 'AWAY'))
-      return true;
-    if (filterVal === 'DECEASED' && (personStatus === 'DECEASED' || personStatus === 'DEAD'))
-      return true;
-
     return personStatus === filterVal;
   });
 
@@ -238,10 +229,10 @@ export default function PopulationRoster() {
           >
             <option value="ALL">ALL STATUS</option>
             <option value="HEALTHY">HEALTHY</option>
-            <option value="WOUNDED">WOUNDED</option>
             <option value="SICK">SICK</option>
-            <option value="MISSING">MISSING</option>
-            <option value="DECEASED">DECEASED</option>
+            <option value="INJURED">INJURED</option>
+            <option value="AWAY">AWAY</option>
+            <option value="DEAD">DEAD</option>
           </select>
           <button className="p-2.5 brutalist-border rounded-lg text-zinc-400 hover:text-white transition-colors">
             <Filter size={20} />
@@ -353,15 +344,12 @@ export default function PopulationRoster() {
                     {(() => {
                       const s = (person.status || '').toUpperCase();
                       const isHealthy = s === 'HEALTHY';
-                      const isWounded = s === 'WOUNDED' || s === 'INJURED';
                       const isSick = s === 'SICK';
-                      const isMissing = s === 'MISSING' || s === 'AWAY';
-                      const isDeceased = s === 'DECEASED' || s === 'DEAD';
+                      const isInjured = s === 'INJURED';
+                      const isAway = s === 'AWAY';
+                      const isDeceased = s === 'DEAD';
 
-                      let label = s;
-                      if (isWounded) label = 'WOUNDED';
-                      else if (isMissing) label = 'MISSING';
-                      else if (isDeceased) label = 'DECEASED';
+                      const label = s;
 
                       return (
                         <div
@@ -369,17 +357,17 @@ export default function PopulationRoster() {
                             'inline-flex items-center gap-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border',
                             isHealthy
                               ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
-                              : isWounded
+                              : isInjured
                                 ? 'bg-amber-950/20 text-amber-500 border-amber-500/30'
                                 : isSick
                                   ? 'bg-orange-950/20 text-orange-500 border-orange-500/30'
-                                  : isMissing
+                                  : isAway
                                     ? 'bg-blue-950/20 text-blue-400 border-blue-400/30'
                                     : 'bg-zinc-950/20 text-zinc-500 border-zinc-500/30',
                           )}
                         >
                           {isHealthy && <Heart size={10} />}
-                          {isWounded && <Activity size={10} />}
+                          {isInjured && <Activity size={10} />}
                           {isDeceased && <Skull size={10} />}
                           {label}
                         </div>

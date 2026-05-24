@@ -2,7 +2,7 @@ export enum UserRole {
   SYSTEM_ADMIN = 'system_admin',
   RESOURCE_MANAGER = 'resource_manager',
   TRAVEL_COORDINATOR = 'travel_coordinator',
-  SURVIVOR = 'survivor',
+  WORKER = 'worker',
 }
 
 export interface User {
@@ -26,17 +26,29 @@ export interface Resource {
   id: number;
   name: string;
   unit: string;
-  daily_ration: number;
-  minimum_stock: number;
+  daily_ration: string | number;
+  minimum_stock: string | number;
   auto_daily: boolean;
 }
 
 export interface InventoryItem {
-  id: number;
-  camp_id: number;
   resource_type_id: number;
+  resource_name: string;
+  unit: string;
   quantity: number;
-  last_updated?: string;
+  minimum_stock: number;
+  is_below_minimum: boolean;
+  created_at?: string;
+  deleted_at?: string | null;
+  resource_type?: {
+    id: number;
+    name: string;
+    unit: string;
+    minimum_stock: number;
+    created_at?: string;
+    updated_at?: string;
+    deleted_at?: string | null;
+  };
 }
 
 export interface InventorySnapshot {
@@ -48,7 +60,7 @@ export interface InventorySnapshot {
   daily_ration: number;
   daily_usage: number;
   projection_days: number | null;
-  status: 'OPTIMAL' | 'LOW' | 'CRITICAL';
+  status: 'OK' | 'LOW' | 'CRITICAL' | 'OVERSTOCKED';
 }
 
 export interface InventoryAuditEntry {
@@ -87,7 +99,7 @@ export interface Person {
   profession_id: number | null;
   profession_name: string | null; // joined by some backends
   skills_summary?: string | null;
-  status: 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD' | 'WOUNDED' | 'MISSING' | 'DECEASED';
+  status: 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD';
   camp_id: number;
   photo_url?: string | null;
   identification_code?: string | null;
@@ -98,7 +110,6 @@ export interface Person {
 export interface Admission {
   id: number;
   camp_id: number;
-  // The contract field is applicant_name; some responses may also include full_name
   applicant_name?: string;
   full_name?: string;
   applicant_age?: number | null;
@@ -107,28 +118,45 @@ export interface Admission {
   background_notes?: string | null;
   photo_url?: string | null;
   id_card_url?: string | null;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
   final_decision?: 'ACCEPTED' | 'REJECTED' | 'PENDING';
   ai_decision?: 'ACCEPTED' | 'PENDING' | 'REJECTED';
-  ai_analysis?: string | null;
   ai_reasoning?: string | null;
   ai_confidence?: number | null;
   ai_suggested_profession?: string | null;
   ai_profession_id?: number | null;
   corrected_profession_id?: number | null;
+  correction_reason?: string | null;
+  person_id?: number | null;
+  reviewed_by?: number | null;
+  reviewed_at?: string | null;
   created_at: string;
-  details?: {
-    age: number;
-    medical_data: string;
-    skills: string;
-    reasoning: string;
-  };
+  updated_at?: string;
 }
 
 export interface Profession {
   id: number;
   name: string;
   description?: string;
+}
+
+export interface Permission {
+  id: number;
+  name: string;
+  description: string | null;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  description: string | null;
+  is_system?: boolean;
+  permissions?: Permission[];
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
 }
 
 export interface ResourceAllocation {
@@ -147,7 +175,7 @@ export interface Expedition {
   destination: string;
   title?: string; // kept for backward compat (may not exist on real API)
   // Real API status enum: PLANNED | ONGOING | RETURNED | CANCELLED
-  status: 'PLANNED' | 'ONGOING' | 'RETURNED' | 'CANCELLED' | 'PLANNING' | 'ACTIVE' | 'LOST';
+  status: 'PLANNED' | 'ONGOING' | 'RETURNED' | 'CANCELLED';
   departure_date: string;
   expected_return_date?: string;
   max_return_date?: string;

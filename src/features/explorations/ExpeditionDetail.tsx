@@ -180,10 +180,10 @@ export default function ExpeditionDetail() {
     );
   }
 
-  const isOngoing = expedition.status === 'ONGOING' || expedition.status === 'ACTIVE';
-  const isPlanned = expedition.status === 'PLANNED' || expedition.status === 'PLANNING';
+  const isOngoing = expedition.status === 'ONGOING';
+  const isPlanned = expedition.status === 'PLANNED';
   const isReturned = expedition.status === 'RETURNED';
-  const isCancelled = expedition.status === 'CANCELLED' || expedition.status === 'LOST';
+  const isCancelled = expedition.status === 'CANCELLED';
   const isReadonly = isReturned || isCancelled;
 
   // ── Render ─────────────────────────────────────────────────────────────

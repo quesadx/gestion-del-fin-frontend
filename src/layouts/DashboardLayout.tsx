@@ -12,6 +12,8 @@ import {
   Sandwich,
   Wrench,
   Shield,
+  Lock,
+  Key,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
@@ -58,6 +60,8 @@ const NAV_ITEMS = [
   { to: '/resources', icon: Package, label: 'Resources' },
   { to: '/professions', icon: Wrench, label: 'Professions' },
   { to: '/users', icon: Shield, label: 'Users' },
+  { to: '/roles', icon: Lock, label: 'Roles' },
+  { to: '/permissions', icon: Key, label: 'Permissions' },
 ] as const;
 
 // Permission required to see each nav item
@@ -73,6 +77,8 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/resources': 'resources.*',
   '/professions': 'professions.read',
   '/users': 'users.read',
+  '/roles': 'roles.read',
+  '/permissions': 'permissions.read',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -112,7 +118,7 @@ export default function DashboardLayout() {
       items.forEach((item) => {
         const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
         const qty = item.quantity ?? 0;
-        const minStock = rt?.minimum_stock ?? 0;
+        const minStock = Number(rt?.minimum_stock ?? 0);
         const name = rt?.name ?? `Resource #${item.resource_type_id}`;
 
         if (qty < minStock / 2) {
@@ -131,12 +137,22 @@ export default function DashboardLayout() {
   // Session-only dismiss for the alert banner.
   const [alertDismissed, setAlertDismissed] = useState(false);
 
-  // Auto-select the user's home camp on first load.
+  // Auto-select the user's home camp on first load, validate it exists in camps list.
   useEffect(() => {
-    if (user?.camp_id && !currentCampId) {
+    if (!camps || camps.length === 0) return;
+    const campIds = new Set(camps.map((c) => c.id));
+
+    // If currentCampId is invalid, clear it so we can auto-select a valid one.
+    if (currentCampId && !campIds.has(currentCampId)) {
+      setCurrentCamp(null);
+      return;
+    }
+
+    // Auto-select user's home camp if none selected yet and it's valid.
+    if (!currentCampId && user?.camp_id && campIds.has(user.camp_id)) {
       setCurrentCamp(user.camp_id);
     }
-  }, [user, currentCampId, setCurrentCamp]);
+  }, [camps, currentCampId, user, setCurrentCamp]);
 
   const handleLogout = () => {
     logout();

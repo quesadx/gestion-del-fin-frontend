@@ -18,7 +18,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'expeditions.read',
     'dashboard.read',
     'resources.*',
-    'admissions.read',
+    'admission.read',
   ],
   travel_coordinator: [
     'expeditions.*',
@@ -80,5 +80,5 @@ export function canManageExpeditions(role: string | null | undefined): boolean {
 }
 
 export function canManageAdmissions(role: string | null | undefined): boolean {
-  return can(role, 'admissions.*');
+  return can(role, 'admission.*');
 }

@@ -165,10 +165,10 @@ export default function NewPersonPage() {
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary cursor-pointer uppercase font-mono"
               >
                 <option value="HEALTHY">HEALTHY</option>
-                <option value="INJURED">WOUNDED</option>
                 <option value="SICK">SICK</option>
-                <option value="AWAY">MISSING</option>
-                <option value="DEAD">DECEASED</option>
+                <option value="INJURED">INJURED</option>
+                <option value="AWAY">AWAY</option>
+                <option value="DEAD">DEAD</option>
               </select>
             </div>
           </div>

@@ -110,9 +110,9 @@ export default function CampDetail() {
 
   // ── Stats ───────────────────────────────────────────────────────────────
 
-  // Active expeditions for this camp (ONGOING or ACTIVE status)
+  // Active expeditions for this camp (ONGOING status)
   const activeExpeditions = expeditions?.filter(
-    (e) => e.camp_id === campId && (e.status === 'ONGOING' || e.status === 'ACTIVE'),
+    (e) => e.camp_id === campId && e.status === 'ONGOING',
   );
 
   const statsLoading = peopleLoading || inventoryLoading || expeditionsLoading;

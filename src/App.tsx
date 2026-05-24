@@ -25,6 +25,8 @@ import ResourcesPage from './features/resources/ResourcesPage';
 import RationsPage from './features/rations/RationsPage';
 import ProfessionsPage from './features/professions/ProfessionsPage';
 import UsersPage from './features/users/UsersPage';
+import RolesPage from './features/roles/RolesPage';
+import PermissionsPage from './features/permissions/PermissionsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -211,6 +213,22 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['system_admin']}>
                   <UsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="roles"
+              element={
+                <ProtectedRoute roles={['system_admin']}>
+                  <RolesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="permissions"
+              element={
+                <ProtectedRoute roles={['system_admin']}>
+                  <PermissionsPage />
                 </ProtectedRoute>
               }
             />

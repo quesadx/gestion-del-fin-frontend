@@ -1,45 +1,48 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { User } from '../../types';
-import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
+import { Role, Permission } from '../../types';
+import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 
-const KNOWN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator', 'worker'];
-
-export default function UsersPage() {
+export default function RolesPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+  const [deletingRole, setDeletingRole] = useState<Role | null>(null);
 
-  // Form states
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('worker');
-  const [campId, setCampId] = useState('');
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
 
-  const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ['users'],
+  const { data: roles, isLoading } = useQuery<Role[]>({
+    queryKey: ['roles'],
     queryFn: async () => {
-      const res = await apiClient.get('/users');
+      const res = await apiClient.get('/roles');
+      return res.data?.data ?? res.data;
+    },
+  });
+
+  const { data: permissions } = useQuery<Permission[]>({
+    queryKey: ['permissions'],
+    queryFn: async () => {
+      const res = await apiClient.get('/permissions');
       return res.data?.data ?? res.data;
     },
   });
 
   const createMutation = useMutation({
     mutationFn: async (payload: {
-      username: string;
-      password: string;
-      role: string;
-      camp_id?: number | null;
+      name: string;
+      description?: string;
+      permission_ids?: number[];
     }) => {
-      const res = await apiClient.post('/users', payload);
+      const res = await apiClient.post('/roles', payload);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
       closeModal();
     },
   });
@@ -50,78 +53,74 @@ export default function UsersPage() {
       payload,
     }: {
       id: number;
-      payload: { username: string; role: string; camp_id?: number | null };
+      payload: { name?: string; description?: string; permission_ids?: number[] };
     }) => {
-      const res = await apiClient.put(`/users/${id}`, payload);
+      const res = await apiClient.put(`/roles/${id}`, payload);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
       closeModal();
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiClient.delete(`/users/${id}`);
+      const res = await apiClient.delete(`/roles/${id}`);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      setDeletingUser(null);
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      setDeletingRole(null);
     },
   });
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingUser(null);
-    setUsername('');
-    setPassword('');
-    setRole('worker');
-    setCampId('');
+  const togglePermission = (id: number) => {
+    setSelectedPermissionIds((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    );
   };
 
-  const formatRole = (role?: string) =>
-    typeof role === 'string' && role.length > 0 ? role.replace(/_/g, ' ') : 'unknown';
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingRole(null);
+    setName('');
+    setDescription('');
+    setSelectedPermissionIds([]);
+  };
 
   const openCreateModal = () => {
-    setEditingUser(null);
-    setUsername('');
-    setPassword('');
-    setRole('worker');
-    setCampId('');
+    setEditingRole(null);
+    setName('');
+    setDescription('');
+    setSelectedPermissionIds([]);
     setIsModalOpen(true);
   };
 
-  const openEditModal = (user: User) => {
-    setEditingUser(user);
-    setUsername(user.username);
-    setPassword('');
-    setRole(user.role ?? 'worker');
-    setCampId(user.camp_id != null ? String(user.camp_id) : '');
+  const openEditModal = (role: Role) => {
+    setEditingRole(role);
+    setName(role.name);
+    setDescription(role.description || '');
+    setSelectedPermissionIds(role.permissions?.map((p) => p.id) ?? []);
     setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username) return;
+    if (!name) return;
 
-    if (editingUser) {
+    const permIds = selectedPermissionIds.length > 0 ? selectedPermissionIds : undefined;
+
+    if (editingRole) {
       updateMutation.mutate({
-        id: editingUser.id,
-        payload: {
-          username,
-          role,
-          camp_id: campId ? Number(campId) : null,
-        },
+        id: editingRole.id,
+        payload: { name, description: description || undefined, permission_ids: permIds },
       });
     } else {
-      if (!password) return;
       createMutation.mutate({
-        username,
-        password,
-        role,
-        camp_id: campId ? Number(campId) : null,
+        name,
+        description: description || undefined,
+        permission_ids: permIds,
       });
     }
   };
@@ -131,10 +130,10 @@ export default function UsersPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tighter uppercase text-brand-primary">
-            Users
+            Roles
           </h1>
           <p className="text-zinc-500 font-mono text-xs uppercase pl-1">
-            Manage system users and role assignments
+            Manage role definitions and permission assignments
           </p>
         </div>
         <button
@@ -142,75 +141,70 @@ export default function UsersPage() {
           className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
         >
           <Plus size={20} />
-          NEW USER
+          NEW ROLE
         </button>
       </div>
 
       {isLoading ? (
         <div className="space-y-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="p-5 bg-surface-raised/40 brutalist-border rounded-xl space-y-3">
               <Skeleton className="h-5 w-1/3" />
-              <Skeleton className="h-4 w-1/5" />
+              <Skeleton className="h-4 w-2/3" />
             </div>
           ))}
         </div>
       ) : (
         <div className="space-y-3">
-          {users?.length === 0 && (
+          {roles?.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
               <Shield size={48} className="mb-4 opacity-30" />
-              <p className="text-sm font-mono uppercase tracking-wider">No users found</p>
+              <p className="text-sm font-mono uppercase tracking-wider">No roles defined</p>
               <p className="text-xs font-mono mt-1 text-zinc-700">
-                Create the first system user to begin managing access
+                Create the first role to begin configuring access control
               </p>
             </div>
           )}
-          {users?.map((user) => (
+          {roles?.map((role) => (
             <motion.div
-              key={user.id}
+              key={role.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-surface-raised brutalist-border p-5 rounded-xl flex items-center justify-between hover:border-zinc-700 transition-colors"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-zinc-950 rounded-lg flex items-center justify-center text-zinc-500 border border-zinc-800 shrink-0">
-                  <UserIcon size={20} />
+                  <Shield size={20} />
                 </div>
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    {user.username}
+                    {role.name.replace(/_/g, ' ')}
                   </h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-zinc-950/40 text-zinc-400 border-zinc-800">
-                      {formatRole(user.role)}
-                    </span>
-                    <span
-                      className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                        user.is_active !== false
-                          ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
-                          : 'bg-red-950/20 text-red-500 border-red-500/30'
-                      }`}
-                    >
-                      {user.is_active !== false ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
-                    {user.camp_id != null && (
-                      <span className="text-[10px] font-mono text-zinc-600">
-                        Camp #{user.camp_id}
+                  <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    {role.is_system && (
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-amber-950/20 text-amber-500 border-amber-500/30">
+                        SYSTEM
                       </span>
+                    )}
+                    <span className="text-xs font-mono text-zinc-500">
+                      {role.permissions?.length ?? 0} permission
+                      {role.permissions?.length !== 1 ? 's' : ''}
+                    </span>
+                    {role.description && (
+                      <span className="text-xs font-mono text-zinc-600">— {role.description}</span>
                     )}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => openEditModal(user)}
+                  onClick={() => openEditModal(role)}
                   className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
                 >
                   <Edit2 size={12} />
                 </button>
                 <button
-                  onClick={() => setDeletingUser(user)}
+                  onClick={() => setDeletingRole(role)}
                   className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
                 >
                   <Trash2 size={12} />
@@ -233,15 +227,15 @@ export default function UsersPage() {
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
                   <p className="text-[10px] font-mono text-brand-primary uppercase tracking-widest leading-none mb-1">
-                    PERSONNEL SECURITY PS-01
+                    ACCESS CONTROL SEC-09
                   </p>
                   <h3 className="text-2xl font-black uppercase italic tracking-tighter">
-                    {editingUser ? 'Edit User' : 'Register New User'}
+                    {editingRole ? 'Edit Role' : 'Register New Role'}
                   </h3>
                   <p className="text-xs text-zinc-500 font-mono">
-                    {editingUser
-                      ? 'Modify user role and profile settings.'
-                      : 'Create a new system user with role-based access.'}
+                    {editingRole
+                      ? 'Modify role name, description, and permission bindings.'
+                      : 'Create a role with specific access permissions.'}
                   </p>
                 </div>
                 <button
@@ -254,61 +248,71 @@ export default function UsersPage() {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Username</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                    Role Name <span className="text-red-500">*</span>
+                  </label>
                   <input
                     required
                     type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="e.g. jdoe"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. camp_operator"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono"
                   />
-                </div>
-
-                {!editingUser && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Password
-                    </label>
-                    <input
-                      required
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Minimum 8 characters"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Role</label>
-                  <select
-                    required
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary"
-                  >
-                    {KNOWN_ROLES.map((r) => (
-                      <option key={r} value={r} className="bg-zinc-950">
-                        {r.replace(/_/g, ' ')}
-                      </option>
-                    ))}
-                  </select>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Camp ID <span className="text-zinc-700 font-normal">(optional)</span>
+                    Description
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={campId}
-                    onChange={(e) => setCampId(e.target.value)}
-                    placeholder="e.g. 1"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Describe what this role can access"
+                    rows={2}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none font-mono"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase flex items-center gap-2">
+                    <Key size={12} />
+                    Permissions
+                  </label>
+                  <div className="max-h-48 overflow-y-auto bg-zinc-950/60 border border-zinc-900 rounded p-3 space-y-1">
+                    {permissions?.length === 0 && (
+                      <p className="text-xs font-mono text-zinc-600 p-2">
+                        No permissions registered yet. Create permissions first.
+                      </p>
+                    )}
+                    {permissions?.map((perm) => (
+                      <label
+                        key={perm.id}
+                        className="flex items-center gap-2 p-1.5 hover:bg-zinc-900/50 rounded cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedPermissionIds.includes(perm.id)}
+                          onChange={() => togglePermission(perm.id)}
+                          className="accent-brand-primary shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <span className="text-xs font-mono font-bold text-zinc-300">
+                            {perm.name}
+                          </span>
+                          {perm.description && (
+                            <span className="text-[10px] font-mono text-zinc-600 ml-2">
+                              — {perm.description}
+                            </span>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-[9px] font-mono text-zinc-600">
+                    {selectedPermissionIds.length} permission
+                    {selectedPermissionIds.length !== 1 ? 's' : ''} selected
+                  </p>
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
@@ -326,7 +330,7 @@ export default function UsersPage() {
                   >
                     {createMutation.isPending || updateMutation.isPending
                       ? 'PROCESSING...'
-                      : editingUser
+                      : editingRole
                         ? 'UPDATE RECORD'
                         : 'CONFIRM REGISTRATION'}
                   </button>
@@ -336,7 +340,7 @@ export default function UsersPage() {
           </div>
         )}
 
-        {deletingUser && (
+        {deletingRole && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
@@ -354,31 +358,40 @@ export default function UsersPage() {
                       Destructive Action
                     </h3>
                     <p className="text-xs text-zinc-500 font-mono">
-                      This will permanently delete this user account from the system.
+                      This will permanently delete this role. Users assigned to this role will lose
+                      their permissions.
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="p-4 bg-zinc-950/60 rounded border border-zinc-900">
-                <p className="text-sm font-bold text-zinc-200">{deletingUser.username}</p>
+                <p className="text-sm font-bold text-zinc-200">
+                  {deletingRole.name.replace(/_/g, ' ')}
+                </p>
                 <p className="text-xs text-zinc-500 font-mono mt-1">
-                  Role: {formatRole(deletingUser.role)} &middot; Camp:{' '}
-                  {deletingUser.camp_id ?? 'None'}
+                  {deletingRole.permissions?.length ?? 0} permission
+                  {deletingRole.permissions?.length !== 1 ? 's' : ''} assigned
+                  {deletingRole.description && (
+                    <>
+                      <span className="text-zinc-700"> &middot; </span>
+                      {deletingRole.description}
+                    </>
+                  )}
                 </p>
               </div>
 
               <div className="flex gap-4 pt-2">
                 <button
                   type="button"
-                  onClick={() => setDeletingUser(null)}
+                  onClick={() => setDeletingRole(null)}
                   className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
                 >
                   ABORT
                 </button>
                 <button
                   type="button"
-                  onClick={() => deleteMutation.mutate(deletingUser.id)}
+                  onClick={() => deleteMutation.mutate(deletingRole.id)}
                   disabled={deleteMutation.isPending}
                   className="flex-1 py-2.5 bg-red-600 text-white text-xs font-black uppercase rounded hover:bg-red-700 transition-colors disabled:opacity-30"
                 >
