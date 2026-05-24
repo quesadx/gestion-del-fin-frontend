@@ -110,7 +110,7 @@ export function InventoryPage() {
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
               {campsArray.map((c) => (
@@ -167,7 +167,7 @@ export function InventoryPage() {
                 <span className="w-1.5 h-1.5 bg-[var(--neon-cyan)] animate-pulse" />
                 STOCK DISTRIBUTION
               </div>
-              <div className="glass-heavy rounded-sm p-4 border border-[oklch(0.68_0.32_340_/_0.2)]">
+              <div className="glass-heavy rounded-md p-4 border border-[oklch(0.68_0.32_340_/_0.2)]">
                 <StockBarChart
                   data={stockChartData}
                   height={Math.max(160, stockChartData.length * 36)}
@@ -245,7 +245,7 @@ export function InventoryPage() {
               </label>
               <select
                 {...adjForm.register('resource_type_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
                 {invArray.map((item) => (
@@ -265,7 +265,7 @@ export function InventoryPage() {
                 </label>
                 <select
                   {...adjForm.register('type')}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
                   <option value="MANUAL_IN">IN</option>
                   <option value="MANUAL_OUT">OUT</option>
@@ -279,7 +279,7 @@ export function InventoryPage() {
                   {...adjForm.register('quantity')}
                   type="number"
                   min={1}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
             </div>
@@ -290,7 +290,7 @@ export function InventoryPage() {
               <textarea
                 {...adjForm.register('description')}
                 rows={3}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">

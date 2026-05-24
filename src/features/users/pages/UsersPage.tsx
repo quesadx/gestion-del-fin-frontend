@@ -258,7 +258,7 @@ export function UsersPage() {
                           <button
                             type="button"
                             onClick={() => handleToggleActive(u)}
-                            className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
+                            className="p-1.5 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                             title={u.is_active ? 'Deactivate' : 'Activate'}
                           >
                             {u.is_active ? (
@@ -270,7 +270,7 @@ export function UsersPage() {
                           <button
                             type="button"
                             onClick={() => openEdit(u)}
-                            className="p-1.5 rounded-sm text-[var(--neon-yellow)] hover:bg-[var(--neon-yellow)]/10 transition-colors"
+                            className="p-1.5 rounded-md text-[var(--neon-yellow)] hover:bg-[var(--neon-yellow)]/10 transition-colors"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
                           </button>
@@ -282,7 +282,7 @@ export function UsersPage() {
                                 username: u.username,
                               })
                             }
-                            className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                            className="p-1.5 rounded-md text-red-400 hover:bg-red-400/10 transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -311,7 +311,7 @@ export function UsersPage() {
               </label>
               <input
                 {...createForm.register('username')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {createForm.formState.errors.username && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -326,7 +326,7 @@ export function UsersPage() {
               <input
                 {...createForm.register('password')}
                 type="password"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {createForm.formState.errors.password && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -340,7 +340,7 @@ export function UsersPage() {
               </label>
               <select
                 {...createForm.register('camp_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
                 {campsArray.map((c) => (
@@ -361,7 +361,7 @@ export function UsersPage() {
               </label>
               <select
                 {...createForm.register('role_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
                 {rolesArray.map((r) => (
@@ -414,7 +414,7 @@ export function UsersPage() {
               </label>
               <input
                 {...editForm.register('username')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {editForm.formState.errors.username && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -429,7 +429,7 @@ export function UsersPage() {
               <input
                 {...editForm.register('password')}
                 type="password"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div>
@@ -438,7 +438,7 @@ export function UsersPage() {
               </label>
               <select
                 {...editForm.register('camp_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="">SELECT...</option>
                 {campsArray.map((c) => (
@@ -459,7 +459,7 @@ export function UsersPage() {
               </label>
               <select
                 {...editForm.register('role_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 {rolesArray.map((r) => (
                   <option key={r.id} value={r.id}>

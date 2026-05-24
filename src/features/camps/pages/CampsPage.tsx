@@ -160,7 +160,7 @@ export function CampsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="">ALL STATUS</option>
                 <option value="ACTIVE">ACTIVE</option>
@@ -238,7 +238,7 @@ export function CampsPage() {
                                   e.stopPropagation();
                                   navigate(`/camps/${camp.id}`);
                                 }}
-                                className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
+                                className="p-1.5 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                                 title="View details"
                               >
                                 <Eye className="h-3.5 w-3.5" />
@@ -252,7 +252,7 @@ export function CampsPage() {
                                     name: camp.name as string,
                                   });
                                 }}
-                                className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                                className="p-1.5 rounded-md text-red-400 hover:bg-red-400/10 transition-colors"
                                 title="Delete"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -307,7 +307,7 @@ export function CampsPage() {
                 {...register('name')}
                 type="text"
                 placeholder="NORTH CAMP"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {errors.name && (
                 <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -323,7 +323,7 @@ export function CampsPage() {
                 {...register('location')}
                 type="text"
                 placeholder="SECTOR 7G - NORTH ZONE"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {errors.location && (
                 <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -337,7 +337,7 @@ export function CampsPage() {
               </label>
               <select
                 {...register('status')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="ABANDONED">ABANDONED</option>
@@ -356,7 +356,7 @@ export function CampsPage() {
                 {...register('ai_context_prompt')}
                 rows={4}
                 placeholder="Camp rules for AI evaluation..."
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data resize-y"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data resize-y"
               />
             </div>
             {createError && (

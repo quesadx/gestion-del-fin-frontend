@@ -314,10 +314,10 @@ export function PersonDetailPage() {
             <img
               src={person.photo_url as string}
               alt={person.full_name as string}
-              className="w-16 h-16 rounded-sm object-cover border border-zinc-700"
+              className="w-16 h-16 rounded-md object-cover border border-zinc-700"
             />
           ) : (
-            <div className="w-16 h-16 rounded-sm bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-700">
+            <div className="w-16 h-16 rounded-md bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-700">
               <span className="font-mono text-xl font-bold text-zinc-500">
                 {(person.full_name as string)?.[0]?.toUpperCase() || '?'}
               </span>
@@ -477,7 +477,7 @@ export function PersonDetailPage() {
               </label>
               <input
                 {...editForm.register('full_name')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {editForm.formState.errors.full_name && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -493,7 +493,7 @@ export function PersonDetailPage() {
                 <input
                   {...editForm.register('age')}
                   type="number"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
                 {editForm.formState.errors.age && (
                   <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -505,7 +505,7 @@ export function PersonDetailPage() {
                 <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
                   PROFESSION //
                 </label>
-                <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
+                <div className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
                   {person.professions?.name || '—'}
                 </div>
               </div>
@@ -516,7 +516,7 @@ export function PersonDetailPage() {
               </label>
               <select
                 {...editForm.register('status')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="HEALTHY">HEALTHY</option>
                 <option value="SICK">SICK</option>
@@ -537,7 +537,7 @@ export function PersonDetailPage() {
               <input
                 {...editForm.register('admitted_at')}
                 type="datetime-local"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {editForm.formState.errors.admitted_at && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -551,7 +551,7 @@ export function PersonDetailPage() {
               </label>
               <input
                 {...editForm.register('identification_code')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {editForm.formState.errors.identification_code && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -566,7 +566,7 @@ export function PersonDetailPage() {
               <input
                 {...editForm.register('blood_type')}
                 placeholder="A+, O-, etc."
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {editForm.formState.errors.blood_type && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -581,7 +581,7 @@ export function PersonDetailPage() {
               <textarea
                 {...editForm.register('skills_summary')}
                 rows={3}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {editForm.formState.errors.skills_summary && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -596,7 +596,7 @@ export function PersonDetailPage() {
               <input
                 {...editForm.register('photo_url')}
                 placeholder="https://example.com/photo.jpg"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {editForm.formState.errors.photo_url && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -635,7 +635,7 @@ export function PersonDetailPage() {
               </label>
               <select
                 {...statusLogForm.register('new_status')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="HEALTHY">HEALTHY</option>
                 <option value="SICK">SICK</option>
@@ -651,7 +651,7 @@ export function PersonDetailPage() {
               <textarea
                 {...statusLogForm.register('reason')}
                 rows={3}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             {statusLogError && (
@@ -694,7 +694,7 @@ export function PersonDetailPage() {
               <label className="block mb-1.5 text-[10px] tracking-[0.2em] text-[var(--neon-cyan)]/60 font-mono-data">
                 CURRENT PROFESSION //
               </label>
-              <div className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
+              <div className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-muted-foreground font-mono-data">
                 {person.professions?.name || '—'}
               </div>
             </div>
@@ -704,7 +704,7 @@ export function PersonDetailPage() {
               </label>
               <select
                 {...reassignForm.register('to_profession_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="">SELECT...</option>
                 {(Array.isArray(professions) ? professions : []).map((prof: Profession) => (
@@ -726,7 +726,7 @@ export function PersonDetailPage() {
               <textarea
                 {...reassignForm.register('reason')}
                 rows={2}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -737,7 +737,7 @@ export function PersonDetailPage() {
                 <input
                   {...reassignForm.register('start_date')}
                   type="date"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
               <div>
@@ -747,7 +747,7 @@ export function PersonDetailPage() {
                 <input
                   {...reassignForm.register('end_date')}
                   type="date"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
             </div>
@@ -824,7 +824,7 @@ export function PersonDetailPage() {
               </label>
               <select
                 {...contributionForm.register('resource_type_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value={0}>Select a resource...</option>
                 {(resources ?? []).map((r) => (
@@ -842,7 +842,7 @@ export function PersonDetailPage() {
                 {...contributionForm.register('amount')}
                 type="number"
                 min={0}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div>
@@ -851,7 +851,7 @@ export function PersonDetailPage() {
               </label>
               <input
                 {...contributionForm.register('reason')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -862,7 +862,7 @@ export function PersonDetailPage() {
                 <input
                   {...contributionForm.register('start_date')}
                   type="date"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
               <div>
@@ -872,7 +872,7 @@ export function PersonDetailPage() {
                 <input
                   {...contributionForm.register('end_date')}
                   type="date"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
             </div>

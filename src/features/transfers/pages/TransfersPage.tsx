@@ -377,7 +377,7 @@ export function TransfersPage() {
                                 <button
                                   type="button"
                                   onClick={() => handleSchedule(t.id as number)}
-                                  className="p-1 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] text-[10px]"
+                                  className="p-1 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] text-[10px]"
                                   title="Schedule delivery"
                                 >
                                   <Truck className="h-3 w-3" />
@@ -392,7 +392,7 @@ export function TransfersPage() {
                                     });
                                     setConfirmDialogOpen(true);
                                   }}
-                                  className="p-1 rounded-sm text-green-400 hover:bg-green-400/10 text-[10px]"
+                                  className="p-1 rounded-md text-green-400 hover:bg-green-400/10 text-[10px]"
                                   title="Approve source"
                                 >
                                   <Check className="h-3 w-3" />
@@ -403,7 +403,7 @@ export function TransfersPage() {
                                     setRejectTarget({ id: t.id as number, reason: '' });
                                     setRejectDialogOpen(true);
                                   }}
-                                  className="p-1 rounded-sm text-red-400 hover:bg-red-400/10 text-[10px]"
+                                  className="p-1 rounded-md text-red-400 hover:bg-red-400/10 text-[10px]"
                                   title="Reject"
                                 >
                                   <X className="h-3 w-3" />
@@ -421,7 +421,7 @@ export function TransfersPage() {
                                   });
                                   setConfirmDialogOpen(true);
                                 }}
-                                className="p-1 rounded-sm bg-green-400/10 text-green-400 hover:bg-green-400/20 text-[10px] px-2"
+                                className="p-1 rounded-md bg-green-400/10 text-green-400 hover:bg-green-400/20 text-[10px] px-2"
                               >
                                 APPROVE DESTINATION
                               </button>
@@ -437,7 +437,7 @@ export function TransfersPage() {
                                   });
                                   setConfirmDialogOpen(true);
                                 }}
-                                className="p-1 rounded-sm bg-[var(--neon-fuchsia)]/10 text-[var(--neon-fuchsia)] hover:bg-[var(--neon-fuchsia)]/20 text-[10px] px-2"
+                                className="p-1 rounded-md bg-[var(--neon-fuchsia)]/10 text-[var(--neon-fuchsia)] hover:bg-[var(--neon-fuchsia)]/20 text-[10px] px-2"
                               >
                                 COMPLETE
                               </button>
@@ -642,7 +642,7 @@ export function TransfersPage() {
                 </label>
                 <select
                   {...formCreate.register('requesting_camp')}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 >
                   <option value="0">SELECT...</option>
                   {campsArray.map((c) => (
@@ -658,7 +658,7 @@ export function TransfersPage() {
                 </label>
                 <select
                   {...formCreate.register('target_camp')}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
                   <option value="0">SELECT...</option>
                   {campsArray.map((c) => (
@@ -675,7 +675,7 @@ export function TransfersPage() {
               </label>
               <select
                 {...formCreate.register('type')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="RESOURCE">RESOURCES</option>
                 <option value="PERSON">PEOPLE</option>
@@ -690,14 +690,14 @@ export function TransfersPage() {
                 {watchItems?.map((_, index) => (
                   <div
                     key={`item-${index}`}
-                    className="flex gap-2 items-start p-2 border border-[oklch(0.68_0.32_340_/_0.2)] rounded-sm"
+                    className="flex gap-2 items-start p-2 border border-[oklch(0.68_0.32_340_/_0.2)] rounded-md"
                   >
                     <div className="flex-1 grid grid-cols-2 gap-2">
                       <div>
                         <label className="text-[9px] text-muted-foreground">TYPE</label>
                         <select
                           {...formCreate.register(`items.${index}.item_type`)}
-                          className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                          className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                         >
                           <option value="RESOURCE">RESOURCE</option>
                           <option value="PERSON">PERSON</option>
@@ -711,7 +711,7 @@ export function TransfersPage() {
                               {...formCreate.register(`items.${index}.resource_type_id`)}
                               type="number"
                               min={1}
-                              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                             />
                           </div>
                           <div>
@@ -721,7 +721,7 @@ export function TransfersPage() {
                               type="number"
                               min={0.01}
                               step="0.01"
-                              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                             />
                           </div>
                         </>
@@ -732,7 +732,7 @@ export function TransfersPage() {
                             {...formCreate.register(`items.${index}.person_id`)}
                             type="number"
                             min={1}
-                            className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                            className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.3)] px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                           />
                         </div>
                       )}
@@ -741,7 +741,7 @@ export function TransfersPage() {
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
-                        className="mt-4 p-1 rounded-sm text-red-400 hover:bg-red-400/10 text-[10px]"
+                        className="mt-4 p-1 rounded-md text-red-400 hover:bg-red-400/10 text-[10px]"
                       >
                         <X className="h-3 w-3" />
                       </button>
@@ -764,7 +764,7 @@ export function TransfersPage() {
               <textarea
                 {...formCreate.register('notes')}
                 rows={2}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -804,7 +804,7 @@ export function TransfersPage() {
                   setRejectTarget((p) => (p ? { ...p, reason: e.target.value } : null))
                 }
                 rows={3}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-yellow)] font-mono-data resize-none"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-yellow)] font-mono-data resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
@@ -847,7 +847,7 @@ export function TransfersPage() {
                 type="datetime-local"
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data [color-scheme:dark]"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data [color-scheme:dark]"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">

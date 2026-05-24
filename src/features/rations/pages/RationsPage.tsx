@@ -153,7 +153,7 @@ export function RationsPage() {
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
               {(campsArray as Record<string, unknown>[]).map((c) => (
@@ -194,7 +194,7 @@ export function RationsPage() {
               </div>
 
               {rationHistory.length === 0 ? (
-                <div className="flex flex-col items-center gap-4 py-8 border border-dashed border-[oklch(0.68_0.32_340_/_0.15)] rounded-sm">
+                <div className="flex flex-col items-center gap-4 py-8 border border-dashed border-[oklch(0.68_0.32_340_/_0.15)] rounded-md">
                   <Utensils className="h-8 w-8 text-[var(--neon-cyan)]/30" />
                   <p className="font-mono-data text-xs text-muted-foreground">
                     NO RATION RECORDS FOR THIS CAMP
@@ -293,7 +293,7 @@ export function RationsPage() {
               </label>
               <select
                 {...form.register('person_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value={0}>SELECT...</option>
                 {(peopleArray as Record<string, unknown>[]).map((p) => (
@@ -315,7 +315,7 @@ export function RationsPage() {
               </label>
               <select
                 {...form.register('resource_type_id')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value={0}>SELECT...</option>
                 {(invArray as Record<string, unknown>[]).map((inv) => {
@@ -356,7 +356,7 @@ export function RationsPage() {
                 step="0.01"
                 min={0.01}
                 {...form.register('quantity')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {form.formState.errors.quantity && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -372,7 +372,7 @@ export function RationsPage() {
               <input
                 type="datetime-local"
                 {...form.register('consumed_at')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {form.formState.errors.consumed_at && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -388,7 +388,7 @@ export function RationsPage() {
               <textarea
                 {...form.register('notes')}
                 rows={2}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
               />
             </div>
 

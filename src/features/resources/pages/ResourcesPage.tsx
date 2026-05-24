@@ -187,7 +187,7 @@ export function ResourcesPage() {
                                 minimum_stock: item.minimum_stock,
                               })
                             }
-                            className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
+                            className="p-1.5 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                             title="Edit"
                           >
                             <Edit3 className="h-3.5 w-3.5" />
@@ -195,7 +195,7 @@ export function ResourcesPage() {
                           <button
                             type="button"
                             onClick={() => setDeleteTarget({ id: item.id, name: item.name })}
-                            className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                            className="p-1.5 rounded-md text-red-400 hover:bg-red-400/10 transition-colors"
                             title="Delete"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -235,7 +235,7 @@ export function ResourcesPage() {
                 {...formCreate.register('name')}
                 type="text"
                 placeholder="WATER"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {formCreate.formState.errors.name && (
                 <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -251,7 +251,7 @@ export function ResourcesPage() {
                 {...formCreate.register('unit')}
                 type="text"
                 placeholder="LITERS"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {formCreate.formState.errors.unit && (
                 <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -270,7 +270,7 @@ export function ResourcesPage() {
                   min={0}
                   step="0.01"
                   placeholder="2"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
                 />
                 {formCreate.formState.errors.daily_ration && (
                   <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -288,7 +288,7 @@ export function ResourcesPage() {
                   min={0}
                   step="0.01"
                   placeholder="100"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
                 />
                 {formCreate.formState.errors.minimum_stock && (
                   <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -336,7 +336,7 @@ export function ResourcesPage() {
               <input
                 {...formEdit.register('name')}
                 type="text"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {formEdit.formState.errors.name && (
                 <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -351,7 +351,7 @@ export function ResourcesPage() {
               <input
                 {...formEdit.register('unit')}
                 type="text"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {formEdit.formState.errors.unit && (
                 <p className="mt-1.5 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -369,7 +369,7 @@ export function ResourcesPage() {
                   type="number"
                   min={0}
                   step="0.01"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-fuchsia)] font-mono-data"
                 />
               </div>
               <div>
@@ -381,7 +381,7 @@ export function ResourcesPage() {
                   type="number"
                   min={0}
                   step="0.01"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none transition-all duration-200 focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
             </div>

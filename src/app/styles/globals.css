@@ -27,8 +27,8 @@
   --accent-success: var(--gdf-status-success);
 
   --radius-none: 0px;
-  --radius-sm: 2px;
-  --radius-md: 4px;
+  --radius-sm: 4px;
+  --radius-md: 10px;
 
   --glass-bg: var(--gdf-surface-raised);
   --glass-bg-hover: var(--gdf-surface-hover);

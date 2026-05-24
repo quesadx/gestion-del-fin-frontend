@@ -127,7 +127,7 @@ export function AdmissionsPage() {
             <select
               value={selectedCampId ?? ''}
               onChange={(e) => setSelectedCampId(e.target.value ? Number(e.target.value) : null)}
-              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             >
               <option value="">SELECT A CAMP</option>
               {campsArray.map((c: Camp) => (
@@ -239,7 +239,7 @@ export function AdmissionsPage() {
                               setDetailTarget(a);
                               setDetailDialogOpen(true);
                             }}
-                            className="p-1.5 rounded-sm text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
+                            className="p-1.5 rounded-md text-[var(--neon-cyan)] hover:bg-[oklch(0.85_0.22_200_/_0.1)] transition-colors"
                             title="View details and AI analysis"
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -249,7 +249,7 @@ export function AdmissionsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleReview(a.id, 'ACCEPTED')}
-                                className="p-1.5 rounded-sm text-green-400 hover:bg-green-400/10 transition-colors"
+                                className="p-1.5 rounded-md text-green-400 hover:bg-green-400/10 transition-colors"
                                 title="Accept"
                               >
                                 <CheckCircle className="h-3.5 w-3.5" />
@@ -257,7 +257,7 @@ export function AdmissionsPage() {
                               <button
                                 type="button"
                                 onClick={() => handleReview(a.id, 'REJECTED')}
-                                className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                                className="p-1.5 rounded-md text-red-400 hover:bg-red-400/10 transition-colors"
                                 title="Reject"
                               >
                                 <XCircle className="h-3.5 w-3.5" />
@@ -289,7 +289,7 @@ export function AdmissionsPage() {
               </label>
               <input
                 {...form.register('applicant_name')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {form.formState.errors.applicant_name && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -305,7 +305,7 @@ export function AdmissionsPage() {
                 <input
                   {...form.register('applicant_age')}
                   type="number"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
             </div>
@@ -316,7 +316,7 @@ export function AdmissionsPage() {
               <textarea
                 {...form.register('applicant_skills')}
                 rows={3}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div>
@@ -326,7 +326,7 @@ export function AdmissionsPage() {
               <textarea
                 {...form.register('health_notes')}
                 rows={2}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -338,7 +338,7 @@ export function AdmissionsPage() {
                   {...form.register('photo_url')}
                   type="text"
                   placeholder="https://..."
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
               <div>
@@ -349,7 +349,7 @@ export function AdmissionsPage() {
                   {...form.register('id_card_url')}
                   type="text"
                   placeholder="https://..."
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
             </div>
@@ -360,7 +360,7 @@ export function AdmissionsPage() {
               <textarea
                 {...form.register('background_notes')}
                 rows={2}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">

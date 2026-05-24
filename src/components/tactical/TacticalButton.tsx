@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import ClickSpark from '@/components/ClickSpark';
+import StarBorder from '@/components/StarBorder';
 
 interface TacticalButtonProps {
   children: ReactNode;
@@ -39,7 +40,7 @@ export function TacticalButton({
       onClick={onClick}
       type={type}
       className={cn(
-        'font-mono text-xs tracking-wider uppercase px-5 py-2.5 rounded-md gdf-btn-press disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100',
+        'font-mono text-xs tracking-wider uppercase px-5 py-2.5 rounded-lg gdf-btn-press disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100',
         VARIANT_CLASSES[variant],
         className,
       )}
@@ -51,9 +52,11 @@ export function TacticalButton({
 
   if (variant === 'primary' && !disabled) {
     return (
-      <ClickSpark sparkColor="#3b82f6" sparkSize={4} sparkCount={10} duration={400}>
-        {button}
-      </ClickSpark>
+      <StarBorder color="#3b82f6" speed="5s" thickness={1}>
+        <ClickSpark sparkColor="#3b82f6" sparkSize={3} sparkCount={8} duration={300}>
+          {button}
+        </ClickSpark>
+      </StarBorder>
     );
   }
 

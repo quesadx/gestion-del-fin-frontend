@@ -98,7 +98,7 @@ export function PersonCreatePage() {
             <input
               {...register('full_name')}
               placeholder="JOHN DOE"
-              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
             />
             {errors.full_name && (
               <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -126,7 +126,7 @@ export function PersonCreatePage() {
               ) : (
                 <select
                   {...register('camp_id')}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 >
                   <option value="">SELECT...</option>
                   {campsArray.map((c) => (
@@ -161,7 +161,7 @@ export function PersonCreatePage() {
               ) : (
                 <select
                   {...register('profession_id')}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 >
                   <option value="">SELECT...</option>
                   {professionsArray.map((p) => (
@@ -186,7 +186,7 @@ export function PersonCreatePage() {
               </label>
               <select
                 {...register('status')}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               >
                 <option value="HEALTHY">HEALTHY</option>
                 <option value="SICK">SICK</option>
@@ -208,7 +208,7 @@ export function PersonCreatePage() {
                 {...register('age')}
                 type="number"
                 placeholder="30"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {errors.age && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -225,7 +225,7 @@ export function PersonCreatePage() {
             <input
               {...register('admitted_at')}
               type="datetime-local"
-              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             />
             {errors.admitted_at && (
               <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -242,7 +242,7 @@ export function PersonCreatePage() {
               <input
                 {...register('identification_code')}
                 placeholder="ID-XXX-###"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {errors.identification_code && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -257,7 +257,7 @@ export function PersonCreatePage() {
               <input
                 {...register('blood_type')}
                 placeholder="O+"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               />
               {errors.blood_type && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -275,7 +275,7 @@ export function PersonCreatePage() {
               {...register('skills_summary')}
               rows={3}
               placeholder="First aid, basic mechanics..."
-              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             />
             {errors.skills_summary && (
               <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -292,7 +292,7 @@ export function PersonCreatePage() {
               {...register('photo_url')}
               type="text"
               placeholder="https://..."
-              className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+              className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-cyan)] font-mono-data"
             />
             {errors.photo_url && (
               <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">

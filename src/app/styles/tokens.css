@@ -36,10 +36,11 @@
 
   /* ── RADIUS ──────────────────────────────────────────────────────────── */
   --gdf-radius-none: 0;
-  --gdf-radius-sm: 2px;
-  --gdf-radius-md: 6px;
-  --gdf-radius-lg: 10px;
-  --gdf-radius-xl: 14px;
+  --gdf-radius-sm:   4px;
+  --gdf-radius-md:   10px;
+  --gdf-radius-lg:   14px;
+  --gdf-radius-xl:   20px;
+  --gdf-radius-2xl:  26px;
 
   /* ── SPACING ──────────────────────────────────────────────────────────── */
   --gdf-space-1: 4px;

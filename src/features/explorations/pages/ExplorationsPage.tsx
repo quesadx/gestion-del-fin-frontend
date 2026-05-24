@@ -294,7 +294,7 @@ export function ExplorationsPage() {
               <select
                 value={campFilter}
                 onChange={(e) => setCampFilter(e.target.value)}
-                className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="">ALL CAMPS</option>
                 {campsArray.map((c) => (
@@ -306,7 +306,7 @@ export function ExplorationsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="">ALL STATUS</option>
                 <option value="PLANNED">PLANNED</option>
@@ -395,7 +395,7 @@ export function ExplorationsPage() {
                                 e.target.value,
                               )
                             }
-                            className="rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-1 text-[10px] text-foreground outline-none font-mono-data"
+                            className="rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-1 text-[10px] text-foreground outline-none font-mono-data"
                           >
                             <option value="PLANNED">PLANNED</option>
                             <option value="ONGOING">ONGOING</option>
@@ -413,7 +413,7 @@ export function ExplorationsPage() {
                                 destination: exp.destination as string,
                               });
                             }}
-                            className="p-1.5 rounded-sm text-red-400 hover:bg-red-400/10 transition-colors"
+                            className="p-1.5 rounded-md text-red-400 hover:bg-red-400/10 transition-colors"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -444,7 +444,7 @@ export function ExplorationsPage() {
                 {...formCreate.register('destination')}
                 type="text"
                 placeholder="AREA 7G"
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
               />
               {formCreate.formState.errors.destination && (
                 <p className="mt-1 text-[10px] text-[var(--neon-yellow)] font-mono-data">
@@ -458,7 +458,7 @@ export function ExplorationsPage() {
               </label>
               <select
                 {...formCreate.register('camp_id', { valueAsNumber: true })}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
               >
                 <option value="0">SELECT...</option>
                 {campsArray.map((c) => (
@@ -476,7 +476,7 @@ export function ExplorationsPage() {
                 <input
                   {...formCreate.register('departure_date')}
                   type="datetime-local"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 />
               </div>
               <div>
@@ -486,7 +486,7 @@ export function ExplorationsPage() {
                 <input
                   {...formCreate.register('expected_return_date')}
                   type="datetime-local"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data"
                 />
               </div>
               <div>
@@ -496,7 +496,7 @@ export function ExplorationsPage() {
                 <input
                   {...formCreate.register('max_return_date')}
                   type="datetime-local"
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-2 py-2 text-xs text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 />
               </div>
             </div>
@@ -507,7 +507,7 @@ export function ExplorationsPage() {
               <textarea
                 {...formCreate.register('notes')}
                 rows={2}
-                className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
               />
             </div>
             {watchedCampId > 0 && (
@@ -522,7 +522,7 @@ export function ExplorationsPage() {
                   </p>
                 ) : (
                   <>
-                    <div className="max-h-40 overflow-y-auto border border-[oklch(0.68_0.32_340_/_0.4)] rounded-sm">
+                    <div className="max-h-40 overflow-y-auto border border-[oklch(0.68_0.32_340_/_0.4)] rounded-md">
                       {availablePeople.map((person) => (
                         <label
                           key={person.id as number}
@@ -610,7 +610,7 @@ export function ExplorationsPage() {
                   type="datetime-local"
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-[oklch(0.68_0.32_340_/_0.4)] px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-fuchsia)] font-mono-data"
                 />
               </div>
 
@@ -622,7 +622,7 @@ export function ExplorationsPage() {
                   {returnResources.map((r, i) => (
                     <div
                       key={`ret-res-${i}`}
-                      className="flex gap-2 items-end p-2 border border-zinc-700 rounded-sm"
+                      className="flex gap-2 items-end p-2 border border-zinc-700 rounded-md"
                     >
                       <div className="flex-1">
                         <label className="text-[9px] text-muted-foreground">RESOURCE</label>
@@ -636,7 +636,7 @@ export function ExplorationsPage() {
                             };
                             setReturnResources(updated);
                           }}
-                          className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                          className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                         >
                           <option value={0}>SELECT...</option>
                           {resourcesArray.map((res) => (
@@ -661,7 +661,7 @@ export function ExplorationsPage() {
                             };
                             setReturnResources(updated);
                           }}
-                          className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
+                          className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-2 py-1.5 text-xs text-foreground outline-none font-mono-data"
                         />
                       </div>
                       {returnResources.length > 1 && (
@@ -670,7 +670,7 @@ export function ExplorationsPage() {
                           onClick={() =>
                             setReturnResources((prev) => prev.filter((_, idx) => idx !== i))
                           }
-                          className="p-1 rounded-sm text-red-400 hover:bg-red-400/10 mb-1"
+                          className="p-1 rounded-md text-red-400 hover:bg-red-400/10 mb-1"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -697,7 +697,7 @@ export function ExplorationsPage() {
                   value={returnNotes}
                   onChange={(e) => setReturnNotes(e.target.value)}
                   rows={2}
-                  className="w-full rounded-sm bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
+                  className="w-full rounded-md bg-[oklch(0.15_0.05_320_/_0.5)] border border-zinc-700 px-3 py-2.5 text-sm text-foreground outline-none focus:border-[var(--neon-cyan)] font-mono-data resize-none"
                 />
               </div>
 

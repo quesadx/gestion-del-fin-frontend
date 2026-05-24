@@ -38,7 +38,7 @@ export function AppShell() {
   const sidebarContent = (
     <div className="flex flex-col h-full p-4 gap-4">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 bg-gdf-accent-primary flex items-center justify-center shrink-0 border border-gdf-border-subtle">
+        <div className="w-8 h-8 bg-gdf-accent-primary flex items-center justify-center shrink-0 rounded-md border border-gdf-border-subtle">
           <span className="font-sans font-black italic text-sm text-gdf-text-inverse">GF</span>
         </div>
         <span className="text-sm font-mono font-bold tracking-wider">GESTIÓN DEL FIN</span>
