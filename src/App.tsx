@@ -1,21 +1,22 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "./store";
-import { ReactNode, useEffect } from "react";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuthStore } from './store';
+import { ReactNode, useEffect } from 'react';
 
 // Layouts
-import DashboardLayout from "./layouts/DashboardLayout";
-import AuthLayout from "./layouts/AuthLayout";
+import DashboardLayout from './layouts/DashboardLayout';
+import AuthLayout from './layouts/AuthLayout';
 
 // Pages
-import LoginPage from "./features/auth/LoginPage";
-import DashboardOverview from "./features/dashboard/DashboardOverview";
-import PopulationRoster from "./features/people/PopulationRoster";
-import InventoryList from "./features/inventory/InventoryList";
-import AdmissionList from "./features/admission/AdmissionList";
-import ExpeditionList from "./features/explorations/ExpeditionList";
-import CampManagement from "./features/camps/CampManagement";
-import TransferList from "./features/transfers/TransferList";
+import LoginPage from './features/auth/LoginPage';
+import DashboardOverview from './features/dashboard/DashboardOverview';
+import PopulationRoster from './features/people/PopulationRoster';
+import InventoryList from './features/inventory/InventoryList';
+import AdmissionList from './features/admission/AdmissionList';
+import ExpeditionList from './features/explorations/ExpeditionList';
+import CampManagement from './features/camps/CampManagement';
+import TransferList from './features/transfers/TransferList';
+import ResourcesPage from './features/resources/ResourcesPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,13 +33,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const ProtectedRoute = ({
-  children,
-  roles,
-}: {
-  children: ReactNode;
-  roles?: string[];
-}) => {
+const ProtectedRoute = ({ children, roles }: { children: ReactNode; roles?: string[] }) => {
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
@@ -56,19 +51,19 @@ export default function App() {
       timeout = setTimeout(
         () => {
           logout();
-          localStorage.setItem("session_expired", "true");
+          localStorage.setItem('session_expired', 'true');
         },
         20 * 60 * 1000,
       );
     };
 
-    window.addEventListener("mousemove", resetTimer);
-    window.addEventListener("keydown", resetTimer);
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keydown', resetTimer);
     resetTimer();
 
     return () => {
-      window.removeEventListener("mousemove", resetTimer);
-      window.removeEventListener("keydown", resetTimer);
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keydown', resetTimer);
       clearTimeout(timeout);
     };
   }, [logout]);
@@ -136,6 +131,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <CampManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="resources"
+              element={
+                <ProtectedRoute roles={['system_admin', 'resource_manager']}>
+                  <ResourcesPage />
                 </ProtectedRoute>
               }
             />

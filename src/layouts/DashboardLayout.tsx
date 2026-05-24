@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -8,60 +8,62 @@ import {
   LogOut,
   Tent,
   ArrowLeftRight,
-} from "lucide-react";
-import { useAuthStore, useCampStore, useConnectionStore } from "../store";
-import { useConnectionStatus } from "../hooks/useConnectionStatus";
-import { useQuery } from "@tanstack/react-query";
-import { apiClient, unwrapList } from "../lib/api";
-import { Camp } from "../types";
-import { cn } from "../lib/utils";
-import { useEffect } from "react";
-import { useServerTime } from "../hooks/useServerTime";
-import { can } from "../lib/permissions";
-import { motion, AnimatePresence } from "motion/react";
+  Package,
+} from 'lucide-react';
+import { useAuthStore, useCampStore, useConnectionStore } from '../store';
+import { useConnectionStatus } from '../hooks/useConnectionStatus';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient, unwrapList } from '../lib/api';
+import { Camp } from '../types';
+import { cn } from '../lib/utils';
+import { useEffect } from 'react';
+import { useServerTime } from '../hooks/useServerTime';
+import { can } from '../lib/permissions';
+import { motion, AnimatePresence } from 'motion/react';
 
 // ── Connection badge config ───────────────────────────────────────────────────
 
 const CONNECTION_BADGE = {
   checking: {
-    wrapper: "bg-amber-950/20 text-amber-400 border-amber-500/30",
-    dot: "bg-amber-400 animate-pulse",
-    label: () => "CONNECTING...",
+    wrapper: 'bg-amber-950/20 text-amber-400 border-amber-500/30',
+    dot: 'bg-amber-400 animate-pulse',
+    label: () => 'CONNECTING...',
   },
   connected: {
-    wrapper: "bg-emerald-950/20 text-emerald-400 border-emerald-500/30",
-    dot: "bg-emerald-400",
-    label: (latencyMs: number | null) =>
-      latencyMs != null ? `ONLINE · ${latencyMs}ms` : "ONLINE",
+    wrapper: 'bg-emerald-950/20 text-emerald-400 border-emerald-500/30',
+    dot: 'bg-emerald-400',
+    label: (latencyMs: number | null) => (latencyMs != null ? `ONLINE · ${latencyMs}ms` : 'ONLINE'),
   },
   disconnected: {
-    wrapper: "bg-red-950/20 text-red-400 border-red-500/30",
-    dot: "bg-red-400 animate-pulse",
-    label: () => "SERVER UNREACHABLE",
+    wrapper: 'bg-red-950/20 text-red-400 border-red-500/30',
+    dot: 'bg-red-400 animate-pulse',
+    label: () => 'SERVER UNREACHABLE',
   },
 } as const;
 
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
-  { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { to: "/population", icon: Users, label: "Population" },
-  { to: "/inventory", icon: Box, label: "Inventory" },
-  { to: "/admission", icon: ClipboardCheck, label: "Admissions" },
-  { to: "/expeditions", icon: Map, label: "Expeditions" },
-  { to: "/transfers", icon: ArrowLeftRight, label: "Transfers" },
-  { to: "/camps", icon: Tent, label: "Refuges" },
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/population', icon: Users, label: 'Population' },
+  { to: '/inventory', icon: Box, label: 'Inventory' },
+  { to: '/admission', icon: ClipboardCheck, label: 'Admissions' },
+  { to: '/expeditions', icon: Map, label: 'Expeditions' },
+  { to: '/transfers', icon: ArrowLeftRight, label: 'Transfers' },
+  { to: '/camps', icon: Tent, label: 'Refuges' },
+  { to: '/resources', icon: Package, label: 'Resources' },
 ] as const;
 
 // Permission required to see each nav item
 const NAV_PERMISSIONS: Record<string, string> = {
-  "/dashboard": "dashboard.read",
-  "/population": "people.read",
-  "/inventory": "inventory.read",
-  "/admission": "admissions.read",
-  "/expeditions": "expeditions.read",
-  "/transfers": "transfers.read",
-  "/camps": "camps.read",
+  '/dashboard': 'dashboard.read',
+  '/population': 'people.read',
+  '/inventory': 'inventory.read',
+  '/admission': 'admissions.read',
+  '/expeditions': 'expeditions.read',
+  '/transfers': 'transfers.read',
+  '/camps': 'camps.read',
+  '/resources': 'resources.*',
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -77,9 +79,9 @@ export default function DashboardLayout() {
   const { retry } = useConnectionStatus();
 
   const { data: camps } = useQuery<Camp[]>({
-    queryKey: ["camps"],
+    queryKey: ['camps'],
     queryFn: async () => {
-      const res = await apiClient.get("/camps");
+      const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
   });
@@ -93,14 +95,12 @@ export default function DashboardLayout() {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate('/login');
   };
 
   const badge = CONNECTION_BADGE[status];
 
-  const visibleNavItems = NAV_ITEMS.filter((item) =>
-    can(user?.role, NAV_PERMISSIONS[item.to]),
-  );
+  const visibleNavItems = NAV_ITEMS.filter((item) => can(user?.role, NAV_PERMISSIONS[item.to]));
 
   return (
     <div className="flex flex-col h-screen bg-surface-base text-zinc-100 overflow-hidden">
@@ -126,10 +126,10 @@ export default function DashboardLayout() {
           <Tent className="text-brand-secondary shrink-0" size={13} />
           <div className="relative flex-1">
             <select
-              value={currentCampId ?? ""}
+              value={currentCampId ?? ''}
               onChange={(e) => {
                 setCurrentCamp(Number(e.target.value));
-                navigate("/dashboard", { replace: true });
+                navigate('/dashboard', { replace: true });
               }}
               className="w-full bg-transparent border-none text-zinc-300 text-xs font-bold font-mono uppercase tracking-tight focus:outline-none appearance-none cursor-pointer pr-4"
             >
@@ -139,11 +139,7 @@ export default function DashboardLayout() {
                 </option>
               )}
               {camps?.map((camp) => (
-                <option
-                  key={camp.id}
-                  value={camp.id}
-                  className="bg-zinc-950 text-zinc-300"
-                >
+                <option key={camp.id} value={camp.id} className="bg-zinc-950 text-zinc-300">
                   {camp.name}
                 </option>
               ))}
@@ -168,14 +164,12 @@ export default function DashboardLayout() {
           {/* Live connection badge */}
           <div
             className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider border transition-colors duration-500",
+              'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider border transition-colors duration-500',
               badge.wrapper,
             )}
           >
-            <span
-              className={cn("w-1.5 h-1.5 rounded-full shrink-0", badge.dot)}
-            />
-            {status === "connected"
+            <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', badge.dot)} />
+            {status === 'connected'
               ? badge.label(latencyMs)
               : (badge as { label: () => string }).label()}
           </div>
@@ -186,11 +180,9 @@ export default function DashboardLayout() {
               {user?.username?.[0].toUpperCase()}
             </div>
             <div className="hidden md:block text-left leading-none">
-              <span className="text-[10px] font-bold block">
-                {user?.username}
-              </span>
+              <span className="text-[10px] font-bold block">{user?.username}</span>
               <span className="text-[8px] text-zinc-500 font-mono uppercase tracking-tight mt-0.5 block">
-                {user?.role?.replace(/_/g, " ")}
+                {user?.role?.replace(/_/g, ' ')}
               </span>
             </div>
             <button
@@ -206,10 +198,10 @@ export default function DashboardLayout() {
 
       {/* ── Disconnected banner ──────────────────────────────────────── */}
       <AnimatePresence>
-        {status === "disconnected" && (
+        {status === 'disconnected' && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
+            animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="shrink-0 overflow-hidden"
@@ -252,10 +244,10 @@ export default function DashboardLayout() {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-full text-xs font-mono font-semibold transition-all select-none border border-transparent",
+                  'flex items-center gap-2 px-3 py-2 rounded-full text-xs font-mono font-semibold transition-all select-none border border-transparent',
                   isActive
-                    ? "bg-brand-primary/10 border-brand-primary/30 text-brand-primary font-bold shadow-[0_0_12px_rgba(239,68,68,0.15)] scale-102"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50",
+                    ? 'bg-brand-primary/10 border-brand-primary/30 text-brand-primary font-bold shadow-[0_0_12px_rgba(239,68,68,0.15)] scale-102'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50',
                 )
               }
             >
