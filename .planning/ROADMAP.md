@@ -7,7 +7,7 @@
 | #   | Phase               | Goal                                                                      | Status                |
 | --- | ------------------- | ------------------------------------------------------------------------- | --------------------- |
 | 01  | Resources CRUD      | Resource types page — create/edit/delete resource definitions             | Complete (2026-05-24) |
-| 02  | Professions CRUD    | Profession types page — create/edit/delete professions                    | Pending               |
+| 02  | Professions CRUD    | Profession types page — create/edit/delete professions                    | Complete (2026-05-24) |
 | 03  | Users CRUD          | System users management page — create/edit/delete users + role assignment | Pending               |
 | 04  | Rations Mgmt        | Ration disbursement tracking page — history + create                      | Pending               |
 | 05  | Inventory Audit     | Dedicated inventory audit page — full chronological event log             | Pending               |
