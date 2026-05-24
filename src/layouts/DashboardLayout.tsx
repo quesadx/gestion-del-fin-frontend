@@ -137,12 +137,22 @@ export default function DashboardLayout() {
   // Session-only dismiss for the alert banner.
   const [alertDismissed, setAlertDismissed] = useState(false);
 
-  // Auto-select the user's home camp on first load.
+  // Auto-select the user's home camp on first load, validate it exists in camps list.
   useEffect(() => {
-    if (user?.camp_id && !currentCampId) {
+    if (!camps || camps.length === 0) return;
+    const campIds = new Set(camps.map((c) => c.id));
+
+    // If currentCampId is invalid, clear it so we can auto-select a valid one.
+    if (currentCampId && !campIds.has(currentCampId)) {
+      setCurrentCamp(null);
+      return;
+    }
+
+    // Auto-select user's home camp if none selected yet and it's valid.
+    if (!currentCampId && user?.camp_id && campIds.has(user.camp_id)) {
       setCurrentCamp(user.camp_id);
     }
-  }, [user, currentCampId, setCurrentCamp]);
+  }, [camps, currentCampId, user, setCurrentCamp]);
 
   const handleLogout = () => {
     logout();
