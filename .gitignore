@@ -7,3 +7,11 @@ coverage/
 .env*
 !.env.example
 legacy/
+.idea/
+.vscode
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+node_modules/.cache
