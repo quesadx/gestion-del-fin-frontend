@@ -1,6 +1,6 @@
 # STATE — Gestión del Fin Frontend
 
-**Last activity:** 2026-05-24 — Completed quick task 260523-p11: ReactBits UI refactor with animated components and cleanup
+**Last activity:** 2026-05-24 — Completed quick task 260523-p11: ReactBits UI refactor — roundness tokens + StarBorder + GlareHover
 
 ## Project State
 
@@ -15,4 +15,4 @@ None.
 
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
-| 260523-p11 | ReactBits UI refactor with animated components and cleanup | 2026-05-24 | 44cf32a | Complete | [260523-p11-reactbits-ui-refactor-with-animated-comp](./quick/260523-p11-reactbits-ui-refactor-with-animated-comp/) |
+| 260523-p11 | ReactBits UI refactor with animated components and cleanup | 2026-05-24 | 87977c6 | Complete | [260523-p11-reactbits-ui-refactor-with-animated-comp](./quick/260523-p11-reactbits-ui-refactor-with-animated-comp/) |
