@@ -1,6 +1,6 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
-export type ConnectionStatus = "checking" | "connected" | "disconnected";
+export type ConnectionStatus = 'checking' | 'connected' | 'disconnected';
 
 interface ConnectionState {
   status: ConnectionStatus;
@@ -16,23 +16,20 @@ interface ConnectionActions {
   setChecking: () => void;
 }
 
-export const useConnectionStore = create<ConnectionState & ConnectionActions>()(
-  (set) => ({
-    status: "checking",
-    latencyMs: null,
-    lastChecked: null,
+export const useConnectionStore = create<ConnectionState & ConnectionActions>()((set) => ({
+  status: 'checking',
+  latencyMs: null,
+  lastChecked: null,
 
-    setConnected: (latencyMs) =>
-      set((prev) => ({
-        status: "connected",
-        // Only overwrite latency when the ping hook provides a measurement.
-        latencyMs: latencyMs !== undefined ? latencyMs : prev.latencyMs,
-        lastChecked: Date.now(),
-      })),
+  setConnected: (latencyMs) =>
+    set((prev) => ({
+      status: 'connected',
+      // Only overwrite latency when the ping hook provides a measurement.
+      latencyMs: latencyMs !== undefined ? latencyMs : prev.latencyMs,
+      lastChecked: Date.now(),
+    })),
 
-    setDisconnected: () =>
-      set({ status: "disconnected", latencyMs: null, lastChecked: Date.now() }),
+  setDisconnected: () => set({ status: 'disconnected', latencyMs: null, lastChecked: Date.now() }),
 
-    setChecking: () => set({ status: "checking" }),
-  }),
-);
+  setChecking: () => set({ status: 'checking' }),
+}));

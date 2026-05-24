@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface CampState {
   currentCampId: number | null;
@@ -12,6 +12,6 @@ export const useCampStore = create<CampState>()(
       currentCampId: null,
       setCurrentCamp: (campId) => set({ currentCampId: campId }),
     }),
-    { name: "camp-storage" },
+    { name: 'camp-storage' },
   ),
 );

@@ -1,16 +1,16 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../../store";
-import { apiClient } from "../../lib/api";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { ShieldAlert, Loader2, KeyRound, User } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store';
+import { apiClient } from '../../lib/api';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { ShieldAlert, Loader2, KeyRound, User } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  username: z.string().min(1, 'Username is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -21,9 +21,9 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionExpired, setSessionExpired] = useState(() => {
-    const expired = localStorage.getItem("session_expired");
+    const expired = localStorage.getItem('session_expired');
     if (expired) {
-      localStorage.removeItem("session_expired");
+      localStorage.removeItem('session_expired');
       return true;
     }
     return false;
@@ -42,14 +42,11 @@ export default function LoginPage() {
     setError(null);
     setSessionExpired(false);
     try {
-      const res = await apiClient.post("/auth/login", data);
+      const res = await apiClient.post('/auth/login', data);
       setAuth(res.data.user, res.data.token);
-      navigate("/dashboard");
+      navigate('/dashboard');
     } catch (err: any) {
-      setError(
-        err.response?.data?.error?.message ||
-          "Authentication failed. Check credentials.",
-      );
+      setError(err.response?.data?.error?.message || 'Authentication failed. Check credentials.');
     } finally {
       setIsLoading(false);
     }
@@ -78,12 +75,10 @@ export default function LoginPage() {
           >
             <ShieldAlert className="text-amber-500 shrink-0 mt-0.5" size={18} />
             <div className="text-sm font-medium text-amber-500">
-              <p className="font-bold uppercase leading-none mb-1">
-                Session Closed
-              </p>
+              <p className="font-bold uppercase leading-none mb-1">Session Closed</p>
               <p className="text-xs text-amber-500/70">
-                Terminal locked down automatically after 20 minutes of system
-                inactivity to prevent unauthorized breach.
+                Terminal locked down automatically after 20 minutes of system inactivity to prevent
+                unauthorized breach.
               </p>
             </div>
           </motion.div>
@@ -110,7 +105,7 @@ export default function LoginPage() {
               size={18}
             />
             <input
-              {...register("username")}
+              {...register('username')}
               placeholder="IDENTIFIER"
               className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/50 transition-all font-mono placeholder:text-zinc-600"
             />
@@ -127,7 +122,7 @@ export default function LoginPage() {
               size={18}
             />
             <input
-              {...register("password")}
+              {...register('password')}
               type="password"
               placeholder="PASSCODE"
               className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/50 transition-all font-mono placeholder:text-zinc-600"
@@ -162,33 +157,26 @@ export default function LoginPage() {
         </p>
         <div className="grid grid-cols-3 gap-2">
           <div className="p-2 border border-zinc-800 bg-zinc-950/60 rounded text-center">
-            <span className="text-brand-primary font-bold font-mono text-xs">
-              admin
-            </span>
+            <span className="text-brand-primary font-bold font-mono text-xs">admin</span>
             <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">
               Control
             </p>
           </div>
           <div className="p-2 border border-zinc-800 bg-zinc-950/60 rounded text-center">
-            <span className="text-brand-secondary font-bold font-mono text-xs">
-              manager
-            </span>
+            <span className="text-brand-secondary font-bold font-mono text-xs">manager</span>
             <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">
               Resources
             </p>
           </div>
           <div className="p-2 border border-zinc-800 bg-zinc-950/60 rounded text-center">
-            <span className="text-blue-400 font-bold font-mono text-xs">
-              travel
-            </span>
+            <span className="text-blue-400 font-bold font-mono text-xs">travel</span>
             <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">
               Logistics
             </p>
           </div>
         </div>
         <p className="text-[9px] font-mono text-zinc-600 text-center uppercase tracking-wider">
-          Access limit enforced based on security keys. Any key initiates
-          survivor access.
+          Access limit enforced based on security keys. Any key initiates survivor access.
         </p>
       </div>
     </div>

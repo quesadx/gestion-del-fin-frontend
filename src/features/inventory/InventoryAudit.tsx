@@ -7,6 +7,7 @@ import { History, ArrowLeft } from 'lucide-react';
 import { cn, formatDate } from '../../lib/utils';
 import { Pagination } from '../../components/Pagination';
 import { Skeleton } from '../../components/Skeleton';
+import { InventoryAuditEntry, Resource } from '../../types';
 
 const PAGE_SIZE = 20;
 
@@ -17,7 +18,7 @@ export default function InventoryAudit() {
   const [selectedType, setSelectedType] = useState<string>('');
 
   // Fetch resources for name resolution (shares cache with ['resources'] key)
-  const { data: resources } = useQuery<any[]>({
+  const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
     queryFn: async () => {
       const res = await apiClient.get('/resources');
@@ -38,7 +39,7 @@ export default function InventoryAudit() {
   }, [resources]);
 
   // Fetch chronological audit log
-  const { data: auditData, isLoading } = useQuery<any[]>({
+  const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
@@ -55,7 +56,7 @@ export default function InventoryAudit() {
     const isSummary = entries[0].resource_name !== undefined;
     if (isSummary || !selectedType) return entries;
 
-    return entries.filter((e: any) => e.type === selectedType);
+    return entries.filter((e) => e.type === selectedType);
   }, [auditData, selectedType]);
 
   const isSummaryAudit = filtered.length > 0 && filtered[0].resource_name !== undefined;
@@ -67,10 +68,10 @@ export default function InventoryAudit() {
     setPage(1);
   };
 
-  const resolveResourceName = (entry: any): string => {
+  const resolveResourceName = (entry: InventoryAuditEntry): string => {
     if (entry.resource_name) return entry.resource_name;
     if (entry.resource?.name) return entry.resource.name;
-    const name = resourceMap.get(entry.resource_type_id);
+    const name = resourceMap.get(entry.resource_type_id ?? -1);
     if (name) return name;
     return `Resource #${entry.resource_type_id ?? 'unknown'}`;
   };
@@ -179,7 +180,7 @@ export default function InventoryAudit() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/50">
-                {paginated.map((entry: any) => {
+                {paginated.map((entry) => {
                   if (isSummaryAudit) {
                     return (
                       <tr
@@ -196,9 +197,7 @@ export default function InventoryAudit() {
                         <td className="py-3 px-4 font-mono text-zinc-100">
                           {entry.log_delta_sum ?? '—'}
                         </td>
-                        <td className="py-3 px-4 text-zinc-400">
-                          {entry.discrepancy ?? '—'}
-                        </td>
+                        <td className="py-3 px-4 text-zinc-400">{entry.discrepancy ?? '—'}</td>
                         <td className="py-3 px-4 text-zinc-400 uppercase tracking-wide">
                           {entry.is_consistent ? 'YES' : 'NO'}
                         </td>

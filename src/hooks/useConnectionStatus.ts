@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "../lib/api";
-import { useConnectionStore } from "../store/connection";
+import { useCallback, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { apiClient } from '../lib/api';
+import { useConnectionStore } from '../store/connection';
 
 /** Ping interval when the connection is healthy. */
 const CONNECTED_INTERVAL_MS = 30_000;
@@ -22,15 +22,12 @@ const DISCONNECTED_INTERVAL_MS = 5_000;
  * authenticated shell's lifetime.
  */
 export function useConnectionStatus(): { retry: () => void } {
-  const { status, setConnected, setDisconnected, setChecking } =
-    useConnectionStore();
+  const { status, setConnected, setDisconnected, setChecking } = useConnectionStore();
   const queryClient = useQueryClient();
 
   const inFlight = useRef(false);
   // "initial" means we haven't completed a ping yet — don't invalidate on first success.
-  const prevStatus = useRef<"initial" | "connected" | "disconnected">(
-    "initial",
-  );
+  const prevStatus = useRef<'initial' | 'connected' | 'disconnected'>('initial');
 
   const ping = useCallback(async () => {
     if (inFlight.current) return;
@@ -38,11 +35,11 @@ export function useConnectionStatus(): { retry: () => void } {
 
     const t0 = performance.now();
     try {
-      await apiClient.get("/system/time");
+      await apiClient.get('/system/time');
       const latency = Math.round(performance.now() - t0);
 
-      const wasDisconnected = prevStatus.current === "disconnected";
-      prevStatus.current = "connected";
+      const wasDisconnected = prevStatus.current === 'disconnected';
+      prevStatus.current = 'connected';
       setConnected(latency);
 
       if (wasDisconnected) {
@@ -51,7 +48,7 @@ export function useConnectionStatus(): { retry: () => void } {
         queryClient.invalidateQueries();
       }
     } catch {
-      prevStatus.current = "disconnected";
+      prevStatus.current = 'disconnected';
       setDisconnected();
     } finally {
       inFlight.current = false;
@@ -66,10 +63,7 @@ export function useConnectionStatus(): { retry: () => void } {
   // Restart the interval whenever the status changes so the polling rate
   // adapts: 5s when disconnected, 30s otherwise.
   useEffect(() => {
-    const ms =
-      status === "disconnected"
-        ? DISCONNECTED_INTERVAL_MS
-        : CONNECTED_INTERVAL_MS;
+    const ms = status === 'disconnected' ? DISCONNECTED_INTERVAL_MS : CONNECTED_INTERVAL_MS;
     const id = setInterval(ping, ms);
     return () => clearInterval(id);
   }, [status, ping]);

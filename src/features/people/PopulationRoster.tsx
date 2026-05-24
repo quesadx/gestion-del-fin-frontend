@@ -7,8 +7,6 @@ import {
   Search,
   UserPlus,
   Filter,
-  MoreHorizontal,
-  ShieldQuestion,
   Heart,
   Skull,
   Activity,
@@ -85,7 +83,7 @@ export default function PopulationRoster() {
     setEditAge(String(person.age));
 
     // Normalize string status
-    let norm: any = 'HEALTHY';
+    let norm: 'HEALTHY' | 'INJURED' | 'SICK' | 'AWAY' | 'DEAD' = 'HEALTHY';
     const s = (person.status || '').toUpperCase();
     if (s === 'HEALTHY') norm = 'HEALTHY';
     else if (s === 'WOUNDED' || s === 'INJURED') norm = 'INJURED';
@@ -117,10 +115,11 @@ export default function PopulationRoster() {
       const res = await apiClient.get(`/camps/${currentCampId}/people`);
       // The real API nests profession under person.professions.name —
       // flatten it to profession_name so the rest of the component works.
-      return unwrapList<any>(res.data).map((p: any) => ({
+      type RawPerson = Person & { professions?: { name?: string } };
+      return unwrapList<RawPerson>(res.data).map((p) => ({
         ...p,
         profession_name: p.profession_name ?? p.professions?.name ?? null,
-      })) as Person[];
+      }));
     },
     enabled: !!currentCampId,
   });
@@ -549,7 +548,11 @@ export default function PopulationRoster() {
                     </label>
                     <select
                       value={editStatus}
-                      onChange={(e) => setEditStatus(e.target.value as any)}
+                      onChange={(e) =>
+                        setEditStatus(
+                          e.target.value as 'HEALTHY' | 'INJURED' | 'SICK' | 'AWAY' | 'DEAD',
+                        )
+                      }
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary cursor-pointer uppercase font-mono"
                     >
                       <option value="HEALTHY">HEALTHY</option>

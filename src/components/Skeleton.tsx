@@ -2,12 +2,7 @@ import React from 'react';
 import { cn } from '../lib/utils';
 
 export function Skeleton({ className, ...props }: React.HtmlHTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn("animate-pulse rounded bg-zinc-800/40", className)}
-      {...props}
-    />
-  );
+  return <div className={cn('animate-pulse rounded bg-zinc-800/40', className)} {...props} />;
 }
 
 export function SkeletonCard() {
@@ -26,7 +21,10 @@ export function SkeletonList({ count = 4 }: { count?: number }) {
   return (
     <div className="space-y-4">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex items-center space-x-4 p-4 brutalist-border bg-surface-raised/30 rounded-lg">
+        <div
+          key={i}
+          className="flex items-center space-x-4 p-4 brutalist-border bg-surface-raised/30 rounded-lg"
+        >
           <Skeleton className="h-10 w-10 rounded-full shrink-0" />
           <div className="space-y-2 flex-1">
             <Skeleton className="h-4 w-1/3" />

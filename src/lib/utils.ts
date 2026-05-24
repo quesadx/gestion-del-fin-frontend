@@ -12,7 +12,8 @@ export function cn(...inputs: ClassValue[]) {
  * Formats a date to local format
  */
 export function formatDate(date: string | Date | null | undefined) {
-  const parsed = typeof date === 'string' ? Date.parse(date) : date instanceof Date ? date.getTime() : NaN;
+  const parsed =
+    typeof date === 'string' ? Date.parse(date) : date instanceof Date ? date.getTime() : NaN;
 
   if (!Number.isFinite(parsed)) {
     return '—';

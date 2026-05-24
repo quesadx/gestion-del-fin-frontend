@@ -51,6 +51,35 @@ export interface InventorySnapshot {
   status: 'OPTIMAL' | 'LOW' | 'CRITICAL';
 }
 
+export interface InventoryAuditEntry {
+  id?: number | string;
+  created_at?: string;
+  timestamp?: string;
+  type?: 'MANUAL_IN' | 'MANUAL_OUT' | string;
+  quantity?: number;
+  description?: string;
+  notes?: string;
+  user?: { username?: string };
+  username?: string;
+  user_id?: number | string;
+  resource_name?: string;
+  resource_type_id?: number;
+  resource?: { name?: string };
+  unit?: string;
+  inventory_quantity?: number;
+  log_delta_sum?: number;
+  discrepancy?: string | number;
+  is_consistent?: boolean;
+}
+
+export interface ResourceLookup {
+  id: number;
+  name: string;
+  unit: string;
+  minimum_stock?: number;
+  daily_ration?: number;
+}
+
 export interface Person {
   id: number;
   full_name: string;

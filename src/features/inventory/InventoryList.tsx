@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { useCampStore } from '../../store';
-import { InventorySnapshot } from '../../types';
+import { InventorySnapshot, Resource } from '../../types';
 import {
   Package,
   AlertTriangle,
@@ -13,10 +13,9 @@ import {
   X,
   PlusCircle,
   MinusCircle,
-  FileText,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn, formatQuantity } from '../../lib/utils';
+import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
 
 export default function InventoryList() {
@@ -40,10 +39,13 @@ export default function InventoryList() {
         apiClient.get(`/inventory/${currentCampId}`),
         apiClient.get('/resources'),
       ]);
-      const items: any[] = invRes.data?.data ?? invRes.data ?? [];
-      const resourceTypes: any[] = resRes.data?.data ?? resRes.data ?? [];
-      return items.map((item: any) => {
-        const rt = resourceTypes.find((r: any) => r.id === item.resource_type_id);
+      const items = (invRes.data?.data ?? invRes.data ?? []) as Array<{
+        resource_type_id: number;
+        quantity?: number;
+      }>;
+      const resourceTypes = (resRes.data?.data ?? resRes.data ?? []) as Resource[];
+      return items.map((item) => {
+        const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
         const qty = item.quantity ?? 0;
         const minStock = rt?.minimum_stock ?? 0;
         return {
@@ -56,7 +58,7 @@ export default function InventoryList() {
           daily_usage: 0,
           projection_days: null,
           status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OPTIMAL',
-        } as InventorySnapshot;
+        };
       });
     },
     enabled: !!currentCampId,

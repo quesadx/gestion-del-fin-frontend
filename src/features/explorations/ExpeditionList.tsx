@@ -11,7 +11,6 @@ import {
   Calendar,
   Users,
   Plus,
-  ChevronRight,
   Timer,
   AlertCircle,
   X,
@@ -70,7 +69,7 @@ export default function ExpeditionList() {
     queryKey: ['resources'],
     queryFn: async () => {
       const res = await apiClient.get('/resources');
-      return unwrapList<any>(res.data);
+      return unwrapList<{ id: number; name: string; unit: string }>(res.data);
     },
   });
 
@@ -134,7 +133,13 @@ export default function ExpeditionList() {
       resources_to_return?: { resource_type_id: number; amount: number }[];
       return_member_status?: string;
     }) => {
-      const body: Record<string, any> = { status, changed_by: actorId };
+      const body: Record<
+        string,
+        string | { resource_type_id: number; amount: number }[] | undefined
+      > = {
+        status,
+        changed_by: actorId,
+      };
       if (actual_return_date) body.actual_return_date = actual_return_date;
       if (resources_to_return?.length) body.resources_to_return = resources_to_return;
       if (return_member_status) body.return_member_status = return_member_status;
@@ -142,8 +147,9 @@ export default function ExpeditionList() {
       try {
         const res = await apiClient.patch(`/expeditions/${id}/status`, body);
         return res.data;
-      } catch (error: any) {
-        if (![404, 405].includes(error.response?.status)) {
+      } catch (error) {
+        const apiError = error as { response?: { status?: number } };
+        if (![404, 405].includes(apiError.response?.status)) {
           throw error;
         }
 

@@ -6,6 +6,7 @@ import { Sandwich, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
+import { InventoryAuditEntry, Resource } from '../../types';
 
 export default function RationsPage() {
   const { currentCampId } = useCampStore();
@@ -21,7 +22,7 @@ export default function RationsPage() {
 
   // ── Resources lookup ─────────────────────────────────────────────────
 
-  const { data: resources } = useQuery<any[]>({
+  const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
     queryFn: async () => {
       const res = await apiClient.get('/resources');
@@ -42,7 +43,7 @@ export default function RationsPage() {
 
   // ── Audit log (for ration history) ────────────────────────────────────
 
-  const { data: auditData, isLoading } = useQuery<any[]>({
+  const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
@@ -54,7 +55,7 @@ export default function RationsPage() {
   // Filter only entries whose description includes "RATION:"
   const rations = useMemo(() => {
     if (!Array.isArray(auditData)) return [];
-    return auditData.filter((entry: any) => {
+    return auditData.filter((entry) => {
       const desc = entry.description || entry.notes || '';
       return desc.toUpperCase().includes('RATION:') || desc.toUpperCase().startsWith('RATION');
     });
@@ -89,10 +90,10 @@ export default function RationsPage() {
 
   // ── Helpers ───────────────────────────────────────────────────────────
 
-  const resolveResourceName = (entry: any): string => {
+  const resolveResourceName = (entry: InventoryAuditEntry): string => {
     if (entry.resource_name) return entry.resource_name;
     if (entry.resource?.name) return entry.resource.name;
-    const name = resourceMap.get(entry.resource_type_id);
+    const name = resourceMap.get(entry.resource_type_id ?? -1);
     if (name) return name;
     return `Resource #${entry.resource_type_id ?? 'unknown'}`;
   };
@@ -185,7 +186,7 @@ export default function RationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
-              {rations.map((entry: any, idx: number) => {
+              {rations.map((entry, idx: number) => {
                 const isDisbursed = entry.type === 'MANUAL_OUT';
                 return (
                   <motion.tr
@@ -271,7 +272,7 @@ export default function RationsPage() {
                     onChange={(e) => setSelectedResourceId(Number(e.target.value))}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-secondary cursor-pointer"
                   >
-                    {resources?.map((resource: any) => (
+                    {resources?.map((resource: Resource) => (
                       <option key={resource.id} value={resource.id}>
                         {resource.name} ({resource.unit})
                       </option>

@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
-import { Expedition, ResourceAllocation } from '../../types';
+import { Expedition, ResourceAllocation, Resource } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
 import { can } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
@@ -20,6 +20,12 @@ import {
 import { motion } from 'motion/react';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 
+type ExpeditionResponse = Expedition & {
+  expedition_members?: Expedition['members'];
+  expedition_allocated_resources?: ResourceAllocation[];
+  expedition_found_resources?: ResourceAllocation[];
+};
+
 export default function ExpeditionDetail() {
   const { id } = useParams();
   const expeditionId = Number(id);
@@ -28,44 +34,54 @@ export default function ExpeditionDetail() {
   const { currentCampId } = useCampStore();
   const queryClient = useQueryClient();
 
-  const actorId = user?.id ?? 1;
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
+  const [foundResources, setFoundResources] = useState<
+    { resource_type_id: number; amount: number }[]
+  >([]);
 
-  // Permission guard
-  if (!can(user?.role, 'expeditions.read')) {
-    navigate('/', { replace: true });
-    return null;
-  }
+  const actorId = user?.id ?? 1;
+  const canRead = can(user?.role, 'expeditions.read');
+
+  useEffect(() => {
+    if (!canRead) {
+      navigate('/', { replace: true });
+    }
+  }, [canRead, navigate]);
 
   // Fetch expedition detail
   const {
     data: expedition,
     isLoading,
     isError,
-  } = useQuery<Expedition>({
+  } = useQuery<ExpeditionResponse>({
     queryKey: ['expedition', expeditionId],
     queryFn: async () => {
       const res = await apiClient.get(`/expeditions/${expeditionId}`);
       return res.data?.data ?? res.data;
     },
-    enabled: !isNaN(expeditionId),
+    enabled: canRead && !isNaN(expeditionId),
   });
 
   // Fetch resources list for resource name resolution
-  const { data: resources } = useQuery<{ id: number; name: string; unit: string }[]>({
+  const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
     queryFn: async () => {
       const res = await apiClient.get('/resources');
-      return unwrapList<any>(res.data);
+      return unwrapList<Resource>(res.data);
     },
+    enabled: canRead,
   });
 
   // Map of resource_type_id -> { name, unit }
   const resourceMap = new Map<number, { name: string; unit: string }>();
   (resources ?? []).forEach((r) => resourceMap.set(r.id, { name: r.name, unit: r.unit }));
 
-  const expeditionMembers = ((expedition as any)?.expedition_members ?? expedition?.members) ?? [];
-  const expeditionAllocatedResources = ((expedition as any)?.expedition_allocated_resources ?? expedition?.allocated_resources) ?? [];
-  const expeditionFoundResources = ((expedition as any)?.expedition_found_resources ?? expedition?.found_resources) ?? [];
+  const expeditionMembers = expedition?.expedition_members ?? expedition?.members ?? [];
+  const expeditionAllocatedResources =
+    expedition?.expedition_allocated_resources ?? expedition?.allocated_resources ?? [];
+  const expeditionFoundResources =
+    expedition?.expedition_found_resources ?? expedition?.found_resources ?? [];
 
   const formatAmount = (value: string | number | null | undefined) => {
     if (value == null || value === '') return '0';
@@ -83,15 +99,19 @@ export default function ExpeditionDetail() {
       actual_return_date?: string;
       resources_to_return?: ResourceAllocation[];
     }) => {
-      const body: Record<string, any> = { status, changed_by: actorId };
+      const body: Record<string, string | ResourceAllocation[] | undefined> = {
+        status,
+        changed_by: actorId,
+      };
       if (actual_return_date) body.actual_return_date = actual_return_date;
       if (resources_to_return?.length) body.resources_to_return = resources_to_return;
 
       try {
         const res = await apiClient.patch(`/expeditions/${expeditionId}/status`, body);
         return res.data;
-      } catch (error: any) {
-        if (![404, 405].includes(error.response?.status)) {
+      } catch (error) {
+        const axiosError = error as { response?: { status?: number } };
+        if (![404, 405].includes(axiosError.response?.status)) {
           throw error;
         }
         const legacyRes = await apiClient.put(`/expeditions/${expeditionId}`, {
@@ -112,13 +132,9 @@ export default function ExpeditionDetail() {
     },
   });
 
-  // ── Return modal state ─────────────────────────────────────────────────
-
-  const [showReturnModal, setShowReturnModal] = useState(false);
-  const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
-  const [foundResources, setFoundResources] = useState<
-    { resource_type_id: number; amount: number }[]
-  >([]);
+  if (!canRead) {
+    return null;
+  }
 
   // ── Loading ────────────────────────────────────────────────────────────
 
@@ -345,7 +361,7 @@ export default function ExpeditionDetail() {
                 </tr>
               </thead>
               <tbody>
-                {expeditionMembers.map((m: any, i: number) => (
+                {expeditionMembers.map((m, i: number) => (
                   <tr
                     key={m.person_id ?? i}
                     className="border-b border-zinc-900/50 last:border-0 hover:bg-zinc-900/20 transition-colors"
@@ -359,7 +375,7 @@ export default function ExpeditionDetail() {
           ) : (
             <div className="flex items-center gap-2 py-6 px-4 text-xs text-zinc-500 font-mono">
               <Users size={14} />
-              {(expedition as any).expedition_members === undefined && (expedition as any).members === undefined
+              {expedition?.expedition_members === undefined && expedition?.members === undefined
                 ? 'Member data not included in response'
                 : 'No members assigned'}
             </div>
@@ -387,7 +403,7 @@ export default function ExpeditionDetail() {
                 </tr>
               </thead>
               <tbody>
-                {expeditionAllocatedResources.map((r: any, i: number) => (
+                {expeditionAllocatedResources.map((r, i: number) => (
                   <tr
                     key={r.resource_type_id ?? i}
                     className="border-b border-zinc-900/50 last:border-0 hover:bg-zinc-900/20 transition-colors"
@@ -409,7 +425,8 @@ export default function ExpeditionDetail() {
           ) : (
             <div className="flex items-center gap-2 py-6 px-4 text-xs text-zinc-500 font-mono">
               <Package size={14} />
-              {(expedition as any).expedition_allocated_resources === undefined && (expedition as any).allocated_resources === undefined
+              {expedition?.expedition_allocated_resources === undefined &&
+              expedition?.allocated_resources === undefined
                 ? 'Allocated resource data not included in response'
                 : 'No allocated resources'}
             </div>
@@ -438,7 +455,7 @@ export default function ExpeditionDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {expeditionFoundResources.map((r: any, i: number) => (
+                  {expeditionFoundResources.map((r, i: number) => (
                     <tr
                       key={r.resource_type_id ?? i}
                       className="border-b border-zinc-900/50 last:border-0 hover:bg-zinc-900/20 transition-colors"
@@ -460,7 +477,8 @@ export default function ExpeditionDetail() {
             ) : (
               <div className="flex items-center gap-2 py-6 px-4 text-xs text-zinc-500 font-mono">
                 <Gift size={14} />
-                {(expedition as any).expedition_found_resources === undefined && expedition.found_resources === undefined
+                {expedition?.expedition_found_resources === undefined &&
+                expedition?.found_resources === undefined
                   ? 'Found resource data not included in response'
                   : 'No found resources recorded'}
               </div>

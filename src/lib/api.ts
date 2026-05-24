@@ -1,6 +1,6 @@
-import axios from "axios";
-import { useAuthStore } from "../store/auth";
-import { useConnectionStore } from "../store/connection";
+import axios from 'axios';
+import { useAuthStore } from '../store/auth';
+import { useConnectionStore } from '../store/connection';
 
 /**
  * Single Axios instance for the entire app.
@@ -12,7 +12,7 @@ export const apiClient = axios.create();
 // ── Request interceptor ──────────────────────────────────────────────────────
 
 apiClient.interceptors.request.use((config) => {
-  config.baseURL = "/api-remote";
+  config.baseURL = '/api-remote';
 
   // Read the token directly from the Zustand store (persisted to localStorage
   // by Zustand's persist middleware). Avoids duplicating the raw localStorage key.
@@ -43,7 +43,7 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expired or invalid — clear auth state and send to login.
       useAuthStore.getState().logout();
-      window.location.href = "/login";
+      window.location.href = '/login';
     }
 
     return Promise.reject(error);
@@ -60,7 +60,7 @@ export const unwrapList = <T>(responseData: unknown): T[] => {
   if (Array.isArray(responseData)) return responseData as T[];
   if (
     responseData &&
-    typeof responseData === "object" &&
+    typeof responseData === 'object' &&
     Array.isArray((responseData as Record<string, unknown>).data)
   ) {
     return (responseData as { data: T[] }).data;
@@ -77,7 +77,7 @@ export const toFormData = (
 ): FormData => {
   const fd = new FormData();
   for (const [key, value] of Object.entries(values)) {
-    if (value == null || value === "") continue;
+    if (value == null || value === '') continue;
     fd.append(key, value instanceof Blob ? value : String(value));
   }
   return fd;

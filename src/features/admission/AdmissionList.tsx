@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient, toFormData, unwrapList } from "../../lib/api";
-import { useCampStore } from "../../store";
-import { Admission } from "../../types";
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient, toFormData, unwrapList } from '../../lib/api';
+import { useCampStore } from '../../store';
+import { Admission } from '../../types';
 import {
   ClipboardCheck,
   BrainCircuit,
@@ -13,49 +13,47 @@ import {
   XCircle,
   ChevronRight,
   Eye,
-} from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
-import { cn, formatDate } from "../../lib/utils";
-import { Skeleton, SkeletonList } from "../../components/Skeleton";
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { cn, formatDate } from '../../lib/utils';
+import { Skeleton, SkeletonList } from '../../components/Skeleton';
 
 const getAdmissionDecisionStatus = (
   admission?: Partial<Admission> | null,
-): "PENDING" | "ACCEPTED" | "REJECTED" => {
+): 'PENDING' | 'ACCEPTED' | 'REJECTED' => {
   const rawStatus = (
     admission?.final_decision ??
     admission?.status ??
     admission?.ai_decision ??
-    "PENDING"
+    'PENDING'
   )
     .toString()
     .toUpperCase();
 
-  if (rawStatus === "APPROVED") return "ACCEPTED";
-  if (rawStatus === "ACCEPTED" || rawStatus === "REJECTED") return rawStatus;
-  return "PENDING";
+  if (rawStatus === 'APPROVED') return 'ACCEPTED';
+  if (rawStatus === 'ACCEPTED' || rawStatus === 'REJECTED') return rawStatus;
+  return 'PENDING';
 };
 
 export default function AdmissionList() {
   const { currentCampId } = useCampStore();
   const queryClient = useQueryClient();
-  const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(
-    null,
-  );
+  const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
 
   // Form states for register intake
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newAge, setNewAge] = useState("");
-  const [newSkills, setNewSkills] = useState("");
-  const [newHealth, setNewHealth] = useState("");
-  const [newBackground, setNewBackground] = useState("");
-  const [newPhotoUrl, setNewPhotoUrl] = useState("");
-  const [newIdCardUrl, setNewIdCardUrl] = useState("");
+  const [newName, setNewName] = useState('');
+  const [newAge, setNewAge] = useState('');
+  const [newSkills, setNewSkills] = useState('');
+  const [newHealth, setNewHealth] = useState('');
+  const [newBackground, setNewBackground] = useState('');
+  const [newPhotoUrl, setNewPhotoUrl] = useState('');
+  const [newIdCardUrl, setNewIdCardUrl] = useState('');
 
   const [selectedProfId, setSelectedProfId] = useState<number | null>(null);
 
   const { data: admissions, isLoading } = useQuery<Admission[]>({
-    queryKey: ["admissions", currentCampId],
+    queryKey: ['admissions', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/admission/camps/${currentCampId}`);
       return unwrapList<Admission>(res.data);
@@ -64,7 +62,7 @@ export default function AdmissionList() {
   });
 
   const { data: details, isLoading: detailsLoading } = useQuery({
-    queryKey: ["admission-details", selectedAdmissionId],
+    queryKey: ['admission-details', selectedAdmissionId],
     queryFn: async () => {
       const res = await apiClient.get(`/admission/${selectedAdmissionId}`);
       return res.data;
@@ -82,9 +80,9 @@ export default function AdmissionList() {
 
   // Fetch professions dynamically for the correction select
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
-    queryKey: ["professions"],
+    queryKey: ['professions'],
     queryFn: async () => {
-      const res = await apiClient.get("/professions");
+      const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
   });
@@ -96,7 +94,7 @@ export default function AdmissionList() {
       corrected_profession_id,
     }: {
       id: number;
-      decision: "ACCEPTED" | "REJECTED";
+      decision: 'ACCEPTED' | 'REJECTED';
       corrected_profession_id?: number;
     }) => {
       // Contract: PATCH /admission/:id/review — only final_decision + optional corrected_profession_id
@@ -106,8 +104,8 @@ export default function AdmissionList() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admissions"] });
-      queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ['admissions'] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
       // Clear out selected so view resets
       setSelectedAdmissionId(null);
     },
@@ -124,24 +122,21 @@ export default function AdmissionList() {
       id_card_url?: string;
     }) => {
       const body = toFormData(formValues);
-      const res = await apiClient.post(
-        `/admission/camps/${currentCampId}`,
-        body,
-      );
+      const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["admissions", currentCampId],
+        queryKey: ['admissions', currentCampId],
       });
       setIsCreateModalOpen(false);
-      setNewName("");
-      setNewAge("");
-      setNewSkills("");
-      setNewHealth("");
-      setNewBackground("");
-      setNewPhotoUrl("");
-      setNewIdCardUrl("");
+      setNewName('');
+      setNewAge('');
+      setNewSkills('');
+      setNewHealth('');
+      setNewBackground('');
+      setNewPhotoUrl('');
+      setNewIdCardUrl('');
     },
   });
 
@@ -187,9 +182,7 @@ export default function AdmissionList() {
               Pending Review
             </h3>
             <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
-              {admissions?.filter(
-                (a) => getAdmissionDecisionStatus(a) === "PENDING",
-              ).length || 0}{" "}
+              {admissions?.filter((a) => getAdmissionDecisionStatus(a) === 'PENDING').length || 0}{' '}
               QUEUE
             </span>
           </div>
@@ -214,10 +207,10 @@ export default function AdmissionList() {
                     key={admission.id}
                     onClick={() => setSelectedAdmissionId(admission.id)}
                     className={cn(
-                      "w-full p-6 text-left transition-all hover:bg-white/5 border-l-4 group relative",
+                      'w-full p-6 text-left transition-all hover:bg-white/5 border-l-4 group relative',
                       selectedAdmissionId === admission.id
-                        ? "bg-white/5 border-brand-primary"
-                        : "border-transparent",
+                        ? 'bg-white/5 border-brand-primary'
+                        : 'border-transparent',
                     )}
                   >
                     <div className="flex justify-between items-start mb-2">
@@ -232,12 +225,12 @@ export default function AdmissionList() {
                     <div className="flex items-center gap-3">
                       <div
                         className={cn(
-                          "text-[9px] font-black uppercase px-2 py-0.5 rounded border",
-                          decisionStatus === "PENDING"
-                            ? "bg-amber-950/20 text-amber-500 border-amber-500/30"
-                            : decisionStatus === "ACCEPTED"
-                              ? "bg-emerald-950/20 text-emerald-500 border-emerald-500/30"
-                              : "bg-red-950/20 text-red-500 border-red-500/30",
+                          'text-[9px] font-black uppercase px-2 py-0.5 rounded border',
+                          decisionStatus === 'PENDING'
+                            ? 'bg-amber-950/20 text-amber-500 border-amber-500/30'
+                            : decisionStatus === 'ACCEPTED'
+                              ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
+                              : 'bg-red-950/20 text-red-500 border-red-500/30',
                         )}
                       >
                         {decisionStatus}
@@ -251,10 +244,10 @@ export default function AdmissionList() {
                     <ChevronRight
                       size={18}
                       className={cn(
-                        "absolute right-4 top-1/2 -translate-y-1/2 text-zinc-800 transition-transform",
+                        'absolute right-4 top-1/2 -translate-y-1/2 text-zinc-800 transition-transform',
                         selectedAdmissionId === admission.id
-                          ? "translate-x-0 opacity-100"
-                          : "-translate-x-2 opacity-0",
+                          ? 'translate-x-0 opacity-100'
+                          : '-translate-x-2 opacity-0',
                       )}
                     />
                   </button>
@@ -283,16 +276,12 @@ export default function AdmissionList() {
                     File Review Terminal
                   </p>
                   <p className="text-xs font-mono text-zinc-600">
-                    Select a candidate to initiate feasibility diagnosis and AI
-                    reasoning.
+                    Select a candidate to initiate feasibility diagnosis and AI reasoning.
                   </p>
                 </div>
               </motion.div>
             ) : detailsLoading ? (
-              <div
-                key="loading"
-                className="flex-1 p-8 space-y-6 animate-pulse bg-zinc-950/20"
-              >
+              <div key="loading" className="flex-1 p-8 space-y-6 animate-pulse bg-zinc-950/20">
                 <div className="space-y-2">
                   <Skeleton className="h-10 w-2/3" />
                   <Skeleton className="h-4 w-1/3" />
@@ -329,20 +318,14 @@ export default function AdmissionList() {
                     </div>
                     <div className="bg-zinc-950 p-2 border border-zinc-800 rounded flex gap-4">
                       <div className="text-center px-4 border-r border-zinc-800">
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase">
-                          Age
-                        </p>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase">Age</p>
                         <p className="font-mono font-bold text-lg">
                           {details.applicant_age || details.details?.age || 25}
                         </p>
                       </div>
                       <div className="text-center px-4">
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase">
-                          Risk
-                        </p>
-                        <p className="font-mono font-bold text-lg text-emerald-500">
-                          Minimal
-                        </p>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase">Risk</p>
+                        <p className="font-mono font-bold text-lg text-emerald-500">Minimal</p>
                       </div>
                     </div>
                   </div>
@@ -376,7 +359,7 @@ export default function AdmissionList() {
                         <img
                           src={
                             details.photo_url ||
-                            "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80"
+                            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
                           }
                           alt="Face Scan"
                           referrerPolicy="no-referrer"
@@ -393,7 +376,7 @@ export default function AdmissionList() {
                         <img
                           src={
                             details.id_card_url ||
-                            "https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=400&h=250&q=80"
+                            'https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=400&h=250&q=80'
                           }
                           alt="ID Card Scan"
                           referrerPolicy="no-referrer"
@@ -425,10 +408,7 @@ export default function AdmissionList() {
                       <div className="absolute -inset-1 bg-linear-to-r from-brand-primary/20 to-brand-secondary/20 rounded-xl blur opacity-25 group-hover:opacity-40 transition" />
                       <div className="relative p-6 bg-surface-base border border-zinc-800 rounded-xl space-y-4">
                         <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 uppercase">
-                          <ShieldAlert
-                            size={14}
-                            className="text-brand-primary"
-                          />
+                          <ShieldAlert size={14} className="text-brand-primary" />
                           Automated Judgment v.9.4
                         </div>
                         <p className="text-sm font-bold leading-relaxed text-zinc-200">
@@ -448,23 +428,20 @@ export default function AdmissionList() {
                 </div>
 
                 {/* Supervisor Manual Role Custom Assignment Override */}
-                {getAdmissionDecisionStatus(details) === "PENDING" && (
+                {getAdmissionDecisionStatus(details) === 'PENDING' && (
                   <div className="px-8 py-4 bg-zinc-950 border-t border-zinc-900/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                       <p className="text-[10px] font-black text-brand-primary uppercase tracking-wider">
                         Manual Assignment Override
                       </p>
                       <p className="text-[11px] text-zinc-500 font-mono">
-                        Verify or correct the AI-suggested profession before
-                        allowing intake:
+                        Verify or correct the AI-suggested profession before allowing intake:
                       </p>
                     </div>
                     <select
-                      value={selectedProfId ?? ""}
+                      value={selectedProfId ?? ''}
                       onChange={(e) =>
-                        setSelectedProfId(
-                          e.target.value ? Number(e.target.value) : null,
-                        )
+                        setSelectedProfId(e.target.value ? Number(e.target.value) : null)
                       }
                       className="bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-300 font-bold font-mono focus:outline-none focus:border-brand-primary uppercase"
                     >
@@ -484,12 +461,11 @@ export default function AdmissionList() {
                     onClick={() =>
                       reviewMutation.mutate({
                         id: details.id,
-                        decision: "REJECTED",
+                        decision: 'REJECTED',
                       })
                     }
                     disabled={
-                      reviewMutation.isPending ||
-                      getAdmissionDecisionStatus(details) !== "PENDING"
+                      reviewMutation.isPending || getAdmissionDecisionStatus(details) !== 'PENDING'
                     }
                     className="flex-1 bg-zinc-900 hover:bg-red-950/30 text-red-500 border border-red-500/30 font-black py-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-30"
                   >
@@ -500,13 +476,12 @@ export default function AdmissionList() {
                     onClick={() => {
                       reviewMutation.mutate({
                         id: details.id,
-                        decision: "ACCEPTED",
+                        decision: 'ACCEPTED',
                         corrected_profession_id: selectedProfId || undefined,
                       });
                     }}
                     disabled={
-                      reviewMutation.isPending ||
-                      getAdmissionDecisionStatus(details) !== "PENDING"
+                      reviewMutation.isPending || getAdmissionDecisionStatus(details) !== 'PENDING'
                     }
                     className="flex-3 bg-brand-accent hover:bg-emerald-600 text-black font-black py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-30"
                   >
@@ -537,8 +512,7 @@ export default function AdmissionList() {
                   Register New Refugee Intake
                 </h3>
                 <p className="text-xs text-zinc-500 font-mono">
-                  This form transmits telemetry data directly to the automated
-                  triage system.
+                  This form transmits telemetry data directly to the automated triage system.
                 </p>
               </div>
 
@@ -558,9 +532,7 @@ export default function AdmissionList() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Age
-                    </label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Age</label>
                     <input
                       required
                       type="number"
@@ -654,8 +626,8 @@ export default function AdmissionList() {
                     className="flex-2 py-2.5 bg-brand-primary text-black text-xs font-bold uppercase rounded hover:bg-brand-primary/90 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
                   >
                     {createAdmissionMutation.isPending
-                      ? "STABILITY AI CALIBRATING..."
-                      : "SUBMIT REFUGE ENTRY"}
+                      ? 'STABILITY AI CALIBRATING...'
+                      : 'SUBMIT REFUGE ENTRY'}
                   </button>
                 </div>
               </form>

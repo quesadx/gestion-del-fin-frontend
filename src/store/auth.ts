@@ -1,12 +1,12 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { User } from "../types";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { User } from '../types';
 
 // Decode JWT payload client-side (no signature verification — UI display only).
 // The server always enforces the token on every protected route.
 const parseJwtPayload = (token: string): Record<string, unknown> => {
   try {
-    const b64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
     return JSON.parse(atob(b64));
   } catch {
     return {};
@@ -32,8 +32,7 @@ export const useAuthStore = create<AuthState>()(
 
       setAuth: (user, token) => {
         const payload = parseJwtPayload(token);
-        const rawId =
-          payload.sub ?? payload.id ?? payload.userId ?? payload.user_id ?? null;
+        const rawId = payload.sub ?? payload.id ?? payload.userId ?? payload.user_id ?? null;
         set({
           user,
           token,
@@ -44,6 +43,6 @@ export const useAuthStore = create<AuthState>()(
       // Zustand persist handles clearing the persisted entry automatically.
       logout: () => set({ user: null, token: null, userId: null }),
     }),
-    { name: "auth-storage" },
+    { name: 'auth-storage' },
   ),
 );
