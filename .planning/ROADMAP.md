@@ -1,21 +1,26 @@
-# GDF Roadmap — Legacy Feature Parity
+# GDF Roadmap
 
-**Goal:** Bring current app (`chore/frontend-remake`) to feature parity with `legacy/` reference. Keep current architecture (single-file features, inline TanStack hooks, Zustand stores, Tailwind CSS 4). Improve, don't copy blindly.
+## Milestones
+
+- ✅ **v1.0-legacy-parity** — Phases 01-10 (shipped 2026-05-24)
 
 ## Phases
 
-| #   | Phase               | Goal                                                                      | Status                |
-| --- | ------------------- | ------------------------------------------------------------------------- | --------------------- |
-| 01  | Resources CRUD      | Resource types page — create/edit/delete resource definitions             | Complete (2026-05-24) |
-| 02  | Professions CRUD    | Profession types page — create/edit/delete professions                    | Complete (2026-05-24) |
-| 03  | Users CRUD          | System users management page — create/edit/delete users + role assignment | Complete (2026-05-24) |
-| 04  | Rations Mgmt        | Ration disbursement tracking page — history + create                      | Complete (2026-05-24) |
-| 05  | Inventory Audit     | Dedicated inventory audit page — full chronological event log             | Complete (2026-05-24) |
-| 06  | Camp Detail         | `/camps/:id` detail page — camp-specific stats + sub-entities             | Complete (2026-05-24) |
-| 07  | Exploration Detail  | `/expeditions/:id` detail page — full expedition view                     | Complete (2026-05-24) |
-| 08  | Person Detail + New | `/population/:id` profile + `/population/new` add person form             | Complete (2026-05-24) |
-| 09  | Person Flows        | Status logging, profession reassignment, contribution overrides           | Complete (2026-05-24) |
-| 10  | Resource Alerts     | Prominent stock alerts system — critical/low banners + nav indicator      | Complete (2026-05-24) |
+<details>
+<summary>✅ v1.0-legacy-parity (Phases 01-10) — SHIPPED 2026-05-24</summary>
+
+- [x] Phase 01: Resources CRUD (1/1 plans) — completed 2026-05-24
+- [x] Phase 02: Professions CRUD (1/1 plans) — completed 2026-05-24
+- [x] Phase 03: Users CRUD (1/1 plans) — completed 2026-05-24
+- [x] Phase 04: Rations Mgmt (1/1 plans) — completed 2026-05-24
+- [x] Phase 05: Inventory Audit (1/1 plans) — completed 2026-05-24
+- [x] Phase 06: Camp Detail (1/1 plans) — completed 2026-05-24
+- [x] Phase 07: Exploration Detail (1/1 plans) — completed 2026-05-24
+- [x] Phase 08: Person Detail + New (1/1 plans) — completed 2026-05-24
+- [x] Phase 09: Person Flows (1/1 plans) — completed 2026-05-24
+- [x] Phase 10: Resource Alerts (1/1 plans) — completed 2026-05-24
+
+</details>
 
 ## Dev Rules
 
@@ -27,3 +32,7 @@
 - All new routes go in `src/App.tsx`, nav items in `src/layouts/DashboardLayout.tsx`
 - Types go in `src/types.ts` (current pattern), not per-feature type files
 - Permission helpers in `src/lib/permissions.ts`
+
+---
+
+_See .planning/milestones/v1.0-legacy-parity-ROADMAP.md for full phase details_
