@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient, unwrapList } from "../../lib/api";
-import { useCampStore, useAuthStore } from "../../store";
-import { Expedition } from "../../types";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient, unwrapList } from '../../lib/api';
+import { useCampStore, useAuthStore } from '../../store';
+import { Expedition } from '../../types';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import {
   Map,
   MapPin,
@@ -16,10 +17,10 @@ import {
   X,
   Edit2,
   Trash2,
-} from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
-import { cn, formatDate } from "../../lib/utils";
-import { Skeleton } from "../../components/Skeleton";
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { cn, formatDate } from '../../lib/utils';
+import { Skeleton } from '../../components/Skeleton';
 
 export default function ExpeditionList() {
   const { currentCampId } = useCampStore();
@@ -32,49 +33,43 @@ export default function ExpeditionList() {
 
   // --- Create form state ---
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [destination, setDestination] = useState("");
-  const [notes, setNotes] = useState("");
-  const [departureDate, setDepartureDate] = useState("");
-  const [expectedReturnDate, setExpectedReturnDate] = useState("");
-  const [maxReturnDate, setMaxReturnDate] = useState("");
+  const [destination, setDestination] = useState('');
+  const [notes, setNotes] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
+  const [expectedReturnDate, setExpectedReturnDate] = useState('');
+  const [maxReturnDate, setMaxReturnDate] = useState('');
 
   // --- Return modal state ---
-  const [returningExpedition, setReturningExpedition] =
-    useState<Expedition | null>(null);
+  const [returningExpedition, setReturningExpedition] = useState<Expedition | null>(null);
   const [foundResources, setFoundResources] = useState<
     { resource_type_id: number; amount: number }[]
   >([]);
-  const [returnMemberStatus, setReturnMemberStatus] =
-    useState<string>("HEALTHY");
+  const [returnMemberStatus, setReturnMemberStatus] = useState<string>('HEALTHY');
 
   // --- Edit form state (PUT — no status) ---
-  const [editingExpedition, setEditingExpedition] = useState<Expedition | null>(
-    null,
-  );
-  const [editDestination, setEditDestination] = useState("");
-  const [editNotes, setEditNotes] = useState("");
-  const [editDepartureDate, setEditDepartureDate] = useState("");
-  const [editExpectedReturn, setEditExpectedReturn] = useState("");
-  const [editMaxReturn, setEditMaxReturn] = useState("");
+  const [editingExpedition, setEditingExpedition] = useState<Expedition | null>(null);
+  const [editDestination, setEditDestination] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [editDepartureDate, setEditDepartureDate] = useState('');
+  const [editExpectedReturn, setEditExpectedReturn] = useState('');
+  const [editMaxReturn, setEditMaxReturn] = useState('');
 
   // Helper: fallback user ID (the server validates via JWT; this just satisfies the required field)
   const actorId = userId ?? 1;
 
   const { data: expeditions, isLoading } = useQuery<Expedition[]>({
-    queryKey: ["expeditions", currentCampId],
+    queryKey: ['expeditions', currentCampId],
     queryFn: async () => {
-      const res = await apiClient.get("/expeditions");
+      const res = await apiClient.get('/expeditions');
       return unwrapList<Expedition>(res.data);
     },
     enabled: !!currentCampId,
   });
 
-  const { data: resources } = useQuery<
-    { id: number; name: string; unit: string }[]
-  >({
-    queryKey: ["resources"],
+  const { data: resources } = useQuery<{ id: number; name: string; unit: string }[]>({
+    queryKey: ['resources'],
     queryFn: async () => {
-      const res = await apiClient.get("/resources");
+      const res = await apiClient.get('/resources');
       return unwrapList<any>(res.data);
     },
   });
@@ -91,40 +86,34 @@ export default function ExpeditionList() {
       notes: string;
       status: string;
     }) => {
-      const res = await apiClient.post("/expeditions", payload);
+      const res = await apiClient.post('/expeditions', payload);
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["expeditions", currentCampId],
+        queryKey: ['expeditions', currentCampId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["dashboard-metrics", currentCampId],
+        queryKey: ['dashboard-metrics', currentCampId],
       });
       setIsModalOpen(false);
-      setDestination("");
-      setNotes("");
-      setDepartureDate("");
-      setExpectedReturnDate("");
-      setMaxReturnDate("");
+      setDestination('');
+      setNotes('');
+      setDepartureDate('');
+      setExpectedReturnDate('');
+      setMaxReturnDate('');
     },
   });
 
   // PUT /expeditions/:id — fields only, NO status
   const updateDetailsMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: number;
-      data: Partial<Expedition>;
-    }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<Expedition> }) => {
       const res = await apiClient.put(`/expeditions/${id}`, data);
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["expeditions", currentCampId],
+        queryKey: ['expeditions', currentCampId],
       });
       setEditingExpedition(null);
     },
@@ -147,10 +136,8 @@ export default function ExpeditionList() {
     }) => {
       const body: Record<string, any> = { status, changed_by: actorId };
       if (actual_return_date) body.actual_return_date = actual_return_date;
-      if (resources_to_return?.length)
-        body.resources_to_return = resources_to_return;
-      if (return_member_status)
-        body.return_member_status = return_member_status;
+      if (resources_to_return?.length) body.resources_to_return = resources_to_return;
+      if (return_member_status) body.return_member_status = return_member_status;
 
       try {
         const res = await apiClient.patch(`/expeditions/${id}/status`, body);
@@ -169,10 +156,10 @@ export default function ExpeditionList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["expeditions", currentCampId],
+        queryKey: ['expeditions', currentCampId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["dashboard-metrics", currentCampId],
+        queryKey: ['dashboard-metrics', currentCampId],
       });
     },
   });
@@ -187,26 +174,20 @@ export default function ExpeditionList() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["expeditions", currentCampId],
+        queryKey: ['expeditions', currentCampId],
       });
       queryClient.invalidateQueries({
-        queryKey: ["dashboard-metrics", currentCampId],
+        queryKey: ['dashboard-metrics', currentCampId],
       });
     },
   });
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toISOString().split('T')[0];
   const [returnDate, setReturnDate] = useState(today);
 
   const handleCreateExpedition = (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      !destination ||
-      !currentCampId ||
-      !departureDate ||
-      !expectedReturnDate ||
-      !maxReturnDate
-    )
+    if (!destination || !currentCampId || !departureDate || !expectedReturnDate || !maxReturnDate)
       return;
     createExpMutation.mutate({
       camp_id: currentCampId,
@@ -216,17 +197,17 @@ export default function ExpeditionList() {
       expected_return_date: expectedReturnDate,
       max_return_date: maxReturnDate,
       notes,
-      status: "PLANNED",
+      status: 'PLANNED',
     });
   };
 
   const handleEditExpClick = (exp: Expedition) => {
     setEditingExpedition(exp);
     setEditDestination(exp.destination);
-    setEditNotes(exp.notes || "");
-    setEditDepartureDate(exp.departure_date?.split("T")[0] ?? "");
-    setEditExpectedReturn(exp.expected_return_date?.split("T")[0] ?? "");
-    setEditMaxReturn(exp.max_return_date?.split("T")[0] ?? "");
+    setEditNotes(exp.notes || '');
+    setEditDepartureDate(exp.departure_date?.split('T')[0] ?? '');
+    setEditExpectedReturn(exp.expected_return_date?.split('T')[0] ?? '');
+    setEditMaxReturn(exp.max_return_date?.split('T')[0] ?? '');
   };
 
   const handleEditExpSubmit = (e: React.FormEvent) => {
@@ -303,14 +284,14 @@ export default function ExpeditionList() {
               <div className="flex flex-col lg:flex-row">
                 <div
                   className={cn(
-                    "w-full lg:w-2 py-4 lg:py-0",
-                    exp.status === "ONGOING" || exp.status === "ACTIVE"
-                      ? "bg-amber-500 shadow-[2px_0_10px_rgba(245,158,11,0.3)]"
-                      : exp.status === "PLANNED" || exp.status === "PLANNING"
-                        ? "bg-zinc-700"
-                        : exp.status === "RETURNED"
-                          ? "bg-emerald-500"
-                          : "bg-red-500 animate-pulse",
+                    'w-full lg:w-2 py-4 lg:py-0',
+                    exp.status === 'ONGOING' || exp.status === 'ACTIVE'
+                      ? 'bg-amber-500 shadow-[2px_0_10px_rgba(245,158,11,0.3)]'
+                      : exp.status === 'PLANNED' || exp.status === 'PLANNING'
+                        ? 'bg-zinc-700'
+                        : exp.status === 'RETURNED'
+                          ? 'bg-emerald-500'
+                          : 'bg-red-500 animate-pulse',
                   )}
                 />
 
@@ -319,22 +300,19 @@ export default function ExpeditionList() {
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "text-[9px] font-black uppercase px-2 py-0.5 rounded border",
-                          exp.status === "ONGOING" || exp.status === "ACTIVE"
-                            ? "bg-amber-950/20 text-amber-500 border-amber-500/30"
-                            : exp.status === "RETURNED"
-                              ? "bg-emerald-950/20 text-emerald-500 border-emerald-500/30"
-                              : exp.status === "CANCELLED" ||
-                                  exp.status === "LOST"
-                                ? "bg-red-950/20 text-red-500 border-red-500/30"
-                                : "bg-zinc-950/20 text-zinc-500 border-zinc-700/50",
+                          'text-[9px] font-black uppercase px-2 py-0.5 rounded border',
+                          exp.status === 'ONGOING' || exp.status === 'ACTIVE'
+                            ? 'bg-amber-950/20 text-amber-500 border-amber-500/30'
+                            : exp.status === 'RETURNED'
+                              ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
+                              : exp.status === 'CANCELLED' || exp.status === 'LOST'
+                                ? 'bg-red-950/20 text-red-500 border-red-500/30'
+                                : 'bg-zinc-950/20 text-zinc-500 border-zinc-700/50',
                         )}
                       >
                         {exp.status}
                       </span>
-                      <span className="text-zinc-600 font-mono text-[10px]">
-                        ID: EX-{exp.id}09
-                      </span>
+                      <span className="text-zinc-600 font-mono text-[10px]">ID: EX-{exp.id}09</span>
                     </div>
                     <h3 className="text-2xl font-black tracking-tighter uppercase italic">
                       {exp.destination}
@@ -365,21 +343,18 @@ export default function ExpeditionList() {
                         <Timer size={12} /> Expected Return
                       </div>
                       <p className="font-mono font-bold text-sm text-zinc-400">
-                        {exp.expected_return_date
-                          ? formatDate(exp.expected_return_date)
-                          : "—"}
+                        {exp.expected_return_date ? formatDate(exp.expected_return_date) : '—'}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-zinc-900 lg:pl-6">
-                    {(exp.status === "PLANNED" ||
-                      exp.status === "PLANNING") && (
+                    {(exp.status === 'PLANNED' || exp.status === 'PLANNING') && (
                       <button
                         onClick={() =>
                           updateStatusMutation.mutate({
                             id: exp.id,
-                            status: "ONGOING",
+                            status: 'ONGOING',
                           })
                         }
                         disabled={updateStatusMutation.isPending}
@@ -388,12 +363,12 @@ export default function ExpeditionList() {
                         DEPLOY SQUAD
                       </button>
                     )}
-                    {(exp.status === "ONGOING" || exp.status === "ACTIVE") && (
+                    {(exp.status === 'ONGOING' || exp.status === 'ACTIVE') && (
                       <>
                         <button
                           onClick={() => {
                             setFoundResources([]);
-                            setReturnMemberStatus("HEALTHY");
+                            setReturnMemberStatus('HEALTHY');
                             setReturningExpedition(exp);
                           }}
                           disabled={updateStatusMutation.isPending}
@@ -410,6 +385,12 @@ export default function ExpeditionList() {
                         </button>
                       </>
                     )}
+                    <Link
+                      to={`/expeditions/${exp.id}`}
+                      className="px-3 py-1.5 text-[10px] font-bold text-brand-primary hover:text-brand-primary/80 uppercase border border-brand-primary/30 hover:border-brand-primary/60 rounded transition-colors"
+                    >
+                      VIEW DETAILS
+                    </Link>
                     <button
                       onClick={() => handleEditExpClick(exp)}
                       className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer"
@@ -429,17 +410,17 @@ export default function ExpeditionList() {
                 </div>
               </div>
 
-              {(exp.status === "ONGOING" || exp.status === "ACTIVE") && (
+              {(exp.status === 'ONGOING' || exp.status === 'ACTIVE') && (
                 <div className="px-6 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex-1 h-1 bg-zinc-900 rounded-full overflow-hidden">
                       <motion.div
-                        initial={{ x: "-100%" }}
-                        animate={{ x: "10%" }}
+                        initial={{ x: '-100%' }}
+                        animate={{ x: '10%' }}
                         transition={{
                           duration: 3,
                           repeat: Infinity,
-                          ease: "linear",
+                          ease: 'linear',
                         }}
                         className="w-1/3 h-full bg-amber-500/50"
                       />
@@ -458,16 +439,11 @@ export default function ExpeditionList() {
       <div className="p-6 bg-red-950/10 border border-red-500/20 rounded-xl flex items-start gap-4">
         <AlertCircle className="text-red-500 shrink-0 mt-1" size={20} />
         <div className="space-y-1">
-          <p className="text-sm font-bold text-red-500 uppercase">
-            Exploration Emergency Protocol
-          </p>
+          <p className="text-sm font-bold text-red-500 uppercase">Exploration Emergency Protocol</p>
           <p className="text-xs text-zinc-500 leading-relaxed max-w-2xl font-medium">
-            Any expedition exceeding its max return date will be marked as{" "}
-            <span className="text-red-400 font-black italic">
-              OPERATIONAL FATALITY
-            </span>
-            . No rescue missions authorized without direct approval from the
-            System Administrator.
+            Any expedition exceeding its max return date will be marked as{' '}
+            <span className="text-red-400 font-black italic">OPERATIONAL FATALITY</span>. No rescue
+            missions authorized without direct approval from the System Administrator.
           </p>
         </div>
       </div>
@@ -490,8 +466,7 @@ export default function ExpeditionList() {
                   Configure Scouting Mission
                 </h3>
                 <p className="text-xs text-zinc-500 font-mono">
-                  Deploy a squad to forage supplies or scout hostile territory
-                  structures.
+                  Deploy a squad to forage supplies or scout hostile territory structures.
                 </p>
               </div>
 
@@ -576,8 +551,8 @@ export default function ExpeditionList() {
                     className="flex-2 py-2.5 bg-brand-primary text-black text-xs font-bold uppercase rounded hover:bg-brand-primary/90 transition-colors disabled:opacity-30"
                   >
                     {createExpMutation.isPending
-                      ? "ENCRYPTING DISPATCH..."
-                      : "CONFIRM MISSION DISPATCH"}
+                      ? 'ENCRYPTING DISPATCH...'
+                      : 'CONFIRM MISSION DISPATCH'}
                   </button>
                 </div>
               </form>
@@ -603,8 +578,7 @@ export default function ExpeditionList() {
                     Edit Scouting Mission
                   </h3>
                   <p className="text-[10px] font-mono text-zinc-600 mt-1">
-                    To change mission status use the quick-action buttons on the
-                    mission card.
+                    To change mission status use the quick-action buttons on the mission card.
                   </p>
                 </div>
                 <button
@@ -691,9 +665,7 @@ export default function ExpeditionList() {
                     disabled={updateDetailsMutation.isPending}
                     className="flex-2 py-2.5 bg-brand-primary text-black text-xs font-bold uppercase rounded hover:bg-brand-primary/90 transition-colors disabled:opacity-30"
                   >
-                    {updateDetailsMutation.isPending
-                      ? "SAVING CHANGES..."
-                      : "SAVE CHANGES"}
+                    {updateDetailsMutation.isPending ? 'SAVING CHANGES...' : 'SAVE CHANGES'}
                   </button>
                 </div>
               </form>
@@ -736,7 +708,7 @@ export default function ExpeditionList() {
                   updateStatusMutation.mutate(
                     {
                       id: returningExpedition.id,
-                      status: "RETURNED",
+                      status: 'RETURNED',
                       actual_return_date: returnDate,
                       resources_to_return: foundResources.filter(
                         (r) => r.resource_type_id && r.amount > 0,
@@ -768,7 +740,7 @@ export default function ExpeditionList() {
                   {foundResources.map((row, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
                       <select
-                        value={row.resource_type_id || ""}
+                        value={row.resource_type_id || ''}
                         onChange={(e) => {
                           const updated = [...foundResources];
                           updated[idx] = {
@@ -789,7 +761,7 @@ export default function ExpeditionList() {
                       <input
                         type="number"
                         min={1}
-                        value={row.amount || ""}
+                        value={row.amount || ''}
                         onChange={(e) => {
                           const updated = [...foundResources];
                           updated[idx] = {
@@ -804,9 +776,7 @@ export default function ExpeditionList() {
                       <button
                         type="button"
                         onClick={() =>
-                          setFoundResources(
-                            foundResources.filter((_, i) => i !== idx),
-                          )
+                          setFoundResources(foundResources.filter((_, i) => i !== idx))
                         }
                         className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
                       >
@@ -817,10 +787,7 @@ export default function ExpeditionList() {
                   <button
                     type="button"
                     onClick={() =>
-                      setFoundResources([
-                        ...foundResources,
-                        { resource_type_id: 0, amount: 0 },
-                      ])
+                      setFoundResources([...foundResources, { resource_type_id: 0, amount: 0 }])
                     }
                     className="text-[10px] font-bold text-brand-primary uppercase hover:text-brand-primary/80 transition-colors"
                   >
@@ -856,9 +823,7 @@ export default function ExpeditionList() {
                     disabled={updateStatusMutation.isPending}
                     className="flex-2 py-2.5 bg-emerald-600 text-white text-xs font-bold uppercase rounded hover:bg-emerald-500 transition-colors disabled:opacity-30"
                   >
-                    {updateStatusMutation.isPending
-                      ? "PROCESSING..."
-                      : "CONFIRM RETURN"}
+                    {updateStatusMutation.isPending ? 'PROCESSING...' : 'CONFIRM RETURN'}
                   </button>
                 </div>
               </form>
@@ -878,7 +843,7 @@ export default function ExpeditionList() {
         onConfirm={() => {
           if (confirmCancelId !== null) {
             updateStatusMutation.mutate(
-              { id: confirmCancelId, status: "CANCELLED" },
+              { id: confirmCancelId, status: 'CANCELLED' },
               { onSettled: () => setConfirmCancelId(null) },
             );
           }
