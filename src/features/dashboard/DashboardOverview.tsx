@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { apiClient, unwrapList } from "../../lib/api";
-import { useCampStore } from "../../store";
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { apiClient, unwrapList } from '../../lib/api';
+import { useCampStore } from '../../store';
 import {
   Users,
   Map,
@@ -10,28 +11,22 @@ import {
   TrendingUp,
   ShieldCheck,
   Box,
-} from "lucide-react";
-import { motion } from "motion/react";
-import { cn, formatQuantity } from "../../lib/utils";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-  CartesianGrid,
-} from "recharts";
-import { Skeleton, SkeletonCard } from "../../components/Skeleton";
-import { InventorySnapshot, Resource, InventoryItem } from "../../types";
+  CheckCircle,
+} from 'lucide-react';
+import { motion } from 'motion/react';
+import { cn, formatQuantity } from '../../lib/utils';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts';
+import { Skeleton, SkeletonCard } from '../../components/Skeleton';
+import { InventorySnapshot, Resource, InventoryItem } from '../../types';
 
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
+  const navigate = useNavigate();
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
-    queryKey: ["dashboard-metrics", currentCampId],
+    queryKey: ['dashboard-metrics', currentCampId],
     queryFn: async () => {
-      const res = await apiClient.get("/metrics/dashboard");
+      const res = await apiClient.get('/metrics/dashboard');
       const d = res.data ?? {};
 
       // The real API returns a flat shape. Normalise it to the nested shape
@@ -49,20 +44,16 @@ export default function DashboardOverview() {
           total_types: d.resource_types_count ?? d.resources?.total_types ?? 0,
           // Real API gives a count, not an array — fabricate an array of the
           // right length so .length works for the "Stock Alerts" card.
-          low_stock:
-            d.resources?.low_stock ??
-            Array(d.low_resource_alerts_count ?? 0).fill({}),
+          low_stock: d.resources?.low_stock ?? Array(d.low_resource_alerts_count ?? 0).fill({}),
         },
         expeditions: {
           active: d.active_expeditions_count ?? d.expeditions?.active ?? 0,
           planned: d.planned_expeditions_count ?? d.expeditions?.planned ?? 0,
-          completed:
-            d.completed_expeditions_count ?? d.expeditions?.completed ?? 0,
+          completed: d.completed_expeditions_count ?? d.expeditions?.completed ?? 0,
         },
         transfers: {
           pending: d.pending_transfers_count ?? d.transfers?.pending ?? 0,
-          in_transit:
-            d.in_transit_transfers_count ?? d.transfers?.in_transit ?? 0,
+          in_transit: d.in_transit_transfers_count ?? d.transfers?.in_transit ?? 0,
         },
       };
     },
@@ -70,14 +61,12 @@ export default function DashboardOverview() {
   });
 
   // Build inventory snapshots from /inventory/{campId} + /resources (joined client-side).
-  const { data: resourceSummaries, isLoading: resourcesLoading } = useQuery<
-    InventorySnapshot[]
-  >({
-    queryKey: ["resource-metrics", currentCampId, metrics?.people?.total ?? 0],
+  const { data: resourceSummaries, isLoading: resourcesLoading } = useQuery<InventorySnapshot[]>({
+    queryKey: ['resource-metrics', currentCampId, metrics?.people?.total ?? 0],
     queryFn: async () => {
       const [invRes, resRes] = await Promise.all([
         apiClient.get(`/inventory/${currentCampId}`),
-        apiClient.get("/resources"),
+        apiClient.get('/resources'),
       ]);
       const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
       const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
@@ -89,22 +78,20 @@ export default function DashboardOverview() {
         const minStock = rt?.minimum_stock ?? 0;
         const dailyRation = rt?.daily_ration ?? 0;
         const dailyUsage = dailyRation * survivorCount;
-        const projectionDays =
-          dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
+        const projectionDays = dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
         return {
           resource_id: item.resource_type_id,
           resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
-          unit: rt?.unit ?? "",
+          unit: rt?.unit ?? '',
           quantity: qty,
           minimum_stock: minStock,
           daily_ration: dailyRation,
           daily_usage: dailyUsage,
           projection_days: projectionDays,
-          status: (qty < minStock
-            ? qty < minStock / 2
-              ? "CRITICAL"
-              : "LOW"
-            : "OPTIMAL") as "OPTIMAL" | "LOW" | "CRITICAL",
+          status: (qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OPTIMAL') as
+            | 'OPTIMAL'
+            | 'LOW'
+            | 'CRITICAL',
         };
       });
     },
@@ -150,35 +137,39 @@ export default function DashboardOverview() {
     );
   }
 
+  // Compute alert counts from live inventory snapshots.
+  const criticalCount = (resourceSummaries ?? []).filter((r) => r.status === 'CRITICAL').length;
+  const lowCount = (resourceSummaries ?? []).filter((r) => r.status === 'LOW').length;
+
   // Map real API fields to display cards
   const statCards = [
     {
-      label: "Survivors",
+      label: 'Survivors',
       value: metrics?.people?.total,
       icon: Users,
-      color: "text-blue-500",
-      bg: "bg-blue-500/10",
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
     },
     {
-      label: "Active Expeditions",
+      label: 'Active Expeditions',
       value: metrics?.expeditions?.active,
       icon: Map,
-      color: "text-amber-500",
-      bg: "bg-amber-500/10",
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
     },
     {
-      label: "Stock Alerts",
+      label: 'Stock Alerts',
       value: metrics?.resources?.low_stock?.length ?? 0,
       icon: AlertTriangle,
-      color: "text-red-500",
-      bg: "bg-red-500/10",
+      color: 'text-red-500',
+      bg: 'bg-red-500/10',
     },
     {
-      label: "Pending Transfers",
+      label: 'Pending Transfers',
       value: metrics?.transfers?.pending,
       icon: ClipboardList,
-      color: "text-brand-primary",
-      bg: "bg-brand-primary/10",
+      color: 'text-brand-primary',
+      bg: 'bg-brand-primary/10',
     },
   ];
 
@@ -186,9 +177,7 @@ export default function DashboardOverview() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">
-            Operational Overview
-          </h1>
+          <h1 className="text-3xl font-black tracking-tighter uppercase">Operational Overview</h1>
           <p className="text-zinc-500 font-mono text-xs uppercase pl-1">
             Resource & Population Surveillance // Stability Alpha-7
           </p>
@@ -196,9 +185,7 @@ export default function DashboardOverview() {
         <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg">
           <ShieldCheck size={18} className="text-brand-accent" />
           <div className="text-[10px] font-mono leading-none">
-            <p className="text-zinc-300 font-bold uppercase">
-              Integrity Status
-            </p>
+            <p className="text-zinc-300 font-bold uppercase">Integrity Status</p>
             <p className="text-brand-accent uppercase">Synchronized</p>
           </div>
         </div>
@@ -221,14 +208,57 @@ export default function DashboardOverview() {
                 >
                   <stat.icon size={20} />
                 </div>
-                <div>
-                  <p className="text-2xl font-black font-mono">
-                    {stat.value ?? 0}
-                  </p>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    {stat.label}
-                  </p>
-                </div>
+                {stat.label === 'Stock Alerts' ? (
+                  <div className="space-y-3">
+                    {criticalCount === 0 && lowCount === 0 ? (
+                      <div className="flex items-center gap-2 text-emerald-500">
+                        <CheckCircle size={16} />
+                        <span className="text-sm font-bold font-mono">All stocks optimal</span>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {criticalCount > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                            <span className="text-xl font-black font-mono text-red-500">
+                              {criticalCount}
+                            </span>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                              CRITICAL
+                            </span>
+                          </div>
+                        )}
+                        {lowCount > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                            <span className="text-xl font-black font-mono text-amber-500">
+                              {lowCount}
+                            </span>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                              LOW
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => navigate('/inventory')}
+                      className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
+                    >
+                      View Details →
+                    </button>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      {stat.label}
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      {stat.label}
+                    </p>
+                  </div>
+                )}
               </motion.div>
             ))}
       </div>
@@ -241,9 +271,7 @@ export default function DashboardOverview() {
               <Box size={16} className="text-brand-secondary" />
               Resource Deployment Analysis
             </h3>
-            <span className="text-[10px] font-mono text-zinc-600">
-              Real-time Telemetry Active
-            </span>
+            <span className="text-[10px] font-mono text-zinc-600">Real-time Telemetry Active</span>
           </div>
 
           {resourcesLoading ? (
@@ -282,10 +310,7 @@ export default function DashboardOverview() {
           ) : (
             <>
               <div className="h-64 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-w-0">
-                <div
-                  ref={chartContainerRef}
-                  className="w-full h-full min-w-25 min-h-25"
-                >
+                <div ref={chartContainerRef} className="w-full h-full min-w-25 min-h-25">
                   {chartSize.width > 0 && chartSize.height > 0 && (
                     <BarChart
                       width={chartSize.width}
@@ -294,11 +319,7 @@ export default function DashboardOverview() {
                       data={resourceSummaries}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        stroke="#18181b"
-                        horizontal={false}
-                      />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#18181b" horizontal={false} />
                       <XAxis type="number" hide />
                       <YAxis
                         dataKey="resource_name"
@@ -306,33 +327,29 @@ export default function DashboardOverview() {
                         axisLine={false}
                         tickLine={false}
                         tick={{
-                          fill: "#71717a",
+                          fill: '#71717a',
                           fontSize: 10,
-                          fontWeight: "bold",
+                          fontWeight: 'bold',
                         }}
                       />
                       <Tooltip
-                        cursor={{ fill: "rgba(255,255,255,0.05)" }}
+                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                         contentStyle={{
-                          backgroundColor: "#09090b",
-                          border: "1px solid #27272a",
-                          borderRadius: "8px",
+                          backgroundColor: '#09090b',
+                          border: '1px solid #27272a',
+                          borderRadius: '8px',
                         }}
                       />
-                      <Bar
-                        dataKey="quantity"
-                        radius={[0, 4, 4, 0]}
-                        barSize={20}
-                      >
+                      <Bar dataKey="quantity" radius={[0, 4, 4, 0]} barSize={20}>
                         {resourceSummaries?.map((entry: any, index: number) => (
                           <Cell
                             key={`cell-${index}`}
                             fill={
-                              entry.status === "CRITICAL"
-                                ? "#ef4444"
-                                : entry.status === "LOW"
-                                  ? "#f59e0b"
-                                  : "#10b981"
+                              entry.status === 'CRITICAL'
+                                ? '#ef4444'
+                                : entry.status === 'LOW'
+                                  ? '#f59e0b'
+                                  : '#10b981'
                             }
                           />
                         ))}
@@ -354,12 +371,12 @@ export default function DashboardOverview() {
                       </p>
                       <div
                         className={cn(
-                          "w-2 h-2 rounded-full animate-pulse",
-                          res.status === "CRITICAL"
-                            ? "bg-red-500"
-                            : res.status === "LOW"
-                              ? "bg-amber-500"
-                              : "bg-emerald-500",
+                          'w-2 h-2 rounded-full animate-pulse',
+                          res.status === 'CRITICAL'
+                            ? 'bg-red-500'
+                            : res.status === 'LOW'
+                              ? 'bg-amber-500'
+                              : 'bg-emerald-500',
                         )}
                       />
                     </div>
@@ -376,23 +393,17 @@ export default function DashboardOverview() {
                         Est. Durability
                         <span
                           className={cn(
-                            (res.projection_days || 0) < 5
-                              ? "text-red-500"
-                              : "text-zinc-400",
+                            (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
                           )}
                         >
-                          {res.projection_days != null
-                            ? `${res.projection_days} DAYS`
-                            : "N/A"}
+                          {res.projection_days != null ? `${res.projection_days} DAYS` : 'N/A'}
                         </span>
                       </p>
                       <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
                         <div
                           className={cn(
-                            "h-full",
-                            (res.projection_days || 0) < 5
-                              ? "bg-red-500"
-                              : "bg-zinc-600",
+                            'h-full',
+                            (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
                           )}
                           style={{
                             width: `${Math.min((res.projection_days || 0) * 10, 100)}%`,
