@@ -1,147 +1,138 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-05-19
+**Analysis Date:** 2026-05-24
 
-## Current State
+## Test Framework
 
-**No test infrastructure exists.** This codebase has zero test files, no test runner configuration, and no testing dependencies installed.
+**Status:** No test framework is configured.
 
-### What's Missing
+**Runner:**
+- No `vitest.config.*`, `jest.config.*`, or any test runner configuration detected
+- `package.json` contains no test-related scripts or dependencies (no `vitest`, `jest`, `@testing-library/*`, `playwright`, `cypress`)
 
-| Layer          | Required (RNF-05)                       | Current                                 |
-| -------------- | --------------------------------------- | --------------------------------------- |
-| Test framework | Playwright for E2E                      | Not configured                          |
-| Unit tests     | Not specified, but expected for quality | No vitest/jest config                   |
-| CI pipeline    | Tests run automatically in CI           | No `.github/workflows/*.yml` found      |
-| Test files     | Covering critical flows                 | No `*.test.*` or `*.spec.*` files exist |
+**Assertion Library:**
+- Not configured — no assertion library detected
 
-### Verification
-
+**Run Commands:**
 ```bash
-# No test files of any kind
-find src/ -name "*.test.*" -o -name "*.spec.*" -o -name "*.e2e.*"
-# → No results
-
-# No test config files
-ls vitest.config.* playwright.config.* jest.config.* 2>/dev/null
-# → No results
-
-# No CI workflows
-ls .github/workflows/*.yml 2>/dev/null
-# → No results
-
-# No test directories
-ls -d e2e/ tests/ __tests__/ 2>/dev/null
-# → No results
+# No test commands available
 ```
 
-### Package.json — No Test Dependencies
+## Test File Organization
 
-The `package.json` contains **no test-related packages**:
+**Status:** No test files exist anywhere in the repository.
 
-- No `@playwright/test`
-- No `vitest`
-- No `@testing-library/react`
-- No `@testing-library/jest-dom`
-- No `jest`
-- No `@vitest/coverage-v8`
+**Search performed:**
+- `**/*.test.{ts,tsx,js,jsx}` — no matches
+- `**/*.spec.{ts,tsx,js,jsx}` — no matches
+- `**/__tests__/**` — no matches
 
-The only quality-related devDependencies are `eslint`, `prettier`, and `cspell`.
+## Test Structure
 
-### Current Quality Gate
+**Not applicable** — no tests exist to analyze.
 
-The `pnpm check` command runs:
+## Mocking
 
+**Status:** No mocking framework configured.
+
+The codebase has several external dependencies that would need mocking in tests:
+- `@tanstack/react-query` (queries and mutations)
+- `axios` / `apiClient` (HTTP requests)
+- `react-router-dom` (navigation, routing)
+- `zustand` (state stores)
+- `motion/react` (animations)
+- `react-hook-form` (form state)
+- `lucide-react` (icons)
+
+## Fixtures and Factories
+
+**Status:** No test fixtures or factory files exist.
+
+The codebase uses these in-memory patterns that could be extracted into factories:
+- Mock data in `server.ts` lines 12–46 (in-memory arrays for `survivors`, `camps`, `resources`, `inventory`, `admissions`, `expeditions`)
+- `src/types.ts` provides TypeScript interfaces that could serve as factory contracts
+
+## Coverage
+
+**Status:** Not configured — no coverage tooling.
+
+**Requirements:** No coverage thresholds enforced.
+
+**View Coverage:**
 ```bash
-pnpm run lint && pnpm run spell && pnpm run build
+# No coverage command available
 ```
 
-This verifies ESLint (passing), CSpell (clean), and TypeScript compilation (succeeds) — but has **no test step**.
+## Test Types
 
-## Test Framework (Planned — Playwright E2E)
+**Unit Tests:**
+- Not present. Components like `src/components/Skeleton.tsx` and utilities like `src/lib/utils.ts` (pure functions: `cn`, `formatDate`, `formatQuantity`) are the best candidates for initial unit test coverage.
 
-**Runner:** Playwright (per requirement RNF-05 in `requerimientos-frontend.md`)
+**Integration Tests:**
+- Not present. The `useQuery` + `useMutation` data flows in feature components would benefit from integration tests with mocked API responses.
 
-- Config: Needs `playwright.config.ts` at repo root
-- Not yet configured
+**E2E Tests:**
+- Not present. No Playwright, Cypress, or Selenium configuration detected.
 
-**Critical flows to test (RNF-05 requires E2E coverage):**
+## Recommended Testing Setup
 
-1. **Authentication flow:** Login → authenticated state → session timeout → re-auth
-2. **Role-based access:** Different roles see different nav items / pages
-3. **Camp CRUD:** Create camp → view list → view detail → update → delete
-4. **Person admission:** Fill admission form → submit → AI decision → accept/correct
-5. **Inventory management:** View inventory → manual adjustment → verify audit log
-6. **Camp transfers:** Create transfer → approve → verify both camps' inventory
-7. **Multi-camp switching:** Select different camp → data changes → session reset
+**Immediate actions to enable testing:**
 
-## Test Commands (Recommended Setup)
+1. **Add test runner:**
+   ```bash
+   npm install -D vitest @testing-library/react @testing-library/jest-dom @testing-library/user-event jsdom
+   ```
 
-Once configured, add to `package.json` scripts:
+2. **Add vitest config** (`vitest.config.ts`):
+   ```typescript
+   import { defineConfig } from 'vitest/config';
+   import path from 'path';
 
-```json
-{
-  "test": "playwright test",
-  "test:ui": "playwright test --ui",
-  "test:headed": "playwright test --headed",
-  "test:e2e": "playwright test --project=chromium",
-  "test:report": "playwright show-report"
-}
-```
+   export default defineConfig({
+     test: {
+       environment: 'jsdom',
+       globals: true,
+       setupFiles: ['./src/test-setup.ts'],
+     },
+     resolve: {
+       alias: {
+         '@': path.resolve(__dirname, '.'),
+       },
+     },
+   });
+   ```
 
-## Test File Organization (Recommended)
+3. **Add test scripts** to `package.json`:
+   ```json
+   "test": "vitest",
+   "test:coverage": "vitest --coverage"
+   ```
 
-**Suggested structure:**
+4. **Create setup file** (`src/test-setup.ts`):
+   ```typescript
+   import '@testing-library/jest-dom';
+   ```
 
-```
-e2e/
-├── fixtures/           # Shared test fixtures (auth state, test data)
-│   └── auth.setup.ts
-├── specs/              # Test specifications by domain
-│   ├── auth.spec.ts
-│   ├── camps.spec.ts
-│   ├── people.spec.ts
-│   ├── inventory.spec.ts
-│   ├── transfers.spec.ts
-│   └── roles.spec.ts
-├── pages/              # Page Object Models
-│   ├── login.page.ts
-│   ├── dashboard.page.ts
-│   ├── camps.page.ts
-│   └── inventory.page.ts
-└── utils/              # Test utilities
-    └── helpers.ts
-```
+**Highest-value targets for first tests:**
+| Priority | Target | File | Rationale |
+|----------|--------|------|-----------|
+| High | `cn()`, `formatDate()`, `formatQuantity()` | `src/lib/utils.ts` | Pure functions, zero dependencies |
+| High | `Skeleton`, `SkeletonCard`, `SkeletonList`, `SkeletonTable` | `src/components/Skeleton.tsx` | Simple presentational components |
+| Medium | `useAuthStore`, `useCampStore` | `src/store/index.ts` | Core state logic, single dependency (zustand) |
+| Medium | `apiClient` interceptor logic | `src/lib/api.ts` | Auth token handling and 401 redirects |
+| Low | Feature pages | `src/features/*/` | Complex components with many dependencies |
 
-## CI Integration (Recommended)
+## Current Testing Gaps
 
-Add a GitHub Actions workflow (`.github/workflows/playwright.yml`) that:
+**Complete absence of tests means:**
+- No regression safety net for refactors
+- No documentation of expected behavior through tests
+- No confidence in API integration correctness
+- No protection against breaking changes in UI components
+- Mutation error states are untested (all `onError` handlers are missing)
 
-1. Checks out code
-2. Sets up Node.js + pnpm
-3. Installs dependencies
-4. Starts the dev server
-5. Runs `playwright test` against it
-6. Uploads test reports on failure
-
-Example trigger: on push/PR to main, on schedule (nightly).
-
-## Coverage Goals (Recommended)
-
-**Per RNF-05 requirement:**
-
-- Cover all critical user flows (authentication, camp management, inventory, transfers, admissions)
-- Verify role-based access control on every protected route
-- Test error states (network failures, invalid inputs, empty states)
-- Test the session timeout and re-authentication flow
-- Test multi-camp switching behavior
-
-**Target metrics (suggested):**
-
-- E2E coverage of all 10 functional requirements (RF-01 through RF-09 + RF-10)
-- Smoke test suite: < 5 minutes for CI
-- Full suite: < 15 minutes
+**Critical gap:** All `useMutation` calls lack `onError` handling (12 out of 12 mutations across all feature components). Without tests, these silent failure paths cannot be caught.
 
 ---
 
-_Testing analysis: 2026-05-19_
+*Testing analysis: 2026-05-24*

@@ -1,170 +1,153 @@
 # External Integrations
 
-**Analysis Date:** 2026-05-19
+**Analysis Date:** 2026-05-24
 
 ## APIs & External Services
 
-### Backend API (Primary)
+**Backend API (Production):**
+- Service: `gestion-del-fin-api-production.up.railway.app`
+  - What it's used for: All CRUD operations — camps, survivors, inventory, admissions, expeditions, metrics
+  - URL: `https://gestion-del-fin-api-production.up.railway.app/api`
+  - SDK/Client: axios (custom instance in `src/lib/api.ts`)
+  - Auth: Bearer token in `Authorization` header, stored in localStorage key `token`
 
-- **Service:** NestJS/Express backend (custom API)
-- **What it's used for:** All business logic — authentication, camp management, people management, inventory/warehouse operations, resource tracking, exploration management, admission processing (including AI), transfers between camps, rations, system time
-- **SDK/Client:** Axios 1.13.6 (`src/shared/api/axiosInstance.ts`)
-- **Auth:** JWT Bearer token (from login response, attached via Axios request interceptor)
-- **Dev URL:** `http://localhost:3000` (proxied via Vite dev server)
-- **Prod URL:** Configured via `VITE_API_URL` environment variable
+**Backend API (Local/Dev):**
+- Service: Local Express server in `server.ts`
+  - What it's used for: Full mock API with in-memory data for development
+  - URL: `/api` (proxied through Vite dev server on port 3000)
+  - Auth: Mock JWT — any username gets a role; `admin` → `system_admin`, `manager` → `resource_manager`, `travel`/`coordinator` → `travel_coordinator`, anything else → `survivor`
+  - All endpoints in `server.ts` lines 48–469
 
-**API Endpoints Consumed** (grouped by feature):
+**Google Gemini AI:**
+- Service: Google Gemini (generative AI)
+  - What it's used for: AI-assisted admission screening (declared but no direct frontend usage found — likely used by the Railway backend or planned)
+  - SDK: `@google/genai` ^1.29.0 (declared in `package.json`; no imports in `src/`)
+  - Auth: `GEMINI_API_KEY` env var (injected into client bundle via `vite.config.ts` line 11 as `process.env.GEMINI_API_KEY`)
 
-| Feature      | API Paths                                                                                                                                                                                                                                | Files                                                                                           |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Auth         | `POST /auth/login`                                                                                                                                                                                                                       | `src/features/auth/api/auth.api.ts`                                                             |
-| System       | `GET /system/time`                                                                                                                                                                                                                       | `src/features/system/api/system.api.ts`, `src/shared/api/system.api.ts`                         |
-| Camps        | `GET /camps`, `GET /camps/:id`, `POST /camps`, `PUT /camps/:id`, `DELETE /camps/:id`                                                                                                                                                     | `src/features/camps/api/camps.api.ts`                                                           |
-| People       | (via barrel)                                                                                                                                                                                                                             | `src/features/people/api/people.api.ts`                                                         |
-| Inventory    | `GET /inventory/:campId`, `GET /inventory/audit/:campId`, `POST /inventory/adjustment`                                                                                                                                                   | `src/features/inventory/api/inventory.api.ts`                                                   |
-| Resources    | (via barrel)                                                                                                                                                                                                                             | `src/features/resources/api/resources.api.ts`                                                   |
-| Transfers    | `GET /transfers`, `GET /transfers/:id`, `POST /transfers`, `PATCH /transfers/:id/schedule`, `PATCH /transfers/:id/approve-source`, `PATCH /transfers/:id/approve-target`, `PATCH /transfers/:id/complete`, `PATCH /transfers/:id/reject` | `src/features/transfers/api/transfers.api.ts`                                                   |
-| Explorations | `GET /expeditions`, `GET /expeditions/:id`, `POST /expeditions`, `PUT /expeditions/:id`, `PATCH /expeditions/:id/status`, `DELETE /expeditions/:id`                                                                                      | `src/features/explorations/api/explorations.api.ts`                                             |
-| Admissions   | `GET /admission/camps/:campId`, `GET /admission/:id`, `POST /admission/camps/:campId`, `PATCH /admission/:id/review`                                                                                                                     | `src/features/admission/api/admission.api.ts`                                                   |
-| Users        | (via barrel)                                                                                                                                                                                                                             | `src/features/users/api/users.api.ts`                                                           |
-| Professions  | (via barrel)                                                                                                                                                                                                                             | `src/features/professions/api/professions.api.ts`, `src/features/people/api/professions.api.ts` |
-
-**Axios Instance Configuration:**
-
-- Base URL: `import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api'`
-- Timeout: 10 seconds
-- Content-Type: `application/json`
-- Request interceptor: Attaches `Authorization: Bearer <token>` from Zustand auth store
-- Response interceptor: On 401, triggers logout and redirects to `/login` (with deduplication flag `isHandling401`)
-
-**Type Definitions:**
-
-- `src/shared/api/types.ts` — Shared API types: `ErrorResponse`, `LoginRequest`, `LoginResponse`, `SystemTimeResponse`, `PaginationQuery`
-
-### AI Service (Person Admission)
-
-- **Service:** Backend-hosted AI (no frontend SDK — not OpenAI, not Anthropic, not Gemini)
-- **What it's used for:**
-  - Evaluating person admission applications (RF-04)
-  - Deciding whether to accept or reject a person
-  - Assigning role/profession automatically
-- **Integration point:** `POST /admission/camps/:campId` (submits applicant data to backend, backend calls AI)
-- **Review flow:** `PATCH /admission/:id/review` — user can override AI decision
-- **AI context config:** Each camp can have an `ai_context_prompt` field (stored in backend) that provides rules/context for the AI evaluation. UI allows setting this in camp create/edit forms (`src/features/camps/pages/CampsPage.tsx`, `src/features/camps/pages/CampDetailPage.tsx`).
-- **Explainability:** The `AdmissionsPage` (`src/features/admission/pages/AdmissionsPage.tsx`) displays AI criteria and decisions. Backend is responsible for providing explainable AI output (RNF-07).
+**Image CDN (Unsplash):**
+- Service: `images.unsplash.com`
+  - What it's used for: Default/placeholder applicant photos and ID card images in admissions
+  - URLs found in:
+    - `src/features/admission/AdmissionList.tsx` lines 257, 269
+    - `server.ts` lines 353-354
+  - Auth: None (public CDN URLs)
+  - Referrer policy: `no-referrer` on `<img>` tags
 
 ## Data Storage
 
 **Databases:**
+- No database detected. The local dev server (`server.ts`) uses in-memory JavaScript arrays for all data:
+  - `survivors` array — `server.ts:12-15`
+  - `camps` array — `server.ts:17-20`
+  - `resources` array — `server.ts:22-26`
+  - `inventory` array — `server.ts:28-32`
+  - `inventoryLogs` array — `server.ts:34-38`
+  - `admissions` array — `server.ts:40-42`
+  - `expeditions` array — `server.ts:44-46`
+- The production Railway backend likely uses a real database (type unknown from client codebase)
 
-- Not applicable — this is a frontend application. All data persistence is on the backend.
-- No local storage database (no IndexedDB, no SQLite).
-- Session data (auth token, user, role) persisted to `localStorage` via Zustand persist middleware (key: `gdf.auth`).
+**Client-Side Storage:**
+- `localStorage` used for:
+  - `token` — JWT auth token (`src/lib/api.ts:27`, `src/store/index.ts:18,22`)
+  - `api_mode` — toggle between `remote` and `local` API (`src/lib/api.ts:18`)
+  - `session_expired` — flag for inactivity timeout UI (`src/App.tsx:45`, `src/features/auth/LoginPage.tsx:24`)
+  - Zustand persisted stores:
+    - `auth-storage` — user object and token (`src/store/index.ts:12-27`)
+    - `camp-storage` — current camp ID (`src/store/index.ts:35-42`)
 
 **File Storage:**
-
-- All file uploads (photos, ID cards) are handled by the backend API endpoints.
-- No client-side file storage.
+- No file upload capabilities detected. Photo/ID URLs are external links (Unsplash).
 
 **Caching:**
-
-- TanStack Query in-memory cache with `staleTime: 30_000` (30 seconds) configured in `src/shared/lib/queryClient.ts`
-- Zustand auth store persisted to `localStorage` (`gdf.auth` key) — only `user`, `token`, and `role` fields are persisted (via `partialize`)
-- Camp store (`src/features/camps/store/camp.store.ts`) is purely in-memory (not persisted)
-- No service worker caching or offline support
+- TanStack React Query provides client-side cache with `staleTime`/`gcTime` defaults
+- No dedicated caching layer (Redis, Memcached) detected
+- Query client configured with `refetchOnWindowFocus: false` and `retry: 1` (`src/App.tsx:19-26`)
 
 ## Authentication & Identity
 
 **Auth Provider:**
+- Custom mock authentication
+  - Implementation: `POST /api/auth/login` returns `{ user: { username, role, camp_id }, token: "mock-jwt-token" }` (`server.ts:49-58`)
+  - Token stored in localStorage, sent as `Bearer` header via axios interceptor (`src/lib/api.ts:26-32`)
+  - Logout via `POST /api/auth/logout` clears client state only
+  - 401 response interceptor clears token and redirects to `/login` (`src/lib/api.ts:34-42`)
+  - Inactivity timeout: 20 minutes of no mouse/keyboard activity triggers auto-logout (`src/App.tsx:39-58`)
 
-- Custom JWT-based authentication via backend API
-- Flow:
-  1. User submits credentials to `POST /auth/login`
-  2. Backend returns JWT token + user info (`LoginResponse` in `src/shared/api/types.ts`)
-  3. Client decodes JWT payload to extract `role` and `userId` (`src/features/auth/auth.service.ts`)
-  4. Token, user, and role stored in Zustand `useAuthStore` (persisted to `localStorage`)
-  5. Axios request interceptor attaches `Authorization: Bearer <token>` to all requests
-  6. On 401 response, Axios response interceptor clears auth state and redirects to `/login`
-- **Valid roles:** `system_admin`, `resource_manager`, `worker`, `travel_coordinator` (defined in `src/features/auth/types/auth.types.ts`)
-- **Session timeout:** 20 minutes of inactivity (`VITE_SESSION_TIMEOUT_MS`, default `1200000`). Tracked via `lastActivity` timestamp updated on mouse/key/scroll/touch events. After timeout, session locks and user is logged out. Implemented in `src/features/auth/auth-context.tsx`.
-- **Role-based access:** Route-level protection via `src/shared/lib/roleGuards.ts` — maps routes to allowed roles. `ProtectedRoute` component (`src/routes/ProtectedRoute.tsx`) enforces access.
+**Role-Based Access Control:**
+- Roles: `system_admin`, `resource_manager`, `travel_coordinator`, `survivor`
+- `ProtectedRoute` component in `src/App.tsx:28-33` wraps routes with optional role checks
+- Dashboard and nested routes require authentication; no role restriction on most routes currently
+
+**External Auth Providers:**
+- None (no OAuth, OIDC, or third-party auth detected)
 
 ## Monitoring & Observability
 
 **Error Tracking:**
-
-- No external error tracking service (no Sentry, no LogRocket, no Datadog)
-- Client-side logging: Custom logger (`src/shared/utils/logger.ts`) prefixes with `[GDF]`, logs `info`/`warn` only in dev mode, `error` always
+- None detected (no Sentry, Datadog, or error monitoring SDK)
 
 **Logs:**
+- Server: `console.log` on startup (`server.ts:487`)
+- Client: Console logging not detected in source
+- No structured logging framework
 
-- Console-based only (via custom `logger` utility)
-- Network errors surfaced via toast notifications (`src/shared/lib/toast.tsx`)
+**Analytics:**
+- None detected (no Google Analytics, Plausible, etc.)
 
 ## CI/CD & Deployment
 
 **Hosting:**
-
-- **Vercel** (per requirement RNF-06)
-- No `vercel.json` configuration file found — Vercel deployment not yet configured
-- Build command: `pnpm build` (runs `tsc -b && vite build`)
-- Output directory: `dist/`
-- Fallback: SPA must serve `index.html` for all routes
+- Platform: Google AI Studio (hosts the frontend SPA and Node.js server)
+  - App URL: `https://ai.studio/apps/f1d6bfbe-c1bb-472e-b56f-4542f336ecdf` (`README.md:9`)
+  - AI Studio injects `GEMINI_API_KEY` and `APP_URL` at runtime (`README.md:18`, `.env.example`)
+- Backend API: Railway (`gestion-del-fin-api-production.up.railway.app`)
 
 **CI Pipeline:**
+- None detected (no `.github/workflows/`, no CI config files)
+- Deployment appears manual or platform-managed by AI Studio
+- Build command: `vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs` (`package.json:8`)
+- Start command: `node dist/server.cjs` (`package.json:9`)
 
-- No CI workflow files found (no `.github/workflows/` directory)
-- Per RNF-05: Playwright E2E tests should run in CI automatically
-- **Playwright:** Not yet installed (no `playwright` in `devDependencies`, no playwright config files, no test files found)
-- Per RNF-06: Deployment should be automated/reproducible — not yet set up
-
-**CI Requirements (not yet implemented):**
-
-- Install dependencies: `pnpm install`
-- Lint: `pnpm lint`
-- Spell check: `pnpm spell`
-- Build: `pnpm build`
-- E2E tests: `pnpm exec playwright test` (once configured)
-- Deploy to Vercel via GitHub integration or Vercel CLI
+**Docker:**
+- No `Dockerfile` or container configuration detected
 
 ## Environment Configuration
 
-**Required env vars** (from `.env.example`):
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `VITE_API_URL` | `http://localhost:3000/api` | Backend API base URL (used in production; dev uses Vite proxy) |
-| `VITE_APP_NAME` | `Gestión del Fin` | Application display name |
-| `VITE_SESSION_TIMEOUT_MS` | `1200000` | Session auto-logout timeout in milliseconds |
+**Required env vars:**
+- `GEMINI_API_KEY` — Google Gemini API key (required, injected by AI Studio)
+- `APP_URL` — Deployment URL (injected by AI Studio, used for self-referential links)
+- `DISABLE_HMR` — Set to `true` in AI Studio to disable HMR and file watching (`vite.config.ts:21-23`)
 
 **Secrets location:**
-
-- `.env.local` — local environment overrides (gitignored)
-- `.env.example` — template committed to git
-- Production: Environment variables in Vercel project settings
-- **Note:** JWT token is stored in `localStorage` under key `gdf.auth` — this is acceptable for this project context but is not a secret storage mechanism
+- `.env` file at project root (gitignored)
+- `.env.local` for local development (`README.md:18`)
+- AI Studio Secrets panel for production (per `.env.example` comments)
 
 ## Webhooks & Callbacks
 
 **Incoming:**
-
-- None — no webhook endpoints in the frontend (SPA cannot receive webhooks)
+- None detected
 
 **Outgoing:**
+- None detected (no webhook calls, no Stripe/Plaid/etc. callbacks)
 
-- None — no outgoing webhooks or callbacks to external services
+## API Mode Switching
 
-## AI & External Intelligence Services
+**Remote vs Local toggle:**
+- UI button in `src/layouts/DashboardLayout.tsx:85-100` switches between:
+  - **Remote:** `https://gestion-del-fin-api-production.up.railway.app/api` (production Railway backend)
+  - **Local:** `/api` (local Express mock server)
+- Persisted in `localStorage` key `api_mode`
+- Switching triggers `window.location.reload()` (`src/lib/api.ts:18-19`)
 
-### AI for Person Admission (RF-04, RNF-07)
+## Axios Client Configuration
 
-- **Provider:** Backend-hosted AI service (not directly accessed from frontend)
-- **Frontend integration:**
-  - Camp creation/editing includes `ai_context_prompt` field (`src/features/camps/pages/CampsPage.tsx:360-365`, `src/features/camps/pages/CampDetailPage.tsx:322-327`) — sets rules/context for AI evaluation
-  - Admission submission (`src/features/admission/api/admission.api.ts`) sends person data to `POST /admission/camps/:campId` — backend handles AI processing
-  - Review UI displays AI decision and criteria (`src/features/admission/pages/AdmissionsPage.tsx`) — user can accept or override
-  - Final decision sent via `PATCH /admission/:id/review`
-- **Explainability (RNF-07):** Backend must return AI criteria and reasoning. Frontend displays these in the admissions review UI. No AI SDK in the client-side bundle.
+**File:** `src/lib/api.ts`
+- Base URL: dynamically resolved from `api_mode` in localStorage (`getBaseURL()`, line 4-11)
+- Request interceptor: attaches `Bearer {token}` from localStorage token (`lines 26-32`)
+- Response interceptor: on 401, clears token and redirects to `/login` (`lines 34-42`)
+- All API calls across features use this single `apiClient` instance
 
 ---
 
-_Integration audit: 2026-05-19_
+*Integration audit: 2026-05-24*

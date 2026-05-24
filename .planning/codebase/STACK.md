@@ -1,227 +1,124 @@
 # Technology Stack
 
-**Analysis Date:** 2026-05-19
+**Analysis Date:** 2026-05-24
 
 ## Languages
 
 **Primary:**
-
-- TypeScript ~5.9.3 - All application code (`src/`) and config files
-- ES2023 target with strict mode enabled
+- TypeScript ~5.8.2 - Entire codebase: frontend components (`src/`), server (`server.ts`), build config (`vite.config.ts`)
 
 **Secondary:**
-
-- JavaScript - Only in root config files (`eslint.config.js`, `tailwind.config.js`, `postcss.config.js`)
-- CSS - Custom styles and Tailwind utilities in `src/app/styles/`
-- SCSS custom properties - Design tokens in `src/app/styles/tokens.css`
-
-**HTML:**
-
-- `index.html` - Single entry point with splash screen inline styles
+- CSS (Tailwind v4 utility classes) - Styling in `src/index.css`
+- HTML - Single entry point `index.html`
 
 ## Runtime
 
 **Environment:**
+- Node.js (ESM — `"type": "module"` in `package.json`)
+- Express 4.21.2 for local development API server (`server.ts`)
+- tsx 4.21.0 for TypeScript execution without pre-compilation
 
-- Node.js 20.x (specified in `flake.nix` for Nix development shell)
-- Package manager: pnpm 10.32.1 (declared in `package.json` `packageManager` field)
-- Lockfile: `pnpm-lock.yaml` (present)
-
-**Nix Dev Environment (Optional):**
-
-- `flake.nix` / `flake.lock` - Reproducible Nix dev shell with nodejs_20, TypeScript, ESLint, Prettier, CSpell, pnpm pre-installed
+**Package Manager:**
+- npm
+- Lockfile: `package-lock.json` present (189KB)
 
 ## Frameworks
 
 **Core:**
+- React 19.0.1 - UI library (all components in `src/`)
+- Vite 6.2.3 - Build tool, dev server, HMR
+- React Router DOM 7.15.0 - Client-side routing (`src/App.tsx`)
+- TanStack React Query 5.100.10 - Server state, caching, mutations (`@tanstack/react-query`)
+- Zustand 5.0.13 - Global client state (`src/store/index.ts`)
+- Tailwind CSS 4.1.14 - Utility-first CSS framework via `@tailwindcss/vite` plugin
+- Express 4.21.2 - Development API/mock server (`server.ts`)
 
-- React 19.2.4 - UI library (with `react-dom 19.2.4`)
-- TypeScript ~5.9.3 - Type checker and compiler
-- Vite 8.0.1 - Build tool and dev server
+**Form/Validation:**
+- React Hook Form 7.75.0 - Form management (`src/features/auth/LoginPage.tsx`)
+- @hookform/resolvers 5.2.2 - Zod schema resolver integration
+- Zod 4.4.3 - Schema validation
 
-**UI Components:**
-
-- shadcn/ui (via Radix primitives) - Headless component library
-  - 26 `@radix-ui/react-*` packages (accordion, alert-dialog, avatar, checkbox, collapsible, context-menu, dialog, dropdown-menu, hover-card, label, menubar, navigation-menu, popover, progress, radio-group, scroll-area, select, separator, slider, slot, switch, tabs, toggle, toggle-group, tooltip, aspect-ratio)
-  - `class-variance-authority 0.7.1` - Component variant definitions
-  - `clsx 2.1.1` + `tailwind-merge 3.5.0` - Class name utilities
-  - `cmdk 1.1.1` - Command menu (⌘K)
-  - `embla-carousel-react 8.6.0` - Carousel
-  - `input-otp 1.4.2` - OTP input
-  - `vaul 1.1.2` - Drawer component
-
-**State Management:**
-
-- Zustand 5.0.12 - Client-side state (auth, UI, camp selection)
-- TanStack Query 5.95.2 - Server state (API data fetching, caching, mutations)
-- TanStack Query Devtools 5.95.2 - Query debugging (dev only)
-
-**Routing:**
-
-- react-router-dom 7.13.2 - Client-side routing with lazy-loaded pages
-
-**Forms:**
-
-- react-hook-form 7.72.0 - Form state management
-- @hookform/resolvers 5.2.2 - Zod integration with react-hook-form
-- zod 4.3.6 - Schema validation
-
-**HTTP Client:**
-
-- Axios 1.13.6 - HTTP requests with interceptors for auth and 401 handling
-
-**Visual:**
-
-- Tailwind CSS 3.4.19 - Utility-first CSS
-- framer-motion 12.38.0 - Animation library (toasts, page transitions, stagger effects)
-- recharts 3.8.1 - Charts (horizontal bar charts for inventory)
-- lucide-react 1.7.0 - Icon library
-- sonner 2.0.7 - Toast library (installed but actual toast system uses Zustand-based custom implementation in `src/shared/lib/toast.tsx`)
-- date-fns 4.1.0 - Date utilities
+**UI/Animation:**
+- Lucide React 0.546.0 - Icon library (used across all feature components)
+- Motion 12.23.24 - Animation library (formerly Framer Motion; imported from `motion/react`)
+- Recharts 3.8.1 - Charting library (`src/features/dashboard/DashboardOverview.tsx`)
+- clsx 2.1.1 + tailwind-merge 3.6.0 - Class merging utilities (`src/lib/utils.ts`)
 
 **Testing:**
-
-- No test framework detected in dependencies
-- Requirement RNF-05 specifies Playwright for E2E tests — **not yet installed**
+- No test framework detected (no `jest`, `vitest`, or test runner in dependencies; no test files found)
 
 **Build/Dev:**
-
-- @vitejs/plugin-react 6.0.1 - Vite React plugin (HMR, Fast Refresh)
-- autoprefixer 10.4.27 - CSS vendor prefixing
-- postcss 8.5.8 - CSS processing
+- tsx 4.21.0 - TypeScript runtime executor for `npm run dev`
+- esbuild 0.28.0 - Server bundling for production (`npm run build`)
+- TypeScript ~5.8.2 - Type checking (`npm run lint`)
+- autoprefixer 10.4.21 - CSS vendor prefixes
+- @types/express 4.17.21 - Express type definitions
+- @types/node 22.14.0 - Node.js type definitions
 
 ## Key Dependencies
 
-**Critical (required at runtime):**
+**Critical:**
 | Package | Version | Purpose |
 |---------|---------|---------|
-| react | 19.2.4 | Core UI framework |
-| react-dom | 19.2.4 | DOM rendering |
-| react-router-dom | 7.13.2 | Page routing |
-| @tanstack/react-query | 5.95.2 | Server state & API cache |
-| zustand | 5.0.12 | Client state management |
-| axios | 1.13.6 | HTTP client with interceptors |
-| react-hook-form | 7.72.0 | Form handling |
-| zod | 4.3.6 | Schema validation |
-| framer-motion | 12.38.0 | Animation |
-| recharts | 3.8.1 | Data visualization |
-| lucide-react | 1.7.0 | Icons |
+| react | 19.0.1 | Core UI rendering |
+| react-dom | 19.0.1 | DOM rendering |
+| react-router-dom | 7.15.0 | Client-side routing with protected routes |
+| @tanstack/react-query | 5.100.10 | API data fetching, caching, optimistic updates |
+| zustand | 5.0.13 | Auth and camp context state management |
+| axios | 1.16.0 | HTTP client with interceptors for auth tokens |
+| zod | 4.4.3 | Runtime schema validation for forms and API contracts |
+| @google/genai | 1.29.0 | Google Gemini AI SDK (declared dependency; no usage found in frontend source) |
+| express | 4.21.2 | Local dev API server with mock data |
 
-**Infrastructure (devDependencies):**
+**Infrastructure:**
 | Package | Version | Purpose |
 |---------|---------|---------|
-| typescript | ~5.9.3 | Type checking and compilation |
-| vite | 8.0.1 | Build tool and dev server |
-| @vitejs/plugin-react | 6.0.1 | React HMR support |
-| tailwindcss | 3.4.19 | CSS utilities |
-| postcss | 8.5.8 | CSS processor |
-| autoprefixer | 10.4.27 | CSS vendor prefixes |
-| eslint | 9.39.4 | Linting |
-| typescript-eslint | 8.57.0 | TypeScript ESLint rules |
-| prettier | 3.8.1 | Code formatting |
-| cspell | 9.7.0 | Spell checking |
-| @cspell/dict-es-es | 3.0.8 | Spanish dictionary for CSpell |
-| @types/react | 19.2.14 | React type definitions |
-| @types/react-dom | 19.2.3 | React DOM type definitions |
-| @types/node | 24.12.0 | Node.js type definitions |
+| vite | 6.2.3 | Build and dev server |
+| @vitejs/plugin-react | 5.0.4 | React Fast Refresh for Vite |
+| @tailwindcss/vite | 4.1.14 | Tailwind CSS integration for Vite |
+| tailwindcss | 4.1.14 | CSS framework |
+| esbuild | 0.28.0 | Production server bundling |
+| dotenv | 17.2.3 | Environment variable loading |
 
 ## Configuration
 
-**Environment Variables** (copied from `.env.example`):
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `VITE_API_URL` | `http://localhost:3000/api` | Backend API base URL |
-| `VITE_APP_NAME` | `Gestión del Fin` | Application display name |
-| `VITE_SESSION_TIMEOUT_MS` | `1200000` (20 min) | Auto-logout after inactivity |
+**Environment:**
+- `.env.example` present — documents two variables:
+  - `GEMINI_API_KEY` — Google Gemini API key (required)
+  - `APP_URL` — Deployment URL (injected by AI Studio/Cloud Run)
+- `.env*` files gitignored (except `.env.example`)
+- `vite.config.ts` reads `GEMINI_API_KEY` via `loadEnv` and injects it as `process.env.GEMINI_API_KEY` in the client bundle
+- `vite.config.ts` reads `DISABLE_HMR` to conditionally disable HMR and file watching (for AI Studio agent edits)
+- The `dotenv` package is listed but not explicitly imported — likely used by Vite's `loadEnv` internally
 
-- `.env.example` present (template)
-- `.env.local` present — contains local environment overrides (Vite auto-loads `.env.local` over `.env`)
-- **Important:** In production, `VITE_API_URL` must point to the deployed backend API URL (not proxied). In development, Vite's `server.proxy` forwards `/api` → `http://localhost:3000`.
+**Build:**
+- `tsconfig.json` — Target `ES2022`, module `ESNext`, bundler resolution, JSX `react-jsx`, path alias `@/*` → `./*`, `noEmit: true`
+- `vite.config.ts` — React plugin, Tailwind plugin, `@` path alias, environment injection for `GEMINI_API_KEY`
+- `index.html` — Single entry point mounting React to `#root`
 
-**TypeScript Configuration:**
-
-- Root: `tsconfig.json` — project references to `tsconfig.app.json` and `tsconfig.node.json`
-- App: `tsconfig.app.json`
-  - Target: ES2023, Module: ESNext, ModuleResolution: bundler
-  - JSX: react-jsx
-  - **strict: true** — all strict checks enabled
-  - **noUnusedLocals: true** — unused local variables are errors
-  - **noUnusedParameters: true** — unused parameters are errors
-  - **noFallthroughCasesInSwitch: true**
-  - **noUncheckedSideEffectImports: true**
-  - Path alias: `@/*` → `./src/*`
-- Node: `tsconfig.node.json` — same strict settings, includes only `vite.config.ts`
-
-**ESLint Configuration:**
-
-- Config: `eslint.config.js` (flat config format)
-- Extends: `@eslint/js` recommended, `typescript-eslint` recommended, `react-hooks` flat recommended, `react-refresh` vite, `eslint-config-prettier`
-- Plugin: `eslint-plugin-prettier` (runs Prettier as ESLint rule — `prettier/prettier: error`)
-- Ignores: `dist`, `reference-frontend/**`, `neon-nova-dashboard/**`, `temp/**`
-- Run: `pnpm lint` (with `--max-warnings 0`)
-
-**Prettier Configuration:**
-
-- Config: `.prettierrc`
-- Key settings: semi: true, singleQuote: true, trailingComma: all, printWidth: 100, tabWidth: 2
-- Ignores: `node_modules`, `dist`, `.env`, `.env.local`, `*.log`, `neon-nova-dashboard`
-- Run: `pnpm format`
-
-**CSpell Configuration:**
-
-- Config: `cspell.json`
-- Language: English (with Spanish dictionary: `@cspell/dict-es-es`)
-- Custom words: Domain-specific terms (Zustand, tanstack, shadcn, recharts, framer, scanlines, etc.)
-- Ignores: `node_modules`, `dist`, `*.lock`, `*.json`, `*.md`, `neon-nova-dashboard`, `temp`
-- Run: `pnpm spell`
-
-**Build Setup:**
-
-- Command: `pnpm build` runs `tsc -b && vite build`
-  1. `tsc -b`: Builds both TypeScript project references (app + node)
-  2. `vite build`: Production bundle
-- Pre-commit check: `pnpm check` runs `pnpm lint && pnpm spell && pnpm build`
-
-**Vite Configuration:**
-
-- Config: `vite.config.ts`
-- Plugin: `@vitejs/plugin-react`
-- Path alias: `@` → `./src`
-- Dev server proxy: `/api` → `http://localhost:3000` (with `changeOrigin: true`)
-- PostCSS: `postcss.config.js` with `tailwindcss` and `autoprefixer`
-
-**Tailwind Configuration:**
-
-- Config: `tailwind.config.js`
-- Content paths: `./index.html`, `./src/**/*.{ts,tsx}`
-- Custom theme: Brutalist dark design system
-  - Custom colors: surface (base/deep/raised/overlay), accent (primary/secondary/success), brand (primary/secondary/accent), status (green/red/yellow), text (primary/secondary/muted), border (subtle/DEFAULT/hover/active)
-  - Custom fonts: Inter (sans), JetBrains Mono (mono)
-  - Custom animations: fade-in, slide-up, slide-in-right, blink
-- No plugins
-
-**Nix Flake:**
-
-- `flake.nix` / `flake.lock` — Nix development environment
-- Provides: nodejs_20, TypeScript language server, ESLint, Prettier, CSpell, pnpm
-- Shell aliases: `pi` (install), `pd` (dev), `pb` (build), `pc` (check)
+**Run Scripts:**
+```bash
+npm run dev       # Start dev server with tsx (Express + Vite middleware)
+npm run build     # Vite build client + esbuild bundle server → dist/
+npm run start     # Run production bundled server
+npm run preview   # Vite preview of production build
+npm run clean     # Remove dist/
+npm run lint      # TypeScript type checking (tsc --noEmit)
+```
 
 ## Platform Requirements
 
 **Development:**
-
-- Node.js 20.x (or Nix with `nix develop`)
-- pnpm 10.x
-- Backend running at `http://localhost:3000` for API proxy
+- Node.js (version not pinned; no `.nvmrc` or `.node-version` found)
+- npm
+- Gemini API key (for AI features)
 
 **Production:**
-
-- Build output: `dist/` directory (static assets)
-- Deployment target: **Vercel** (per requirement RNF-06)
-- No `vercel.json` found — deployment configuration not yet set up
-- Runtime: Static file serving (SPA). Must serve `index.html` for all routes (fallback)
-- Environment variables must be set in Vercel dashboard (`VITE_API_URL` pointing to deployed backend)
+- Deployment target: Google AI Studio / Cloud Run (per `README.md` and `metadata.json`)
+- AI Studio app URL: `https://ai.studio/apps/f1d6bfbe-c1bb-472e-b56f-4542f336ecdf`
+- Primary API backend hosted on Railway: `https://gestion-del-fin-api-production.up.railway.app/api`
+- No `Dockerfile` detected; deployment handled by AI Studio platform
 
 ---
 
-_Stack analysis: 2026-05-19_
+*Stack analysis: 2026-05-24*
