@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { Camp } from '../../types';
-import { Plus, Edit2, MapPin, Activity, ShieldCheck, X, AlertCircle } from 'lucide-react';
+import { Plus, Edit2, MapPin, Activity, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
@@ -268,7 +268,7 @@ export default function CampManagement() {
                   </label>
                   <select
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
+                    onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'ABANDONED')}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary cursor-pointer"
                   >
                     <option value="ACTIVE">ACTIVE - SYSTEM OVERWATCH FUNCTIONAL</option>

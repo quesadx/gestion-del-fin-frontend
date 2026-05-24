@@ -45,8 +45,12 @@ export default function LoginPage() {
       const res = await apiClient.post('/auth/login', data);
       setAuth(res.data.user, res.data.token);
       navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Authentication failed. Check credentials.');
+    } catch (err) {
+      const authError = err as {
+        response?: { data?: { error?: { message?: string } } };
+      };
+      const message = err instanceof Error ? err.message : authError.response?.data?.error?.message;
+      setError(message || 'Authentication failed. Check credentials.');
     } finally {
       setIsLoading(false);
     }

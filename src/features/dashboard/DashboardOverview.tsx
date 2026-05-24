@@ -14,7 +14,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn, formatQuantity } from '../../lib/utils';
+import { cn } from '../../lib/utils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { InventorySnapshot, Resource, InventoryItem } from '../../types';
@@ -341,7 +341,7 @@ export default function DashboardOverview() {
                         }}
                       />
                       <Bar dataKey="quantity" radius={[0, 4, 4, 0]} barSize={20}>
-                        {resourceSummaries?.map((entry: any, index: number) => (
+                        {resourceSummaries?.map((entry: InventorySnapshot, index: number) => (
                           <Cell
                             key={`cell-${index}`}
                             fill={
@@ -360,7 +360,7 @@ export default function DashboardOverview() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-                {resourceSummaries?.map((res: any) => (
+                {resourceSummaries?.map((res: InventorySnapshot) => (
                   <div
                     key={res.resource_id}
                     className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group"

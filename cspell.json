@@ -44,7 +44,16 @@
     "prettierignore",
     "typecheck",
     "devcontainer",
-    "codespaces"
+    "codespaces",
+    "Explainability",
+    "exhaustions",
+    "Overwatch",
+    "OVERWATCH",
+    "lockdown",
+    "Normalise",
+    "jdoe",
+    "scanline",
+    "SVRT"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md", "legacy"]
 }

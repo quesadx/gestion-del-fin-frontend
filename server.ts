@@ -1,7 +1,20 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import axios from 'axios';
+import axios, { type Method } from 'axios';
+
+type AdmissionRecord = {
+  id: number;
+  camp_id: number;
+  full_name: string;
+  status?: string;
+  final_decision?: string;
+  ai_profession_id?: number;
+  applicant_age?: number;
+  age?: number;
+  details?: unknown;
+  [key: string]: unknown;
+};
 
 async function startServer() {
   const app = express();
@@ -344,7 +357,7 @@ async function startServer() {
   });
 
   app.put('/api/people/:id', (req, res) => {
-    const { full_name, status, age, profession_id, profession_name } = req.body;
+    const { full_name, status, age, profession_name } = req.body;
     const person = survivors.find((s) => s.id == Number(req.params.id));
     if (person) {
       if (full_name !== undefined) person.full_name = full_name;
@@ -358,7 +371,7 @@ async function startServer() {
   });
 
   app.put('/api/camps/:campId/people/:id', (req, res) => {
-    const { full_name, status, age, profession_id, profession_name } = req.body;
+    const { full_name, status, age, profession_name } = req.body;
     const person = survivors.find((s) => s.id == Number(req.params.id));
     if (person) {
       if (full_name !== undefined) person.full_name = full_name;
@@ -408,7 +421,9 @@ async function startServer() {
   });
 
   app.get('/api/admission/:id', (req, res) => {
-    const adm: any = admissions.find((a) => a.id == Number(req.params.id));
+    const adm = admissions.find((a) => a.id == Number(req.params.id)) as
+      | AdmissionRecord
+      | undefined;
     if (!adm) {
       return res.status(404).json({ error: 'Admission not found' });
     }
@@ -553,14 +568,16 @@ async function startServer() {
   });
 
   app.patch('/api/admission/:id/review', (req, res) => {
-    const { status, final_decision, corrected_profession_id, correction_reason } = req.body;
+    const { status, final_decision, corrected_profession_id } = req.body;
     const resolvedStatus = final_decision || status;
-    const adm = admissions.find((a) => a.id == Number(req.params.id));
+    const adm = admissions.find((a) => a.id == Number(req.params.id)) as
+      | AdmissionRecord
+      | undefined;
     if (adm) {
       const decision =
         resolvedStatus === 'APPROVED' || resolvedStatus === 'ACCEPTED' ? 'APPROVED' : 'REJECTED';
       adm.status = decision;
-      (adm as any).final_decision = decision === 'APPROVED' ? 'ACCEPTED' : 'REJECTED';
+      adm.final_decision = decision === 'APPROVED' ? 'ACCEPTED' : 'REJECTED';
 
       if (decision === 'APPROVED') {
         const professions = [
@@ -573,13 +590,13 @@ async function startServer() {
 
         const profId = corrected_profession_id
           ? Number(corrected_profession_id)
-          : (adm as any).ai_profession_id || 5;
+          : adm.ai_profession_id || 5;
         const prof = professions.find((p) => p.id === profId) || professions[4];
 
         survivors.push({
           id: survivors.length + 1,
           full_name: adm.full_name,
-          age: (adm as any).applicant_age || adm.age || 25,
+          age: adm.applicant_age || adm.age || 25,
           profession_id: prof.id,
           profession_name: prof.name,
           status: 'HEALTHY',
@@ -704,9 +721,9 @@ async function startServer() {
     const isMultipart =
       typeof contentType === 'string' && contentType.includes('multipart/form-data');
 
-    const makeRequest = (url: string, requestMethod: string, data?: any) =>
+    const makeRequest = (url: string, requestMethod: string, data?: unknown) =>
       axios({
-        method: requestMethod as any,
+        method: requestMethod as Method,
         url,
         data,
         headers: {
@@ -752,8 +769,9 @@ async function startServer() {
       }
 
       res.status(response.status).json(response.data);
-    } catch (err: any) {
-      res.status(502).json({ error: 'Proxy error', detail: err.message });
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      res.status(502).json({ error: 'Proxy error', detail });
     }
   });
 

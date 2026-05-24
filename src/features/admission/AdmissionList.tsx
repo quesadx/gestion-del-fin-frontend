@@ -4,10 +4,8 @@ import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useCampStore } from '../../store';
 import { Admission } from '../../types';
 import {
-  ClipboardCheck,
   BrainCircuit,
   ShieldAlert,
-  ArrowRight,
   UserPlus,
   CheckCircle2,
   XCircle,
@@ -69,14 +67,6 @@ export default function AdmissionList() {
     },
     enabled: !!selectedAdmissionId,
   });
-
-  React.useEffect(() => {
-    if (details) {
-      setSelectedProfId(details.ai_profession_id || 5);
-    } else {
-      setSelectedProfId(null);
-    }
-  }, [details]);
 
   // Fetch professions dynamically for the correction select
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
