@@ -14,11 +14,7 @@ export default function CampDetail() {
   const campId = Number(id);
   const navigate = useNavigate();
   const { user } = useAuthStore();
-
-  // Permission guard
-  if (!can(user?.role, 'camps.read')) {
-    return <Navigate to="/" replace />;
-  }
+  const hasReadAccess = can(user?.role, 'camps.read');
 
   // Camp detail query
   const {
@@ -31,7 +27,7 @@ export default function CampDetail() {
       const res = await apiClient.get(`/camps/${campId}`);
       return res.data?.data ?? res.data;
     },
-    enabled: !isNaN(campId),
+    enabled: hasReadAccess && !isNaN(campId),
   });
 
   // People count
@@ -41,7 +37,7 @@ export default function CampDetail() {
       const res = await apiClient.get(`/camps/${campId}/people`);
       return unwrapList<Person>(res.data);
     },
-    enabled: !isNaN(campId),
+    enabled: hasReadAccess && !isNaN(campId),
   });
 
   // Inventory count
@@ -51,7 +47,7 @@ export default function CampDetail() {
       const res = await apiClient.get(`/inventory/${campId}`);
       return unwrapList<InventoryItem>(res.data);
     },
-    enabled: !isNaN(campId),
+    enabled: hasReadAccess && !isNaN(campId),
   });
 
   // Expeditions
@@ -61,8 +57,12 @@ export default function CampDetail() {
       const res = await apiClient.get('/expeditions');
       return unwrapList<Expedition>(res.data);
     },
-    enabled: !isNaN(campId),
+    enabled: hasReadAccess && !isNaN(campId),
   });
+
+  if (!hasReadAccess) {
+    return <Navigate to="/" replace />;
+  }
 
   // ── Loading state ───────────────────────────────────────────────────────
 

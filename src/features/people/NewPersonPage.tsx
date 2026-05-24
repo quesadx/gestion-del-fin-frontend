@@ -30,6 +30,7 @@ export default function NewPersonPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
+  const hasSystemAdminAccess = can(user?.role, '*');
 
   const {
     register,
@@ -48,12 +49,6 @@ export default function NewPersonPage() {
     },
   });
 
-  // ── Permission guard: system_admin only ─────────────────────────────────
-
-  if (!can(user?.role, '*')) {
-    return <Navigate to="/" replace />;
-  }
-
   // ── Fetch professions ───────────────────────────────────────────────────
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
@@ -62,6 +57,7 @@ export default function NewPersonPage() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
+    enabled: hasSystemAdminAccess,
   });
 
   // ── Create mutation ─────────────────────────────────────────────────────
@@ -90,6 +86,10 @@ export default function NewPersonPage() {
   const onSubmit = (data: NewPersonForm) => {
     createPersonMutation.mutate(data);
   };
+
+  if (!hasSystemAdminAccess) {
+    return <Navigate to="/" replace />;
+  }
 
   // ── Render ──────────────────────────────────────────────────────────────
 

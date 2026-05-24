@@ -41,12 +41,7 @@ export default function PersonDetail() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
-
-  // ── Permission guard ───────────────────────────────────────────────────
-
-  if (!can(user?.role, 'people.read')) {
-    return <Navigate to="/" replace />;
-  }
+  const hasReadPermission = can(user?.role, 'people.read');
 
   // ── Person query ───────────────────────────────────────────────────────
 
@@ -65,7 +60,7 @@ export default function PersonDetail() {
         profession_name: raw.profession_name ?? raw.professions?.name ?? null,
       } as Person;
     },
-    enabled: !isNaN(personId) && !!currentCampId,
+    enabled: hasReadPermission && !isNaN(personId) && !!currentCampId,
   });
 
   // ── Supporting queries ─────────────────────────────────────────────────
@@ -76,6 +71,7 @@ export default function PersonDetail() {
       const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
+    enabled: hasReadPermission,
   });
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
@@ -84,6 +80,7 @@ export default function PersonDetail() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
+    enabled: hasReadPermission,
   });
 
   const { data: resources } = useQuery<{ id: number; name: string }[]>({
@@ -92,6 +89,7 @@ export default function PersonDetail() {
       const res = await apiClient.get('/resources');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
+    enabled: hasReadPermission,
   });
 
   const campName = camps?.find((c) => c.id === person?.camp_id)?.name;
@@ -319,6 +317,10 @@ export default function PersonDetail() {
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideStartDate, setOverrideStartDate] = useState('');
   const [overrideEndDate, setOverrideEndDate] = useState('');
+
+  if (!hasReadPermission) {
+    return <Navigate to="/" replace />;
+  }
 
   // ── Status badge helper ────────────────────────────────────────────────
 
