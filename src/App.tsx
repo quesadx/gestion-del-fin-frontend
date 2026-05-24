@@ -22,6 +22,7 @@ import CampManagement from './features/camps/CampManagement';
 import CampDetail from './features/camps/CampDetail';
 import TransferList from './features/transfers/TransferList';
 import ResourcesPage from './features/resources/ResourcesPage';
+import RationsPage from './features/rations/RationsPage';
 import ProfessionsPage from './features/professions/ProfessionsPage';
 import UsersPage from './features/users/UsersPage';
 
@@ -186,6 +187,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['system_admin', 'resource_manager']}>
                   <ResourcesPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="rations"
+              element={
+                <ProtectedRoute>
+                  <RationsPage />
                 </ProtectedRoute>
               }
             />

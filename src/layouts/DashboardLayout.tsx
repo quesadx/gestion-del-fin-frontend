@@ -9,6 +9,7 @@ import {
   Tent,
   ArrowLeftRight,
   Package,
+  Sandwich,
   Wrench,
   Shield,
 } from 'lucide-react';
@@ -49,6 +50,7 @@ const NAV_ITEMS = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/population', icon: Users, label: 'Population' },
   { to: '/inventory', icon: Box, label: 'Inventory' },
+  { to: '/rations', icon: Sandwich, label: 'Rations' },
   { to: '/admission', icon: ClipboardCheck, label: 'Admissions' },
   { to: '/expeditions', icon: Map, label: 'Expeditions' },
   { to: '/transfers', icon: ArrowLeftRight, label: 'Transfers' },
@@ -63,6 +65,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/dashboard': 'dashboard.read',
   '/population': 'people.read',
   '/inventory': 'inventory.read',
+  '/rations': 'inventory.read',
   '/admission': 'admissions.read',
   '/expeditions': 'expeditions.read',
   '/transfers': 'transfers.read',
