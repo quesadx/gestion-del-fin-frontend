@@ -135,7 +135,7 @@ export default function ExpeditionList() {
     }) => {
       const body: Record<
         string,
-        string | { resource_type_id: number; amount: number }[] | undefined
+        number | string | { resource_type_id: number; amount: number }[] | undefined
       > = {
         status,
         changed_by: actorId,
@@ -149,7 +149,7 @@ export default function ExpeditionList() {
         return res.data;
       } catch (error) {
         const apiError = error as { response?: { status?: number } };
-        if (![404, 405].includes(apiError.response?.status)) {
+        if (![404, 405].includes(apiError.response?.status ?? -1)) {
           throw error;
         }
 

@@ -279,7 +279,7 @@ export default function PersonDetail() {
       data: {
         full_name: editName,
         age: Number(editAge) || 25,
-        status: editStatus,
+        status: editStatus as Person['status'],
         ...(editProfessionId != null ? { profession_id: editProfessionId } : {}),
         ...(editSkillsSummary ? { skills_summary: editSkillsSummary } : {}),
         ...(editPhotoUrl ? { photo_url: editPhotoUrl } : {}),
