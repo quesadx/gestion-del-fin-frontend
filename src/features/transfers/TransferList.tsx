@@ -5,6 +5,7 @@ import { useCampStore, useAuthStore } from '../../store';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton, SkeletonList } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { Pagination } from '../../components/Pagination';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowRight,
@@ -189,12 +190,14 @@ function StatusStepper({ status }: { status: TransferStatus }) {
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function TransferList() {
+  const PAGE_SIZE = 15;
   const { currentCampId } = useCampStore();
   const { user, userId } = useAuthStore();
   const queryClient = useQueryClient();
 
   // ── UI state ────────────────────────────────────────────────────────────
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [confirmCompleteId, setConfirmCompleteId] = useState<number | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<number | null>(null);
@@ -219,6 +222,9 @@ export default function TransferList() {
       return unwrapList<Transfer>(res.data);
     },
   });
+
+  const totalPages = Math.max(1, Math.ceil((transfers?.length ?? 0) / PAGE_SIZE));
+  const paginatedTransfers = (transfers ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const { data: detail, isLoading: detailLoading } = useQuery<Transfer>({
     queryKey: ['transfer', selectedId],
@@ -375,7 +381,7 @@ export default function TransferList() {
               Transfer Log
             </h3>
             <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
-              {transfers?.length ?? 0} RECORDS
+              {transfers?.length ?? 0} RECORDS · PAGE {page}/{totalPages}
             </span>
           </div>
 
@@ -400,7 +406,7 @@ export default function TransferList() {
                 )}
               </div>
             ) : (
-              transfers.map((transfer) => {
+              paginatedTransfers.map((transfer) => {
                 const isSelected = selectedId === transfer.id;
                 const reqName =
                   transfer.requesting_camp_ref?.name ?? getCampName(transfer.requesting_camp);
@@ -458,6 +464,10 @@ export default function TransferList() {
                 );
               })
             )}
+          </div>
+
+          <div className="p-3 border-t border-zinc-900 flex justify-center">
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
 
