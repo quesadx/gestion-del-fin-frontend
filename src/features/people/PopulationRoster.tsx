@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient, toFormData, unwrapList } from "../../lib/api";
-import { useCampStore, useAuthStore } from "../../store";
-import { Person, Camp } from "../../types";
+import React, { useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiClient, toFormData, unwrapList } from '../../lib/api';
+import { useCampStore, useAuthStore } from '../../store';
+import { Person, Camp } from '../../types';
 import {
   Search,
   UserPlus,
@@ -18,36 +18,32 @@ import {
   Trash2,
   X,
   AlertTriangle,
-} from "lucide-react";
-import { useState } from "react"; // useMemo is imported above with React
-import { useNavigate } from "react-router-dom";
-import { cn } from "../../lib/utils";
-import { motion, AnimatePresence } from "motion/react";
-import { Skeleton } from "../../components/Skeleton";
-import { ConfirmDialog } from "../../components/ConfirmDialog";
+} from 'lucide-react';
+import { useState } from 'react'; // useMemo is imported above with React
+import { useNavigate } from 'react-router-dom';
+import { cn } from '../../lib/utils';
+import { motion, AnimatePresence } from 'motion/react';
+import { Skeleton } from '../../components/Skeleton';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 
 export default function PopulationRoster() {
   const { currentCampId } = useCampStore();
   const queryClient = useQueryClient();
   const { userId } = useAuthStore();
   const navigate = useNavigate();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [transferringPerson, setTransferringPerson] = useState<Person | null>(
-    null,
-  );
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [transferringPerson, setTransferringPerson] = useState<Person | null>(null);
   const [targetCampId, setTargetCampId] = useState<number | null>(null);
-  const [confirmDeletePerson, setConfirmDeletePerson] = useState<Person | null>(
-    null,
-  );
+  const [confirmDeletePerson, setConfirmDeletePerson] = useState<Person | null>(null);
 
   // Edit states
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editAge, setEditAge] = useState("");
-  const [editStatus, setEditStatus] = useState<
-    "HEALTHY" | "INJURED" | "SICK" | "AWAY" | "DEAD"
-  >("HEALTHY");
+  const [editName, setEditName] = useState('');
+  const [editAge, setEditAge] = useState('');
+  const [editStatus, setEditStatus] = useState<'HEALTHY' | 'INJURED' | 'SICK' | 'AWAY' | 'DEAD'>(
+    'HEALTHY',
+  );
   const [editProfessionId, setEditProfessionId] = useState<number | null>(null);
 
   const updatePersonMutation = useMutation({
@@ -61,15 +57,12 @@ export default function PopulationRoster() {
         skills_summary: data.skills_summary,
         photo_url: data.photo_url,
       });
-      const res = await apiClient.put(
-        `/camps/${currentCampId}/people/${id}`,
-        body,
-      );
+      const res = await apiClient.put(`/camps/${currentCampId}/people/${id}`, body);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["people"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setEditingPerson(null);
     },
   });
@@ -77,14 +70,12 @@ export default function PopulationRoster() {
   const deletePersonMutation = useMutation({
     mutationFn: async (id: number) => {
       // Align endpoint to /api/camps/{campId}/people/{id}
-      const res = await apiClient.delete(
-        `/camps/${currentCampId}/people/${id}`,
-      );
+      const res = await apiClient.delete(`/camps/${currentCampId}/people/${id}`);
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["people"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
     },
   });
 
@@ -94,13 +85,13 @@ export default function PopulationRoster() {
     setEditAge(String(person.age));
 
     // Normalize string status
-    let norm: any = "HEALTHY";
-    const s = (person.status || "").toUpperCase();
-    if (s === "HEALTHY") norm = "HEALTHY";
-    else if (s === "WOUNDED" || s === "INJURED") norm = "INJURED";
-    else if (s === "SICK") norm = "SICK";
-    else if (s === "MISSING" || s === "AWAY") norm = "AWAY";
-    else if (s === "DECEASED" || s === "DEAD") norm = "DEAD";
+    let norm: any = 'HEALTHY';
+    const s = (person.status || '').toUpperCase();
+    if (s === 'HEALTHY') norm = 'HEALTHY';
+    else if (s === 'WOUNDED' || s === 'INJURED') norm = 'INJURED';
+    else if (s === 'SICK') norm = 'SICK';
+    else if (s === 'MISSING' || s === 'AWAY') norm = 'AWAY';
+    else if (s === 'DECEASED' || s === 'DEAD') norm = 'DEAD';
 
     setEditStatus(norm);
     setEditProfessionId(person.profession_id ?? null);
@@ -115,15 +106,13 @@ export default function PopulationRoster() {
         full_name: editName,
         age: Number(editAge) || 25,
         status: editStatus,
-        ...(editProfessionId != null
-          ? { profession_id: editProfessionId }
-          : {}),
+        ...(editProfessionId != null ? { profession_id: editProfessionId } : {}),
       },
     });
   };
 
   const { data: survivors, isLoading } = useQuery<Person[]>({
-    queryKey: ["people", currentCampId],
+    queryKey: ['people', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/camps/${currentCampId}/people`);
       // The real API nests profession under person.professions.name —
@@ -137,9 +126,9 @@ export default function PopulationRoster() {
   });
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
-    queryKey: ["professions"],
+    queryKey: ['professions'],
     queryFn: async () => {
-      const res = await apiClient.get("/professions");
+      const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
   });
@@ -150,40 +139,32 @@ export default function PopulationRoster() {
     return professions
       .map((prof) => {
         const assigned = survivors.filter((s) => s.profession_id === prof.id);
-        const active = assigned.filter((s) =>
-          ["HEALTHY"].includes((s.status || "").toUpperCase()),
-        );
+        const active = assigned.filter((s) => ['HEALTHY'].includes((s.status || '').toUpperCase()));
         return { ...prof, total: assigned.length, active: active.length };
       })
       .filter((p) => p.total > 0 && p.active === 0);
   }, [survivors, professions]);
 
   const { data: camps } = useQuery<Camp[]>({
-    queryKey: ["camps"],
+    queryKey: ['camps'],
     queryFn: async () => {
-      const res = await apiClient.get("/camps");
+      const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
   });
 
   const transferMutation = useMutation({
-    mutationFn: async ({
-      personId,
-      campId,
-    }: {
-      personId: number;
-      campId: number;
-    }) => {
-      await apiClient.post("/transfers", {
+    mutationFn: async ({ personId, campId }: { personId: number; campId: number }) => {
+      await apiClient.post('/transfers', {
         requesting_camp: currentCampId,
         target_camp: campId,
-        type: "PERSON",
+        type: 'PERSON',
         requested_by: userId ?? 1,
-        items: [{ item_type: "PERSON", person_id: personId }],
+        items: [{ item_type: 'PERSON', person_id: personId }],
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["people"] });
+      queryClient.invalidateQueries({ queryKey: ['people'] });
       setTransferringPerson(null);
       setTargetCampId(null);
     },
@@ -191,33 +172,22 @@ export default function PopulationRoster() {
 
   const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
-    const profMatch = s.profession_name
-      ?.toLowerCase()
-      .includes(search.toLowerCase());
+    const profMatch = s.profession_name?.toLowerCase().includes(search.toLowerCase());
     const matchesSearch = nameMatch || profMatch;
 
     if (!matchesSearch) return false;
-    if (statusFilter === "ALL") return true;
+    if (statusFilter === 'ALL') return true;
 
-    const personStatus = (s.status || "").toUpperCase();
+    const personStatus = (s.status || '').toUpperCase();
     const filterVal = statusFilter.toUpperCase();
 
-    if (filterVal === "HEALTHY" && personStatus === "HEALTHY") return true;
-    if (
-      filterVal === "WOUNDED" &&
-      (personStatus === "WOUNDED" || personStatus === "INJURED")
-    )
+    if (filterVal === 'HEALTHY' && personStatus === 'HEALTHY') return true;
+    if (filterVal === 'WOUNDED' && (personStatus === 'WOUNDED' || personStatus === 'INJURED'))
       return true;
-    if (filterVal === "SICK" && personStatus === "SICK") return true;
-    if (
-      filterVal === "MISSING" &&
-      (personStatus === "MISSING" || personStatus === "AWAY")
-    )
+    if (filterVal === 'SICK' && personStatus === 'SICK') return true;
+    if (filterVal === 'MISSING' && (personStatus === 'MISSING' || personStatus === 'AWAY'))
       return true;
-    if (
-      filterVal === "DECEASED" &&
-      (personStatus === "DECEASED" || personStatus === "DEAD")
-    )
+    if (filterVal === 'DECEASED' && (personStatus === 'DECEASED' || personStatus === 'DEAD'))
       return true;
 
     return personStatus === filterVal;
@@ -227,29 +197,33 @@ export default function PopulationRoster() {
     <div className="space-y-6 relative">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">
-            Population Roster
-          </h1>
+          <h1 className="text-3xl font-black tracking-tighter uppercase">Population Roster</h1>
           <p className="text-zinc-500 font-mono text-xs uppercase pl-1">
             Survivor census & role assignment
           </p>
         </div>
-        <button
-          onClick={() => navigate("/admission")}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <UserPlus size={18} />
-          REGISTER INTAKE
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/population/new')}
+            className="bg-brand-accent hover:bg-emerald-600 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95"
+          >
+            <UserPlus size={18} />
+            NEW SURVIVOR
+          </button>
+          <button
+            onClick={() => navigate('/admission')}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <UserPlus size={18} />
+            REGISTER INTAKE
+          </button>
+        </div>
       </div>
 
       {/* Controls */}
       <div className="flex gap-4 flex-wrap">
         <div className="flex-1 relative min-w-75">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
-            size={18}
-          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -285,10 +259,9 @@ export default function PopulationRoster() {
               PROFESSION SHORTFALL DETECTED
             </p>
             <p className="text-[11px] text-zinc-400 font-mono leading-relaxed">
-              The following roles have no active personnel. Consider temporary
-              reassignment:{" "}
+              The following roles have no active personnel. Consider temporary reassignment:{' '}
               <span className="text-amber-400 font-bold">
-                {professionCoverage.map((p) => p.name).join(", ")}
+                {professionCoverage.map((p) => p.name).join(', ')}
               </span>
             </p>
           </div>
@@ -355,55 +328,55 @@ export default function PopulationRoster() {
               </tr>
             ) : (
               filteredSurvivors.map((person: Person) => (
-                <tr
-                  key={person.id}
-                  className="hover:bg-white/5 transition-colors group"
-                >
+                <tr key={person.id} className="hover:bg-white/5 transition-colors group">
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => navigate(`/population/${person.id}`)}
+                      className="flex items-center gap-3 text-left"
+                    >
                       <div className="w-8 h-8 rounded bg-zinc-800 grid place-items-center font-bold text-zinc-500">
                         {person.full_name[0]}
                       </div>
                       <span className="font-bold text-zinc-100 group-hover:text-brand-primary transition-colors">
                         {person.full_name}
                       </span>
-                    </div>
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                       <Briefcase size={14} className="text-zinc-600" />
                       <span className="text-sm text-zinc-400 font-mono uppercase tracking-tighter">
-                        {person.profession_name || "UNASSIGNED"}
+                        {person.profession_name || 'UNASSIGNED'}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     {(() => {
-                      const s = (person.status || "").toUpperCase();
-                      const isHealthy = s === "HEALTHY";
-                      const isWounded = s === "WOUNDED" || s === "INJURED";
-                      const isSick = s === "SICK";
-                      const isMissing = s === "MISSING" || s === "AWAY";
-                      const isDeceased = s === "DECEASED" || s === "DEAD";
+                      const s = (person.status || '').toUpperCase();
+                      const isHealthy = s === 'HEALTHY';
+                      const isWounded = s === 'WOUNDED' || s === 'INJURED';
+                      const isSick = s === 'SICK';
+                      const isMissing = s === 'MISSING' || s === 'AWAY';
+                      const isDeceased = s === 'DECEASED' || s === 'DEAD';
 
                       let label = s;
-                      if (isWounded) label = "WOUNDED";
-                      else if (isMissing) label = "MISSING";
-                      else if (isDeceased) label = "DECEASED";
+                      if (isWounded) label = 'WOUNDED';
+                      else if (isMissing) label = 'MISSING';
+                      else if (isDeceased) label = 'DECEASED';
 
                       return (
                         <div
                           className={cn(
-                            "inline-flex items-center gap-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border",
+                            'inline-flex items-center gap-2 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border',
                             isHealthy
-                              ? "bg-emerald-950/20 text-emerald-500 border-emerald-500/30"
+                              ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
                               : isWounded
-                                ? "bg-amber-950/20 text-amber-500 border-amber-500/30"
+                                ? 'bg-amber-950/20 text-amber-500 border-amber-500/30'
                                 : isSick
-                                  ? "bg-orange-950/20 text-orange-500 border-orange-500/30"
+                                  ? 'bg-orange-950/20 text-orange-500 border-orange-500/30'
                                   : isMissing
-                                    ? "bg-blue-950/20 text-blue-400 border-blue-400/30"
-                                    : "bg-zinc-950/20 text-zinc-500 border-zinc-500/30",
+                                    ? 'bg-blue-950/20 text-blue-400 border-blue-400/30'
+                                    : 'bg-zinc-950/20 text-zinc-500 border-zinc-500/30',
                           )}
                         >
                           {isHealthy && <Heart size={10} />}
@@ -415,9 +388,7 @@ export default function PopulationRoster() {
                     })()}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-mono text-zinc-500">
-                      {person.age} YRS
-                    </span>
+                    <span className="text-sm font-mono text-zinc-500">{person.age} YRS</span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end items-center gap-1">
@@ -481,16 +452,14 @@ export default function PopulationRoster() {
                         key={camp.id}
                         onClick={() => setTargetCampId(camp.id)}
                         className={cn(
-                          "p-4 text-left border rounded-lg transition-all",
+                          'p-4 text-left border rounded-lg transition-all',
                           targetCampId === camp.id
-                            ? "bg-brand-secondary/10 border-brand-secondary text-brand-secondary"
-                            : "bg-surface-base border-zinc-800 text-zinc-400 hover:border-zinc-700",
+                            ? 'bg-brand-secondary/10 border-brand-secondary text-brand-secondary'
+                            : 'bg-surface-base border-zinc-800 text-zinc-400 hover:border-zinc-700',
                         )}
                       >
                         <p className="font-bold uppercase">{camp.name}</p>
-                        <p className="text-[10px] font-mono opacity-60">
-                          {camp.location}
-                        </p>
+                        <p className="text-[10px] font-mono opacity-60">{camp.location}</p>
                       </button>
                     ))}
                 </div>
@@ -517,9 +486,7 @@ export default function PopulationRoster() {
                   }
                   className="flex-2 py-3 bg-brand-secondary text-black font-black uppercase rounded hover:bg-amber-600 transition-colors disabled:opacity-30"
                 >
-                  {transferMutation.isPending
-                    ? "AUTHORIZING..."
-                    : "CONFIRM TRANSFER"}
+                  {transferMutation.isPending ? 'AUTHORIZING...' : 'CONFIRM TRANSFER'}
                 </button>
               </div>
             </motion.div>
@@ -539,9 +506,7 @@ export default function PopulationRoster() {
                   <h3 className="text-2xl font-black uppercase italic tracking-tighter">
                     Edit Personnel Profile
                   </h3>
-                  <p className="text-xs text-zinc-500 font-mono">
-                    ID: SURVIVOR-{editingPerson.id}
-                  </p>
+                  <p className="text-xs text-zinc-500 font-mono">ID: SURVIVOR-{editingPerson.id}</p>
                 </div>
                 <button
                   onClick={() => setEditingPerson(null)}
@@ -601,11 +566,9 @@ export default function PopulationRoster() {
                     Profession/Role
                   </label>
                   <select
-                    value={editProfessionId ?? ""}
+                    value={editProfessionId ?? ''}
                     onChange={(e) =>
-                      setEditProfessionId(
-                        e.target.value ? Number(e.target.value) : null,
-                      )
+                      setEditProfessionId(e.target.value ? Number(e.target.value) : null)
                     }
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase cursor-pointer"
                   >
@@ -631,9 +594,7 @@ export default function PopulationRoster() {
                     disabled={updatePersonMutation.isPending}
                     className="flex-2 py-2.5 bg-brand-primary text-black text-xs font-bold uppercase rounded hover:bg-zinc-300 transition-colors"
                   >
-                    {updatePersonMutation.isPending
-                      ? "SAVING..."
-                      : "SAVE CHANGES"}
+                    {updatePersonMutation.isPending ? 'SAVING...' : 'SAVE CHANGES'}
                   </button>
                 </div>
               </form>
@@ -645,7 +606,7 @@ export default function PopulationRoster() {
       <ConfirmDialog
         isOpen={confirmDeletePerson !== null}
         title="Remove survivor from roster?"
-        description={`This will permanently delete ${confirmDeletePerson?.full_name ?? "this person"} from the camp roster. This action cannot be undone.`}
+        description={`This will permanently delete ${confirmDeletePerson?.full_name ?? 'this person'} from the camp roster. This action cannot be undone.`}
         confirmLabel="DELETE"
         variant="danger"
         isPending={deletePersonMutation.isPending}

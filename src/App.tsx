@@ -11,6 +11,8 @@ import AuthLayout from './layouts/AuthLayout';
 import LoginPage from './features/auth/LoginPage';
 import DashboardOverview from './features/dashboard/DashboardOverview';
 import PopulationRoster from './features/people/PopulationRoster';
+import PersonDetail from './features/people/PersonDetail';
+import NewPersonPage from './features/people/NewPersonPage';
 import InventoryList from './features/inventory/InventoryList';
 import InventoryAudit from './features/inventory/InventoryAudit';
 import AdmissionList from './features/admission/AdmissionList';
@@ -96,6 +98,22 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <PopulationRoster />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="population/new"
+              element={
+                <ProtectedRoute roles={['system_admin']}>
+                  <NewPersonPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="population/:id"
+              element={
+                <ProtectedRoute>
+                  <PersonDetail />
                 </ProtectedRoute>
               }
             />
