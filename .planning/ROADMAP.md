@@ -13,9 +13,9 @@
 | 05  | Inventory Audit     | Dedicated inventory audit page — full chronological event log             | Complete (2026-05-24) |
 | 06  | Camp Detail         | `/camps/:id` detail page — camp-specific stats + sub-entities             | Complete (2026-05-24) |
 | 07  | Exploration Detail  | `/expeditions/:id` detail page — full expedition view                     | Complete (2026-05-24) |
-| 08  | Person Detail + New | `/population/:id` profile + `/population/new` add person form             | Pending               |
-| 09  | Person Flows        | Status logging, profession reassignment, contribution overrides           | Pending               |
-| 10  | Resource Alerts     | Prominent stock alerts system — critical/low banners + nav indicator      | Pending               |
+| 08  | Person Detail + New | `/population/:id` profile + `/population/new` add person form             | Complete (2026-05-24) |
+| 09  | Person Flows        | Status logging, profession reassignment, contribution overrides           | Complete (2026-05-24) |
+| 10  | Resource Alerts     | Prominent stock alerts system — critical/low banners + nav indicator      | Complete (2026-05-24) |
 
 ## Dev Rules
 
