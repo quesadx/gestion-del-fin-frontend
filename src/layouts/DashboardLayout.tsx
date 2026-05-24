@@ -358,7 +358,7 @@ export default function DashboardLayout() {
         <motion.nav
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 bg-zinc-950/85 backdrop-blur-xl border border-zinc-900 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.85)] max-w-[95vw]"
+          className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 bg-zinc-950/85 backdrop-blur-xl border border-zinc-900 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.85)] max-w-[95vw] overflow-x-auto"
         >
           {visibleNavItems.map((item) => (
             <NavLink

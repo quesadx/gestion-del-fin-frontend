@@ -89,3 +89,14 @@
     3px 100%;
   pointer-events: none;
 }
+
+@layer base {
+  @media (max-width: 640px) {
+    table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
