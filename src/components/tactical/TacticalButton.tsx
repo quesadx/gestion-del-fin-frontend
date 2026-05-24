@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import ClickSpark from '@/components/ClickSpark';
 
 interface TacticalButtonProps {
   children: ReactNode;
@@ -29,7 +30,7 @@ export function TacticalButton({
   type,
   ...rest
 }: TacticalButtonProps) {
-  return (
+  const button = (
     <motion.button
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.97 }}
@@ -47,4 +48,14 @@ export function TacticalButton({
       {children}
     </motion.button>
   );
+
+  if (variant === 'primary' && !disabled) {
+    return (
+      <ClickSpark sparkColor="#3b82f6" sparkSize={4} sparkCount={10} duration={400}>
+        {button}
+      </ClickSpark>
+    );
+  }
+
+  return button;
 }

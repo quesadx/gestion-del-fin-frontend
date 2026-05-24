@@ -56,7 +56,7 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        mono: ['Inter', 'monospace'],
       },
       backdropBlur: {
         glass: 'var(--gdf-glass-blur)',

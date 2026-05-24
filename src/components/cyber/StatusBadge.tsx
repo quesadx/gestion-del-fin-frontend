@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import DecryptedText from '@/components/DecryptedText';
 
 const STATUS_CLASSES: Record<string, string> = {
   red: 'border-gdf-status-danger/30 text-gdf-status-danger',
@@ -31,7 +32,13 @@ export function StatusBadge({ status, variant = 'red', className = '' }: StatusB
       <span
         className={cn('inline-block h-1.5 w-1.5 animate-blink rounded-full', DOT_CLASSES[variant])}
       />
-      {status}
+      <DecryptedText
+        text={status}
+        speed={50}
+        maxIterations={8}
+        animateOn="view"
+        className={cn('font-bold uppercase tracking-[0.1em]', STATUS_CLASSES[variant])}
+      />
     </span>
   );
 }

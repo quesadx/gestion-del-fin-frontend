@@ -10,6 +10,7 @@ import { ROLE_LANDING } from '@/shared/lib/roleGuards';
 import { GlassPanel } from '@/components/tactical/GlassPanel';
 import { TacticalButton } from '@/components/tactical/TacticalButton';
 import { ShieldAlert } from 'lucide-react';
+import BlurText from '@/components/BlurText';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'Minimum 3 characters required'),
@@ -60,7 +61,13 @@ export function LoginPage() {
               <ShieldAlert size={24} className="text-gdf-text-inverse" />
             </div>
             <h1 className="font-sans text-2xl font-black tracking-tighter uppercase text-gdf-text-primary">
-              End Management
+              <BlurText
+                text="End Management"
+                delay={60}
+                animateBy="words"
+                direction="top"
+                className="text-2xl font-black tracking-tighter uppercase"
+              />
             </h1>
             <p className="font-mono text-[10px] text-gdf-text-muted uppercase tracking-widest mt-2">
               TACTICAL COMMAND // AUTHENTICATION

@@ -25,7 +25,7 @@
 /* ── FONT SCALE ─────────────────────────────────────────────────────────── */
 :root {
   --gdf-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --gdf-font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+  --gdf-font-mono: 'Inter', 'Cascadia Code', monospace;
   --gdf-font-xs: 0.625rem;
   --gdf-font-sm: 0.75rem;
   --gdf-font-base: 0.8125rem;

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import './tokens.css';
 @tailwind base;
 @tailwind components;
@@ -126,42 +126,8 @@
 }
 
 @layer components {
-  .brutalist-border {
-    border: 1px solid var(--gdf-border-subtle);
-  }
-
-  .glass {
-    background: var(--gdf-glass-bg);
-    border: 1px solid var(--gdf-glass-border);
-    backdrop-filter: blur(var(--gdf-glass-blur));
-    -webkit-backdrop-filter: blur(var(--gdf-glass-blur));
-  }
-  .glass-heavy {
-    background: var(--gdf-glass-bg-heavy);
-    border: 1px solid var(--gdf-glass-border);
-    backdrop-filter: blur(var(--gdf-glass-blur-heavy));
-    -webkit-backdrop-filter: blur(var(--gdf-glass-blur-heavy));
-  }
-  .glass-interactive {
-    background: var(--gdf-glass-bg);
-    border: 1px solid var(--gdf-glass-border);
-    backdrop-filter: blur(var(--gdf-glass-blur));
-    -webkit-backdrop-filter: blur(var(--gdf-glass-blur));
-    transition:
-      background var(--gdf-transition-fast),
-      border-color var(--gdf-transition-fast);
-  }
-  .glass-interactive:hover {
-    background: var(--gdf-glass-bg-hover);
-    border-color: var(--gdf-glass-border-hover);
-  }
-  .glass-interactive:active {
-    background: var(--gdf-glass-bg-heavy);
-    border-color: var(--gdf-border-active);
-  }
-
   .font-mono-data {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', monospace;
     font-size: 0.75rem;
   }
   .font-display {
@@ -179,12 +145,12 @@
   }
 
   .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', monospace;
     font-size: 0.8125rem;
     letter-spacing: 0;
   }
   .font-mono-sm {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', monospace;
     font-size: 0.6875rem;
     letter-spacing: 0;
   }
@@ -279,20 +245,6 @@
     -webkit-backdrop-filter: blur(var(--gdf-glass-blur-heavy));
     border-radius: var(--gdf-radius-lg);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  }
-  .gdf-glass-card {
-    background: var(--gdf-glass-bg);
-    border: 1px solid var(--gdf-glass-border);
-    backdrop-filter: blur(var(--gdf-glass-blur));
-    -webkit-backdrop-filter: blur(var(--gdf-glass-blur));
-    border-radius: var(--gdf-radius-xl);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    transition:
-      transform var(--gdf-transition-base),
-      box-shadow var(--gdf-transition-base);
-  }
-  .gdf-glass-card:hover {
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
   }
   .gdf-interactive-hover {
     transition:
