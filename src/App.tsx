@@ -12,6 +12,7 @@ import LoginPage from './features/auth/LoginPage';
 import DashboardOverview from './features/dashboard/DashboardOverview';
 import PopulationRoster from './features/people/PopulationRoster';
 import InventoryList from './features/inventory/InventoryList';
+import InventoryAudit from './features/inventory/InventoryAudit';
 import AdmissionList from './features/admission/AdmissionList';
 import ExpeditionList from './features/explorations/ExpeditionList';
 import CampManagement from './features/camps/CampManagement';
@@ -101,6 +102,14 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <InventoryList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="inventory/audit"
+              element={
+                <ProtectedRoute>
+                  <InventoryAudit />
                 </ProtectedRoute>
               }
             />
