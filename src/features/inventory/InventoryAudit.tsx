@@ -50,11 +50,15 @@ export default function InventoryAudit() {
   // Filter by adjustment type
   const filtered = useMemo(() => {
     const entries = Array.isArray(auditData) ? auditData : [];
-    if (!selectedType) return entries;
+    if (entries.length === 0) return [];
+
+    const isSummary = entries[0].resource_name !== undefined;
+    if (isSummary || !selectedType) return entries;
+
     return entries.filter((e: any) => e.type === selectedType);
   }, [auditData, selectedType]);
 
-  // Pagination slice
+  const isSummaryAudit = filtered.length > 0 && filtered[0].resource_name !== undefined;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -64,10 +68,11 @@ export default function InventoryAudit() {
   };
 
   const resolveResourceName = (entry: any): string => {
+    if (entry.resource_name) return entry.resource_name;
     if (entry.resource?.name) return entry.resource.name;
     const name = resourceMap.get(entry.resource_type_id);
     if (name) return name;
-    return `Resource #${entry.resource_type_id}`;
+    return `Resource #${entry.resource_type_id ?? 'unknown'}`;
   };
 
   return (
@@ -139,7 +144,7 @@ export default function InventoryAudit() {
               No audit records found
             </p>
             <p className="text-xs text-zinc-600 font-mono mt-1">
-              {selectedType
+              {selectedType && !isSummaryAudit
                 ? `No entries of type "${selectedType}" for this camp.`
                 : 'No inventory adjustments have been recorded for this camp.'}
             </p>
@@ -152,16 +157,55 @@ export default function InventoryAudit() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
-                  <th className="py-3 px-4 font-semibold">Timestamp</th>
-                  <th className="py-3 px-4 font-semibold">Resource</th>
-                  <th className="py-3 px-4 font-semibold">Type</th>
-                  <th className="py-3 px-4 font-semibold">Quantity</th>
-                  <th className="py-3 px-4 font-semibold">Description</th>
-                  <th className="py-3 px-4 font-semibold">User</th>
+                  {isSummaryAudit ? (
+                    <>
+                      <th className="py-3 px-4 font-semibold">Resource</th>
+                      <th className="py-3 px-4 font-semibold">Unit</th>
+                      <th className="py-3 px-4 font-semibold">Inventory</th>
+                      <th className="py-3 px-4 font-semibold">Log Delta</th>
+                      <th className="py-3 px-4 font-semibold">Discrepancy</th>
+                      <th className="py-3 px-4 font-semibold">Consistent</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="py-3 px-4 font-semibold">Timestamp</th>
+                      <th className="py-3 px-4 font-semibold">Resource</th>
+                      <th className="py-3 px-4 font-semibold">Type</th>
+                      <th className="py-3 px-4 font-semibold">Quantity</th>
+                      <th className="py-3 px-4 font-semibold">Description</th>
+                      <th className="py-3 px-4 font-semibold">User</th>
+                    </>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/50">
                 {paginated.map((entry: any) => {
+                  if (isSummaryAudit) {
+                    return (
+                      <tr
+                        key={entry.resource_type_id}
+                        className="hover:bg-zinc-900/40 transition-colors"
+                      >
+                        <td className="py-3 px-4 font-medium text-zinc-100">
+                          {resolveResourceName(entry)}
+                        </td>
+                        <td className="py-3 px-4 text-zinc-400">{entry.unit ?? '—'}</td>
+                        <td className="py-3 px-4 font-mono text-zinc-100">
+                          {entry.inventory_quantity ?? '—'}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-zinc-100">
+                          {entry.log_delta_sum ?? '—'}
+                        </td>
+                        <td className="py-3 px-4 text-zinc-400">
+                          {entry.discrepancy ?? '—'}
+                        </td>
+                        <td className="py-3 px-4 text-zinc-400 uppercase tracking-wide">
+                          {entry.is_consistent ? 'YES' : 'NO'}
+                        </td>
+                      </tr>
+                    );
+                  }
+
                   const isIn = entry.type === 'MANUAL_IN';
                   return (
                     <tr
@@ -169,7 +213,7 @@ export default function InventoryAudit() {
                       className="hover:bg-zinc-900/40 transition-colors"
                     >
                       <td className="py-3 px-4 font-mono text-zinc-300 whitespace-nowrap">
-                        {formatDate(entry.created_at ?? entry.timestamp)}
+                        {formatDate(entry.created_at ?? entry.timestamp ?? null)}
                       </td>
                       <td className="py-3 px-4 font-medium text-zinc-100">
                         {resolveResourceName(entry)}

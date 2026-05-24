@@ -81,6 +81,9 @@ export default function UsersPage() {
     setCampId('');
   };
 
+  const formatRole = (role?: string) =>
+    typeof role === 'string' && role.length > 0 ? role.replace(/_/g, ' ') : 'unknown';
+
   const openCreateModal = () => {
     setEditingUser(null);
     setUsername('');
@@ -94,7 +97,7 @@ export default function UsersPage() {
     setEditingUser(user);
     setUsername(user.username);
     setPassword('');
-    setRole(user.role);
+    setRole(user.role ?? 'survivor');
     setCampId(user.camp_id != null ? String(user.camp_id) : '');
     setIsModalOpen(true);
   };
@@ -180,7 +183,7 @@ export default function UsersPage() {
                   </h3>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-zinc-950/40 text-zinc-400 border-zinc-800">
-                      {user.role.replace(/_/g, ' ')}
+                      {formatRole(user.role)}
                     </span>
                     <span
                       className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
@@ -360,7 +363,7 @@ export default function UsersPage() {
               <div className="p-4 bg-zinc-950/60 rounded border border-zinc-900">
                 <p className="text-sm font-bold text-zinc-200">{deletingUser.username}</p>
                 <p className="text-xs text-zinc-500 font-mono mt-1">
-                  Role: {deletingUser.role.replace(/_/g, ' ')} &middot; Camp:{' '}
+                  Role: {formatRole(deletingUser.role)} &middot; Camp:{' '}
                   {deletingUser.camp_id ?? 'None'}
                 </p>
               </div>
