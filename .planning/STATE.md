@@ -2,11 +2,11 @@
 
 **Last Updated:** 2026-05-24
 
-## Current Phase
+## Current Milestone
 
-- **Phase:** 10 (Resource Alerts)
-- **Status:** Complete
-- **Plans Complete:** 1/1
+- **Milestone:** v1.0-legacy-parity (Legacy Feature Parity)
+- **Status:** ✅ Shipped
+- **Phases Complete:** 10/10
 
 ## Progress
 
@@ -23,6 +23,14 @@
 | 09    | ✓      | 1/1   | 100%     |
 | 10    | ✓      | 1/1   | 100%     |
 
+## Project Reference
+
+See: .planning/PROJECT.md (updated 2026-05-24)
+
+**Core value:** Complete camp operation management in a single, responsive web interface.
+
+**Current focus:** Planning next milestone.
+
 ## Last Activity
 
-- Phase 10 (Resource Alerts) — Complete
+- Milestone v1.0-legacy-parity — Shipped 2026-05-24
