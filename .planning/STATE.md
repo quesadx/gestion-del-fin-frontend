@@ -16,4 +16,4 @@ None.
 | # | Description | Date | Commit | Status | Directory |
 |---|-------------|------|--------|--------|-----------|
 | 260523-p11 | ReactBits UI refactor with animated components and cleanup | 2026-05-24 | 87977c6 | Complete | [260523-p11-reactbits-ui-refactor-with-animated-comp](./quick/260523-p11-reactbits-ui-refactor-with-animated-comp/) |
-| 260523-ptf | Tactical dashboard cleanup — contrast, glow reduction, terminal aesthetic removal | 2026-05-24 | TBD | Complete | [260523-ptf-clean-up-tactical-dashboard-improve-read](./quick/260523-ptf-clean-up-tactical-dashboard-improve-read/) |
+| 260523-ptf | Tactical dashboard cleanup — contrast, glow reduction, terminal aesthetic removal | 2026-05-24 | 0ab61e9 | Complete | [260523-ptf-clean-up-tactical-dashboard-improve-read](./quick/260523-ptf-clean-up-tactical-dashboard-improve-read/) |
