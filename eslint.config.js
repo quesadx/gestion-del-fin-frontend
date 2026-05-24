@@ -5,19 +5,18 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import prettierPlugin from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
-import { defineConfig, globalIgnores } from 'eslint/config';
 
-export default defineConfig([
-  globalIgnores(['dist', 'reference-frontend/**', 'neon-nova-dashboard/**', 'temp/**', 'e2e/**']),
+export default tseslint.config(
+  { ignores: ['dist', 'legacy', 'e2e', '*.config.*'] },
   {
-    files: ['**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
-      tseslint.configs.recommended,
+      ...tseslint.configs.recommended,
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
       prettierConfig,
     ],
+    files: ['**/*.{ts,tsx}'],
     plugins: {
       prettier: prettierPlugin,
     },
@@ -29,4 +28,4 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
-]);
+);

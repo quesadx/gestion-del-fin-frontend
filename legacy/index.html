@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://gestion-del-fin-api-production.up.railway.app; frame-ancestors 'none';"
+    />
+    <title>GESTIÓN DEL FIN — Tactical Command</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <style>
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #080c12;
+        color: #e8edf3;
+        font-family: 'JetBrains Mono', monospace;
+        transition: opacity 0.4s ease-out;
+      }
+      #splash.hide {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash-icon {
+        width: 48px;
+        height: 48px;
+        margin-bottom: 24px;
+        background: #3b82f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', sans-serif;
+        font-weight: 900;
+        font-style: italic;
+        font-size: 20px;
+        color: #080c12;
+      }
+      #splash-spinner {
+        width: 48px;
+        height: 2px;
+        margin-bottom: 32px;
+        background: rgba(59, 130, 246, 0.15);
+        overflow: hidden;
+      }
+      #splash-spinner::after {
+        content: '';
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: #3b82f6;
+        animation: splash-load 1.2s ease-in-out infinite;
+      }
+      #splash-lines {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        color: #536682;
+        text-transform: uppercase;
+      }
+      #splash-lines span {
+        opacity: 0;
+        animation: splash-fade-in 0.3s ease-out forwards;
+      }
+      @keyframes splash-load {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(350%);
+        }
+      }
+      @keyframes splash-fade-in {
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div id="splash">
+        <div id="splash-icon">GF</div>
+        <div id="splash-spinner"></div>
+        <div id="splash-lines">
+          <span style="animation-delay: 0s">TACTICAL OS BOOT</span>
+          <span style="animation-delay: 0.3s">MEMORY CHECK: OK</span>
+          <span style="animation-delay: 0.6s">SECURE CHANNEL: ESTABLISHED</span>
+          <span style="animation-delay: 0.9s">HOLO INTERFACE INITIALIZING</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

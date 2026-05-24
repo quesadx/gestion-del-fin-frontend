@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   check:
-    name: Build, Lint & Spell
+    name: Lint, Format, Spell & Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.18.0
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -31,6 +31,9 @@ jobs:
 
       - name: Lint
         run: pnpm run lint
+
+      - name: Format check
+        run: pnpm run format:check
 
       - name: Spell check
         run: pnpm run spell

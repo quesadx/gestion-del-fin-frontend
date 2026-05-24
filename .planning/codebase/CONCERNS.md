@@ -1,259 +1,237 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-05-19
+**Analysis Date:** 2026-05-24
 
 ## Tech Debt
 
-### Scaffolding Artifact Leak
+### Monolithic Mock Server
+- Issue: All API routes, mock data, and Vite middleware share a single 491-line `server.ts`. Early-stage prototyping pattern with no layering whatsoever.
+- Files: `server.ts`
+- Impact: Mock data is initialized as mutable `let` variables at module scope (lines 12–46). Every route handler directly mutates shared state. Adding a new domain (e.g., "buildings") requires touching the monolith.
+- Fix approach: Extract route handlers into separate domain modules (`server/routes/camps.ts`, `server/routes/people.ts`) with a shared in-memory store module. Use a proper database (SQLite via `better-sqlite3`) as the next evolution step.
 
-- Issue: `temp/neon-nova-dashboard/` directory remains from project scaffolding. Contains ~2,100 lines of duplicate shadcn/ui components (`sidebar.tsx` 738 lines, `chart.tsx` 331 lines, `carousel.tsx` 240 lines) and a 436-line routes file.
-- Files: `temp/neon-nova-dashboard/src/**`
-- Impact: Build tooling may pick these up; confused devs may edit wrong files; search tools return duplicate results.
-- Fix approach: Delete `temp/` directory — it is not imported by `src/` anywhere.
+### Ephemeral In-Memory Data Store
+- Issue: All data (survivors, camps, resources, inventory, admissions, expeditions, audit logs) lives in `let` arrays in `server.ts`. Every server restart wipes all data.
+- Files: `server.ts` (lines 12–46)
+- Impact: Impossible to persist operational data between dev sessions. Cannot track real inventory changes or admission decisions across restarts.
+- Fix approach: Migrate to a file-backed store (low-touch: JSON file per entity) or embedded SQLite. Each route handler should use the store abstraction rather than direct array mutation.
 
-### Pervasive Type Casting Instead of Proper API Response Types
+### Mutable Global State Across Routes
+- Issue: Multiple route handlers mutate the same arrays concurrently. Inventory adjustment (`POST /api/inventory/adjustment`, line 175) directly pushes to `inventory` and `inventoryLogs` arrays. Camp creation (`POST /api/camps`, line 78) pushes to three different arrays. No transaction isolation or locking.
+- Files: `server.ts` (lines 78–107, 175–210, 399–407)
+- Impact: Race conditions possible under concurrent requests. Inconsistent state between inventory and audit logs if one push succeeds and another fails.
+- Fix approach: Wrap multi-array mutations in helper functions (`addInventoryChange`, `addCampWithDefaults`) that operate atomically. Eventually replace with transactional database operations.
 
-- Issue: Throughout page components, API responses are cast with `as Record<string, unknown>` chains instead of using typed DTO interfaces. Example from `DashboardPage.tsx`:
-  ```typescript
-  const campsData = (campsQuery.data as Record<string, unknown>)?.data as
-    | Record<string, unknown>[]
-    | undefined;
-  ```
-  This pattern appears in 15+ page files. The `PaginationQuery` and `LoginResponse` types exist in `src/shared/api/types.ts`, but domain-specific API response wrappers (pagination envelope, list-response wrapper) are not typed.
-- Files: `src/pages/DashboardPage.tsx`, `src/features/people/pages/PeopleListPage.tsx`, `src/features/camps/pages/CampsPage.tsx`, `src/features/explorations/pages/ExplorationsPage.tsx`, `src/features/inventory/pages/InventoryPage.tsx`, `src/features/transfers/pages/TransfersPage.tsx`, `src/layouts/AppShell.tsx`, `src/features/admission/pages/AdmissionsPage.tsx`, `src/features/rations/pages/RationsPage.tsx`
-- Impact: Zero type safety on API responses. Refactoring backend response shape silently breaks UI. Autocomplete doesn't work. Property access typos are not caught.
-- Fix approach: Define `PaginatedResponse<T>` and `ApiResponse<T>` generic types in `src/shared/api/types.ts`. Propagate through all API modules, hooks, and pages. This is high-effort but foundational.
+### Large Feature Component Files
+- Issue: Several feature components exceed 400 lines, mixing data fetching, form state, modal rendering, and UI markup in a single file.
+- Files:
+  - `src/features/admission/AdmissionList.tsx` (483 lines)
+  - `src/features/people/PopulationRoster.tsx` (476 lines)
+  - `src/features/explorations/ExpeditionList.tsx` (469 lines)
+  - `src/features/inventory/InventoryList.tsx` (420 lines)
+- Impact: Hard to test, hard to refactor, high cognitive load. Each file contains 3–4 "screens" (list view, create modal, edit modal, detail panel) in one component.
+- Fix approach: Split each feature into sub-components: `AdmissionList.tsx` → `AdmissionPanel.tsx`, `AdmissionDetail.tsx`, `AdmissionCreateModal.tsx`. Extract hooks (`useAdmissions`, `useExpeditions`) for data fetching logic.
 
-### Inconsistent Zod Resolver Usage
+### Widespread `any` Type Usage (12 occurrences)
+- Issue: TypeScript's `any` is used to bypass type checking in critical data paths. All audit log data, resource summaries, API error responses, and form state casts use `any`.
+- Files:
+  - `src/features/dashboard/DashboardOverview.tsx` (lines 151, 163) — resource chart data
+  - `src/features/inventory/InventoryList.tsx` (lines 34, 254) — audit log query and rendering
+  - `src/features/auth/LoginPage.tsx` (line 44) — API error catch
+  - `src/features/people/PopulationRoster.tsx` (lines 60, 420) — status normalization and form state
+  - `src/features/explorations/ExpeditionList.tsx` (lines 93, 336, 425) — form state casts
+  - `src/features/camps/CampManagement.tsx` (line 236) — status form cast
+  - `server.ts` (line 282, 385) — admission data mutation with `(adm as any)`
+- Impact: Silent runtime type errors in production. API response shape changes won't be caught at compile time.
+- Fix approach: Define proper `AuditLogEntry`, `ResourceMetric`, `ApiErrorResponse` types in `src/types.ts`. Use `z.infer` with Zod schemas for API responses. Replace `as any` casts with explicit type assertions.
 
-- Issue: Some forms use `zodResolver` directly (e.g., `LoginPage.tsx` line 32, `ExplorationsPage.tsx` line 142), others use a custom `resolved()` wrapper from `src/shared/lib/form.ts`. The wrapper just re-exports `zodResolver` with a type cast, adding indirection with no benefit.
-- Files: `src/shared/lib/form.ts` (7 lines), `src/pages/LoginPage.tsx` (uses zodResolver), `src/features/explorations/pages/ExplorationsPage.tsx` (uses zodResolver), 10+ pages use `resolved()`.
-- Impact: Confusion for new developers. Two patterns for the same thing.
-- Fix approach: Pick one pattern (prefer `zodResolver` directly, matching AGENTS.md). Remove `src/shared/lib/form.ts`.
+### No Test Coverage
+- Issue: Zero test files exist. No test runner configured (no jest.config, vitest.config, or test script in package.json). The only "check" is `tsc --noEmit`.
+- Files: N/A (missing entirely)
+- Impact: All features are untested. Refactoring, dependency upgrades, and new features risk regressions with no safety net.
+- Fix approach: Add Vitest (already compatible with Vite ecosystem). Start with integration tests for critical API endpoints and unit tests for state management (`src/store/index.ts`). Add a `npm run test` script.
 
-### Duplicate API Module Files
+### Fake Authentication with Hardcoded Credentials
+- Issue: Login accepts any password. Role assignment is hardcoded: username "admin" → system_admin, "manager" → resource_manager, "travel"/"coordinator" → travel_coordinator, anything else → survivor. The mock JWT token is the literal string `"mock-jwt-token"`.
+- Files:
+  - `server.ts` (lines 49–58)
+  - `src/features/auth/LoginPage.tsx` (lines 130–144) — displays hardcoded credentials in UI
+- Impact: Zero actual security. The UI literally shows the valid usernames to anyone visiting the login page.
+- Fix approach: Remove credential display from login UI. If this stays as a demo with mock auth, at minimum remove the visible credential hints. For real auth, integrate a proper authentication provider or implement password hashing with bcrypt.
 
-- Issue: `src/features/inventory/api/resources.api.ts` and `src/features/resources/api/resources.api.ts` both define `getAll` for resources — likely copy-paste duplicates with different feature paths.
-- Files: `src/features/inventory/api/resources.api.ts`, `src/features/resources/api/resources.api.ts`
-- Impact: Drift risk — updating one doesn't update the other. Unclear which module "owns" the resources API.
-- Fix approach: Consolidate into a single `src/features/resources/api/resources.api.ts`. Inventory should import from resources feature, not duplicate.
+### Unused Dependencies
+- Issue: `@google/genai` (^1.29.0) is listed in `dependencies` but never imported in any source file. No Gemini API calls exist in the codebase.
+- Files: `package.json` (line 15)
+- Impact: Unnecessary package bloat, increased install time, potential supply-chain surface.
+- Fix approach: Either remove the dependency or actually implement Gemini API integration (AI admission analysis). The `vite.config.ts` injects `GEMINI_API_KEY` via `process.env`, suggesting the intent exists but code was never written.
+
+### Unused Imports in Feature Components
+- Issue: `ArrowRight` is imported from lucide-react in `AdmissionList.tsx` but never used in the JSX.
+- Files: `src/features/admission/AdmissionList.tsx` (line 6)
+- Impact: Minor bundle size increase. Linting would catch this if configured.
+- Fix approach: Add `eslint-plugin-react` with `no-unused-vars` or configure TypeScript's `noUnusedLocals` in tsconfig.json.
 
 ## Known Bugs
 
-### Session Lock Not Persisted Across Reload
-
-- Symptoms: `isLocked` state resets to `false` on page refresh because `src/features/auth/store/auth.store.ts` line 59 partializes only `{ user, token, role }`. The lock interval (10s) in `auth-context.tsx` line 33 checks `lastActivity` — which is not persisted either, resetting to `Date.now()` on every reload.
-- Files: `src/features/auth/store/auth.store.ts:58-63`, `src/features/auth/auth-context.tsx:28-32`
-- Trigger: User is idle for 20 minutes, refreshes the page → session lock is bypassed because `lastActivity` resets.
-- Workaround: None. Session timeout is effectively disabled for page refreshes.
-
-### TransfersPage Sends Hardcoded `requested_by: 0`
-
-- Symptoms: In `src/features/transfers/pages/TransfersPage.tsx` line 148, `requested_by: 0` is hardcoded. The page does have access to `useAuthStore` to get `userId`, but doesn't use it.
-- Files: `src/features/transfers/pages/TransfersPage.tsx:148`
-- Trigger: Creating any transfer.
-- Workaround: None — all transfers created from this page will have invalid `requested_by`.
-
-### `useAuth` Throws on Missing Provider with No Error Boundary
-
-- Symptoms: If `useAuth()` is called outside `AuthProvider`, the hook throws `Error('useAuth must be used inside AuthProvider')` (line 8 of `useAuth.ts`). There is no React Error Boundary wrapping the app — this will crash the entire React tree with an unhandled error.
-- Files: `src/features/auth/useAuth.ts:8`, `src/App.tsx` (no ErrorBoundary)
-- Trigger: Any component calling `useAuth()` outside the provider tree.
-- Workaround: None. Would show a white screen.
-
-### Navigation Ref Race Condition
-
-- Symptoms: `navigationRef` in `src/shared/api/axiosInstance.ts` is a global mutable ref. If multiple 401 responses arrive simultaneously, `isHandling401` gate (line 24) prevents double-logout, but the `setTimeout` reset (2000ms, line 46) creates a window where legitimate 401s from re-login attempts are silently ignored.
-- Files: `src/shared/api/axiosInstance.ts:5,24-47`
-- Impact: After auto-logout, if user quickly re-logs in and their token is invalid, the 401 handler won't fire again for 2 seconds.
+### Disabled Pagination Controls
+- Symptoms: The PREV/NEXT buttons in the Population Roster are permanently disabled with no implementation.
+- Files: `src/features/people/PopulationRoster.tsx` (lines 470–471)
+- Trigger: Always visible when viewing population list.
+- Workaround: None — all records are shown in a single un-paginated table.
+- Fix approach: Implement client-side pagination or add server-side `limit`/`offset` query params.
 
 ## Security Considerations
 
-### JWT Token in localStorage (XSS Risk)
+### Token Stored in localStorage (XSS-Vulnerable)
+- Risk: JWT token is stored in `localStorage` and attached via axios interceptor. Any XSS vulnerability would leak the token.
+- Files:
+  - `src/store/index.ts` (line 18) — `localStorage.setItem('token', token)`
+  - `src/lib/api.ts` (line 27) — reads token from localStorage
+- Current mitigation: None. The token is fully accessible to any script running on the page.
+- Recommendations: Use httpOnly cookies for token storage (requires server-side cookie setting). At minimum, use sessionStorage instead of localStorage for slightly reduced persistence window.
 
-- Risk: JWT token stored in `localStorage` via Zustand persist middleware (`gdf.auth` key). Any XSS vulnerability grants attacker full access token.
-- Files: `src/features/auth/store/auth.store.ts:58-63`
-- Current mitigation: No `dangerouslySetInnerHTML` usage in app code (shadcn chart.tsx uses it for SVG, low risk). No eval or innerHTML patterns detected.
-- Recommendations: Consider httpOnly cookie approach for token storage. At minimum, add Content-Security-Policy headers.
+### Hardcoded External API URL
+- Risk: The remote API URL (`https://gestion-del-fin-api-production.up.railway.app/api`) is hardcoded in the frontend source code rather than configured via environment variables.
+- Files: `src/lib/api.ts` (line 10)
+- Current mitigation: The `api_mode` toggle in localStorage switches between local (`/api`) and remote.
+- Recommendations: Move the remote URL to an environment variable (`VITE_API_REMOTE_URL`). Add validation for the URL format at build time.
 
-### Session Timeout Uses Client-Side Clock
+### No CORS Policy on Mock Server
+- Risk: The Express mock server has no CORS middleware configured, meaning it only accepts same-origin requests by default. This is secure but could cause confusion when frontend and API are on different origins.
+- Files: `server.ts` (no CORS configuration present)
+- Current mitigation: Express's default behavior blocks cross-origin requests.
+- Recommendations: If the API is intended to be called from other origins, configure CORS with explicit origin whitelist.
 
-- Risk: The lock check at `src/features/auth/auth-context.tsx:28` uses `Date.now()` for elapsed time calculation. User can bypass timeout by changing system clock backward.
-- Files: `src/features/auth/auth-context.tsx:27-32`
-- Recommendations: Validate session on server side (check token expiry). Use server time (`getServerNow()` from `useServerTime.ts`) instead of `Date.now()`.
+### No CSRF Protection on Mutating Endpoints
+- Risk: POST/PUT/PATCH/DELETE endpoints have no CSRF token validation. Since the token is sent via `Authorization` header (Bearer), CSRF is partially mitigated, but this pattern is fragile.
+- Files: All mutating routes in `server.ts` (lines 78, 109, 175, 217, 245, 265, 297, 378, 422, 439, 449)
+- Current mitigation: Bearer token in Authorization header (same-origin policy prevents header reading).
+- Recommendations: Implement CSRF token double-submit cookie pattern if moving to cookie-based auth.
 
-### Role Guards Are Client-Only
-
-- Risk: `canAccess()` in `src/shared/lib/roleGuards.ts` and `RoleGate` component in `src/shared/guards/RoleGate.tsx` are purely client-side. API endpoints may still respond to unauthorized requests if backend doesn't enforce same roles. Frontend can be bypassed via browser devtools.
-- Files: `src/shared/lib/roleGuards.ts`, `src/shared/guards/RoleGate.tsx`, `src/routes/ProtectedRoute.tsx`
-- Current mitigation: Backend should independently enforce role-checking on every endpoint. Frontend guards are UX, not security.
-- Recommendations: Document backend role enforcement. Add interceptor-level 403 handling in `axiosInstance.ts`.
-
-### Environment File Present in Repo
-
-- Risk: `.env` file exists (184 bytes). While Vite env vars with `VITE_` prefix are bundled into client-side code intentionally, non-`VITE_` vars could leak.
-- Files: `.env` (present), `.env.example` (present)
-- Recommendations: Verify `.env` only contains `VITE_*` vars. Ensure `.env` is in `.gitignore` (or add `.env` to gitattributes if it should be committed as example).
-
-### Zero Input Sanitization for User-Generated Content
-
-- Risk: No sanitization library (DOMPurify, etc.) imported. Text inputs (names, notes, skills_summary) are rendered directly in JSX. React's built-in escaping protects against HTML injection in text content, but if any component renders user input as `dangerouslySetInnerHTML`, XSS is possible.
-- Files: `src/components/ui/chart.tsx:89` (shadcn default — uses `dangerouslySetInnerHTML` for SVG tooltip labels)
-- Current mitigation: React's JSX escaping covers most cases.
-- Recommendations: Add `dompurify` if any user content is ever rendered as HTML. Audit chart tooltip if it can render user-provided data.
+### Input Validation Gaps on Server
+- Issue: Several endpoints accept and process user input without type validation or sanitization. The server only checks for `!name` or `!destination` presence, not type/format.
+- Files:
+  - `server.ts` (line 402) — `applicant_age` cast to Number without range check
+  - `server.ts` (line 178) — `quantity` from request body directly used in arithmetic
+- Impact: Negative inventory quantities, zero-age applicants, oversized strings could corrupt mock data.
+- Fix approach: Add Zod validation schemas to all request bodies on the server side, mirroring the client-side validation pattern already in use.
 
 ## Performance Bottlenecks
 
-### Explorations Load All Without Pagination
+### Client-Side Filtering on Full Dataset
+- Problem: The Population Roster fetches all survivors for a camp and filters client-side via JavaScript (name/profession/status matching). No server-side search.
+- Files: `src/features/people/PopulationRoster.tsx` (lines 115–133)
+- Cause: No server-side search/filter endpoints exist.
+- Improvement path: Add query parameters (`?search=`, `?status=`) to the `/api/camps/:campId/people` endpoint. Enable server-side filtering to reduce payload size as data grows.
 
-- Problem: `src/features/explorations/api/explorations.api.ts` line 47: `getAll: () => api.get('/expeditions').then((res) => res.data.data)` — no pagination params. As data grows, this fetches all records.
-- Files: `src/features/explorations/api/explorations.api.ts:47`
-- Cause: API not designed with pagination; frontend doesn't request it.
-- Improvement path: Add `PaginationQuery` param to `getAll()`. Add server-side pagination support.
+### Full Page Reload on API Mode Switch
+- Problem: `setApiMode()` calls `window.location.reload()` to switch between local/remote API, causing a full SPA teardown and re-initialization.
+- Files: `src/lib/api.ts` (line 19)
+- Cause: The axios baseURL is set once at module initialization time (`axios.create()`), making it impossible to change dynamically without a reload.
+- Improvement path: Use an axios instance that can be reconfigured at runtime. Store the mode in React context or zustand store, and create a factory function for the axios instance that reads current mode.
 
-### Camp Switch Invalidates All Queries
-
-- Problem: `src/layouts/AppShell.tsx` line 35 calls `queryClient.invalidateQueries()` with no filter key — this invalidates EVERY cached query in the app, causing full refetch waterfall.
-- Files: `src/layouts/AppShell.tsx:35`
-- Cause: Overly broad invalidation to ensure data consistency.
-- Improvement path: Invalidate only camp-scoped query keys: `queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== 'professions' })` or similar whitelist.
-
-### Client-Side Filtering on People List
-
-- Problem: `src/features/people/pages/PeopleListPage.tsx` fetches 20 rows per page via API pagination, but then applies client-side `searchTerm`, `statusFilter`, and `professionFilter`. If the matching row is on page 3, the user sees 0 results on page 1 even though data exists.
-- Files: `src/features/people/pages/PeopleListPage.tsx:61-72`
-- Cause: Server API likely doesn't support these filter params, so frontend does it locally.
-- Improvement path: Push filter params to API (add `search`, `status`, `profession_id` to `PaginationQuery`).
-
-### Large Page Components
-
-- Problem: `ExplorationsPage.tsx` (830 lines), `TransfersPage.tsx` (741 lines), `PersonDetailPage.tsx` (740 lines) — each is a "god component" mixing data fetching, form logic, dialog state, and UI rendering.
-- Files: `src/features/explorations/pages/ExplorationsPage.tsx`, `src/features/transfers/pages/TransfersPage.tsx`, `src/features/people/pages/PersonDetailPage.tsx`
-- Cause: No extraction of sub-components or custom hooks for complex dialogs.
-- Improvement path: Extract dialog contents into separate components. Move form logic into custom hooks. This also enables code splitting for dialog content.
-
-### No Image Optimization
-
-- Problem: `src/components/cyber/FileInput.tsx` converts uploaded images to base64 data URLs. No compression, resizing, or lazy loading. Large images bloat form submissions.
-- Files: `src/components/cyber/FileInput.tsx:25-29`
-- Improvement path: Add canvas-based resize before encoding. Consider uploading to cloud storage instead of base64-encoding in form payload.
+### No Data Caching Strategy
+- Problem: React Query is configured with `refetchOnWindowFocus: false` and `retry: 1`, but there's no `staleTime` or `gcTime` configured. Every navigation re-fetches data.
+- Files: `src/App.tsx` (lines 19–26)
+- Cause: Default React Query settings treat all data as immediately stale.
+- Improvement path: Set `staleTime: 30000` (30 seconds) as a baseline. Configure per-query `staleTime` for slow-changing data (camps list could have `staleTime: 5 * 60 * 1000`).
 
 ## Fragile Areas
 
-### No React Error Boundaries
+### React Router v7 with Nested Protected Routes
+- Files: `src/App.tsx` (lines 64–118)
+- Why fragile: The `ProtectedRoute` component is used both as a layout wrapper and as individual route wrappers for `population`, `inventory`, `admission`, `expeditions`, and `camps` routes. This dual nesting creates unexpected behavior — the inner `ProtectedRoute` checks auth again but has no `roles` parameter, making the inner check redundant.
+- Safe modification: Remove the inner `<ProtectedRoute>` wrappers on lines 81, 89, 97, 105, 113. The outer `<ProtectedRoute>` on line 71 already guards the entire layout.
+- Test coverage: No tests exist for routing behavior.
 
-- Files: Not found anywhere in `src/`
-- Why fragile: Any unhandled error in a React component crashes the entire tree (white screen). There is `src/lib/error-capture.ts` (global `error`/`unhandledrejection` listener) but `consumeLastCapturedError()` is never called. `src/lib/error-page.ts` renders a static HTML page — also never invoked from React.
-- Safe modification: Wrap each lazy-loaded route in `<ErrorBoundary fallback={ErrorPanel} />`.
-- Test coverage: Not testable without tests.
-
-### Pervasive `Record<string, unknown>` Casts
-
-- Files: 20+ page component files
-- Why fragile: Changing a single backend field name (e.g., `full_name` → `name`) silently breaks multiple pages with no compile error. Runtime behavior degrades to `undefined` rendering instead of type errors.
-- Safe modification: Define proper response types. Use TypeScript `satisfies` or explicit interfaces. Treat current casts as temporary until types are added.
+### Complex Status Normalization Logic
+- Files: `src/features/people/PopulationRoster.tsx` (lines 60–66, 123–132, 247–273)
+- Why fragile: Person status is normalized from backend values (`WOUNDED`, `INJURED`, `MISSING`, `AWAY`, `DECEASED`, `DEAD`) to display labels in THREE separate locations: edit form population (lines 60–66), search filtering (lines 123–132), and table rendering (lines 247–273). Any status enum change requires updating all three locations.
+- Safe modification: Extract a `normalizePersonStatus` utility and a `STATUS_CONFIG` map into `src/lib/utils.ts` or a dedicated `src/lib/status.ts`. Update all three locations to use the shared mapping.
 - Test coverage: None.
 
-### Zustand Store for Server Time Violates Architecture Rule
+### API Response Shape Divergence
+- Files:
+  - `server.ts` (line 213–214) — `/api/camps/:campId/people` returns `{ data: [...], total: ... }`
+  - `server.ts` (line 75) — `/api/camps` returns bare array
+  - `server.ts` (line 124) — `/api/metrics/dashboard` returns flat object
+- Why fragile: No consistent response envelope. The frontend must know which endpoints wrap in `data`, which return raw arrays, and which return flat objects.
+- Safe modification: Define a standard API response format (`{ data: T, meta?: { total: number } }`) and enforce it server-side with a helper function. Update all frontend queries to expect consistent shapes.
+- Test coverage: None.
 
-- Files: `src/features/camps/store/camp.store.ts:6-7` (stores `serverTime: number`)
-- Why fragile: AGENTS.md hard rule states "Never store API data in Zustand." `serverTime` is fetched from `/system/time` endpoint and stored in Zustand. `useServerTime.ts` hooks into Zustand store. TanStack Query is already available for this.
-- Fix: Use TanStack Query for server time with `staleTime: 60_000`. Remove `serverTime`/`lastSyncLocal`/`syncServerTime` from Zustand store.
-
-### Overlapping API Module Domains
-
-- Files: `src/features/resources/api/resources.api.ts` vs `src/features/inventory/api/resources.api.ts`
-- Why fragile: Two modules define the same API calls. Changes must be duplicated or will diverge.
-- Fix: Delete `src/features/inventory/api/resources.api.ts`. Inventory hooks should import from `@/features/resources/api/resources.api`.
+### Inactivity Timeout Depends on DOM Events Only
+- Files: `src/App.tsx` (lines 39–58)
+- Why fragile: The 20-minute inactivity logout only resets on `mousemove` and `keydown` events. Touch events on mobile, scroll events, or active API calls won't reset the timer. Browser tab visibility is not checked.
+- Safe modification: Add `touchstart`, `scroll`, and `visibilitychange` event listeners. Use `document.addEventListener('visibilitychange', ...)` to check if the tab is still visible.
 
 ## Scaling Limits
 
-### People List Pagination
+### In-Memory Array Store
+- Current capacity: Unlimited by JavaScript heap (~1.4GB for Node), but no persistence.
+- Limit: All data lost on restart. Array operations (`.find`, `.filter`) are O(n) — degrades with thousands of records.
+- Scaling path: Replace with SQLite (via `better-sqlite3`) for dev/prototype. Migrate to PostgreSQL for production.
 
-- Current capacity: 20 rows per page, client-side filtered
-- Limit: Camp with 500+ people — client-side search becomes slow; pagination renders wrong pages after filter
-- Scaling path: Push filters/search to API. Increase `PaginationQuery` params.
+### No Pagination on Any Endpoint
+- Current capacity: All GET endpoints return full datasets. Dashboard metrics always compute from full inventory/survivor arrays.
+- Limit: With 10,000+ survivors or 100,000+ inventory records, response times degrade and payload sizes become impractical.
+- Scaling path: Add `?page=` and `?limit=` query parameters to all list endpoints. Add database-level `LIMIT`/`OFFSET` when migrating to SQL.
 
-### All Explorations Fetched at Once
-
-- Current capacity: No limit on `GET /expeditions`
-- Limit: Camp with 200+ explorations — payload too large, render time degrades
-- Scaling path: Add pagination and filtering to explorations API and frontend.
-
-### Camp Selector in AppShell
-
-- Current capacity: All camps loaded via `useCamps()` in sidebar
-- Limit: 50+ camps — sidebar selector becomes unscrollable/unusable
-- Scaling path: Add virtualized scrolling or searchable select to camp dropdown.
+### Client-Side Filtering
+- Current capacity: Filters process entire dataset in JavaScript.
+- Limit: Same as above — degrades with large datasets.
+- Scaling path: Move filtering to server-side query parameters.
 
 ## Dependencies at Risk
 
-### Zod v4 (Breaking Changes)
+### `@google/genai` Unused Dependency
+- Risk: This package is in `dependencies` (not devDependencies) but has zero imports in the source code. It adds ~2–5MB to install size and increases supply-chain attack surface.
+- Impact: None currently — no functionality depends on it. But it may be expected by the AI Studio platform at runtime.
+- Migration plan: Verify with AI Studio docs whether `@google/genai` is injected at runtime by the platform. If not, remove it. If yes, document why it's needed and add an `import` that calls it so tree-shaking can't remove it.
 
-- Risk: Package is at `"zod": "^4.3.6"`. Zod v4 changed API surface significantly from v3. `@hookform/resolvers` v5 supports it, but community examples and LLM training data are mostly Zod v3.
-- Impact: `z.object({}).refine()` pattern may have subtle differences. Debugging validation behavior requires Zod v4-specific docs.
-- Migration plan: Verify all `.refine()`, `.superRefine()`, and error formatting works as expected. Consider pinning to exact version.
+### `react-router-dom` v7 (Major Version with Breaking Changes)
+- Risk: The app uses React Router v7 (`^7.15.0`), which introduced breaking changes from v6 (new data APIs, changed `Route` component API). The current usage pattern (`BrowserRouter`, `Routes`, `Route`) is v6-compatible but may not leverage v7 improvements.
+- Impact: Future v7 minor updates could deprecate the v6-compatible API surface used here.
+- Migration plan: Monitor React Router v7 changelog. Consider migrating to v7's `createBrowserRouter` + `RouterProvider` pattern for better data loading and error handling.
 
-### React Router v7 (New API)
-
-- Risk: `"react-router-dom": "^7.13.2"` — v7 introduced breaking route config changes from v6. Code currently uses v6-style `<BrowserRouter>`, `<Routes>`, `<Route>` JSX API, which React Router v7 still supports in "compat mode."
-- Impact: Future v7.x updates may deprecate compat API. Migration to `createBrowserRouter` data-router pattern required.
-- Migration plan: Plan migration to `createBrowserRouter` with loaders for TanStack Query prefetching (better UX with suspense).
+### `vite` Listed in Both `dependencies` and `devDependencies`
+- Risk: `vite` appears in both `dependencies` (line 32) and `devDependencies` (line 44) of `package.json`. This causes version conflict potential and unnecessary production bundle inclusion.
+- Files: `package.json` (lines 32, 44)
+- Impact: Redundant install, potential version mismatch.
+- Migration plan: Remove `vite` from `dependencies`. It should only be in `devDependencies`. The `build` script uses `tsx` and `esbuild` for production, not `vite`.
 
 ## Missing Critical Features
 
-### RF-04 / RF-05: AI-Powered Admission Evaluation
+### No Error Boundaries
+- Problem: No React Error Boundary is defined anywhere in the component tree. Any uncaught render error will unmount the entire React tree, showing a blank white screen.
+- Blocks: Graceful error recovery for users. Debug information for developers.
+- Fix approach: Add a root-level `<ErrorBoundary>` component in `src/components/ErrorBoundary.tsx` wrapping `<App />` in `main.tsx`. Add feature-level error boundaries for critical sections.
 
-- Problem: AGENTS.md requirements specify "people management with AI" and "AI explainability" (RNF). The only "AI" implementation is a `ai_context_prompt` text field in camp create/edit forms (`src/features/camps/pages/CampsPage.tsx:360-367`). No actual LLM integration, no AI evaluation of admissions, no explainability UI.
-- Blocks: AI-driven admission scoring, AI-assisted person profiling, explainability dashboard.
-- Files: `src/features/camps/pages/CampsPage.tsx:360-367`, `src/features/camps/pages/CampDetailPage.tsx:159-166`
-- Priority: High — core differentiator requirement, currently completely absent.
+### No Accessibility Support
+- Problem: Zero ARIA attributes, no keyboard navigation in modals (no focus trapping, no Escape-to-close on all modals), no screen reader labels on interactive elements.
+- Blocks: Usability for keyboard-only and screen-reader users. Compliance with accessibility standards.
+- Fix approach: Add `role`, `aria-label`, and `aria-describedby` to form inputs. Implement focus trapping in modal components. Add keyboard event handlers (Escape closes modals).
 
-### RF-07: Exploration Provisioning / Resource Allocation
-
-- Problem: `ExplorationsPage.tsx` lines 577-583 show placeholder text: "Resource allocation pending inventory integration" and "Found resources can be recorded when return flow is connected." The `CreateExplorationDto` supports `allocated_resources` but the UI never populates it. Return flow dialog exists (lines 610-754) but resource selection dropdown comes from a generic `resourcesArray` that may not be camp-scoped.
-- Blocks: Complete exploration workflow. Provisioning supplies before departure.
-- Priority: High — makes exploration feature incomplete.
-
-### RNF: Playwright E2E Tests
-
-- Problem: Zero test files found anywhere in repo (`*.spec.ts`, `*.test.ts`, `*.e2e.*`, `playwright*`). No Playwright config, no test runner.
-- Blocks: Quality assurance, regression detection, CI validation.
-- Priority: High — listed as non-functional requirement, completely absent.
-
-### RNF: AI Explainability UI
-
-- Problem: No UI exists to show AI decision rationale. The `ai_context_prompt` field accepts input but there's no output display for AI evaluation results.
-- Blocks: User trust in AI evaluations, requirement acceptance.
-- Priority: Medium — depends on RF-04/RF-05 AI integration being built first.
-
-### RNF: Gamification
-
-- Problem: No gamification elements (achievements, scoring, badges, leaderboards, streak tracking) exist. Search for "gamif", "achievement", "badge", "score", "leaderboard" returned zero results except shadcn/ui Badge component styling.
-- Blocks: User engagement, requirement acceptance.
-- Priority: Low-Medium — can be incrementally added after core features stabilize.
-
-### RF-03: Role-Specific Dashboard Metrics
-
-- Problem: Dashboard (`src/pages/DashboardPage.tsx`) shows basic counts (camps, resources, auto-supply). Worker role gets only "INVENTORY" and "RATIONS" navigation cards — no actual dashboard metrics for workers (e.g., pending tasks, stock they manage, recent rations). `travel_coordinator` role gets only "EXPEDITIONS" card with no metrics.
-- Blocks: Complete dashboard experience for non-admin roles.
-- Priority: Medium — basic navigation works but doesn't meet "role-specific views" requirement.
-
-### No Responsive Mobile Layout
-
-- Problem: AppShell sidebar is fixed but not responsive — no drawer/mobile menu pattern for small screens. Main content uses responsive padding (`p-4 md:p-6 lg:p-8`) but sidebar always takes 64-256px. `use-mobile.tsx` hook exists (detects mobile viewport) but isn't used in AppShell.
-- Files: `src/layouts/AppShell.tsx`, `src/hooks/use-mobile.tsx`
-- Priority: Medium — reduces usability on mobile/tablet.
+### No Loading State for Initial App Boot
+- Problem: When the app first loads, there's no loading indicator while camps data is fetched. The user sees "No Refuge Selected" until data arrives.
+- Files: `src/features/dashboard/DashboardOverview.tsx` (lines 31–41)
+- Blocks: Poor initial UX. User sees error-like state briefly.
+- Fix approach: Show a skeleton or spinner in the dashboard layout while `camps` query is loading. Wait until camps are available before rendering the Outlet.
 
 ## Test Coverage Gaps
 
-### Entire Codebase Has Zero Tests
+### Entire Codebase Untested
+- What's not tested: Authentication flow, route protection, all CRUD operations, form validation, state management, API error handling, modal interactions, data rendering, status normalization, inventory math, chart rendering.
+- Files: All 17 source files in `src/` and `server.ts`.
+- Risk: Any change can silently break functionality. Refactoring is high-risk.
+- Priority: High
 
-- What's not tested: Authentication flow, RBAC guards, form validation, API integration, TanStack Query hooks, Zustand stores, component rendering, error states, loading states, empty states.
-- Files: Every file in `src/`
-- Risk: Every change is deployed untested. Regression detection is manual. Refactoring large pages (830-line ExplorationsPage) is dangerous.
-- Priority: High — start with critical path: auth flow, camp CRUD, inventory CRUD.
+### Critical Untested Flows
+- **Login/Authentication**: No test verifies that invalid credentials are rejected, that protected routes redirect, or that the inactivity timer works.
+- **Inventory Adjustment Math**: The `MANUAL_IN`/`MANUAL_OUT` logic with `Math.max(0, ...)` floor in `server.ts` (line 192) has no test coverage.
+- **Admission AI Screening Logic**: The skill-based classification chain in `server.ts` (lines 306–339) has complex branching with no tests.
+- **Cross-Camp Transfer**: Person transfer between camps (`POST /api/people/:id/transfer`) has no validation that target camp exists.
+- Priority: High — these are the most business-critical and error-prone code paths.
 
 ---
 
-_Concerns audit: 2026-05-19_
+*Concerns audit: 2026-05-24*

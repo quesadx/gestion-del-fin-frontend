@@ -1,56 +1,20 @@
-# Gestión del Fin — Frontend
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Zombie apocalypse multi-camp resource management system. Universidad Nacional de Costa Rica final project (EIF209, 2026).
+# Run and deploy your AI Studio app
 
-## Stack
+This contains everything you need to run your app locally.
 
-- **React 19** / **TypeScript** (strict) / **Vite 8**
-- **Tailwind CSS 3** / **shadcn/ui**
-- **TanStack Query 5** / **Zustand 5**
-- **Axios** / **react-hook-form** + **zod**
+View your app in AI Studio: https://ai.studio/apps/f1d6bfbe-c1bb-472e-b56f-4542f336ecdf
 
-## Quick Start
+## Run Locally
 
-```bash
-nix develop          # enter Nix shell
-pnpm install         # install dependencies
-pnpm dev             # vite dev server → http://localhost:5173
-pnpm build           # tsc + vite production build
-pnpm check           # lint + spell + build — run before commit
-pnpm format          # prettier src/
-```
+**Prerequisites:**  Node.js
 
-## Architecture
 
-```
-src/
-├── app/             # Global styles
-├── features/        # Business domains (auth, camps, people, inventory, etc.)
-│   ├── api/         # Axios call functions
-│   ├── hooks/       # TanStack Query hooks
-│   ├── pages/       # Route pages
-│   ├── store/       # Zustand stores (client state only)
-│   └── types/       # Domain types
-├── components/      # Reusable UI (cyber/, ui/, navigation/)
-├── layouts/         # AppShell (sidebar + header + content)
-├── routes/          # Router + ProtectedRoute + ErrorBoundary
-├── shared/          # Axios instance, API types, toast, form helpers
-└── lib/             # Utilities
-```
-
-### State split
-
-- **Zustand** → client state only (auth, UI)
-- **TanStack Query** → server state (camps, people, resources, etc.)
-
-## Design
-
-**Brutalist dark** — red (#ef4444) / amber (#f59e0b) / green (#10b981) on near-black (#0a0a0a).
-
-## Env
-
-```
-VITE_API_URL=/api          # proxied to localhost:3000 in dev
-VITE_APP_NAME=Gestión del Fin
-VITE_SESSION_TIMEOUT_MS=1200000   # 20 min
-```
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
