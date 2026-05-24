@@ -6,9 +6,11 @@ export enum UserRole {
 }
 
 export interface User {
+  id: number;
   username: string;
   role: string; // API returns strings like "ADMIN" — keep as string
-  camp_id?: number | null;
+  camp_id: number | null;
+  is_active?: boolean;
 }
 
 export interface Camp {
