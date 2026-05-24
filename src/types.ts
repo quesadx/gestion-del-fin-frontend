@@ -1,8 +1,8 @@
 export enum UserRole {
-  SYSTEM_ADMIN = "system_admin",
-  RESOURCE_MANAGER = "resource_manager",
-  TRAVEL_COORDINATOR = "travel_coordinator",
-  SURVIVOR = "survivor",
+  SYSTEM_ADMIN = 'system_admin',
+  RESOURCE_MANAGER = 'resource_manager',
+  TRAVEL_COORDINATOR = 'travel_coordinator',
+  SURVIVOR = 'survivor',
 }
 
 export interface User {
@@ -15,7 +15,7 @@ export interface Camp {
   id: number;
   name: string;
   location: string | null;
-  status: "ACTIVE" | "ABANDONED";
+  status: 'ACTIVE' | 'ABANDONED';
   ai_context_prompt: string | null;
   created_at?: string;
 }
@@ -46,7 +46,7 @@ export interface InventorySnapshot {
   daily_ration: number;
   daily_usage: number;
   projection_days: number | null;
-  status: "OPTIMAL" | "LOW" | "CRITICAL";
+  status: 'OPTIMAL' | 'LOW' | 'CRITICAL';
 }
 
 export interface Person {
@@ -56,15 +56,7 @@ export interface Person {
   profession_id: number | null;
   profession_name: string | null; // joined by some backends
   skills_summary?: string | null;
-  status:
-    | "HEALTHY"
-    | "SICK"
-    | "INJURED"
-    | "AWAY"
-    | "DEAD"
-    | "WOUNDED"
-    | "MISSING"
-    | "DECEASED";
+  status: 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD' | 'WOUNDED' | 'MISSING' | 'DECEASED';
   camp_id: number;
   photo_url?: string | null;
 }
@@ -81,9 +73,9 @@ export interface Admission {
   background_notes?: string | null;
   photo_url?: string | null;
   id_card_url?: string | null;
-  status: "PENDING" | "APPROVED" | "REJECTED";
-  final_decision?: "ACCEPTED" | "REJECTED" | "PENDING";
-  ai_decision?: "ACCEPTED" | "PENDING" | "REJECTED";
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  final_decision?: 'ACCEPTED' | 'REJECTED' | 'PENDING';
+  ai_decision?: 'ACCEPTED' | 'PENDING' | 'REJECTED';
   ai_analysis?: string | null;
   ai_reasoning?: string | null;
   ai_confidence?: number | null;
@@ -99,6 +91,12 @@ export interface Admission {
   };
 }
 
+export interface Profession {
+  id: number;
+  name: string;
+  description?: string;
+}
+
 export interface Expedition {
   id: number;
   camp_id: number;
@@ -106,14 +104,7 @@ export interface Expedition {
   destination: string;
   title?: string; // kept for backward compat (may not exist on real API)
   // Real API status enum: PLANNED | ONGOING | RETURNED | CANCELLED
-  status:
-    | "PLANNED"
-    | "ONGOING"
-    | "RETURNED"
-    | "CANCELLED"
-    | "PLANNING"
-    | "ACTIVE"
-    | "LOST";
+  status: 'PLANNED' | 'ONGOING' | 'RETURNED' | 'CANCELLED' | 'PLANNING' | 'ACTIVE' | 'LOST';
   departure_date: string;
   expected_return_date?: string;
   max_return_date?: string;
