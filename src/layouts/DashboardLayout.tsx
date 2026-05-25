@@ -117,6 +117,7 @@ export default function DashboardLayout() {
   const [campPopupOpen, setCampPopupOpen] = useState(false);
   const [campSwapTick, setCampSwapTick] = useState(0);
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
+  const [focusedCampIndex, setFocusedCampIndex] = useState(0);
 
   // Start the ping loop and get the manual retry trigger.
   const { retry } = useConnectionStatus();
@@ -182,11 +183,58 @@ export default function DashboardLayout() {
     }
   }, [camps, currentCampId, user, setCurrentCamp]);
 
+  useEffect(() => {
+    if (!camps || camps.length === 0) {
+      setFocusedCampIndex(0);
+      return;
+    }
+
+    const fallbackIndex = currentCampId ? camps.findIndex((camp) => camp.id === currentCampId) : -1;
+    setFocusedCampIndex(fallbackIndex >= 0 ? fallbackIndex : 0);
+  }, [camps, currentCampId, campPopupOpen]);
+
+  const confirmCampSelection = (campId: number) => {
+    setCurrentCamp(campId);
+    navigate('/dashboard', { replace: true });
+    setCampPopupOpen(false);
+  };
+
   const shiftCampCards = (direction: 1 | -1) => {
     if (!camps || camps.length <= 1) return;
     setCampSwapDirection(direction);
     setCampSwapTick((prev) => prev + 1);
+    setFocusedCampIndex((prev) => (prev + direction + camps.length) % camps.length);
   };
+
+  useEffect(() => {
+    if (!campPopupOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!camps || camps.length === 0) return;
+
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        shiftCampCards(-1);
+        return;
+      }
+
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        shiftCampCards(1);
+        return;
+      }
+
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        const focusedCamp = camps[focusedCampIndex];
+        if (!focusedCamp) return;
+        confirmCampSelection(focusedCamp.id);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [campPopupOpen, camps, focusedCampIndex]);
 
   const handleLogout = () => {
     logout();
@@ -336,18 +384,18 @@ export default function DashboardLayout() {
                         type="button"
                         onClick={() => shiftCampCards(-1)}
                         aria-label="Show previous camp"
-                        className="absolute left-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-3 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                        className="absolute left-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-5 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                       >
-                        <ChevronLeft size={18} />
+                        <ChevronLeft size={26} />
                       </button>
 
                       <button
                         type="button"
                         onClick={() => shiftCampCards(1)}
                         aria-label="Show next camp"
-                        className="absolute right-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-3 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                        className="absolute right-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-5 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                       >
-                        <ChevronRight size={18} />
+                        <ChevronRight size={26} />
                       </button>
                     </>
                   ) : null}
@@ -363,6 +411,7 @@ export default function DashboardLayout() {
                     manualSwapTick={campSwapTick}
                     manualSwapDirection={campSwapDirection}
                     bringToFrontOnClick={true}
+                    onCardClick={(idx) => setFocusedCampIndex(idx)}
                     skewAmount={2}
                     easing="linear"
                   >
@@ -416,11 +465,9 @@ export default function DashboardLayout() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setCurrentCamp(camp.id);
-                                    navigate('/dashboard', { replace: true });
-                                    setCampPopupOpen(false);
+                                    confirmCampSelection(camp.id);
                                   }}
-                                  className="shrink-0 rounded-full border border-white/25 bg-black/35 px-4 py-2 text-xs font-mono font-bold uppercase tracking-[0.16em] text-zinc-100 transition-colors hover:border-white/45 hover:bg-black/50"
+                                  className="shrink-0 rounded-full border border-white/25 bg-black/35 px-6 py-3 text-sm font-mono font-bold uppercase tracking-[0.16em] text-zinc-100 transition-colors hover:border-white/45 hover:bg-black/50"
                                 >
                                   Select
                                 </button>
