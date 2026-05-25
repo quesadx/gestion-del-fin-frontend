@@ -109,6 +109,7 @@ export default function LoginPage() {
             />
             <input
               {...register('username')}
+              aria-label="Username"
               placeholder="IDENTIFIER"
               className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/50 transition-all font-mono placeholder:text-zinc-600"
             />
@@ -126,6 +127,7 @@ export default function LoginPage() {
             />
             <input
               {...register('password')}
+              aria-label="Password"
               type="password"
               placeholder="PASSCODE"
               className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary/50 transition-all font-mono placeholder:text-zinc-600"
@@ -142,6 +144,7 @@ export default function LoginPage() {
           as="button"
           disabled={isLoading}
           type="submit"
+          aria-label="Sign in"
           className="w-full group relative hover:scale-[1.02] hover:brightness-110 transition-all duration-200"
           color="rgba(239,68,68,0.95)"
           speed="5s"

@@ -33,17 +33,21 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium
 
-      - name: Start frontend server
-        run: pnpm run dev &
+      - name: Start server, wait, run tests
+        run: |
+          pnpm run dev &
+          SERVER_PID=$!
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:3000 > /dev/null 2>&1; then
+              echo "Server ready after ${i}s"
+              break
+            fi
+            sleep 2
+          done
+          pnpm run test:e2e
+          kill $SERVER_PID 2>/dev/null || true
         env:
           CI: 'true'
-
-      - name: Wait for server
-        run: npx wait-on http://localhost:3000/login --timeout 60000
-
-      - name: Run Playwright tests
-        run: pnpm run test:e2e
-        env:
           E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
 

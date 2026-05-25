@@ -495,6 +495,7 @@ export default function ExpeditionList() {
                   <input
                     required
                     type="text"
+                    aria-label="Destination Landmark"
                     value={destination}
                     onChange={(e) => setDestination(e.target.value)}
                     placeholder="e.g. Forgotten Highway Warehouse"
@@ -510,6 +511,7 @@ export default function ExpeditionList() {
                     <input
                       required
                       type="date"
+                      aria-label="Departure Date"
                       value={departureDate}
                       onChange={(e) => setDepartureDate(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
@@ -522,6 +524,7 @@ export default function ExpeditionList() {
                     <input
                       required
                       type="date"
+                      aria-label="Expected Return"
                       value={expectedReturnDate}
                       onChange={(e) => setExpectedReturnDate(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
@@ -534,6 +537,7 @@ export default function ExpeditionList() {
                     <input
                       required
                       type="date"
+                      aria-label="Max Return"
                       value={maxReturnDate}
                       onChange={(e) => setMaxReturnDate(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"

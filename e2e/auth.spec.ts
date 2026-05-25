@@ -1,13 +1,16 @@
 import { test, expect } from "@playwright/test";
 
+const USERNAME = process.env.E2E_USERNAME ?? "admin_master";
+const PASSWORD = process.env.E2E_PASSWORD ?? "password";
+
 test.describe("Authentication", () => {
   test("login with valid credentials redirects to /dashboard", async ({
     page,
   }) => {
     await page.goto("/login");
 
-    await page.getByLabel(/username/i).fill("admin_master");
-    await page.getByLabel(/password/i).fill("password");
+    await page.getByLabel(/username/i).fill(USERNAME);
+    await page.getByLabel(/password/i).fill(PASSWORD);
     await page.getByRole("button", { name: /login|sign in|enter/i }).click();
 
     await expect(page).toHaveURL(/\/dashboard/);
@@ -41,7 +44,7 @@ test.describe("Authentication", () => {
     await page.reload();
 
     await expect(
-      page.getByText(/session expired|inactivity|logged out/i),
+      page.getByText(/session closed|inactivity|logged out/i),
     ).toBeVisible();
   });
 });
