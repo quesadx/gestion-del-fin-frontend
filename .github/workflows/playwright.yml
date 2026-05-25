@@ -33,6 +33,14 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium
 
+      - name: Start frontend server
+        run: pnpm run dev &
+        env:
+          CI: 'true'
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000/login --timeout 60000
+
       - name: Run Playwright tests
         run: pnpm run test:e2e
         env:
