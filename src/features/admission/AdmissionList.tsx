@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
-import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { useCampStore } from '../../store';
+import { can, PERM } from '../../lib/permissions';
 import { Admission } from '../../types';
 import { BrainCircuit, ShieldAlert, UserPlus, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -26,10 +26,9 @@ const getAdmissionDecisionStatus = (
 
 export default function AdmissionList() {
   const { currentCampId } = useCampStore();
-  const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const canReevaluate = can(user?.role, 'admission.create') && can(user?.role, 'admission.review');
+  const canReevaluate = can(PERM.ADMISSION_CREATE) && can(PERM.ADMISSION_REVIEW);
   const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 

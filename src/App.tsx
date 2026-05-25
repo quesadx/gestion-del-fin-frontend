@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useAuthStore, useCampStore } from './store';
 import { ReactNode, Suspense, lazy, useEffect } from 'react';
 import { apiClient, unwrapList } from './lib/api';
+import { can, PERM } from './lib/permissions';
 import { Role } from './types';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -82,10 +83,19 @@ const queryClient = new QueryClient({
   },
 });
 
-const ProtectedRoute = ({ children, roles }: { children: ReactNode; roles?: string[] }) => {
+const ProtectedRoute = ({
+  children,
+  roles,
+  permission,
+}: {
+  children: ReactNode;
+  roles?: string[];
+  permission?: string;
+}) => {
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  if (permission && !can(permission)) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -205,7 +215,7 @@ export default function App() {
                     <Route
                       path="population/new"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission={PERM.PEOPLE_CREATE}>
                           <NewPersonPage />
                         </ProtectedRoute>
                       }
@@ -285,7 +295,7 @@ export default function App() {
                     <Route
                       path="resources"
                       element={
-                        <ProtectedRoute roles={['system_admin', 'resource_manager']}>
+                        <ProtectedRoute permission={PERM.RESOURCES_ALL}>
                           <ResourcesPage />
                         </ProtectedRoute>
                       }
@@ -301,7 +311,7 @@ export default function App() {
                     <Route
                       path="professions"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.PROFESSIONS_READ}>
                           <ProfessionsPage />
                         </ProtectedRoute>
                       }
@@ -309,7 +319,7 @@ export default function App() {
                     <Route
                       path="users"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission={PERM.USERS_ALL}>
                           <UsersPage />
                         </ProtectedRoute>
                       }
@@ -317,7 +327,7 @@ export default function App() {
                     <Route
                       path="roles"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission={PERM.ROLES_ALL}>
                           <RolesPage />
                         </ProtectedRoute>
                       }
@@ -325,7 +335,7 @@ export default function App() {
                     <Route
                       path="permissions"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission={PERM.PERMISSIONS_ALL}>
                           <PermissionsPage />
                         </ProtectedRoute>
                       }

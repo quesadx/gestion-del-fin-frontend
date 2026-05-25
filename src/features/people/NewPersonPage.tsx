@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
-import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { useCampStore } from '../../store';
+import { can, PERM } from '../../lib/permissions';
 import { ArrowLeft, Loader2, UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -28,9 +28,8 @@ type NewPersonForm = z.infer<typeof newPersonSchema>;
 export default function NewPersonPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
-  const hasSystemAdminAccess = can(user?.role, '*');
+  const hasSystemAdminAccess = can(PERM.WILDCARD);
 
   const {
     register,

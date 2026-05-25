@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { useCampStore } from '../../store';
+import { can, PERM } from '../../lib/permissions';
 import { Camp } from '../../types';
 import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -11,7 +11,6 @@ import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
 
 export default function CampManagement() {
-  const { user } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,7 +56,7 @@ export default function CampManagement() {
     },
   });
 
-  const canDelete = can(user?.role, 'camps.delete');
+  const canDelete = can(PERM.CAMPS_DELETE);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {

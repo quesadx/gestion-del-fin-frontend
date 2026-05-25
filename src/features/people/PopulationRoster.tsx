@@ -23,7 +23,7 @@ import {
 import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
 import { cn, normalizePersonStatus } from '../../lib/utils';
-import { can } from '../../lib/permissions';
+import { can, PERM } from '../../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -34,7 +34,7 @@ const PAGE_SIZE = 20;
 export default function PopulationRoster() {
   const { currentCampId } = useCampStore();
   const queryClient = useQueryClient();
-  const { userId, user } = useAuthStore();
+  const { userId } = useAuthStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -196,7 +196,7 @@ export default function PopulationRoster() {
     },
   });
 
-  const canReassign = can(user?.role, 'people.profession_reassign.create');
+  const canReassign = can(PERM.PEOPLE_PROFESSION_REASSIGN_CREATE);
 
   const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
