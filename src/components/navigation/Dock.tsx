@@ -130,7 +130,6 @@ interface DockProps {
   distance?: number;
   panelHeight?: number;
   baseItemSize?: number;
-  dockHeight?: number;
   magnification?: number;
   spring?: SpringOptions;
 }
@@ -142,13 +141,16 @@ export default function Dock({
   magnification = 70,
   distance = 200,
   panelHeight = 68,
-  dockHeight = 256,
   baseItemSize = 50,
 }: DockProps) {
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
   const panelRef = useRef<HTMLDivElement>(null);
+  const itemsRef = useRef<HTMLDivElement>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
+  const scrollPos = useRef(0);
+  const touchStartX = useRef(0);
+  const touchStartScroll = useRef(0);
 
   const isMobile = useMemo(() => {
     if (typeof window === 'undefined') return false;
@@ -159,13 +161,6 @@ export default function Dock({
   const responsivePanelHeight = isMobile ? Math.min(panelHeight, 58) : panelHeight;
   const responsiveMagnification = isMobile ? Math.min(magnification, 60) : magnification;
   const responsiveDistance = isMobile ? Math.min(distance, 150) : distance;
-
-  const maxHeight = useMemo(
-    () => Math.max(dockHeight, responsiveMagnification + responsiveMagnification / 2 + 4),
-    [responsiveMagnification, dockHeight],
-  );
-  const heightRow = useTransform(isHovered, [0, 1], [responsivePanelHeight, maxHeight]);
-  const height = useSpring(heightRow, spring);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -202,24 +197,67 @@ export default function Dock({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  const syncScroll = useCallback(() => {
+    if (!itemsRef.current) return;
+    itemsRef.current.style.transform = `translateX(${-scrollPos.current}px)`;
+  }, []);
+
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      const panel = panelRef.current;
+      if (!panel || !itemsRef.current) return;
+      const maxScroll = Math.max(0, itemsRef.current.scrollWidth - panel.clientWidth);
+      scrollPos.current = Math.max(0, Math.min(scrollPos.current + e.deltaX, maxScroll));
+      syncScroll();
+    },
+    [syncScroll],
+  );
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    panel.addEventListener('wheel', handleWheel, { passive: false });
+    return () => panel.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartScroll.current = scrollPos.current;
+  }, []);
+
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const panel = panelRef.current;
+      if (!panel || !itemsRef.current) return;
+      const dx = touchStartX.current - e.touches[0].clientX;
+      const maxScroll = Math.max(0, itemsRef.current.scrollWidth - panel.clientWidth);
+      scrollPos.current = Math.max(0, Math.min(touchStartScroll.current + dx, maxScroll));
+      syncScroll();
+    },
+    [syncScroll],
+  );
+
   return (
-    <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">
-      <motion.div
-        ref={panelRef}
-        onMouseMove={({ pageX }) => {
-          isHovered.set(1);
-          mouseX.set(pageX);
-        }}
-        onMouseLeave={() => {
-          isHovered.set(0);
-          mouseX.set(Infinity);
-        }}
-        className={`dock-panel ${className}`}
-        style={{ height: responsivePanelHeight }}
-        role="toolbar"
-        aria-label="Main navigation"
-        aria-orientation="horizontal"
-      >
+    <motion.div
+      ref={panelRef}
+      onMouseMove={({ pageX }) => {
+        isHovered.set(1);
+        mouseX.set(pageX);
+      }}
+      onMouseLeave={() => {
+        isHovered.set(0);
+        mouseX.set(Infinity);
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      className={`dock-panel ${className}`}
+      style={{ height: responsivePanelHeight }}
+      role="toolbar"
+      aria-label="Main navigation"
+      aria-orientation="horizontal"
+    >
+      <div ref={itemsRef} className="dock-items">
         {items.map((item, index) => (
           <DockItem
             key={`${item.label}-${index}`}
@@ -236,7 +274,7 @@ export default function Dock({
             onFocusRequest={() => setFocusedIndex(index)}
           />
         ))}
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

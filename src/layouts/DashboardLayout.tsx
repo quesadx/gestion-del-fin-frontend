@@ -352,7 +352,7 @@ export default function DashboardLayout() {
 
           <div className="relative z-10 flex h-full items-center justify-between gap-2 sm:gap-4">
             {/* Branding */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1">
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
                 <ShieldAlert size={15} />
               </div>
@@ -391,7 +391,7 @@ export default function DashboardLayout() {
             </div>
 
             {/* Right: server time + connection status + user info */}
-            <div className="flex items-center gap-2 sm:gap-3.5">
+            <div className="flex items-center gap-2 sm:gap-3.5 flex-1 justify-end">
               {/* Server time */}
               {synced && (
                 <span className="hidden lg:inline-flex items-center gap-1.5 text-sm font-mono text-zinc-400 tabular-nums">
@@ -765,7 +765,7 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-50 -translate-x-1/2">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <Dock items={dockItems} />
         </motion.div>

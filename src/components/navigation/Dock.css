@@ -1,12 +1,3 @@
-.dock-outer {
-  position: relative;
-  display: flex;
-  max-width: calc(100vw - 1rem);
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-}
-
 .dock-panel {
   display: flex;
   align-items: flex-end;
@@ -20,15 +11,8 @@
     0 6px 20px rgba(0, 0, 0, 0.24),
     0 0 0 1px rgba(239, 68, 68, 0.04),
     0 0 24px rgba(239, 68, 68, 0.08);
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.dock-panel::-webkit-scrollbar {
-  display: none;
+  position: relative;
+  overflow: visible;
 }
 
 @media (min-width: 640px) {
@@ -36,6 +20,14 @@
     gap: 1rem;
     padding: 0 0.75rem 0.5rem;
   }
+}
+
+.dock-items {
+  display: flex;
+  align-items: flex-end;
+  gap: inherit;
+  width: max-content;
+  flex-shrink: 0;
 }
 
 .dock-item {
