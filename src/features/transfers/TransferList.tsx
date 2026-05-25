@@ -216,11 +216,12 @@ export default function TransferList() {
 
   // ── Queries ──────────────────────────────────────────────────────────────
   const { data: transfers, isLoading } = useQuery<Transfer[]>({
-    queryKey: ['transfers'],
+    queryKey: ['transfers', currentCampId],
     queryFn: async () => {
-      const res = await apiClient.get('/transfers');
+      const res = await apiClient.get(`/transfers?camp_id=${currentCampId}`);
       return unwrapList<Transfer>(res.data);
     },
+    enabled: !!currentCampId,
   });
 
   const totalPages = Math.max(1, Math.ceil((transfers?.length ?? 0) / PAGE_SIZE));

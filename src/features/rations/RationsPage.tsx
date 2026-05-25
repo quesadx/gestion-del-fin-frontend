@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import { apiClient } from '../../lib/api';
 import { useCampStore } from '../../store';
 import { Sandwich, Plus, X } from 'lucide-react';
@@ -41,15 +42,33 @@ export default function RationsPage() {
     return map;
   }, [resources]);
 
+  const getEntryType = (entry: InventoryAuditEntry): string => {
+    const rawType =
+      entry.type ??
+      (entry as InventoryAuditEntry & { log_type?: string; logType?: string }).log_type ??
+      (entry as InventoryAuditEntry & { log_type?: string; logType?: string }).logType ??
+      '';
+
+    return String(rawType).trim().toUpperCase().replace(/\s+/g, '_').replace(/-/g, '_');
+  };
+
   // ── Audit log (for ration history) ────────────────────────────────────
 
   const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
-      const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
-      return res.data?.data ?? res.data ?? [];
+      try {
+        const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
+        return res.data?.data ?? res.data ?? [];
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          return [];
+        }
+        throw error;
+      }
     },
     enabled: !!currentCampId,
+    retry: false,
   });
 
   // Filter only entries whose description includes "RATION:"
@@ -187,7 +206,7 @@ export default function RationsPage() {
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
               {rations.map((entry, idx: number) => {
-                const isDisbursed = entry.type === 'MANUAL_OUT';
+                const isDisbursed = getEntryType(entry) === 'MANUAL_OUT';
                 return (
                   <motion.tr
                     key={entry.id ?? idx}
