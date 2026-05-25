@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useCampStore } from '../../store';
-import { can, PERM } from '../../lib/permissions';
+import { useCan, PERM } from '../../lib/permissions';
 import { Admission } from '../../types';
 import { BrainCircuit, ShieldAlert, UserPlus, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -28,7 +28,9 @@ export default function AdmissionList() {
   const { currentCampId } = useCampStore();
   const queryClient = useQueryClient();
 
-  const canReevaluate = can(PERM.ADMISSION_CREATE) && can(PERM.ADMISSION_REVIEW);
+  const canCreate = useCan(PERM.ADMISSION_CREATE);
+  const canReview = useCan(PERM.ADMISSION_REVIEW);
+  const canReevaluate = canCreate && canReview;
   const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
@@ -214,13 +216,15 @@ export default function AdmissionList() {
             AI-driven refugee screening & assessment
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)] uppercase tracking-wider"
-        >
-          <UserPlus size={18} />
-          REGISTER INTAKE
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)] uppercase tracking-wider"
+          >
+            <UserPlus size={18} />
+            REGISTER INTAKE
+          </button>
+        )}
       </div>
 
       <div className="h-[calc(100vh-280px)]">
@@ -587,19 +591,30 @@ export default function AdmissionList() {
 
                   {/* Actions */}
                   <div className="p-4 border-t border-zinc-900 bg-surface-raised flex gap-3">
-                    <button
-                      onClick={() =>
-                        reviewMutation.mutate({ id: details.id, decision: 'REJECTED' })
-                      }
-                      disabled={
-                        reviewMutation.isPending ||
-                        getAdmissionDecisionStatus(details) !== 'PENDING'
-                      }
-                      className="flex-1 bg-zinc-900 hover:bg-red-950/30 text-red-500 border border-red-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
-                    >
-                      <XCircle size={16} />
-                      REJECT
-                    </button>
+                    {canReview ? (
+                      <button
+                        onClick={() =>
+                          reviewMutation.mutate({ id: details.id, decision: 'REJECTED' })
+                        }
+                        disabled={
+                          reviewMutation.isPending ||
+                          getAdmissionDecisionStatus(details) !== 'PENDING'
+                        }
+                        className="flex-1 bg-zinc-900 hover:bg-red-950/30 text-red-500 border border-red-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
+                      >
+                        <XCircle size={16} />
+                        REJECT
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        title="No tienes permiso para realizar esta acción"
+                        className="flex-1 bg-zinc-900/30 text-red-500/50 border border-red-500/20 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs cursor-not-allowed"
+                      >
+                        <XCircle size={16} />
+                        REJECT
+                      </button>
+                    )}
                     {canReevaluate && (
                       <button
                         onClick={() => {
@@ -620,23 +635,34 @@ export default function AdmissionList() {
                         CORRECT
                       </button>
                     )}
-                    <button
-                      onClick={() =>
-                        reviewMutation.mutate({
-                          id: details.id,
-                          decision: 'ACCEPTED',
-                          corrected_profession_id: selectedProfId || undefined,
-                        })
-                      }
-                      disabled={
-                        reviewMutation.isPending ||
-                        getAdmissionDecisionStatus(details) !== 'PENDING'
-                      }
-                      className="flex-[2] bg-brand-accent hover:bg-emerald-600 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] disabled:opacity-30"
-                    >
-                      <CheckCircle2 size={16} />
-                      APPROVE
-                    </button>
+                    {canReview ? (
+                      <button
+                        onClick={() =>
+                          reviewMutation.mutate({
+                            id: details.id,
+                            decision: 'ACCEPTED',
+                            corrected_profession_id: selectedProfId || undefined,
+                          })
+                        }
+                        disabled={
+                          reviewMutation.isPending ||
+                          getAdmissionDecisionStatus(details) !== 'PENDING'
+                        }
+                        className="flex-[2] bg-brand-accent hover:bg-emerald-600 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] disabled:opacity-30"
+                      >
+                        <CheckCircle2 size={16} />
+                        APPROVE
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        title="No tienes permiso para realizar esta acción"
+                        className="flex-[2] bg-brand-accent/30 text-black/50 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs cursor-not-allowed"
+                      >
+                        <CheckCircle2 size={16} />
+                        APPROVE
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
