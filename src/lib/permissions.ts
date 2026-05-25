@@ -25,6 +25,8 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'dashboard.read',
     'resources.*',
     'admission.read',
+    'admission.create',
+    'admission.review',
   ],
   travel_coordinator: [
     'expeditions.*',

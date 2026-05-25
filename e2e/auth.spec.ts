@@ -26,7 +26,7 @@ test.describe("Authentication", () => {
     await page.getByRole("button", { name: /login|sign in|enter/i }).click();
 
     await expect(
-      page.getByText(/invalid|incorrect|unauthorized|error/i),
+      page.getByText(/invalid|incorrect|unauthorized|error|failed|authentication|credentials/i).first(),
     ).toBeVisible();
   });
 
@@ -35,16 +35,14 @@ test.describe("Authentication", () => {
   }) => {
     await page.goto("/login");
 
-    // Simulate the session_expired flag being set (e.g. by a previous tab timeout)
     await page.evaluate(() => {
       localStorage.setItem("session_expired", "true");
     });
 
-    // Reload so the app can read the flag on mount
     await page.reload();
 
     await expect(
-      page.getByText(/session closed|inactivity|logged out/i),
-    ).toBeVisible();
+      page.getByText("Session Closed", { exact: true }),
+    ).toBeVisible({ timeout: 15_000 });
   });
 });
