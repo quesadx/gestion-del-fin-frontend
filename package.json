@@ -20,8 +20,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "spell": "cspell src/",
-    "check": "pnpm run lint && pnpm run spell && pnpm run build",
-    "test:e2e": "playwright test"
+    "check": "pnpm run lint && pnpm run spell && pnpm run build"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
@@ -48,7 +47,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@playwright/test": "^1.60.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.15",
