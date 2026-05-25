@@ -35,7 +35,7 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260525-qt1 | topbar user info container + separator | 2026-05-25 | f4235f6 | [260525-qt1-topbar-user-info-separator](./quick/260525-qt1-topbar-user-info-separator/) |
+| 260525-qt1 | topbar user info container + separator | 2026-05-25 | 3035fa0 | [260525-qt1-topbar-user-info-separator](./quick/260525-qt1-topbar-user-info-separator/) |
 
 ## Last Activity
 
