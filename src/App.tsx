@@ -83,18 +83,9 @@ const queryClient = new QueryClient({
   },
 });
 
-const ProtectedRoute = ({
-  children,
-  roles,
-  permission,
-}: {
-  children: ReactNode;
-  roles?: string[];
-  permission?: string;
-}) => {
+const ProtectedRoute = ({ children, permission }: { children: ReactNode; permission?: string }) => {
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
   if (permission && !can(permission)) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
