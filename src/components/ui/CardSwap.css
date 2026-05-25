@@ -11,8 +11,8 @@
   top: 50%;
   left: 50%;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: #000;
+  border: none;
+  background: transparent;
   transform-style: preserve-3d;
   will-change: transform;
   backface-visibility: hidden;

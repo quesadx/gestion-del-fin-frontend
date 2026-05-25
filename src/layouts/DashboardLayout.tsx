@@ -22,10 +22,12 @@ import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource } from '../types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useCallback, type MouseEvent } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
+import gsap from 'gsap';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert } from 'lucide-react';
 import { CardBody, CardContainer } from '../components/ui/3d-card';
@@ -69,6 +71,11 @@ const CAMP_COLOR_THEMES = [
     tint: 'from-pink-500/22 via-fuchsia-900/15 to-rose-800/14',
   },
 ];
+
+type TiltController = {
+  tiltX: gsap.QuickToFunc;
+  tiltY: gsap.QuickToFunc;
+};
 
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
@@ -118,6 +125,8 @@ export default function DashboardLayout() {
   const [campSwapTick, setCampSwapTick] = useState(0);
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
+  const [hoveredCampIndex, setHoveredCampIndex] = useState<number | null>(null);
+  const tiltControllersRef = useRef(new WeakMap<HTMLButtonElement, TiltController>());
 
   // Start the ping loop and get the manual retry trigger.
   const { retry } = useConnectionStatus();
@@ -167,44 +176,44 @@ export default function DashboardLayout() {
   const [alertDismissed, setAlertDismissed] = useState(false);
 
   // Auto-select the user's home camp on first load, validate it exists in camps list.
-  useEffect(() => {
-    if (!camps || camps.length === 0) return;
-    const campIds = new Set(camps.map((c) => c.id));
+  const confirmCampSelection = useCallback(
+    (campId: number) => {
+      setCurrentCamp(campId);
+      navigate('/dashboard', { replace: true });
+      setCampPopupOpen(false);
+    },
+    [navigate, setCurrentCamp],
+  );
 
-    // If currentCampId is invalid, clear it so we can auto-select a valid one.
-    if (currentCampId && !campIds.has(currentCampId)) {
-      setCurrentCamp(null);
-      return;
+  const shiftCampCards = useCallback(
+    (direction: 1 | -1) => {
+      if (!camps || camps.length <= 1) return;
+      setCampSwapDirection(direction);
+      setCampSwapTick((prev) => prev + 1);
+      setFocusedCampIndex((prev) => (prev + direction + camps.length) % camps.length);
+    },
+    [camps],
+  );
+
+  const openCampPopup = () => {
+    if (camps && camps.length > 0) {
+      const fallbackIndex = currentCampId
+        ? camps.findIndex((camp) => camp.id === currentCampId)
+        : -1;
+      setFocusedCampIndex(fallbackIndex >= 0 ? fallbackIndex : 0);
+      setHoveredCampIndex(null);
     }
-
-    // Auto-select user's home camp if none selected yet and it's valid.
-    if (!currentCampId && user?.camp_id && campIds.has(user.camp_id)) {
-      setCurrentCamp(user.camp_id);
-    }
-  }, [camps, currentCampId, user, setCurrentCamp]);
-
-  useEffect(() => {
-    if (!camps || camps.length === 0) {
-      setFocusedCampIndex(0);
-      return;
-    }
-
-    const fallbackIndex = currentCampId ? camps.findIndex((camp) => camp.id === currentCampId) : -1;
-    setFocusedCampIndex(fallbackIndex >= 0 ? fallbackIndex : 0);
-  }, [camps, currentCampId, campPopupOpen]);
-
-  const confirmCampSelection = (campId: number) => {
-    setCurrentCamp(campId);
-    navigate('/dashboard', { replace: true });
-    setCampPopupOpen(false);
+    setCampPopupOpen(true);
   };
 
-  const shiftCampCards = (direction: 1 | -1) => {
-    if (!camps || camps.length <= 1) return;
-    setCampSwapDirection(direction);
-    setCampSwapTick((prev) => prev + 1);
-    setFocusedCampIndex((prev) => (prev + direction + camps.length) % camps.length);
-  };
+  const confirmCampFromIndex = useCallback(
+    (campIndex: number) => {
+      const camp = camps?.[campIndex];
+      if (!camp) return;
+      confirmCampSelection(camp.id);
+    },
+    [camps, confirmCampSelection],
+  );
 
   useEffect(() => {
     if (!campPopupOpen) return;
@@ -226,15 +235,13 @@ export default function DashboardLayout() {
 
       if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
-        const focusedCamp = camps[focusedCampIndex];
-        if (!focusedCamp) return;
-        confirmCampSelection(focusedCamp.id);
+        confirmCampFromIndex(focusedCampIndex);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [campPopupOpen, camps, focusedCampIndex]);
+  }, [campPopupOpen, camps, focusedCampIndex, confirmCampFromIndex, shiftCampCards]);
 
   const handleLogout = () => {
     logout();
@@ -297,7 +304,7 @@ export default function DashboardLayout() {
             {/* Camp switcher - left of center */}
             <div className="relative">
               <button
-                onClick={() => setCampPopupOpen(true)}
+                onClick={openCampPopup}
                 className="flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.04)] cursor-pointer hover:border-red-500/25 transition-colors"
               >
                 <Tent className="text-brand-secondary shrink-0" size={14} />
@@ -384,18 +391,18 @@ export default function DashboardLayout() {
                         type="button"
                         onClick={() => shiftCampCards(-1)}
                         aria-label="Show previous camp"
-                        className="absolute left-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-5 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                        className="absolute left-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                       >
-                        <ChevronLeft size={26} />
+                        <ChevronLeft size={30} />
                       </button>
 
                       <button
                         type="button"
                         onClick={() => shiftCampCards(1)}
                         aria-label="Show next camp"
-                        className="absolute right-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-5 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                        className="absolute right-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                       >
-                        <ChevronRight size={26} />
+                        <ChevronRight size={30} />
                       </button>
                     </>
                   ) : null}
@@ -403,7 +410,7 @@ export default function DashboardLayout() {
                   <CardSwap
                     width={820}
                     height={500}
-                    cardDistance={86}
+                    cardDistance={120}
                     verticalDistance={62}
                     delay={5600}
                     autoPlay={false}
@@ -418,11 +425,54 @@ export default function DashboardLayout() {
                     {camps.map((camp, index) => {
                       const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
                       const isActive = camp.id === currentCampId;
+                      const isHovered = hoveredCampIndex === index;
+
+                      const handleCardMove = (event: MouseEvent<HTMLButtonElement>) => {
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        const x = (event.clientX - rect.left) / rect.width - 0.5;
+                        const y = (event.clientY - rect.top) / rect.height - 0.5;
+
+                        let controller = tiltControllersRef.current.get(event.currentTarget);
+
+                        if (!controller) {
+                          controller = {
+                            tiltX: gsap.quickTo(event.currentTarget, '--tilt-x', {
+                              duration: 0.28,
+                              ease: 'power3.out',
+                            }),
+                            tiltY: gsap.quickTo(event.currentTarget, '--tilt-y', {
+                              duration: 0.28,
+                              ease: 'power3.out',
+                            }),
+                          };
+
+                          tiltControllersRef.current.set(event.currentTarget, controller);
+                        }
+
+                        controller.tiltX(Number((-y * 7).toFixed(2)));
+                        controller.tiltY(Number((x * 7).toFixed(2)));
+                      };
+
+                      const handleCardLeave = (event: MouseEvent<HTMLButtonElement>) => {
+                        const controller = tiltControllersRef.current.get(event.currentTarget);
+
+                        if (controller) {
+                          controller.tiltX(0);
+                          controller.tiltY(0);
+                        }
+
+                        setHoveredCampIndex(null);
+                      };
 
                       return (
                         <Card key={camp.id}>
-                          <div
-                            className="relative h-full w-full cursor-pointer overflow-hidden rounded-[14px] text-left transition-transform duration-200 ease-out hover:z-50 hover:-translate-y-4"
+                          <button
+                            type="button"
+                            onClick={() => confirmCampSelection(camp.id)}
+                            onMouseEnter={() => setHoveredCampIndex(index)}
+                            onMouseMove={handleCardMove}
+                            onMouseLeave={handleCardLeave}
+                            className={`relative h-full w-full cursor-pointer overflow-hidden rounded-[14px] text-left transform-gpu transition-[box-shadow] duration-300 ease-out hover:z-50 hover:shadow-[0_24px_80px_rgba(0,0,0,0.32)] [transform:perspective(1200px)_rotateX(calc(var(--tilt-x,0)*1deg))_rotateY(calc(var(--tilt-y,0)*1deg))_translateZ(0)] ${isHovered ? 'scale-[1.03]' : ''}`}
                             style={{ border: `1px solid ${theme.border}` }}
                           >
                             <div className="absolute inset-0">
@@ -440,40 +490,30 @@ export default function DashboardLayout() {
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
-                            <div className="relative z-10 flex h-full flex-col justify-between p-8">
-                              <div className="flex items-center justify-between gap-2">
-                                <span className="rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-xs font-mono uppercase tracking-[0.18em] text-zinc-200">
-                                  Refuge
-                                </span>
-
-                                {isActive ? (
-                                  <span className="rounded-full border border-red-500/45 bg-red-500/14 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-[0.14em] text-red-200">
-                                    Active
+                            <div className="relative z-10 flex h-full flex-col justify-start p-8">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="space-y-2">
+                                  <span className="inline-flex rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-xs font-mono uppercase tracking-[0.18em] text-zinc-200">
+                                    Refuge
                                   </span>
-                                ) : null}
-                              </div>
 
-                              <div className="flex items-end justify-between gap-6">
-                                <p className="text-sm font-mono uppercase tracking-[0.16em] text-zinc-300/85">
-                                  Select destination
-                                </p>
-                                <h4 className="mt-2 text-4xl font-black uppercase tracking-tight text-white">
-                                  {camp.name}
-                                </h4>
+                                  {isActive ? (
+                                    <span className="inline-flex rounded-full border border-red-500/45 bg-red-500/14 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-[0.14em] text-red-200">
+                                      Active
+                                    </span>
+                                  ) : null}
 
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    confirmCampSelection(camp.id);
-                                  }}
-                                  className="shrink-0 rounded-full border border-white/25 bg-black/35 px-6 py-3 text-sm font-mono font-bold uppercase tracking-[0.16em] text-zinc-100 transition-colors hover:border-white/45 hover:bg-black/50"
-                                >
-                                  Select
-                                </button>
+                                  <p className="text-sm font-mono uppercase tracking-[0.16em] text-zinc-300/85">
+                                    Select destination
+                                  </p>
+
+                                  <h4 className="text-4xl font-black uppercase tracking-tight text-white">
+                                    {camp.name}
+                                  </h4>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </button>
                         </Card>
                       );
                     })}

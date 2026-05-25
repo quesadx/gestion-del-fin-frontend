@@ -13,6 +13,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import gsap from 'gsap';
 import './CardSwap.css';
@@ -123,11 +124,8 @@ export default function CardSwap({
   );
 
   const childArr = useMemo(() => Children.toArray(children), [children]);
-  const refs = useMemo<RefObject<HTMLDivElement | null>[]>(
-    () => childArr.map(() => createRef<HTMLDivElement>()),
-    // Keep refs stable across re-renders; only recreate when card count changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [childArr.length],
+  const [refs] = useState<RefObject<HTMLDivElement | null>[]>(() =>
+    childArr.map(() => createRef<HTMLDivElement>()),
   );
 
   const order = useRef<number[]>(Array.from({ length: childArr.length }, (_, i) => i));
@@ -391,6 +389,7 @@ export default function CardSwap({
     swapRef.current(manualSwapDirection);
   }, [autoPlay, manualSwapTick, manualSwapDirection]);
 
+  // eslint-disable-next-line react-hooks/refs
   const rendered = childArr.map((child, i) => {
     if (!isValidElement(child)) return child;
     const typedChild = child as CardLikeElement;
