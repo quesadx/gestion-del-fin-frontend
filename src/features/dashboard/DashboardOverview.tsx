@@ -124,6 +124,16 @@ export default function DashboardOverview() {
     return () => observer.disconnect();
   }, []);
 
+  // If the resource data arrives after the first measurement (common after login
+  // redirect), ensure we measure again so the chart can render with a non-zero size.
+  useEffect(() => {
+    const element = chartContainerRef.current;
+    if (!element) return;
+
+    const next = { width: element.clientWidth, height: element.clientHeight };
+    setChartSize((prev) => (prev.width === next.width && prev.height === next.height ? prev : next));
+  }, [resourceSummaries]);
+
   if (!currentCampId) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center text-center space-y-4">
@@ -204,7 +214,7 @@ export default function DashboardOverview() {
                 transition={{ delay: i * 0.1 }}
               >
                 <BorderGlow
-                  backgroundColor="#17131b"
+                  backgroundColor="#1b0b0c"
                   borderRadius={16}
                   glowColor="356 78 62"
                   glowIntensity={0.7}
@@ -333,7 +343,7 @@ export default function DashboardOverview() {
                       data={resourceSummaries}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#18181b" horizontal={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1b0b0c" horizontal={false} />
                       <XAxis type="number" hide />
                       <YAxis
                         dataKey="resource_name"
@@ -349,8 +359,8 @@ export default function DashboardOverview() {
                       <Tooltip
                         cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                         contentStyle={{
-                          backgroundColor: '#09090b',
-                          border: '1px solid #27272a',
+                          backgroundColor: '#0c0708',
+                          border: '1px solid #2a0f10',
                           borderRadius: '8px',
                         }}
                       />
@@ -377,7 +387,7 @@ export default function DashboardOverview() {
                 {resourceSummaries?.map((res: InventorySnapshot) => (
                   <BorderGlow
                     key={res.resource_id}
-                    backgroundColor="#17131b"
+                    backgroundColor="#1b0b0c"
                     borderRadius={14}
                     glowColor={res.status === 'CRITICAL' ? '356 82 60' : '36 88 58'}
                     glowIntensity={0.55}

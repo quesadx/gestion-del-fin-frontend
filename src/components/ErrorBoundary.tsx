@@ -40,7 +40,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         <div className="flex items-center justify-center min-h-[400px] p-8">
           <BorderGlow
             className="max-w-md w-full"
-            backgroundColor="#120F17"
+            backgroundColor="#1b0b0c"
             borderRadius={16}
             glowColor="356 82 60"
             glowIntensity={0.95}

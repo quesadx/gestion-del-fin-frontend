@@ -44,7 +44,7 @@ export function ConfirmDialog({
           >
             <BorderGlow
               className="max-w-sm w-full"
-              backgroundColor="#120F17"
+              backgroundColor="#1b0b0c"
               borderRadius={16}
               glowColor={isDanger ? '356 82 60' : '36 88 58'}
               glowIntensity={0.95}

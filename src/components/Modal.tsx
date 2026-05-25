@@ -70,7 +70,7 @@ export function Modal({
           >
             <BorderGlow
               className={cn('w-full max-h-[90vh] overflow-hidden', sizeMap[size], className)}
-              backgroundColor="#120F17"
+              backgroundColor="#1b0b0c"
               borderRadius={16}
               glowColor="356 78 62"
               glowIntensity={0.9}

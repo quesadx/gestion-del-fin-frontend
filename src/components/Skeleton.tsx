@@ -10,7 +10,7 @@ export function SkeletonCard() {
   return (
     <BorderGlow
       className="animate-pulse"
-      backgroundColor="#171717"
+      backgroundColor="#1b0b0c"
       borderRadius={14}
       glowColor="356 76 58"
       glowIntensity={0.55}
@@ -37,7 +37,7 @@ export function SkeletonList({ count = 4 }: { count?: number }) {
         <BorderGlow
           key={i}
           className=""
-          backgroundColor="#120F17"
+          backgroundColor="#1b0b0c"
           borderRadius={14}
           glowColor="356 76 58"
           glowIntensity={0.5}
@@ -95,7 +95,7 @@ export function SkeletonDetail() {
         </div>
       </div>
       <BorderGlow
-        backgroundColor="#171717"
+        backgroundColor="#1b0b0c"
         borderRadius={16}
         glowColor="356 76 58"
         glowIntensity={0.55}
@@ -118,7 +118,7 @@ export function SkeletonDetail() {
         </div>
       </BorderGlow>
       <BorderGlow
-        backgroundColor="#171717"
+        backgroundColor="#1b0b0c"
         borderRadius={16}
         glowColor="356 76 58"
         glowIntensity={0.55}
@@ -153,7 +153,7 @@ export function SkeletonGrid({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <BorderGlow
           key={i}
-          backgroundColor="#171717"
+          backgroundColor="#1b0b0c"
           borderRadius={16}
           glowColor="356 76 58"
           glowIntensity={0.5}

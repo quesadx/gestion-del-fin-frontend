@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ShieldAlert, Loader2, KeyRound, User } from 'lucide-react';
+import StarBorder from '../../components/ui/StarBorder';
 import { motion, AnimatePresence } from 'motion/react';
 
 const loginSchema = z.object({
@@ -139,20 +140,21 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <button
+        <StarBorder
+          as="button"
           disabled={isLoading}
           type="submit"
-          className="w-full bg-brand-primary hover:bg-red-600 text-black font-black py-3 rounded-lg transition-all flex items-center justify-center gap-2 group relative overflow-hidden"
+          className="w-full group relative"
+          color="rgba(239,68,68,0.95)"
+          speed="5s"
+          thickness={2}
         >
           {isLoading ? (
             <Loader2 className="animate-spin" size={20} />
           ) : (
-            <>
-              <span className="relative z-10">REQUEST AUTHORIZATION</span>
-              <div className="absolute inset-0 bg-white/20 translate-x-full group-hover:translate-x-full transition-transform duration-500 skew-x-[-20deg]" />
-            </>
+            <span className="relative z-10 font-black">REQUEST AUTHORIZATION</span>
           )}
-        </button>
+        </StarBorder>
       </form>
 
       <div className="pt-6 border-t border-zinc-900 space-y-4">
