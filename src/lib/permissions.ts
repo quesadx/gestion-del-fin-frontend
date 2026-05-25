@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store';
+import { createElement, Fragment, type ReactNode } from 'react';
 
 export const ROLES = {
   SYSTEM_ADMIN: 'system_admin',
@@ -138,10 +139,6 @@ export function hasPermission(permission: string): boolean {
 
 // ── Convenience helpers ───────────────────────────────────────────────────────
 
-export function isAdmin(role: string | null | undefined): boolean {
-  return canLegacy(role, '*') || role === ROLES.SYSTEM_ADMIN;
-}
-
 export function canManageInventory(role: string | null | undefined): boolean {
   return canLegacy(role, 'inventory.*');
 }
@@ -156,4 +153,50 @@ export function canManageExpeditions(role: string | null | undefined): boolean {
 
 export function canManageAdmissions(role: string | null | undefined): boolean {
   return canLegacy(role, 'admission.*');
+}
+
+// ── React hooks ──────────────────────────────────────────────────────────────
+
+export function useCan(permission: string): boolean {
+  const permissions = useAuthStore((s) => s.permissions);
+  const loaded = useAuthStore((s) => s.permissionsLoaded);
+  if (!loaded) return false;
+  return checkPermission(permissions, permission);
+}
+
+export function usePermissions() {
+  const permissions = useAuthStore((s) => s.permissions);
+  const loaded = useAuthStore((s) => s.permissionsLoaded);
+  const error = useAuthStore((s) => s.permissionsError);
+
+  return {
+    can: (p: string) => checkPermission(permissions, p),
+    loaded,
+    error,
+    isAdmin: checkPermission(permissions, '*'),
+  };
+}
+
+export function useIsAdmin(): boolean {
+  return useCan('*');
+}
+
+export function Can({
+  permission,
+  fallback,
+  children,
+}: {
+  permission: string;
+  fallback?: ReactNode;
+  children: ReactNode;
+}): ReactNode {
+  const allowed = useCan(permission);
+  if (!allowed) return createElement(Fragment, null, fallback ?? null);
+  return createElement(Fragment, null, children);
+}
+
+// ── Store-backed isAdmin (replaces role-param version) ──────────────────────
+
+export function isAdmin(): boolean {
+  return can('*');
 }
