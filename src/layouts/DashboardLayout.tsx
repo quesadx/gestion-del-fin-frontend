@@ -670,7 +670,12 @@ export default function DashboardLayout() {
               </div>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <GlitchText speed={0.1} enableShadows={true} enableOnHover={false} className="!text-white">
+                <GlitchText
+                  speed={0.1}
+                  enableShadows={true}
+                  enableOnHover={false}
+                  className="!text-white"
+                >
                   1000011
                 </GlitchText>
               </div>

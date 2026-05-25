@@ -7,7 +7,7 @@ function hexToVec3(hex: string): [number, number, number] {
   return [
     parseInt(h.slice(0, 2), 16) / 255,
     parseInt(h.slice(2, 4), 16) / 255,
-    parseInt(h.slice(4, 6), 16) / 255
+    parseInt(h.slice(4, 6), 16) / 255,
   ];
 }
 
@@ -177,7 +177,7 @@ export default function EvilEye({
   noiseScale = 0.7,
   pupilFollow = 1.0,
   flameSpeed = 1.7,
-  backgroundColor = '#000000'
+  backgroundColor = '#000000',
 }: EvilEyeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const programRef = useRef<Program | null>(null);
@@ -221,7 +221,11 @@ export default function EvilEye({
     function resize() {
       renderer.setSize(container.offsetWidth, container.offsetHeight);
       if (programRef.current) {
-        programRef.current.uniforms.uResolution.value = [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height];
+        programRef.current.uniforms.uResolution.value = [
+          gl.canvas.width,
+          gl.canvas.height,
+          gl.canvas.width / gl.canvas.height,
+        ];
       }
     }
     window.addEventListener('resize', resize);
@@ -233,7 +237,9 @@ export default function EvilEye({
       fragment: fragmentShader,
       uniforms: {
         uTime: { value: 0 },
-        uResolution: { value: [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height] },
+        uResolution: {
+          value: [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height],
+        },
         uNoiseTexture: { value: noiseTexture },
         uPupilSize: { value: pupilSize },
         uIrisWidth: { value: irisWidth },
@@ -245,8 +251,8 @@ export default function EvilEye({
         uPupilFollow: { value: pupilFollow },
         uFlameSpeed: { value: flameSpeed },
         uEyeColor: { value: hexToVec3(eyeColor) },
-        uBgColor: { value: hexToVec3(backgroundColor) }
-      }
+        uBgColor: { value: hexToVec3(backgroundColor) },
+      },
     });
     programRef.current = program;
 
@@ -276,6 +282,7 @@ export default function EvilEye({
       }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [intensity, pupilSize, irisWidth, glowIntensity, scale, noiseScale, pupilFollow, flameSpeed]);
 
   useEffect(() => {
