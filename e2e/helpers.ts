@@ -8,15 +8,11 @@ export async function loginAndWaitForDashboard(page: Page): Promise<void> {
     await page.goto("/login");
     await page.getByLabel(/username/i).fill(USERNAME);
     await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByRole("button", { name: /login|sign in|enter/i }).click();
+    await page.getByLabel(/sign in/i).click();
 
     try {
       await expect(page).toHaveURL(/\/dashboard/, { timeout: 12_000 });
-      const campBtn = page
-        .locator("header button")
-        .filter({ hasText: /outpost|base|camp|alpha|beta|gamma|delta/i })
-        .first();
-      await expect(campBtn).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByRole('button', { name: /dashboard/i })).toBeVisible({ timeout: 20_000 });
       return;
     } catch {
       if (attempt === 2) throw new Error("Login failed after 3 attempts (rate limited?)");

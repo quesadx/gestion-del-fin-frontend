@@ -11,7 +11,7 @@ test.describe("Authentication", () => {
 
     await page.getByLabel(/username/i).fill(USERNAME);
     await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByRole("button", { name: /login|sign in|enter/i }).click();
+    await page.getByLabel(/sign in/i).click();
 
     await expect(page).toHaveURL(/\/dashboard/);
   });
@@ -23,10 +23,10 @@ test.describe("Authentication", () => {
 
     await page.getByLabel(/username/i).fill("wrong_user");
     await page.getByLabel(/password/i).fill("wrongpassword");
-    await page.getByRole("button", { name: /login|sign in|enter/i }).click();
+    await page.getByLabel(/sign in/i).click();
 
     await expect(
-      page.getByText('Request failed with status code 401', { exact: true }),
+      page.locator('form').getByText(/Request failed with status code 401/i),
     ).toBeVisible();
   });
 
