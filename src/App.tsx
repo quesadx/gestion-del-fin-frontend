@@ -2,6 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, useCampStore } from './store';
 import { ReactNode, Suspense, lazy, useEffect } from 'react';
+import { apiClient, unwrapList } from './lib/api';
+import { Role } from './types';
 
 const PAGE_TITLES: Record<string, string> = {
   '/login': 'Login',
@@ -131,6 +133,41 @@ export default function App() {
       clearTimeout(timeout);
     };
   }, [logout]);
+
+  const { token, permissionsLoaded, setPermissions, setPermissionsError } = useAuthStore();
+
+  useEffect(() => {
+    if (!token || permissionsLoaded) return;
+
+    let cancelled = false;
+
+    async function fetchPermissions() {
+      try {
+        const res = await apiClient.get('/roles');
+        const roles = unwrapList<Role>(res.data);
+        const userRole = useAuthStore.getState().user?.role;
+        const matched = roles.find((r) => r.name === userRole);
+        const permissionNames = matched?.permissions?.map((p) => p.name) ?? [];
+        if (!cancelled) setPermissions(permissionNames);
+      } catch {
+        if (!cancelled) setPermissionsError('Failed to load permissions');
+      }
+    }
+
+    fetchPermissions();
+
+    const onFocus = () => {
+      if (useAuthStore.getState().token && useAuthStore.getState().permissionsLoaded) {
+        fetchPermissions();
+      }
+    };
+    window.addEventListener('focus', onFocus);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [token, permissionsLoaded, setPermissions, setPermissionsError]);
 
   return (
     <QueryClientProvider client={queryClient}>
