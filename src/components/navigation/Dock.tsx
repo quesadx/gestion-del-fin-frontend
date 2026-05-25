@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'motion/react';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './Dock.css';
 
 export interface DockItemData {
@@ -19,6 +19,8 @@ interface DockItemProps {
   distance: number;
   magnification: number;
   baseItemSize: number;
+  isFocused: boolean;
+  onFocusRequest: () => void;
 }
 
 interface SpringOptions {
@@ -37,6 +39,8 @@ function DockItem({
   distance,
   magnification,
   baseItemSize,
+  isFocused,
+  onFocusRequest,
 }: DockItemProps) {
   const ref = useRef<HTMLButtonElement | null>(null);
   const isHovered = useMotionValue(0);
@@ -46,7 +50,6 @@ function DockItem({
       x: 0,
       width: baseItemSize,
     };
-
     return val - rect.x - baseItemSize / 2;
   });
 
@@ -57,16 +60,24 @@ function DockItem({
   );
   const size = useSpring(targetSize, spring);
 
+  useEffect(() => {
+    if (isFocused) {
+      ref.current?.focus({ preventScroll: false });
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [isFocused]);
+
   return (
     <motion.button
       ref={ref}
       type="button"
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, minWidth: baseItemSize, minHeight: baseItemSize }}
       onHoverStart={() => isHovered.set(1)}
       onHoverEnd={() => isHovered.set(0)}
       onFocus={() => isHovered.set(1)}
       onBlur={() => isHovered.set(0)}
       onClick={onClick}
+      onFocusCapture={onFocusRequest}
       className={`dock-item ${className}`}
       aria-label={label}
     >
@@ -91,7 +102,6 @@ function DockLabel({ children, className = '', isHovered }: DockLabelProps) {
     const unsubscribe = isHovered.on('change', (latest) => {
       setIsVisible(latest === 1);
     });
-
     return () => unsubscribe();
   }, [isHovered]);
 
@@ -137,17 +147,65 @@ export default function Dock({
 }: DockProps) {
   const mouseX = useMotionValue(Infinity);
   const isHovered = useMotionValue(0);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 640;
+  }, []);
+
+  const responsiveBaseSize = isMobile ? Math.min(baseItemSize, 40) : baseItemSize;
+  const responsivePanelHeight = isMobile ? Math.min(panelHeight, 58) : panelHeight;
+  const responsiveMagnification = isMobile ? Math.min(magnification, 60) : magnification;
+  const responsiveDistance = isMobile ? Math.min(distance, 150) : distance;
 
   const maxHeight = useMemo(
-    () => Math.max(dockHeight, magnification + magnification / 2 + 4),
-    [magnification, dockHeight],
+    () => Math.max(dockHeight, responsiveMagnification + responsiveMagnification / 2 + 4),
+    [responsiveMagnification, dockHeight],
   );
-  const heightRow = useTransform(isHovered, [0, 1], [panelHeight, maxHeight]);
+  const heightRow = useTransform(isHovered, [0, 1], [responsivePanelHeight, maxHeight]);
   const height = useSpring(heightRow, spring);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End')
+        return;
+
+      const activeElement = document.activeElement;
+      const isInDock = panelRef.current?.contains(activeElement);
+      if (!isInDock) return;
+
+      e.preventDefault();
+
+      if (e.key === 'Home') {
+        setFocusedIndex(0);
+        return;
+      }
+      if (e.key === 'End') {
+        setFocusedIndex(items.length - 1);
+        return;
+      }
+
+      setFocusedIndex((prev) => {
+        if (prev < 0) return 0;
+        if (e.key === 'ArrowRight') return (prev + 1) % items.length;
+        if (e.key === 'ArrowLeft') return (prev - 1 + items.length) % items.length;
+        return prev;
+      });
+    },
+    [items.length],
+  );
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <motion.div style={{ height, scrollbarWidth: 'none' }} className="dock-outer">
       <motion.div
+        ref={panelRef}
         onMouseMove={({ pageX }) => {
           isHovered.set(1);
           mouseX.set(pageX);
@@ -157,9 +215,10 @@ export default function Dock({
           mouseX.set(Infinity);
         }}
         className={`dock-panel ${className}`}
-        style={{ height: panelHeight, overflowX: 'auto', overflowY: 'hidden' }}
+        style={{ height: responsivePanelHeight }}
         role="toolbar"
         aria-label="Main navigation"
+        aria-orientation="horizontal"
       >
         {items.map((item, index) => (
           <DockItem
@@ -170,9 +229,11 @@ export default function Dock({
             className={item.className}
             mouseX={mouseX}
             spring={spring}
-            distance={distance}
-            magnification={magnification}
-            baseItemSize={baseItemSize}
+            distance={responsiveDistance}
+            magnification={responsiveMagnification}
+            baseItemSize={responsiveBaseSize}
+            isFocused={focusedIndex === index}
+            onFocusRequest={() => setFocusedIndex(index)}
           />
         ))}
       </motion.div>
