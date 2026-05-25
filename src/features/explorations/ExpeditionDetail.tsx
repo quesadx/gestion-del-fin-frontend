@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { Expedition, ResourceAllocation, Resource } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
-import { can, PERM } from '../../lib/permissions';
+import { can, useCan, PERM } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
 import {
   MapPin,
@@ -42,6 +42,7 @@ export default function ExpeditionDetail() {
 
   const actorId = user?.id ?? 1;
   const canRead = can(PERM.EXPEDITIONS_READ);
+  const canManage = useCan(PERM.EXPEDITIONS_MANAGE);
 
   useEffect(() => {
     if (!canRead) {
@@ -294,35 +295,64 @@ export default function ExpeditionDetail() {
         {/* Action buttons */}
         {!isReadonly && (
           <div className="flex flex-wrap items-center gap-3 border-t border-zinc-900/50 pt-4">
-            {isPlanned && (
-              <button
-                onClick={() => updateStatusMutation.mutate({ status: 'ONGOING' })}
-                disabled={updateStatusMutation.isPending}
-                className="px-4 py-2 bg-brand-primary text-black font-extrabold text-xs uppercase rounded hover:bg-brand-primary/90 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                {updateStatusMutation.isPending ? 'DEPLOYING...' : 'DEPLOY SQUAD'}
-              </button>
-            )}
+            {isPlanned &&
+              (canManage ? (
+                <button
+                  onClick={() => updateStatusMutation.mutate({ status: 'ONGOING' })}
+                  disabled={updateStatusMutation.isPending}
+                  className="px-4 py-2 bg-brand-primary text-black font-extrabold text-xs uppercase rounded hover:bg-brand-primary/90 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {updateStatusMutation.isPending ? 'DEPLOYING...' : 'DEPLOY SQUAD'}
+                </button>
+              ) : (
+                <button
+                  disabled
+                  title="No tienes permiso para realizar esta acción"
+                  className="px-4 py-2 bg-brand-primary/30 text-black/50 font-extrabold text-xs uppercase rounded cursor-not-allowed"
+                >
+                  DEPLOY SQUAD
+                </button>
+              ))}
             {isOngoing && (
               <>
-                <button
-                  onClick={() => {
-                    setFoundResources([]);
-                    setReturnDate(new Date().toISOString().split('T')[0]);
-                    setShowReturnModal(true);
-                  }}
-                  disabled={updateStatusMutation.isPending}
-                  className="px-4 py-2 bg-emerald-600 text-white font-extrabold text-xs uppercase rounded hover:bg-emerald-500 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  CONFIRM RETURN
-                </button>
-                <button
-                  onClick={() => updateStatusMutation.mutate({ status: 'CANCELLED' })}
-                  disabled={updateStatusMutation.isPending}
-                  className="px-4 py-2 bg-red-600 text-white font-extrabold text-xs uppercase rounded hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  MARK LOST
-                </button>
+                {canManage ? (
+                  <button
+                    onClick={() => {
+                      setFoundResources([]);
+                      setReturnDate(new Date().toISOString().split('T')[0]);
+                      setShowReturnModal(true);
+                    }}
+                    disabled={updateStatusMutation.isPending}
+                    className="px-4 py-2 bg-emerald-600 text-white font-extrabold text-xs uppercase rounded hover:bg-emerald-500 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    CONFIRM RETURN
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    title="No tienes permiso para realizar esta acción"
+                    className="px-4 py-2 bg-emerald-600/30 text-white/50 font-extrabold text-xs uppercase rounded cursor-not-allowed"
+                  >
+                    CONFIRM RETURN
+                  </button>
+                )}
+                {canManage ? (
+                  <button
+                    onClick={() => updateStatusMutation.mutate({ status: 'CANCELLED' })}
+                    disabled={updateStatusMutation.isPending}
+                    className="px-4 py-2 bg-red-600 text-white font-extrabold text-xs uppercase rounded hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    MARK LOST
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    title="No tienes permiso para realizar esta acción"
+                    className="px-4 py-2 bg-red-600/30 text-white/50 font-extrabold text-xs uppercase rounded cursor-not-allowed"
+                  >
+                    MARK LOST
+                  </button>
+                )}
               </>
             )}
           </div>
