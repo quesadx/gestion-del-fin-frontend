@@ -1,3 +1,5 @@
+import { useAuthStore } from '../store';
+
 export const ROLES = {
   SYSTEM_ADMIN: 'system_admin',
   RESOURCE_MANAGER: 'resource_manager',
@@ -112,50 +114,46 @@ export type PermissionKey = (typeof PERM)[keyof typeof PERM];
 
 /**
  * Returns true if the role has the given permission.
- * Supports wildcard "*" (all permissions) and namespace wildcard "inventory.*"
- * (any permission starting with "inventory.").
+ * Deprecated — use store-backed can(permission) instead.
+ * Will be removed after all call sites migrate in 11b.
  */
-export function can(role: string | null | undefined, permission: string): boolean {
+export function canLegacy(role: string | null | undefined, permission: string): boolean {
   if (!role) return false;
 
   const perms = ROLE_PERMISSIONS[role];
   if (!perms) return false;
 
-  for (const p of perms) {
-    // Full wildcard — role can do everything
-    if (p === '*') return true;
+  return checkPermission(perms, permission);
+}
 
-    // Exact match
-    if (p === permission) return true;
+export function can(permission: string): boolean {
+  const permissions = useAuthStore.getState().permissions;
+  if (permissions.length === 0) return false;
+  return checkPermission(permissions, permission);
+}
 
-    // Namespace wildcard: "inventory.*" matches "inventory.read", "inventory.create", etc.
-    if (p.endsWith('.*')) {
-      const ns = p.slice(0, -2); // e.g. "inventory"
-      if (permission === ns || permission.startsWith(`${ns}.`)) return true;
-    }
-  }
-
-  return false;
+export function hasPermission(permission: string): boolean {
+  return can(permission);
 }
 
 // ── Convenience helpers ───────────────────────────────────────────────────────
 
 export function isAdmin(role: string | null | undefined): boolean {
-  return can(role, '*') || role === ROLES.SYSTEM_ADMIN;
+  return canLegacy(role, '*') || role === ROLES.SYSTEM_ADMIN;
 }
 
 export function canManageInventory(role: string | null | undefined): boolean {
-  return can(role, 'inventory.*');
+  return canLegacy(role, 'inventory.*');
 }
 
 export function canManageTransfers(role: string | null | undefined): boolean {
-  return can(role, 'transfers.*');
+  return canLegacy(role, 'transfers.*');
 }
 
 export function canManageExpeditions(role: string | null | undefined): boolean {
-  return can(role, 'expeditions.*');
+  return canLegacy(role, 'expeditions.*');
 }
 
 export function canManageAdmissions(role: string | null | undefined): boolean {
-  return can(role, 'admission.*');
+  return canLegacy(role, 'admission.*');
 }
