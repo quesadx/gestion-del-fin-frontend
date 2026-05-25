@@ -169,6 +169,14 @@ export interface ExplorationMember {
   person_id: number;
 }
 
+export interface GamificationAchievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  xpReward: number;
+}
+
 export interface Expedition {
   id: number;
   camp_id: number;

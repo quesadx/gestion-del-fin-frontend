@@ -230,12 +230,12 @@ export default function RolesPage() {
                     ACCESS CONTROL SEC-09
                   </p>
                   <h3 className="text-2xl font-black uppercase italic tracking-tighter">
-                    {editingRole ? 'Edit Role' : 'Register New Role'}
+                    {editingRole ? 'Edit Role' : 'Propose New Role'}
                   </h3>
                   <p className="text-xs text-zinc-500 font-mono">
                     {editingRole
                       ? 'Modify role name, description, and permission bindings.'
-                      : 'Create a role with specific access permissions.'}
+                      : 'Justify and propose a new role. The description serves as the formal justification for why this role is needed.'}
                   </p>
                 </div>
                 <button
@@ -263,13 +263,13 @@ export default function RolesPage() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Description
+                    Justification / Description
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Describe what this role can access"
-                    rows={2}
+                    placeholder="Explain why this role is needed and what it enables..."
+                    rows={3}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none font-mono"
                   />
                 </div>
@@ -332,7 +332,7 @@ export default function RolesPage() {
                       ? 'PROCESSING...'
                       : editingRole
                         ? 'UPDATE RECORD'
-                        : 'CONFIRM REGISTRATION'}
+                        : 'PROPOSE ROLE'}
                   </button>
                 </div>
               </form>

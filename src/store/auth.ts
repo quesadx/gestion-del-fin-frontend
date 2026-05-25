@@ -33,8 +33,12 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, token) => {
         const payload = parseJwtPayload(token);
         const rawId = payload.sub ?? payload.id ?? payload.userId ?? payload.user_id ?? null;
+        const rawCampId = payload.campId ?? payload.camp_id ?? null;
         set({
-          user,
+          user: {
+            ...user,
+            camp_id: rawCampId != null ? Number(rawCampId) : null,
+          },
           token,
           userId: rawId != null ? Number(rawId) : null,
         });

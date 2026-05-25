@@ -16,10 +16,14 @@ import {
   Trash2,
   X,
   AlertTriangle,
+  Wrench,
+  AlertCircle,
+  MapPinOff,
 } from 'lucide-react';
 import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
-import { cn } from '../../lib/utils';
+import { cn, normalizePersonStatus } from '../../lib/utils';
+import { can } from '../../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -30,7 +34,7 @@ const PAGE_SIZE = 20;
 export default function PopulationRoster() {
   const { currentCampId } = useCampStore();
   const queryClient = useQueryClient();
-  const { userId } = useAuthStore();
+  const { userId, user } = useAuthStore();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -38,6 +42,10 @@ export default function PopulationRoster() {
   const [transferringPerson, setTransferringPerson] = useState<Person | null>(null);
   const [targetCampId, setTargetCampId] = useState<number | null>(null);
   const [confirmDeletePerson, setConfirmDeletePerson] = useState<Person | null>(null);
+
+  const [reassignModal, setReassignModal] = useState(false);
+  const [reassignVacantProfId, setReassignVacantProfId] = useState<number | null>(null);
+  const [reassignPersonId, setReassignPersonId] = useState<number | null>(null);
 
   // Edit states
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
@@ -85,17 +93,7 @@ export default function PopulationRoster() {
     setEditingPerson(person);
     setEditName(person.full_name);
     setEditAge(String(person.age));
-
-    // Normalize string status
-    let norm: 'HEALTHY' | 'INJURED' | 'SICK' | 'AWAY' | 'DEAD' = 'HEALTHY';
-    const s = (person.status || '').toUpperCase();
-    if (s === 'HEALTHY') norm = 'HEALTHY';
-    else if (s === 'SICK') norm = 'SICK';
-    else if (s === 'INJURED') norm = 'INJURED';
-    else if (s === 'AWAY') norm = 'AWAY';
-    else if (s === 'DEAD') norm = 'DEAD';
-
-    setEditStatus(norm);
+    setEditStatus(normalizePersonStatus(person.status));
     setEditProfessionId(person.profession_id ?? null);
   };
 
@@ -142,7 +140,7 @@ export default function PopulationRoster() {
     return professions
       .map((prof) => {
         const assigned = survivors.filter((s) => s.profession_id === prof.id);
-        const active = assigned.filter((s) => ['HEALTHY'].includes((s.status || '').toUpperCase()));
+        const active = assigned.filter((s) => normalizePersonStatus(s.status) === 'HEALTHY');
         return { ...prof, total: assigned.length, active: active.length };
       })
       .filter((p) => p.total > 0 && p.active === 0);
@@ -173,6 +171,33 @@ export default function PopulationRoster() {
     },
   });
 
+  const reassignMutation = useMutation({
+    mutationFn: async ({
+      personId,
+      fromProfId,
+      toProfId,
+    }: {
+      personId: number;
+      fromProfId: number;
+      toProfId: number;
+    }) => {
+      await apiClient.post(`/camps/${currentCampId}/people/profession-reassignments`, {
+        person_id: personId,
+        from_profession_id: fromProfId,
+        to_profession_id: toProfId,
+        reason: 'Temporary reassignment — covering vacant profession',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['people'] });
+      setReassignModal(false);
+      setReassignVacantProfId(null);
+      setReassignPersonId(null);
+    },
+  });
+
+  const canReassign = can(user?.role, 'people.profession_reassign.create');
+
   const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
     const profMatch = s.profession_name?.toLowerCase().includes(search.toLowerCase());
@@ -181,7 +206,7 @@ export default function PopulationRoster() {
     if (!matchesSearch) return false;
     if (statusFilter === 'ALL') return true;
 
-    const personStatus = (s.status || '').toUpperCase();
+    const personStatus = normalizePersonStatus(s.status);
     const filterVal = statusFilter.toUpperCase();
 
     return personStatus === filterVal;
@@ -257,7 +282,7 @@ export default function PopulationRoster() {
       {professionCoverage.length > 0 && (
         <div className="p-4 bg-amber-950/20 border border-amber-500/30 rounded-xl flex items-start gap-3">
           <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-          <div className="space-y-1">
+          <div className="space-y-1 flex-1">
             <p className="text-xs font-black text-amber-500 uppercase tracking-wider">
               PROFESSION SHORTFALL DETECTED
             </p>
@@ -268,6 +293,14 @@ export default function PopulationRoster() {
               </span>
             </p>
           </div>
+          {canReassign && (
+            <button
+              onClick={() => setReassignModal(true)}
+              className="shrink-0 bg-amber-600 hover:bg-amber-500 text-black text-[10px] font-black uppercase tracking-wider px-4 py-2 rounded transition-colors"
+            >
+              REASSIGN
+            </button>
+          )}
         </div>
       )}
 
@@ -287,6 +320,9 @@ export default function PopulationRoster() {
               </th>
               <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
                 Age
+              </th>
+              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                Workable
               </th>
               <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-right">
                 Actions
@@ -312,6 +348,9 @@ export default function PopulationRoster() {
                   <td className="px-6 py-4">
                     <Skeleton className="h-4 w-12" />
                   </td>
+                  <td className="px-6 py-4">
+                    <Skeleton className="h-5 w-20" />
+                  </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <Skeleton className="h-8 w-8 rounded" />
@@ -323,7 +362,7 @@ export default function PopulationRoster() {
             ) : filteredSurvivors.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-6 py-20 text-center text-zinc-600 font-mono text-xs uppercase tracking-widest"
                 >
                   No personnel records found.
@@ -355,14 +394,14 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4">
                     {(() => {
-                      const s = (person.status || '').toUpperCase();
-                      const isHealthy = s === 'HEALTHY';
-                      const isSick = s === 'SICK';
-                      const isInjured = s === 'INJURED';
-                      const isAway = s === 'AWAY';
-                      const isDeceased = s === 'DEAD';
+                      const status = normalizePersonStatus(person.status);
+                      const isHealthy = status === 'HEALTHY';
+                      const isSick = status === 'SICK';
+                      const isInjured = status === 'INJURED';
+                      const isAway = status === 'AWAY';
+                      const isDeceased = status === 'DEAD';
 
-                      const label = s;
+                      const label = status;
 
                       return (
                         <div
@@ -389,6 +428,45 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-mono text-zinc-500">{person.age} YRS</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {(() => {
+                      const status = normalizePersonStatus(person.status);
+                      const isWorkable = status === 'HEALTHY';
+                      const isAway = status === 'AWAY';
+                      const isDeceased = status === 'DEAD';
+
+                      if (isDeceased) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-zinc-950/40 text-zinc-600 border border-zinc-800">
+                            <Skull size={10} />
+                            DECEASED
+                          </span>
+                        );
+                      }
+                      if (isAway) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-blue-950/20 text-blue-400 border border-blue-400/30">
+                            <MapPinOff size={10} />
+                            ABSENT
+                          </span>
+                        );
+                      }
+                      if (isWorkable) {
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-950/20 text-emerald-400 border border-emerald-400/30">
+                            <Wrench size={10} />
+                            AVAILABLE
+                          </span>
+                        );
+                      }
+                      return (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-950/20 text-amber-400 border border-amber-400/30">
+                          <AlertCircle size={10} />
+                          UNAVAILABLE
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end items-center gap-1">
@@ -623,6 +701,137 @@ export default function PopulationRoster() {
         }}
         onCancel={() => setConfirmDeletePerson(null)}
       />
+
+      {/* Reassign modal — temporary profession coverage */}
+      <AnimatePresence>
+        {reassignModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-lg w-full space-y-6 max-h-[85vh] overflow-y-auto"
+            >
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                  Temporary Reassignment
+                </h3>
+                <p className="text-sm text-zinc-500 font-mono">
+                  Cover a vacant profession with a healthy survivor.
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                    Vacant Profession (target)
+                  </p>
+                  <div className="grid gap-2">
+                    {professionCoverage.map((prof) => (
+                      <button
+                        key={prof.id}
+                        onClick={() => {
+                          setReassignVacantProfId(prof.id);
+                          setReassignPersonId(null);
+                        }}
+                        className={cn(
+                          'p-3 text-left border rounded-lg transition-all w-full',
+                          reassignVacantProfId === prof.id
+                            ? 'bg-brand-secondary/10 border-brand-secondary text-brand-secondary'
+                            : 'bg-surface-base border-zinc-800 text-zinc-400 hover:border-zinc-700',
+                        )}
+                      >
+                        <p className="text-xs font-bold uppercase">{prof.name}</p>
+                        <p className="text-[10px] font-mono opacity-60">
+                          {prof.total} assigned, 0 active
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {reassignVacantProfId && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                      Select Healthy Survivor (source)
+                    </p>
+                    <div className="grid gap-2 max-h-48 overflow-auto pr-1">
+                      {survivors
+                        ?.filter(
+                          (p) =>
+                            normalizePersonStatus(p.status) === 'HEALTHY' &&
+                            p.profession_id != null &&
+                            p.profession_id !== reassignVacantProfId,
+                        )
+                        .map((person) => (
+                          <button
+                            key={person.id}
+                            onClick={() => setReassignPersonId(person.id)}
+                            className={cn(
+                              'p-3 text-left border rounded-lg transition-all w-full',
+                              reassignPersonId === person.id
+                                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
+                                : 'bg-surface-base border-zinc-800 text-zinc-400 hover:border-zinc-700',
+                            )}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold">{person.full_name}</span>
+                              <span className="text-[10px] font-mono text-zinc-500">
+                                {person.profession_name || 'UNASSIGNED'}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      {survivors?.filter(
+                        (p) =>
+                          normalizePersonStatus(p.status) === 'HEALTHY' &&
+                          p.profession_id != null &&
+                          p.profession_id !== reassignVacantProfId,
+                      ).length === 0 && (
+                        <p className="text-[11px] text-zinc-600 font-mono text-center py-4">
+                          No other healthy survivors available.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t border-zinc-900">
+                <button
+                  onClick={() => {
+                    setReassignModal(false);
+                    setReassignVacantProfId(null);
+                    setReassignPersonId(null);
+                  }}
+                  className="flex-1 py-3 font-bold border border-zinc-800 rounded hover:bg-zinc-900 transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  disabled={
+                    !reassignVacantProfId || !reassignPersonId || reassignMutation.isPending
+                  }
+                  onClick={() => {
+                    if (!reassignVacantProfId || !reassignPersonId) return;
+                    const person = survivors?.find((p) => p.id === reassignPersonId);
+                    const fromProfId = person?.profession_id;
+                    if (!fromProfId) return;
+                    reassignMutation.mutate({
+                      personId: reassignPersonId,
+                      fromProfId,
+                      toProfId: reassignVacantProfId,
+                    });
+                  }}
+                  className="flex-2 py-3 bg-amber-600 text-black font-black uppercase rounded hover:bg-amber-500 transition-colors disabled:opacity-30"
+                >
+                  {reassignMutation.isPending ? 'REASSIGNING...' : 'CONFIRM REASSIGN'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="pt-4 flex items-center justify-between">
         <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">

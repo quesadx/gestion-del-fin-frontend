@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
-import { useCampStore } from '../../store';
+import { useAuthStore, useCampStore } from '../../store';
+import { can } from '../../lib/permissions';
 import { Admission } from '../../types';
 import {
   BrainCircuit,
@@ -33,7 +34,10 @@ const getAdmissionDecisionStatus = (
 
 export default function AdmissionList() {
   const { currentCampId } = useCampStore();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
+
+  const canReevaluate = can(user?.role, 'admission.create') && can(user?.role, 'admission.review');
   const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
@@ -48,6 +52,13 @@ export default function AdmissionList() {
   const [newIdCardUrl, setNewIdCardUrl] = useState('');
 
   const [selectedProfId, setSelectedProfId] = useState<number | null>(null);
+
+  const [isCorrectModalOpen, setIsCorrectModalOpen] = useState(false);
+  const [correctName, setCorrectName] = useState('');
+  const [correctAge, setCorrectAge] = useState('');
+  const [correctSkills, setCorrectSkills] = useState('');
+  const [correctHealth, setCorrectHealth] = useState('');
+  const [correctBackground, setCorrectBackground] = useState('');
 
   const { data: admissions, isLoading } = useQuery<Admission[]>({
     queryKey: ['admissions', currentCampId],
@@ -129,6 +140,35 @@ export default function AdmissionList() {
       setNewBackground('');
       setNewPhotoUrl('');
       setNewIdCardUrl('');
+    },
+  });
+
+  const correctAndReevaluateMutation = useMutation({
+    mutationFn: async ({
+      oldId,
+      formValues,
+    }: {
+      oldId: number;
+      formValues: {
+        applicant_name: string;
+        applicant_age?: number;
+        applicant_skills: string;
+        health_notes: string;
+        background_notes: string;
+        photo_url?: string;
+        id_card_url?: string;
+      };
+    }) => {
+      const body = toFormData(formValues);
+      const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
+      await apiClient.patch(`/admission/${oldId}/review`, { final_decision: 'REJECTED' });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
+      setIsCorrectModalOpen(false);
+      setSelectedAdmissionId(null);
     },
   });
 
@@ -315,7 +355,9 @@ export default function AdmissionList() {
                     <div className="bg-zinc-950 p-2 border border-zinc-800 rounded flex gap-4">
                       <div className="text-center px-4 border-r border-zinc-800">
                         <p className="text-[10px] font-bold text-zinc-500 uppercase">Age</p>
-                        <p className="font-mono font-bold text-lg">{details.applicant_age || 25}</p>
+                        <p className="font-mono font-bold text-lg">
+                          {details.applicant_age ?? '—'}
+                        </p>
                       </div>
                       <div className="text-center px-4">
                         <p className="text-[10px] font-bold text-zinc-500 uppercase">Risk</p>
@@ -466,6 +508,26 @@ export default function AdmissionList() {
                     <XCircle size={20} />
                     REJECT INTAKE
                   </button>
+                  {canReevaluate && (
+                    <button
+                      onClick={() => {
+                        setCorrectName(details.applicant_name || details.full_name || '');
+                        setCorrectAge(String(details.applicant_age ?? ''));
+                        setCorrectSkills(details.applicant_skills || '');
+                        setCorrectHealth(details.health_notes || '');
+                        setCorrectBackground(details.background_notes || '');
+                        setIsCorrectModalOpen(true);
+                      }}
+                      disabled={
+                        correctAndReevaluateMutation.isPending ||
+                        getAdmissionDecisionStatus(details) !== 'PENDING'
+                      }
+                      className="flex-1 bg-amber-950/20 hover:bg-amber-950/40 text-amber-500 border border-amber-500/30 font-black py-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-30"
+                    >
+                      <BrainCircuit size={20} />
+                      CORRECT &amp; REEVALUATE
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       reviewMutation.mutate({
@@ -622,6 +684,132 @@ export default function AdmissionList() {
                     {createAdmissionMutation.isPending
                       ? 'STABILITY AI CALIBRATING...'
                       : 'SUBMIT REFUGE ENTRY'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {isCorrectModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+            >
+              <div className="border-b border-zinc-900 pb-4 mb-2">
+                <p className="text-[10px] font-mono text-amber-500 uppercase tracking-widest leading-none mb-1">
+                  CORRECTION PROTOCOL
+                </p>
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                  Correct &amp; Re-evaluate
+                </h3>
+                <p className="text-xs text-zinc-500 font-mono mt-1">
+                  Edit the applicant data and resubmit for a fresh AI evaluation. The original
+                  intake will be rejected.
+                </p>
+              </div>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!correctName) return;
+                  correctAndReevaluateMutation.mutate({
+                    oldId: details.id,
+                    formValues: {
+                      applicant_name: correctName,
+                      applicant_age: correctAge ? Number(correctAge) : undefined,
+                      applicant_skills: correctSkills,
+                      health_notes: correctHealth,
+                      background_notes: correctBackground,
+                      photo_url: details.photo_url ?? undefined,
+                      id_card_url: details.id_card_url ?? undefined,
+                    },
+                  });
+                }}
+                className="space-y-4"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2 space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                      Applicant Full Name
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={correctName}
+                      onChange={(e) => setCorrectName(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Age</label>
+                    <input
+                      required
+                      type="number"
+                      value={correctAge}
+                      onChange={(e) => setCorrectAge(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                    Applicant Skills summary
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={correctSkills}
+                    onChange={(e) => setCorrectSkills(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                    Health assessment notes
+                  </label>
+                  <textarea
+                    required
+                    value={correctHealth}
+                    onChange={(e) => setCorrectHealth(e.target.value)}
+                    rows={2}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                    Historical background notes
+                  </label>
+                  <textarea
+                    value={correctBackground}
+                    onChange={(e) => setCorrectBackground(e.target.value)}
+                    rows={2}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
+                  />
+                </div>
+
+                <div className="flex gap-4 pt-4 border-t border-zinc-900">
+                  <button
+                    type="button"
+                    onClick={() => setIsCorrectModalOpen(false)}
+                    className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
+                  >
+                    CANCEL
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={correctAndReevaluateMutation.isPending}
+                    className="flex-2 py-2.5 bg-amber-600 text-black text-xs font-bold uppercase rounded hover:bg-amber-500 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
+                  >
+                    {correctAndReevaluateMutation.isPending
+                      ? 'REEVALUATING...'
+                      : 'SUBMIT & REEVALUATE'}
                   </button>
                 </div>
               </form>

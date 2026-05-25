@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, unwrapList } from '../../lib/api';
-import { useCampStore } from '../../store';
+import { useAuthStore, useCampStore } from '../../store';
 import {
   Users,
   Map,
@@ -12,26 +12,29 @@ import {
   ShieldCheck,
   Box,
   CheckCircle,
+  HardHat,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
-import { InventorySnapshot, Resource, InventoryItem } from '../../types';
+import { InventorySnapshot, Resource, InventoryItem, Person } from '../../types';
 import BorderGlow from '../../components/BorderGlow';
+
+const ADMIN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator'];
 
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
+  const isWorker = user?.role === 'worker';
+  const isAdmin = user?.role ? ADMIN_ROLES.includes(user.role) : false;
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['dashboard-metrics', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get('/metrics/dashboard');
       const d = res.data ?? {};
-
-      // The real API returns a flat shape. Normalise it to the nested shape
-      // the rest of the component reads, with fallbacks for both formats.
       return {
         people: {
           total: d.survivor_count ?? d.people?.total ?? 0,
@@ -43,8 +46,6 @@ export default function DashboardOverview() {
         },
         resources: {
           total_types: d.resource_types_count ?? d.resources?.total_types ?? 0,
-          // Real API gives a count, not an array — fabricate an array of the
-          // right length so .length works for the "Stock Alerts" card.
           low_stock: d.resources?.low_stock ?? Array(d.low_resource_alerts_count ?? 0).fill({}),
         },
         expeditions: {
@@ -58,12 +59,24 @@ export default function DashboardOverview() {
         },
       };
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && isAdmin,
   });
 
-  // Build inventory snapshots from /inventory/{campId} + /resources (joined client-side).
-  const { data: resourceSummaries, isLoading: resourcesLoading } = useQuery<InventorySnapshot[]>({
-    queryKey: ['resource-metrics', currentCampId, metrics?.people?.total ?? 0],
+  const { data: peopleList, isLoading: peopleLoading } = useQuery<Person[]>({
+    queryKey: ['worker-people', currentCampId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/camps/${currentCampId}/people`);
+      return unwrapList<Person>(res.data);
+    },
+    enabled: !!currentCampId && isWorker,
+  });
+  const survivorCount = isWorker ? (peopleList?.length ?? 0) : (metrics?.people?.total ?? 0);
+  const healthyCount = isWorker
+    ? (peopleList?.filter((p) => p.status === 'HEALTHY').length ?? 0)
+    : (metrics?.people?.healthy ?? 0);
+
+  const { data: rawInventory, isLoading: resourcesLoading } = useQuery({
+    queryKey: ['resource-metrics', currentCampId],
     queryFn: async () => {
       const [invRes, resRes] = await Promise.all([
         apiClient.get(`/inventory/${currentCampId}`),
@@ -71,33 +84,45 @@ export default function DashboardOverview() {
       ]);
       const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
       const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
-      const survivorCount: number = metrics?.people?.total ?? 0;
-
-      return items.map((item) => {
-        const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
-        const qty = Math.floor(Number(item.quantity ?? 0));
-        const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));
-        const dailyRation = Math.floor(Number(rt?.daily_ration ?? 0));
-        const dailyUsage = dailyRation * survivorCount;
-        const projectionDays = dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
-        return {
-          resource_id: item.resource_type_id,
-          resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
-          unit: rt?.unit ?? '',
-          quantity: qty,
-          minimum_stock: minStock,
-          daily_ration: dailyRation,
-          daily_usage: dailyUsage,
-          projection_days: projectionDays,
-          status: (qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK') as
-            | 'OK'
-            | 'LOW'
-            | 'CRITICAL',
-        } satisfies InventorySnapshot;
-      }) as InventorySnapshot[];
+      return { items, resourceTypes };
     },
     enabled: !!currentCampId,
   });
+
+  const resourceSummaries: InventorySnapshot[] = useMemo(() => {
+    if (!rawInventory) return [];
+
+    const { items, resourceTypes } = rawInventory;
+
+    return items.map((item) => {
+      const rt = resourceTypes.find((r) => r.id === item.resource_type_id) ?? item.resource_type;
+      const name =
+        item.resource_name ??
+        item.resource_type?.name ??
+        rt?.name ??
+        `Resource #${item.resource_type_id}`;
+      const unit = item.unit ?? item.resource_type?.unit ?? rt?.unit ?? '';
+      const qty = item.quantity ?? 0;
+      const minStock = Number(rt?.minimum_stock ?? item.minimum_stock ?? 0);
+      const dailyRation = Number((rt as Resource | undefined)?.daily_ration ?? 0);
+      const dailyUsage = dailyRation * survivorCount;
+      const projectionDays = dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
+      return {
+        resource_id: item.resource_type_id,
+        resource_name: name,
+        unit,
+        quantity: qty,
+        minimum_stock: minStock,
+        daily_ration: dailyRation,
+        daily_usage: dailyUsage,
+        projection_days: projectionDays,
+        status: (qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK') as
+          | 'OK'
+          | 'LOW'
+          | 'CRITICAL',
+      } satisfies InventorySnapshot;
+    }) as InventorySnapshot[];
+  }, [rawInventory, survivorCount]);
 
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
@@ -124,8 +149,6 @@ export default function DashboardOverview() {
     return () => observer.disconnect();
   }, []);
 
-  // If the resource data arrives after the first measurement (common after login
-  // redirect), ensure we measure again so the chart can render with a non-zero size.
   useEffect(() => {
     const element = chartContainerRef.current;
     if (!element) return;
@@ -150,12 +173,10 @@ export default function DashboardOverview() {
     );
   }
 
-  // Compute alert counts from live inventory snapshots.
   const criticalCount = (resourceSummaries ?? []).filter((r) => r.status === 'CRITICAL').length;
   const lowCount = (resourceSummaries ?? []).filter((r) => r.status === 'LOW').length;
 
-  // Map real API fields to display cards
-  const statCards = [
+  const adminCards = [
     {
       label: 'Survivors',
       value: metrics?.people?.total,
@@ -186,28 +207,74 @@ export default function DashboardOverview() {
     },
   ];
 
+  const workerCards = [
+    {
+      label: 'Survivors',
+      value: survivorCount,
+      icon: Users,
+      color: 'text-blue-500',
+      bg: 'bg-blue-500/10',
+    },
+    {
+      label: 'Healthy',
+      value: healthyCount,
+      icon: ShieldCheck,
+      color: 'text-emerald-500',
+      bg: 'bg-emerald-500/10',
+    },
+    {
+      label: 'Stock Alerts',
+      value: criticalCount + lowCount,
+      icon: AlertTriangle,
+      color: 'text-red-500',
+      bg: 'bg-red-500/10',
+    },
+    {
+      label: 'Resource Types',
+      value: resourceSummaries?.length ?? 0,
+      icon: Box,
+      color: 'text-brand-primary',
+      bg: 'bg-brand-primary/10',
+    },
+  ];
+
+  const statCards = isWorker ? workerCards : adminCards;
+  const cardCount = statCards.length;
+  const isLoading = isWorker ? peopleLoading : metricsLoading;
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">Operational Overview</h1>
+          <h1 className="text-3xl font-black tracking-tighter uppercase">
+            {isWorker ? 'Camp Status' : 'Operational Overview'}
+          </h1>
           <p className="text-zinc-500 font-mono text-xs uppercase pl-1">
-            Resource & Population Surveillance // Stability Alpha-7
+            {isWorker
+              ? 'Camp Resources & Population'
+              : 'Resource & Population Surveillance // Stability Alpha-7'}
           </p>
         </div>
         <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg">
-          <ShieldCheck size={18} className="text-brand-accent" />
+          {isWorker ? (
+            <HardHat size={18} className="text-amber-500" />
+          ) : (
+            <ShieldCheck size={18} className="text-brand-accent" />
+          )}
           <div className="text-[10px] font-mono leading-none">
-            <p className="text-zinc-300 font-bold uppercase">Integrity Status</p>
-            <p className="text-brand-accent uppercase">Synchronized</p>
+            <p className="text-zinc-300 font-bold uppercase">
+              {isWorker ? 'Worker Access' : 'Integrity Status'}
+            </p>
+            <p className={isWorker ? 'text-amber-500 uppercase' : 'text-brand-accent uppercase'}>
+              {isWorker ? 'Read-Only' : 'Synchronized'}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metricsLoading
-          ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
+        {isLoading
+          ? Array.from({ length: cardCount }).map((_, i) => <SkeletonCard key={i} />)
           : statCards.map((stat, i) => (
               <motion.div
                 key={stat.label}
@@ -290,7 +357,6 @@ export default function DashboardOverview() {
       </div>
 
       <div className="space-y-6">
-        {/* Resource Monitor */}
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-zinc-900">
             <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
