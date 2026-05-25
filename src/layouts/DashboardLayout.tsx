@@ -164,7 +164,7 @@ export default function DashboardLayout() {
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
-  const [showGlitchOnce, setShowGlitchOnce] = useState(false);
+  const [showEyePhase, setShowEyePhase] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -367,7 +367,7 @@ export default function DashboardLayout() {
                   GESTION-DEL-FIN
                 </p>
                 <span className="text-xs font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
-                  Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
+                  Survival Terminal v1.0.0
                 </span>
               </div>
             </div>
@@ -468,11 +468,9 @@ export default function DashboardLayout() {
                   type="button"
                   onClick={() => {
                     setShowEasterEgg(true);
-                    setTimeout(() => {
-                      setShowGlitchOnce(true);
-                      setTimeout(() => setShowGlitchOnce(false), 500);
-                    }, 2500);
-                    setTimeout(() => setShowEasterEgg(false), 5000);
+                    setShowEyePhase(true);
+                    setTimeout(() => setShowEyePhase(false), 5000);
+                    setTimeout(() => setShowEasterEgg(false), 5500);
                   }}
                   aria-label="Easter egg"
                   className="rounded-full border border-red-500/30 bg-black/50 p-2.5 text-red-400 backdrop-blur-md transition-all hover:scale-110 hover:border-red-500/60 hover:text-red-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
@@ -655,24 +653,25 @@ export default function DashboardLayout() {
             onClick={(e) => e.stopPropagation()}
             className="fixed inset-0 z-[999] bg-black/95"
           >
-            <div className="absolute inset-0">
-              <EvilEye
-                eyeColor="#EF4444"
-                intensity={0.6}
-                pupilSize={0.7}
-                irisWidth={0.35}
-                glowIntensity={0.3}
-                scale={0.6}
-                noiseScale={1.5}
-                pupilFollow={1.5}
-                flameSpeed={3.0}
-                backgroundColor="#000000"
-              />
-            </div>
-            {showGlitchOnce && (
+            {showEyePhase ? (
+              <div className="absolute inset-0">
+                <EvilEye
+                  eyeColor="#EF4444"
+                  intensity={0.6}
+                  pupilSize={0.7}
+                  irisWidth={0.35}
+                  glowIntensity={0.3}
+                  scale={0.6}
+                  noiseScale={1.5}
+                  pupilFollow={1.5}
+                  flameSpeed={3.0}
+                  backgroundColor="#000000"
+                />
+              </div>
+            ) : (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <GlitchText speed={0.1} enableShadows={false} enableOnHover={false} className="!text-black !opacity-100">
-                  I SEE YOU
+                <GlitchText speed={0.1} enableShadows={true} enableOnHover={false} className="!text-white">
+                  1000011
                 </GlitchText>
               </div>
             )}

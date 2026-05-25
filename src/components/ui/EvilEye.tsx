@@ -180,6 +180,7 @@ export default function EvilEye({
   backgroundColor = '#000000'
 }: EvilEyeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const programRef = useRef<Program | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -217,19 +218,17 @@ export default function EvilEye({
     container.addEventListener('mousemove', onMouseMove);
     container.addEventListener('mouseleave', onMouseLeave);
 
-    let program: Program | undefined;
-
     function resize() {
       renderer.setSize(container.offsetWidth, container.offsetHeight);
-      if (program) {
-        program.uniforms.uResolution.value = [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height];
+      if (programRef.current) {
+        programRef.current.uniforms.uResolution.value = [gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height];
       }
     }
     window.addEventListener('resize', resize);
     resize();
 
     const geometry = new Triangle(gl);
-    program = new Program(gl, {
+    const program = new Program(gl, {
       vertex: vertexShader,
       fragment: fragmentShader,
       uniforms: {
@@ -249,6 +248,7 @@ export default function EvilEye({
         uBgColor: { value: hexToVec3(backgroundColor) }
       }
     });
+    programRef.current = program;
 
     const mesh = new Mesh(gl, { geometry, program });
     container.appendChild(gl.canvas as HTMLCanvasElement);
@@ -259,8 +259,8 @@ export default function EvilEye({
       animationFrameId = requestAnimationFrame(update);
       mouse.x += (mouse.tx - mouse.x) * 0.05;
       mouse.y += (mouse.ty - mouse.y) * 0.05;
-      program!.uniforms.uMouse.value = [mouse.x, mouse.y];
-      program!.uniforms.uTime.value = time * 0.001;
+      program.uniforms.uMouse.value = [mouse.x, mouse.y];
+      program.uniforms.uTime.value = time * 0.001;
       renderer.render({ scene: mesh });
     }
     animationFrameId = requestAnimationFrame(update);
@@ -270,12 +270,19 @@ export default function EvilEye({
       window.removeEventListener('resize', resize);
       container.removeEventListener('mousemove', onMouseMove);
       container.removeEventListener('mouseleave', onMouseLeave);
+      programRef.current = null;
       if (gl.canvas && container.contains(gl.canvas as HTMLCanvasElement)) {
         container.removeChild(gl.canvas as HTMLCanvasElement);
       }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, [eyeColor, intensity, pupilSize, irisWidth, glowIntensity, scale, noiseScale, pupilFollow, flameSpeed, backgroundColor]);
+  }, [intensity, pupilSize, irisWidth, glowIntensity, scale, noiseScale, pupilFollow, flameSpeed]);
+
+  useEffect(() => {
+    if (programRef.current) {
+      programRef.current.uniforms.uEyeColor.value = hexToVec3(eyeColor);
+    }
+  }, [eyeColor]);
 
   return <div ref={containerRef} className="evil-eye-container" />;
 }
