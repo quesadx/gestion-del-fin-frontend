@@ -182,7 +182,7 @@ export default function LoginPage() {
           </div>
         </div>
         <p className="text-[9px] font-mono text-zinc-600 text-center uppercase tracking-wider">
-          Access limit enforced based on security keys. Any key initiates survivor access.
+          Access limit enforced based on security keys.
         </p>
       </div>
     </div>
