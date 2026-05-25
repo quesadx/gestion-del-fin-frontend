@@ -19,8 +19,13 @@ interface AuthState {
   /** Numeric user ID extracted from the JWT `sub`/`id`/`userId` claim.
    *  Required by the API for `created_by` / `changed_by` / `requested_by`. */
   userId: number | null;
+  permissions: string[];
+  permissionsLoaded: boolean;
+  permissionsError: string | null;
   setAuth: (user: User, token: string) => void;
   logout: () => void;
+  setPermissions: (permissions: string[]) => void;
+  setPermissionsError: (error: string | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,6 +34,9 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       userId: null,
+      permissions: [],
+      permissionsLoaded: false,
+      permissionsError: null,
 
       setAuth: (user, token) => {
         const payload = parseJwtPayload(token);
@@ -41,11 +49,24 @@ export const useAuthStore = create<AuthState>()(
           },
           token,
           userId: rawId != null ? Number(rawId) : null,
+          permissionsLoaded: false,
         });
       },
 
-      // Zustand persist handles clearing the persisted entry automatically.
-      logout: () => set({ user: null, token: null, userId: null }),
+      logout: () =>
+        set({
+          user: null,
+          token: null,
+          userId: null,
+          permissions: [],
+          permissionsLoaded: false,
+          permissionsError: null,
+        }),
+
+      setPermissions: (permissions) =>
+        set({ permissions, permissionsLoaded: true, permissionsError: null }),
+
+      setPermissionsError: (error) => set({ permissionsError: error, permissionsLoaded: true }),
     }),
     { name: 'auth-storage' },
   ),
