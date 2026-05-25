@@ -26,7 +26,7 @@ test.describe("Authentication", () => {
     await page.getByRole("button", { name: /login|sign in|enter/i }).click();
 
     await expect(
-      page.getByText(/invalid|incorrect|unauthorized|error|failed|authentication|credentials/i).first(),
+      page.getByText('Request failed with status code 401', { exact: true }),
     ).toBeVisible();
   });
 
