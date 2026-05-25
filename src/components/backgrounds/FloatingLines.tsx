@@ -132,13 +132,15 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     mouseUv.y *= -1.0;
   }
 
+  float lenLog = log(length(baseUv) + 1.0);
+
   if (enableBottom) {
+    float angle = bottomWavePosition.z * lenLog;
+    vec2 ruv = baseUv * rotate2d(angle);
     for (int i = 0; i < bottomLineCount; ++i) {
       float fi = float(i);
       float t = fi / max(float(bottomLineCount - 1), 1.0);
       vec3 lineCol = getLineColor(t, b);
-      float angle = bottomWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate2d(angle);
       col += lineCol * wave(
         ruv + vec2(bottomLineDistance * fi + bottomWavePosition.x, bottomWavePosition.y),
         1.5 + 0.2 * fi,
@@ -150,12 +152,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   }
 
   if (enableMiddle) {
+    float angle = middleWavePosition.z * lenLog;
+    vec2 ruv = baseUv * rotate2d(angle);
     for (int i = 0; i < middleLineCount; ++i) {
       float fi = float(i);
       float t = fi / max(float(middleLineCount - 1), 1.0);
       vec3 lineCol = getLineColor(t, b);
-      float angle = middleWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate2d(angle);
       col += lineCol * wave(
         ruv + vec2(middleLineDistance * fi + middleWavePosition.x, middleWavePosition.y),
         2.0 + 0.15 * fi,
@@ -167,13 +169,13 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   }
 
   if (enableTop) {
+    float angle = topWavePosition.z * lenLog;
+    vec2 ruv = baseUv * rotate2d(angle);
+    ruv.x *= -1.0;
     for (int i = 0; i < topLineCount; ++i) {
       float fi = float(i);
       float t = fi / max(float(topLineCount - 1), 1.0);
       vec3 lineCol = getLineColor(t, b);
-      float angle = topWavePosition.z * log(length(baseUv) + 1.0);
-      vec2 ruv = baseUv * rotate2d(angle);
-      ruv.x *= -1.0;
       col += lineCol * wave(
         ruv + vec2(topLineDistance * fi + topWavePosition.x, topWavePosition.y),
         1.0 + 0.2 * fi,
@@ -280,12 +282,18 @@ export default function FloatingLines({
   const parallaxStrengthRef = useRef(parallaxStrength);
   const mouseDampingRef = useRef(mouseDamping);
 
+  const clockRef = useRef<Clock | null>(null);
   const targetLineGradientRef = useRef<Vector3[]>(
     Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1)),
   );
   const currentLineGradientRef = useRef<Vector3[]>(
     Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1)),
   );
+  const transitionStartGradientRef = useRef<Vector3[]>(
+    Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1)),
+  );
+  const transitionStartTimeRef = useRef(-1);
+  const TRANSITION_DURATION = 0.6;
 
   const getLineCount = (waveType: WaveName) => {
     if (typeof lineCount === 'number') return lineCount;
@@ -384,6 +392,7 @@ export default function FloatingLines({
         const color = hexToVec3(hex);
         targetLineGradientRef.current[i] = color;
         currentLineGradientRef.current[i] = color.clone();
+        transitionStartGradientRef.current[i] = color.clone();
         (uniforms.lineGradient.value as Vector3[])[i].set(color.x, color.y, color.z);
       });
     }
@@ -400,6 +409,7 @@ export default function FloatingLines({
     scene.add(mesh);
 
     const clock = new Clock();
+    clockRef.current = clock;
 
     const setSize = () => {
       if (!active) return;
@@ -471,8 +481,12 @@ export default function FloatingLines({
         (uniforms.parallaxOffset.value as Vector2).copy(currentParallaxRef.current);
       }
 
+      const elapsed = clock.getElapsedTime() - transitionStartTimeRef.current;
+      const t = Math.min(elapsed / TRANSITION_DURATION, 1);
+      const easedT = 1 - Math.pow(1 - t, 3);
       for (let i = 0; i < MAX_GRADIENT_STOPS; i++) {
-        currentLineGradientRef.current[i].lerp(targetLineGradientRef.current[i], 0.06);
+        currentLineGradientRef.current[i].copy(transitionStartGradientRef.current[i]);
+        currentLineGradientRef.current[i].lerp(targetLineGradientRef.current[i], easedT);
         (uniforms.lineGradient.value as Vector3[])[i].copy(currentLineGradientRef.current[i]);
       }
 
@@ -537,6 +551,13 @@ export default function FloatingLines({
     if (linesGradient && linesGradient.length > 0) {
       const stops = linesGradient.slice(0, MAX_GRADIENT_STOPS);
       u.lineGradientCount.value = stops.length;
+
+      const now = clockRef.current?.getElapsedTime() ?? performance.now() / 1000;
+      transitionStartTimeRef.current = now;
+      for (let i = 0; i < MAX_GRADIENT_STOPS; i++) {
+        transitionStartGradientRef.current[i].copy(currentLineGradientRef.current[i]);
+      }
+
       stops.forEach((hex: string, i: number) => {
         const color = hexToVec3(hex);
         targetLineGradientRef.current[i].set(color.x, color.y, color.z);
