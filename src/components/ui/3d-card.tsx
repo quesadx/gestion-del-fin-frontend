@@ -21,10 +21,18 @@ export function CardContainer({
   children,
   className,
   containerClassName,
+  tiltStrength = 60,
+  tiltXStrength,
+  tiltYStrength,
+  disableTiltX = false,
 }: {
   children?: ReactNode;
   className?: string;
   containerClassName?: string;
+  tiltStrength?: number;
+  tiltXStrength?: number;
+  tiltYStrength?: number;
+  disableTiltX?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMouseEntered, setIsMouseEntered] = useState(false);
@@ -33,8 +41,8 @@ export function CardContainer({
     if (!containerRef.current) return;
 
     const { left, top, width, height } = containerRef.current.getBoundingClientRect();
-    const x = (event.clientX - left - width / 2) / 60;
-    const y = (event.clientY - top - height / 2) / 60;
+    const x = disableTiltX ? 0 : (event.clientX - left - width / 2) / (tiltXStrength ?? tiltStrength);
+    const y = (event.clientY - top - height / 2) / (tiltYStrength ?? tiltStrength);
 
     containerRef.current.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
   };

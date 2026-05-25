@@ -27,6 +27,7 @@ import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert } from 'lucide-react';
+import { CardBody, CardContainer } from '../components/ui/3d-card';
 
 // ── Connection badge config ───────────────────────────────────────────────────
 
@@ -197,52 +198,114 @@ export default function DashboardLayout() {
   return (
     <div className="relative z-10 flex flex-col h-screen bg-transparent text-zinc-100 overflow-hidden">
       {/* ── Top header ──────────────────────────────────────────────────── */}
-      <header className="h-16 shrink-0 border border-red-500/12 bg-[rgba(12,10,14,0.94)] backdrop-blur-md flex items-center justify-between px-5 sm:px-6 rounded-2xl mx-4 mt-4 sticky top-0 z-40 shadow-[0_20px_60px_rgba(0,0,0,0.35),0_0_0_1px_rgba(239,68,68,0.04)]">
-        {/* Branding */}
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_15px_rgba(239,68,68,0.25)] select-none">
-            <ShieldAlert size={17} />
-          </div>
-          <div className="leading-none">
-            <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
-              GESTION-DEL-FIN
-            </p>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
-              Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
-            </span>
-          </div>
-        </div>
+      <CardContainer
+        className="w-full"
+        containerClassName="mx-4 mt-4 shrink-0 relative z-50 overflow-visible"
+        tiltStrength={1200}
+        tiltXStrength={1600}
+        tiltYStrength={1200}
+      >
+        <CardBody className="relative z-50 h-16 w-full overflow-visible rounded-3xl border border-red-500/15 bg-[rgba(12,7,8,0.78)] px-5 sm:px-6 shadow-[0_18px_70px_rgba(0,0,0,0.34),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.12),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.06),transparent_35%)]" />
 
-        {/* Camp switcher - left of center */}
-        <div className="relative">
-          <button
-            onClick={() => setCampPopupOpen(true)}
-            className="flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.03)] cursor-pointer hover:border-red-500/25 transition-colors"
-          >
-            <Tent className="text-brand-secondary shrink-0" size={14} />
-            <span className="truncate text-zinc-300 text-xs font-bold font-mono uppercase tracking-[0.14em]">
-              {camps?.find((c) => c.id === currentCampId)?.name ?? 'Select Refuge'}
-            </span>
-          </button>
+          <div className="relative z-10 flex h-full items-center justify-between gap-4">
+            {/* Branding */}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
+                <ShieldAlert size={17} />
+              </div>
+              <div className="leading-none">
+                <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
+                  GESTION-DEL-FIN
+                </p>
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
+                  Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
+                </span>
+              </div>
+            </div>
 
-          <AnimatePresence>
-            {campPopupOpen && (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-40"
-                  onClick={() => setCampPopupOpen(false)}
-                />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  className="absolute left-0 top-full mt-2 z-50 w-56 bg-[#1b0b0c] border border-red-500/15 rounded-xl overflow-hidden shadow-xl shadow-black/60"
+            {/* Camp switcher - left of center */}
+            <div className="relative">
+              <button
+                onClick={() => setCampPopupOpen(true)}
+                className="flex items-center gap-2 bg-[rgba(18,15,23,0.92)] border border-red-500/12 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.04)] cursor-pointer hover:border-red-500/25 transition-colors"
+              >
+                <Tent className="text-brand-secondary shrink-0" size={14} />
+                <span className="truncate text-zinc-300 text-xs font-bold font-mono uppercase tracking-[0.14em]">
+                  {camps?.find((c) => c.id === currentCampId)?.name ?? 'Select Refuge'}
+                </span>
+              </button>
+            </div>
+
+            {/* Right: server time + connection status + user chip */}
+            <div className="flex items-center gap-3.5">
+              {/* Server time */}
+              {synced && (
+                <div className="hidden md:flex items-center gap-2 bg-[rgba(18,15,23,0.92)] border border-red-500/12 rounded px-3 py-1.5 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
+                  <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.14em]">
+                    SVRT
+                  </span>
+                  <span className="text-xs font-mono font-bold text-zinc-200 tabular-nums">
+                    {timeStr}
+                  </span>
+                </div>
+              )}
+
+              {/* User chip */}
+              <div className="flex items-center gap-2 bg-[rgba(18,15,23,0.92)] border border-red-500/12 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
+                <div className="w-6 h-6 rounded bg-zinc-800 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
+                  {user?.username?.[0].toUpperCase()}
+                </div>
+                <div className="hidden md:block text-left leading-none">
+                  <span className="text-xs font-bold block">{user?.username}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
+                    {user?.role?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  title="Terminate Session"
+                  className="p-1 ml-1 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
                 >
-                  <div className="py-1">
+                  <LogOut size={13} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </CardBody>
+      </CardContainer>
+
+      {/* ── Disconnected banner ──────────────────────────────────────── */}
+      <AnimatePresence>
+        {campPopupOpen && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 8 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 8 }}
+              transition={{ duration: 0.15 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-full max-w-md">
+                <div className="overflow-hidden rounded-2xl border border-red-500/15 bg-[rgba(12,7,8,0.86)] shadow-[0_20px_70px_rgba(0,0,0,0.5),0_0_0_1px_rgba(239,68,68,0.08)] backdrop-blur-xl">
+                  <div className="flex items-center justify-between border-b border-red-500/10 px-5 py-4">
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-brand-primary">
+                        Refuge selector
+                      </p>
+                      <h3 className="text-lg font-black uppercase tracking-tight text-white">
+                        Choose camp
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setCampPopupOpen(false)}
+                      className="text-zinc-500 hover:text-zinc-200 transition-colors text-sm font-bold uppercase tracking-[0.18em]"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  <div className="max-h-[70vh] overflow-y-auto p-2">
                     {camps?.map((camp) => (
                       <button
                         key={camp.id}
@@ -251,9 +314,9 @@ export default function DashboardLayout() {
                           navigate('/dashboard', { replace: true });
                           setCampPopupOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-[0.12em] transition-colors hover:bg-red-950/40 ${
+                        className={`w-full rounded-xl px-4 py-3 text-left text-xs font-bold font-mono uppercase tracking-[0.12em] transition-colors hover:bg-red-950/35 ${
                           camp.id === currentCampId
-                            ? 'text-brand-primary bg-red-950/20'
+                            ? 'text-brand-primary bg-red-950/20 border border-red-500/10'
                             : 'text-zinc-300'
                         }`}
                       >
@@ -261,52 +324,12 @@ export default function DashboardLayout() {
                       </button>
                     ))}
                   </div>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Right: server time + connection status + user chip */}
-        <div className="flex items-center gap-3.5">
-          {/* Server time */}
-          {synced && (
-            <div className="hidden md:flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded px-3 py-1.5 shadow-[0_0_0_1px_rgba(239,68,68,0.03)]">
-              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.14em]">
-                SVRT
-              </span>
-              <span className="text-xs font-mono font-bold text-zinc-200 tabular-nums">
-                {timeStr}
-              </span>
-            </div>
-          )}
-
-
-
-          {/* User chip */}
-          <div className="flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.03)]">
-            <div className="w-6 h-6 rounded bg-zinc-800 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
-              {user?.username?.[0].toUpperCase()}
-            </div>
-            <div className="hidden md:block text-left leading-none">
-              <span className="text-xs font-bold block">{user?.username}</span>
-              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
-                {user?.role?.replace(/_/g, ' ')}
-              </span>
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Terminate Session"
-              className="p-1 ml-1 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
-            >
-              <LogOut size={13} />
-            </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      </header>
+        )}
 
-      {/* ── Disconnected banner ──────────────────────────────────────── */}
-      <AnimatePresence>
         {status === 'disconnected' && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
