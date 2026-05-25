@@ -5,6 +5,7 @@ import { ReactNode, Suspense, lazy, useEffect } from 'react';
 import { Skeleton } from './components/Skeleton';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/Toaster';
+import AppBackground from './components/backgrounds/AppBackground';
 
 // Layouts (lazy)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -97,10 +98,13 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Toaster />
-        <ErrorBoundary>
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
+        <div className="relative isolate min-h-screen bg-surface-base">
+          <AppBackground />
+          <div className="relative z-10">
+            <Toaster />
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
               <Route element={<AuthLayout />}>
                 <Route path="/login" element={<LoginPage />} />
               </Route>
@@ -254,9 +258,11 @@ export default function App() {
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </ErrorBoundary>
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
+          </div>
+        </div>
       </BrowserRouter>
     </QueryClientProvider>
   );

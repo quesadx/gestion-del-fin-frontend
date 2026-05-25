@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
+import Dock, { type DockItemData } from '../components/navigation/Dock';
 
 // ── Connection badge config ───────────────────────────────────────────────────
 
@@ -164,8 +165,29 @@ export default function DashboardLayout() {
 
   const visibleNavItems = NAV_ITEMS.filter((item) => can(user?.role, NAV_PERMISSIONS[item.to]));
 
+  const dockItems: DockItemData[] = visibleNavItems.map((item) => {
+    const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
+    const showInventoryAlert = item.to === '/inventory' && (inventoryAlerts?.criticalCount ?? 0) > 0;
+
+    return {
+      icon: (
+        <div className="relative">
+          <item.icon size={15} />
+          {showInventoryAlert && (
+            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
+          )}
+        </div>
+      ),
+      label: item.label,
+      onClick: () => navigate(item.to),
+      className: isActive
+        ? 'bg-brand-primary/10 border-brand-primary/30 text-brand-primary shadow-[0_0_12px_rgba(239,68,68,0.18)]'
+        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/70',
+    };
+  });
+
   return (
-    <div className="flex flex-col h-screen bg-surface-base text-zinc-100 overflow-hidden">
+    <div className="relative z-10 flex flex-col h-screen bg-transparent text-zinc-100 overflow-hidden">
       {/* ── Top header ──────────────────────────────────────────────────── */}
       <header className="h-16 shrink-0 border-b border-zinc-900 bg-surface-raised/85 backdrop-blur-md flex items-center justify-between px-6 sm:px-8 sticky top-0 z-40">
         {/* Branding */}
@@ -337,7 +359,7 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-surface-base px-6 py-6 sm:px-8 sm:py-8 pb-32">
+      <main className="flex-1 overflow-y-auto bg-transparent px-6 py-6 sm:px-8 sm:py-8 pb-32">
         <div className="max-w-7xl mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div
@@ -354,37 +376,10 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-        <motion.nav
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 bg-zinc-950/85 backdrop-blur-xl border border-zinc-900 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.85)] max-w-[95vw] overflow-x-auto"
-        >
-          {visibleNavItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2 px-3 py-2 rounded-full text-xs font-mono font-semibold transition-all select-none border border-transparent',
-                  isActive
-                    ? 'bg-brand-primary/10 border-brand-primary/30 text-brand-primary font-bold shadow-[0_0_12px_rgba(239,68,68,0.15)] scale-102'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/50',
-                )
-              }
-            >
-              <div className="relative">
-                <item.icon size={15} />
-                {item.to === '/inventory' && (inventoryAlerts?.criticalCount ?? 0) > 0 && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_rgba(239,68,68,0.6)]" />
-                )}
-              </div>
-              <span className="hidden md:inline tracking-tight uppercase text-[10px]">
-                {item.label}
-              </span>
-            </NavLink>
-          ))}
-        </motion.nav>
+      <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <Dock items={dockItems} />
+        </motion.div>
       </div>
     </div>
   );
