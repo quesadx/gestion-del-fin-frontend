@@ -19,6 +19,7 @@ import { cn } from '../../lib/utils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { InventorySnapshot, Resource, InventoryItem, Person } from '../../types';
+import BorderGlow from '../../components/BorderGlow';
 
 const ADMIN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator'];
 
@@ -74,10 +75,6 @@ export default function DashboardOverview() {
     ? (peopleList?.filter((p) => p.status === 'HEALTHY').length ?? 0)
     : (metrics?.people?.healthy ?? 0);
 
-  // Fetch raw inventory data + resource catalog for min_stock / daily_ration.
-  // Resource names come directly from the inventory response (resource_name field),
-  // NOT from a paginated join — avoids "Resource #N" fallbacks when the catalog
-  // has more entries than a single page.
   const { data: rawInventory, isLoading: resourcesLoading } = useQuery({
     queryKey: ['resource-metrics', currentCampId],
     queryFn: async () => {
@@ -87,14 +84,11 @@ export default function DashboardOverview() {
       ]);
       const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
       const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
-
       return { items, resourceTypes };
     },
     enabled: !!currentCampId,
   });
 
-  // Compute inventory snapshots with daily projections in render (NOT in query),
-  // so changes to survivorCount don't invalidate the fetch cache.
   const resourceSummaries: InventorySnapshot[] = useMemo(() => {
     if (!rawInventory) return [];
 
@@ -155,6 +149,16 @@ export default function DashboardOverview() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const element = chartContainerRef.current;
+    if (!element) return;
+
+    const next = { width: element.clientWidth, height: element.clientHeight };
+    setChartSize((prev) =>
+      prev.width === next.width && prev.height === next.height ? prev : next,
+    );
+  }, [resourceSummaries]);
+
   if (!currentCampId) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center text-center space-y-4">
@@ -169,11 +173,9 @@ export default function DashboardOverview() {
     );
   }
 
-  // Compute alert counts from live inventory snapshots.
   const criticalCount = (resourceSummaries ?? []).filter((r) => r.status === 'CRITICAL').length;
   const lowCount = (resourceSummaries ?? []).filter((r) => r.status === 'LOW').length;
 
-  // Map real API fields to display cards
   const adminCards = [
     {
       label: 'Survivors',
@@ -270,7 +272,6 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading
           ? Array.from({ length: cardCount }).map((_, i) => <SkeletonCard key={i} />)
@@ -280,70 +281,82 @@ export default function DashboardOverview() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
               >
-                <div
-                  className={`w-10 h-10 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
+                <BorderGlow
+                  backgroundColor="#1b0b0c"
+                  borderRadius={16}
+                  glowColor="356 78 62"
+                  glowIntensity={0.7}
+                  glowRadius={24}
+                  edgeSensitivity={20}
+                  coneSpread={18}
+                  animated={false}
+                  className="h-full"
                 >
-                  <stat.icon size={20} />
-                </div>
-                {stat.label === 'Stock Alerts' ? (
-                  <div className="space-y-3">
-                    {criticalCount === 0 && lowCount === 0 ? (
-                      <div className="flex items-center gap-2 text-emerald-500">
-                        <CheckCircle size={16} />
-                        <span className="text-sm font-bold font-mono">All stocks optimal</span>
+                  <div className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors h-full">
+                    <div
+                      className={`w-10 h-10 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
+                    >
+                      <stat.icon size={20} />
+                    </div>
+                    {stat.label === 'Stock Alerts' ? (
+                      <div className="space-y-3">
+                        {criticalCount === 0 && lowCount === 0 ? (
+                          <div className="flex items-center gap-2 text-emerald-500">
+                            <CheckCircle size={16} />
+                            <span className="text-sm font-bold font-mono">All stocks optimal</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {criticalCount > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                                <span className="text-xl font-black font-mono text-red-500">
+                                  {criticalCount}
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                  CRITICAL
+                                </span>
+                              </div>
+                            )}
+                            {lowCount > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                <span className="text-xl font-black font-mono text-amber-500">
+                                  {lowCount}
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                  LOW
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => navigate('/inventory')}
+                          className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
+                        >
+                          View Details →
+                        </button>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          {stat.label}
+                        </p>
                       </div>
                     ) : (
-                      <div className="space-y-1.5">
-                        {criticalCount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                            <span className="text-xl font-black font-mono text-red-500">
-                              {criticalCount}
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                              CRITICAL
-                            </span>
-                          </div>
-                        )}
-                        {lowCount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                            <span className="text-xl font-black font-mono text-amber-500">
-                              {lowCount}
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                              LOW
-                            </span>
-                          </div>
-                        )}
+                      <div>
+                        <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          {stat.label}
+                        </p>
                       </div>
                     )}
-                    <button
-                      onClick={() => navigate('/inventory')}
-                      className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
-                    >
-                      View Details →
-                    </button>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      {stat.label}
-                    </p>
                   </div>
-                ) : (
-                  <div>
-                    <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      {stat.label}
-                    </p>
-                  </div>
-                )}
+                </BorderGlow>
               </motion.div>
             ))}
       </div>
 
       <div className="space-y-6">
-        {/* Resource Monitor */}
         <div className="space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-zinc-900">
             <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
@@ -398,7 +411,7 @@ export default function DashboardOverview() {
                       data={resourceSummaries}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#18181b" horizontal={false} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1b0b0c" horizontal={false} />
                       <XAxis type="number" hide />
                       <YAxis
                         dataKey="resource_name"
@@ -414,8 +427,8 @@ export default function DashboardOverview() {
                       <Tooltip
                         cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                         contentStyle={{
-                          backgroundColor: '#09090b',
-                          border: '1px solid #27272a',
+                          backgroundColor: '#0c0708',
+                          border: '1px solid #2a0f10',
                           borderRadius: '8px',
                         }}
                       />
@@ -424,11 +437,18 @@ export default function DashboardOverview() {
                           <Cell
                             key={`cell-${index}`}
                             fill={
-                              entry.status === 'CRITICAL'
-                                ? '#ef4444'
-                                : entry.status === 'LOW'
-                                  ? '#f59e0b'
-                                  : '#10b981'
+                              [
+                                '#ef4444',
+                                '#f59e0b',
+                                '#10b981',
+                                '#3b82f6',
+                                '#8b5cf6',
+                                '#ec4899',
+                                '#06b6d4',
+                                '#f97316',
+                                '#14b8a6',
+                                '#e11d48',
+                              ][index % 10]
                             }
                           />
                         ))}
@@ -440,57 +460,67 @@ export default function DashboardOverview() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
                 {resourceSummaries?.map((res: InventorySnapshot) => (
-                  <div
+                  <BorderGlow
                     key={res.resource_id}
-                    className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group"
+                    backgroundColor="#1b0b0c"
+                    borderRadius={14}
+                    glowColor={res.status === 'CRITICAL' ? '356 82 60' : '36 88 58'}
+                    glowIntensity={0.55}
+                    glowRadius={20}
+                    edgeSensitivity={18}
+                    coneSpread={18}
+                    animated={false}
+                    className="h-full"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-[10px] font-black text-zinc-500 uppercase">
-                        {res.resource_name}
-                      </p>
-                      <div
-                        className={cn(
-                          'w-2 h-2 rounded-full animate-pulse',
-                          res.status === 'CRITICAL'
-                            ? 'bg-red-500'
-                            : res.status === 'LOW'
-                              ? 'bg-amber-500'
-                              : 'bg-emerald-500',
-                        )}
-                      />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-black font-mono tracking-tight">
-                        {res.quantity}
-                      </span>
-                      <span className="text-[10px] font-mono text-zinc-600 uppercase">
-                        {res.unit}
-                      </span>
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase flex justify-between">
-                        Est. Durability
-                        <span
-                          className={cn(
-                            (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
-                          )}
-                        >
-                          {res.projection_days != null ? `${res.projection_days} DAYS` : 'N/A'}
-                        </span>
-                      </p>
-                      <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group h-full">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-[10px] font-black text-zinc-500 uppercase">
+                          {res.resource_name}
+                        </p>
                         <div
                           className={cn(
-                            'h-full',
-                            (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
+                            'w-2 h-2 rounded-full animate-pulse',
+                            res.status === 'CRITICAL'
+                              ? 'bg-red-500'
+                              : res.status === 'LOW'
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500',
                           )}
-                          style={{
-                            width: `${Math.min((res.projection_days || 0) * 10, 100)}%`,
-                          }}
                         />
                       </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-black font-mono tracking-tight">
+                          {res.quantity}
+                        </span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase">
+                          {res.unit}
+                        </span>
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        <p className="text-[9px] font-bold text-zinc-500 uppercase flex justify-between">
+                          Est. Durability
+                          <span
+                            className={cn(
+                              (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
+                            )}
+                          >
+                            {res.projection_days != null ? `${res.projection_days} DAYS` : 'N/A'}
+                          </span>
+                        </p>
+                        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              'h-full',
+                              (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
+                            )}
+                            style={{
+                              width: `${Math.min((res.projection_days || 0) * 10, 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </BorderGlow>
                 ))}
               </div>
             </>

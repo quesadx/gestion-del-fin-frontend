@@ -71,7 +71,7 @@ export default function ExpeditionList() {
   const { data: expeditions, isLoading } = useQuery<Expedition[]>({
     queryKey: ['expeditions', currentCampId],
     queryFn: async () => {
-      const res = await apiClient.get('/expeditions');
+      const res = await apiClient.get(`/expeditions?camp_id=${currentCampId}`);
       return unwrapList<Expedition>(res.data);
     },
     enabled: !!currentCampId,
