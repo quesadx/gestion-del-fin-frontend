@@ -1,18 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
 import { can } from '../../lib/permissions';
 import { Admission } from '../../types';
-import {
-  BrainCircuit,
-  ShieldAlert,
-  UserPlus,
-  CheckCircle2,
-  XCircle,
-  ChevronRight,
-  Eye,
-} from 'lucide-react';
+import { BrainCircuit, ShieldAlert, UserPlus, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton, SkeletonList } from '../../components/Skeleton';
@@ -48,8 +40,8 @@ export default function AdmissionList() {
   const [newSkills, setNewSkills] = useState('');
   const [newHealth, setNewHealth] = useState('');
   const [newBackground, setNewBackground] = useState('');
-  const [newPhotoUrl, setNewPhotoUrl] = useState('');
-  const [newIdCardUrl, setNewIdCardUrl] = useState('');
+  const [newPhoto, setNewPhoto] = useState<File | null>(null);
+  const [newIdCard, setNewIdCard] = useState<File | null>(null);
 
   const [selectedProfId, setSelectedProfId] = useState<number | null>(null);
 
@@ -59,6 +51,8 @@ export default function AdmissionList() {
   const [correctSkills, setCorrectSkills] = useState('');
   const [correctHealth, setCorrectHealth] = useState('');
   const [correctBackground, setCorrectBackground] = useState('');
+  const [correctPhoto, setCorrectPhoto] = useState<File | null>(null);
+  const [correctIdCard, setCorrectIdCard] = useState<File | null>(null);
 
   const { data: admissions, isLoading } = useQuery<Admission[]>({
     queryKey: ['admissions', currentCampId],
@@ -107,7 +101,7 @@ export default function AdmissionList() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
       // Clear out selected so view resets
       setSelectedAdmissionId(null);
@@ -121,10 +115,18 @@ export default function AdmissionList() {
       applicant_skills: string;
       health_notes: string;
       background_notes: string;
-      photo_url?: string;
-      id_card_url?: string;
+      photo?: File | null;
+      id_card?: File | null;
     }) => {
-      const body = toFormData(formValues);
+      const body = toFormData({
+        applicant_name: formValues.applicant_name,
+        applicant_age: formValues.applicant_age,
+        applicant_skills: formValues.applicant_skills,
+        health_notes: formValues.health_notes,
+        background_notes: formValues.background_notes,
+        ...(formValues.photo ? { photo: formValues.photo } : {}),
+        ...(formValues.id_card ? { id_card: formValues.id_card } : {}),
+      });
       const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
       return res.data;
     },
@@ -138,8 +140,8 @@ export default function AdmissionList() {
       setNewSkills('');
       setNewHealth('');
       setNewBackground('');
-      setNewPhotoUrl('');
-      setNewIdCardUrl('');
+      setNewPhoto(null);
+      setNewIdCard(null);
     },
   });
 
@@ -155,17 +157,24 @@ export default function AdmissionList() {
         applicant_skills: string;
         health_notes: string;
         background_notes: string;
-        photo_url?: string;
-        id_card_url?: string;
+        photo?: File | null;
+        id_card?: File | null;
       };
     }) => {
-      const body = toFormData(formValues);
+      const body = toFormData({
+        applicant_name: formValues.applicant_name,
+        ...(formValues.applicant_age != null ? { applicant_age: formValues.applicant_age } : {}),
+        applicant_skills: formValues.applicant_skills,
+        health_notes: formValues.health_notes,
+        background_notes: formValues.background_notes,
+        ...(formValues.photo ? { photo: formValues.photo } : {}),
+        ...(formValues.id_card ? { id_card: formValues.id_card } : {}),
+      });
       const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
       await apiClient.patch(`/admission/${oldId}/review`, { final_decision: 'REJECTED' });
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admissions'] });
       queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
       setIsCorrectModalOpen(false);
       setSelectedAdmissionId(null);
@@ -181,10 +190,19 @@ export default function AdmissionList() {
       applicant_skills: newSkills,
       health_notes: newHealth,
       background_notes: newBackground,
-      photo_url: newPhotoUrl,
-      id_card_url: newIdCardUrl,
+      photo: newPhoto,
+      id_card: newIdCard,
     });
   };
+
+  // Close detail modal on Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedAdmissionId(null);
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   return (
     <div className="space-y-8 h-full">
@@ -206,16 +224,16 @@ export default function AdmissionList() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-280px)]">
-        {/* List Panel */}
-        <div className="flex flex-col bg-surface-raised brutalist-border rounded-xl overflow-hidden">
+      <div className="h-[calc(100vh-280px)]">
+        {/* List Panel - full width */}
+        <div className="flex flex-col bg-surface-raised brutalist-border rounded-xl overflow-hidden h-full">
           <div className="p-4 bg-black/40 border-b border-zinc-900 flex justify-between items-center">
             <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-              Pending Review
+              Intake Queue
             </h3>
             <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
               {admissions?.filter((a) => getAdmissionDecisionStatus(a) === 'PENDING').length || 0}{' '}
-              QUEUE · PAGE {page}/{totalPages}
+              PENDING · PAGE {page}/{totalPages}
             </span>
           </div>
           <div className="flex-1 overflow-auto divide-y divide-zinc-900">
@@ -239,17 +257,17 @@ export default function AdmissionList() {
                     key={admission.id}
                     onClick={() => setSelectedAdmissionId(admission.id)}
                     className={cn(
-                      'w-full p-6 text-left transition-all hover:bg-white/5 border-l-4 group relative',
+                      'w-full p-5 text-left transition-all hover:bg-white/5 border-l-4 group',
                       selectedAdmissionId === admission.id
                         ? 'bg-white/5 border-brand-primary'
                         : 'border-transparent',
                     )}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-bold text-lg tracking-tight group-hover:text-brand-primary transition-colors">
+                      <span className="font-bold text-base tracking-tight group-hover:text-brand-primary transition-colors">
                         {admission.applicant_name || admission.full_name}
                       </span>
-                      <span className="text-[10px] font-mono text-zinc-500 italic">
+                      <span className="text-[10px] font-mono text-zinc-500 italic shrink-0 ml-2">
                         {formatDate(admission.created_at)}
                       </span>
                     </div>
@@ -267,21 +285,12 @@ export default function AdmissionList() {
                       >
                         {decisionStatus}
                       </div>
-                      <div className="flex items-center gap-1 text-[10px] text-zinc-600 font-mono">
-                        <BrainCircuit size={12} className="text-zinc-700" />
-                        AI ANALYSIS COMPLETE
-                      </div>
-                    </div>
-
-                    <ChevronRight
-                      size={18}
-                      className={cn(
-                        'absolute right-4 top-1/2 -translate-y-1/2 text-zinc-800 transition-transform',
-                        selectedAdmissionId === admission.id
-                          ? 'translate-x-0 opacity-100'
-                          : '-translate-x-2 opacity-0',
+                      {admission.ai_confidence != null && (
+                        <span className="text-[10px] font-mono text-zinc-600">
+                          {(admission.ai_confidence * 100).toFixed(0)}% confidence
+                        </span>
                       )}
-                    />
+                    </div>
                   </button>
                 );
               })
@@ -292,266 +301,350 @@ export default function AdmissionList() {
             <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
-
-        {/* Details Panel */}
-        <div className="bg-surface-raised brutalist-border rounded-xl flex flex-col overflow-hidden relative">
-          <AnimatePresence mode="wait">
-            {!selectedAdmissionId ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex-1 flex flex-col items-center justify-center text-center p-12 space-y-6"
-              >
-                <div className="w-20 h-20 bg-zinc-900 rounded-full grid place-items-center border border-zinc-800">
-                  <Eye size={32} className="text-zinc-700" />
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-bold uppercase tracking-widest text-zinc-400">
-                    File Review Terminal
-                  </p>
-                  <p className="text-xs font-mono text-zinc-600">
-                    Select a candidate to initiate feasibility diagnosis and AI reasoning.
-                  </p>
-                </div>
-              </motion.div>
-            ) : detailsLoading ? (
-              <div key="loading" className="flex-1 p-8 space-y-6 animate-pulse bg-zinc-950/20">
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-2/3" />
-                  <Skeleton className="h-4 w-1/3" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Skeleton className="h-20 w-full" />
-                  <Skeleton className="h-20 w-full" />
-                </div>
-                <div className="grid grid-cols-3 gap-6 pt-4">
-                  <Skeleton className="h-28 w-full rounded-lg" />
-                  <Skeleton className="h-28 col-span-2 w-full rounded-lg" />
-                </div>
-                <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-lg space-y-3">
-                  <Skeleton className="h-4 w-1/4" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              </div>
-            ) : (
-              <motion.div
-                key="details"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="flex-1 flex flex-col h-full bg-zinc-950/20"
-              >
-                <div className="p-8 border-b border-zinc-900 space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <h2 className="text-4xl font-black tracking-tighter uppercase italic">
-                        {details.applicant_name || details.full_name}
-                      </h2>
-                      <p className="text-zinc-500 font-mono text-sm">
-                        File ID: #ADM-{details.id}002
-                      </p>
-                    </div>
-                    <div className="bg-zinc-950 p-2 border border-zinc-800 rounded flex gap-4">
-                      <div className="text-center px-4 border-r border-zinc-800">
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase">Age</p>
-                        <p className="font-mono font-bold text-lg">
-                          {details.applicant_age ?? '—'}
-                        </p>
-                      </div>
-                      <div className="text-center px-4">
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase">Risk</p>
-                        <p className="font-mono font-bold text-lg text-emerald-500">Minimal</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-                      <p className="text-[10px] font-black text-brand-primary uppercase mb-2">
-                        Detected Skills
-                      </p>
-                      <p className="text-xs font-medium leading-relaxed">
-                        {details.applicant_skills || '—'}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
-                      <p className="text-[10px] font-black text-brand-secondary uppercase mb-2">
-                        Medical Condition
-                      </p>
-                      <p className="text-xs font-medium leading-relaxed">
-                        {details.health_notes || '—'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Scanned Identification and Face Photo */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-zinc-900">
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-black text-zinc-500 uppercase">
-                        Applicant Face Scan
-                      </p>
-                      <div className="aspect-square w-full rounded-lg overflow-hidden border border-zinc-800 bg-zinc-950">
-                        <img
-                          src={
-                            details.photo_url ||
-                            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
-                          }
-                          alt="Face Scan"
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="md:col-span-2 space-y-2">
-                      <p className="text-[10px] font-black text-zinc-500 uppercase">
-                        Identification Document Scan
-                      </p>
-                      <div className="aspect-[1.58] w-full rounded-lg overflow-hidden border border-zinc-800 bg-zinc-950 relative group">
-                        <img
-                          src={
-                            details.id_card_url ||
-                            'https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=400&h=250&q=80'
-                          }
-                          alt="ID Card Scan"
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity"
-                        />
-                        <div className="absolute inset-x-0 bottom-0 bg-black/80 py-2 text-center border-t border-zinc-900">
-                          <span className="text-[9px] font-mono font-bold text-brand-secondary uppercase tracking-widest">
-                            ENFORCED IDENTITY ATTESTATION
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-1 overflow-auto p-8 bg-black/20 space-y-8">
-                  {/* AI Explainability Section */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-brand-primary text-black rounded">
-                        <BrainCircuit size={20} />
-                      </div>
-                      <h3 className="font-black italic uppercase tracking-tight text-xl">
-                        Predictive AI Analysis
-                      </h3>
-                    </div>
-
-                    <div className="relative group">
-                      <div className="absolute -inset-1 bg-linear-to-r from-brand-primary/20 to-brand-secondary/20 rounded-xl blur opacity-25 group-hover:opacity-40 transition" />
-                      <div className="relative p-6 bg-surface-base border border-zinc-800 rounded-xl space-y-4">
-                        <div className="flex items-center gap-2 text-xs font-mono text-zinc-500 uppercase">
-                          <ShieldAlert size={14} className="text-brand-primary" />
-                          Automated Judgment v.9.4
-                        </div>
-                        <p className="text-sm font-bold leading-relaxed text-zinc-200">
-                          "{details.ai_reasoning || '—'}"
-                        </p>
-                        <div className="pt-4 border-t border-zinc-900">
-                          <p className="text-[10px] font-bold text-zinc-600 uppercase mb-2">
-                            Detailed Reasoning
-                          </p>
-                          <p className="text-xs text-zinc-400 italic">
-                            "{details.ai_reasoning || 'No detailed reasoning available'}"
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Supervisor Manual Role Custom Assignment Override */}
-                {getAdmissionDecisionStatus(details) === 'PENDING' && (
-                  <div className="px-8 py-4 bg-zinc-950 border-t border-zinc-900/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <p className="text-[10px] font-black text-brand-primary uppercase tracking-wider">
-                        Manual Assignment Override
-                      </p>
-                      <p className="text-[11px] text-zinc-500 font-mono">
-                        Verify or correct the AI-suggested profession before allowing intake:
-                      </p>
-                    </div>
-                    <select
-                      value={selectedProfId ?? ''}
-                      onChange={(e) =>
-                        setSelectedProfId(e.target.value ? Number(e.target.value) : null)
-                      }
-                      className="bg-zinc-900 border border-zinc-800 rounded px-3 py-1.5 text-xs text-zinc-300 font-bold font-mono focus:outline-none focus:border-brand-primary uppercase"
-                    >
-                      <option value="">— AI Suggested —</option>
-                      {professions?.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Sticky Actions */}
-                <div className="p-8 border-t border-zinc-900 bg-surface-raised sticky bottom-0 flex gap-4">
-                  <button
-                    onClick={() =>
-                      reviewMutation.mutate({
-                        id: details.id,
-                        decision: 'REJECTED',
-                      })
-                    }
-                    disabled={
-                      reviewMutation.isPending || getAdmissionDecisionStatus(details) !== 'PENDING'
-                    }
-                    className="flex-1 bg-zinc-900 hover:bg-red-950/30 text-red-500 border border-red-500/30 font-black py-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-30"
-                  >
-                    <XCircle size={20} />
-                    REJECT INTAKE
-                  </button>
-                  {canReevaluate && (
-                    <button
-                      onClick={() => {
-                        setCorrectName(details.applicant_name || details.full_name || '');
-                        setCorrectAge(String(details.applicant_age ?? ''));
-                        setCorrectSkills(details.applicant_skills || '');
-                        setCorrectHealth(details.health_notes || '');
-                        setCorrectBackground(details.background_notes || '');
-                        setIsCorrectModalOpen(true);
-                      }}
-                      disabled={
-                        correctAndReevaluateMutation.isPending ||
-                        getAdmissionDecisionStatus(details) !== 'PENDING'
-                      }
-                      className="flex-1 bg-amber-950/20 hover:bg-amber-950/40 text-amber-500 border border-amber-500/30 font-black py-4 rounded-lg flex items-center justify-center gap-2 transition-all disabled:opacity-30"
-                    >
-                      <BrainCircuit size={20} />
-                      CORRECT &amp; REEVALUATE
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      reviewMutation.mutate({
-                        id: details.id,
-                        decision: 'ACCEPTED',
-                        corrected_profession_id: selectedProfId || undefined,
-                      });
-                    }}
-                    disabled={
-                      reviewMutation.isPending || getAdmissionDecisionStatus(details) !== 'PENDING'
-                    }
-                    className="flex-3 bg-brand-accent hover:bg-emerald-600 text-black font-black py-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] disabled:opacity-30"
-                  >
-                    <CheckCircle2 size={20} />
-                    APPROVE & ASSIGN ROLE
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
 
       <AnimatePresence>
+        {selectedAdmissionId && (
+          <div
+            className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+            onClick={() => setSelectedAdmissionId(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-surface-raised brutalist-border rounded-xl w-full max-w-3xl my-8 overflow-hidden relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setSelectedAdmissionId(null)}
+                className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-zinc-900/80 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
+              >
+                <XCircle size={16} />
+              </button>
+
+              {detailsLoading ? (
+                <div className="p-8 space-y-6">
+                  <div className="space-y-2">
+                    <Skeleton className="h-8 w-2/3" />
+                    <Skeleton className="h-4 w-1/3" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-6 pt-4">
+                    <Skeleton className="h-28 w-full rounded-lg" />
+                    <Skeleton className="h-28 col-span-2 w-full rounded-lg" />
+                  </div>
+                  <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-lg space-y-3">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                </div>
+              ) : !details ? (
+                <div className="p-12 text-center">
+                  <p className="text-zinc-600 font-mono text-xs">
+                    Failed to load admission details.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col max-h-[80vh]">
+                  {/* Header */}
+                  <div className="p-6 border-b border-zinc-900 space-y-4">
+                    <div className="flex items-start justify-between gap-4 pr-8">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h2 className="text-2xl font-black tracking-tighter uppercase truncate">
+                            {details.applicant_name || details.full_name}
+                          </h2>
+                          {(() => {
+                            const s = getAdmissionDecisionStatus(details);
+                            return (
+                              <span
+                                className={cn(
+                                  'shrink-0 text-[9px] font-black uppercase px-2 py-0.5 rounded border',
+                                  s === 'PENDING'
+                                    ? 'bg-amber-950/20 text-amber-500 border-amber-500/30'
+                                    : s === 'ACCEPTED'
+                                      ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
+                                      : 'bg-red-950/20 text-red-500 border-red-500/30',
+                                )}
+                              >
+                                {s}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        <p className="text-zinc-600 font-mono text-xs">
+                          ID: ADM-{String(details.id).padStart(4, '0')} ·{' '}
+                          {details.created_at
+                            ? new Date(details.created_at).toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                              })
+                            : '—'}
+                        </p>
+                      </div>
+                      <div className="shrink-0 bg-zinc-950 px-3 py-1.5 border border-zinc-800 rounded flex items-center gap-3">
+                        <div className="text-center">
+                          <p className="text-[9px] font-bold text-zinc-500 uppercase">Age</p>
+                          <p className="font-mono font-bold text-base">
+                            {details.applicant_age ?? '?'}
+                          </p>
+                        </div>
+                        <div className="w-px h-8 bg-zinc-800" />
+                        <div className="text-center">
+                          <p className="text-[9px] font-bold text-zinc-500 uppercase">Conf.</p>
+                          <p className="font-mono font-bold text-base">
+                            {details.ai_confidence != null
+                              ? `${(details.ai_confidence * 100).toFixed(0)}%`
+                              : '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Scrollable content */}
+                  <div className="flex-1 overflow-auto">
+                    <div className="p-6 space-y-6">
+                      <section className="space-y-3">
+                        <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
+                          Personal Information
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 bg-zinc-900/60 border border-zinc-800/60 rounded-lg">
+                            <p className="text-[9px] font-bold text-brand-primary uppercase mb-1.5">
+                              Skills
+                            </p>
+                            <p className="text-xs leading-relaxed text-zinc-300">
+                              {details.applicant_skills || (
+                                <span className="text-zinc-600 italic">None reported</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="p-3 bg-zinc-900/60 border border-zinc-800/60 rounded-lg">
+                            <p className="text-[9px] font-bold text-brand-secondary uppercase mb-1.5">
+                              Health
+                            </p>
+                            <p className="text-xs leading-relaxed text-zinc-300">
+                              {details.health_notes || (
+                                <span className="text-zinc-600 italic">None reported</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        {details.background_notes && (
+                          <div className="p-3 bg-zinc-900/60 border border-zinc-800/60 rounded-lg">
+                            <p className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5">
+                              Background
+                            </p>
+                            <p className="text-xs leading-relaxed text-zinc-300">
+                              {details.background_notes}
+                            </p>
+                          </div>
+                        )}
+                      </section>
+
+                      {(details.photo_url || details.id_card_url) && (
+                        <section className="space-y-3">
+                          <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            Attached Documents
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            {details.photo_url && (
+                              <div>
+                                <p className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5">
+                                  Photo
+                                </p>
+                                <div className="aspect-square rounded-lg overflow-hidden border border-zinc-800 bg-zinc-950">
+                                  <img
+                                    src={details.photo_url}
+                                    alt="Applicant"
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            {details.id_card_url && (
+                              <div
+                                className={details.photo_url ? 'md:col-span-2' : 'md:col-span-3'}
+                              >
+                                <p className="text-[9px] font-bold text-zinc-500 uppercase mb-1.5">
+                                  ID Card
+                                </p>
+                                <div className="aspect-[1.58] rounded-lg overflow-hidden border border-zinc-800 bg-zinc-950 relative group">
+                                  <img
+                                    src={details.id_card_url}
+                                    alt="ID Card"
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                  />
+                                  <div className="absolute inset-x-0 bottom-0 bg-black/80 py-1.5 text-center border-t border-zinc-900">
+                                    <span className="text-[8px] font-mono font-bold text-brand-secondary uppercase tracking-widest">
+                                      IDENTITY ATTESTATION
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </section>
+                      )}
+
+                      <section className="space-y-3">
+                        <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          AI Evaluation
+                        </h4>
+                        <div className="relative">
+                          <div className="absolute -inset-1 bg-linear-to-r from-brand-primary/10 to-brand-secondary/10 rounded-xl blur opacity-30" />
+                          <div className="relative p-4 bg-surface-base border border-zinc-800 rounded-xl space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-500 uppercase">
+                                <BrainCircuit size={14} className="text-brand-primary" />
+                                Decision Engine
+                              </div>
+                              {details.ai_confidence != null && (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-20 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                    <div
+                                      className={cn(
+                                        'h-full rounded-full transition-all',
+                                        details.ai_confidence > 0.7
+                                          ? 'bg-emerald-500'
+                                          : details.ai_confidence > 0.4
+                                            ? 'bg-amber-500'
+                                            : 'bg-red-500',
+                                      )}
+                                      style={{
+                                        width: `${(details.ai_confidence * 100).toFixed(0)}%`,
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-[10px] font-mono font-bold text-zinc-400">
+                                    {details.ai_decision || 'PENDING'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            {details.ai_reasoning && (
+                              <div className="p-3 bg-zinc-900/40 border border-zinc-800/40 rounded-lg">
+                                <p className="text-[9px] font-bold text-zinc-600 uppercase mb-1">
+                                  Reasoning
+                                </p>
+                                <p className="text-xs leading-relaxed text-zinc-300 italic">
+                                  "{details.ai_reasoning}"
+                                </p>
+                              </div>
+                            )}
+                            {details.ai_suggested_profession && (
+                              <div className="flex items-center gap-2 text-xs text-zinc-400">
+                                <ShieldAlert size={12} className="text-brand-primary" />
+                                Suggested role:{' '}
+                                <span className="font-bold text-zinc-200 uppercase">
+                                  {details.ai_suggested_profession}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+
+                      {getAdmissionDecisionStatus(details) === 'PENDING' && (
+                        <section className="space-y-2">
+                          <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                            Role Override
+                          </h4>
+                          <div className="p-3 bg-zinc-900/40 border border-zinc-800/40 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <p className="text-[11px] text-zinc-500 font-mono">
+                              Override the AI-suggested profession:
+                            </p>
+                            <select
+                              value={selectedProfId ?? ''}
+                              onChange={(e) =>
+                                setSelectedProfId(e.target.value ? Number(e.target.value) : null)
+                              }
+                              className="bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-300 font-bold font-mono focus:outline-none focus:border-brand-primary uppercase"
+                            >
+                              <option value="">— AI Suggested —</option>
+                              {professions?.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                  {p.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </section>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="p-4 border-t border-zinc-900 bg-surface-raised flex gap-3">
+                    <button
+                      onClick={() =>
+                        reviewMutation.mutate({ id: details.id, decision: 'REJECTED' })
+                      }
+                      disabled={
+                        reviewMutation.isPending ||
+                        getAdmissionDecisionStatus(details) !== 'PENDING'
+                      }
+                      className="flex-1 bg-zinc-900 hover:bg-red-950/30 text-red-500 border border-red-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
+                    >
+                      <XCircle size={16} />
+                      REJECT
+                    </button>
+                    {canReevaluate && (
+                      <button
+                        onClick={() => {
+                          setCorrectName(details.applicant_name || details.full_name || '');
+                          setCorrectAge(String(details.applicant_age ?? ''));
+                          setCorrectSkills(details.applicant_skills || '');
+                          setCorrectHealth(details.health_notes || '');
+                          setCorrectBackground(details.background_notes || '');
+                          setIsCorrectModalOpen(true);
+                        }}
+                        disabled={
+                          correctAndReevaluateMutation.isPending ||
+                          getAdmissionDecisionStatus(details) !== 'PENDING'
+                        }
+                        className="flex-1 bg-amber-950/20 hover:bg-amber-950/40 text-amber-500 border border-amber-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
+                      >
+                        <BrainCircuit size={16} />
+                        CORRECT
+                      </button>
+                    )}
+                    <button
+                      onClick={() =>
+                        reviewMutation.mutate({
+                          id: details.id,
+                          decision: 'ACCEPTED',
+                          corrected_profession_id: selectedProfId || undefined,
+                        })
+                      }
+                      disabled={
+                        reviewMutation.isPending ||
+                        getAdmissionDecisionStatus(details) !== 'PENDING'
+                      }
+                      className="flex-[2] bg-brand-accent hover:bg-emerald-600 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] disabled:opacity-30"
+                    >
+                      <CheckCircle2 size={16} />
+                      APPROVE
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
+
         {isCreateModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
             <motion.div
@@ -644,26 +737,24 @@ export default function AdmissionList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Applicant Photo URL (Optional)
+                      Applicant Photo (Optional, max 10MB)
                     </label>
                     <input
-                      type="url"
-                      value={newPhotoUrl}
-                      onChange={(e) => setNewPhotoUrl(e.target.value)}
-                      placeholder="e.g. https://images.unsplash.com/photo-..."
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewPhoto(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Identification Card URL (Optional)
+                      ID Card (Optional, max 10MB)
                     </label>
                     <input
-                      type="url"
-                      value={newIdCardUrl}
-                      onChange={(e) => setNewIdCardUrl(e.target.value)}
-                      placeholder="e.g. https://images.unsplash.com/photo-..."
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewIdCard(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
                 </div>
@@ -724,8 +815,8 @@ export default function AdmissionList() {
                       applicant_skills: correctSkills,
                       health_notes: correctHealth,
                       background_notes: correctBackground,
-                      photo_url: details.photo_url ?? undefined,
-                      id_card_url: details.id_card_url ?? undefined,
+                      photo: correctPhoto,
+                      id_card: correctIdCard,
                     },
                   });
                 }}
@@ -792,6 +883,31 @@ export default function AdmissionList() {
                     rows={2}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                      Applicant Photo (Optional, max 10MB)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setCorrectPhoto(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                      ID Card (Optional, max 10MB)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setCorrectIdCard(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
