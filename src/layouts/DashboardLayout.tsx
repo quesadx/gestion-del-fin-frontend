@@ -434,10 +434,19 @@ export default function DashboardLayout() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setCampPopupOpen(false)}
-            className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-60"
           >
-            <div className="pointer-events-none fixed inset-0 z-0 h-[100dvh] w-[100dvw]">
+            {/* Backdrop click catcher */}
+            <div
+              className="absolute inset-0 bg-black/45 backdrop-blur-[1px]"
+              onClick={() => setCampPopupOpen(false)}
+            />
+
+            {/* Animated background layer (catches pointermove for parallax) */}
+            <div
+              className="absolute inset-0 h-full w-full overflow-hidden"
+              onClick={() => setCampPopupOpen(false)}
+            >
               <FloatingLines
                 linesGradient={activeFloatingLinesTheme.linesGradient}
                 enabledWaves={['top', 'middle', 'bottom']}
@@ -445,14 +454,14 @@ export default function DashboardLayout() {
                 lineDistance={[8, 6, 4]}
                 bendRadius={4.8}
                 bendStrength={-0.35}
-                interactive={false}
+                interactive={true}
                 parallax={true}
-                parallaxStrength={0.08}
-                animationSpeed={0.9}
+                parallaxStrength={0.12}
+                animationSpeed={2.0}
                 mixBlendMode="screen"
               />
               <div
-                className="absolute inset-0"
+                className="absolute inset-0 background-drift"
                 style={{
                   backgroundImage:
                     `radial-gradient(circle at 50% 35%, ${activeFloatingLinesTheme.glow}, transparent 56%),` +
@@ -480,14 +489,14 @@ export default function DashboardLayout() {
               </div>
             ) : null}
 
-            <div className="relative z-10 flex h-full w-full items-center justify-center p-4">
+            <div className="absolute inset-0 flex h-full w-full items-center justify-center p-4 pointer-events-none">
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 8 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 8 }}
                 transition={{ duration: 0.15 }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-[96vw]"
+                className="relative w-full max-w-[96vw] pointer-events-auto"
               >
                 <div className="pointer-events-none absolute inset-x-0 -top-18 z-40 flex items-start justify-center">
                   <div className="pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-white/10 bg-black/25 px-5 py-2.5 backdrop-blur-xl shadow-[0_0_45px_rgba(0,0,0,0.35)]">
@@ -538,8 +547,8 @@ export default function DashboardLayout() {
                       cardDistance={120}
                       verticalDistance={62}
                       delay={5600}
-                      autoPlay={false}
-                      pauseOnHover={true}
+                      autoPlay={true}
+                      pauseOnHover={false}
                       manualSwapTick={campSwapTick}
                       manualSwapDirection={campSwapDirection}
                       bringToFrontOnClick={false}

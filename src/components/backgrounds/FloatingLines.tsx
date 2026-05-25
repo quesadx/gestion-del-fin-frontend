@@ -467,6 +467,7 @@ export default function FloatingLines({
     const renderLoop = () => {
       if (!active) return;
 
+      clock.update();
       uniforms.iTime.value = clock.getElapsed();
 
       if (interactiveRef.current) {

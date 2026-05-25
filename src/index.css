@@ -206,13 +206,13 @@
     opacity: 0.82;
   }
   50% {
-    transform: translate3d(0, -1.5%, 0) scale(1.025);
+    transform: translate3d(0, -3%, 0) scale(1.05);
     opacity: 0.96;
   }
 }
 
 .background-drift {
-  animation: background-drift 18s ease-in-out infinite;
+  animation: background-drift 12s ease-in-out infinite;
   will-change: transform, opacity;
 }
 

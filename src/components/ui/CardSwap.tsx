@@ -404,7 +404,7 @@ export default function CardSwap({
   ]);
 
   useEffect(() => {
-    if (autoPlay || manualSwapTick === undefined) return;
+    if (manualSwapTick === undefined) return;
 
     if (lastManualSwapTickRef.current === null) {
       lastManualSwapTickRef.current = manualSwapTick;
