@@ -53,7 +53,9 @@
     "Normalise",
     "jdoe",
     "scanline",
-    "SVRT"
+    "SVRT",
+    "lerp",
+    "gsap"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md", "legacy"]
 }
