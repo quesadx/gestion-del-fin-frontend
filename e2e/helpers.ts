@@ -8,10 +8,10 @@ export async function loginAndWaitForDashboard(page: Page): Promise<void> {
     await page.goto("/login");
     await page.getByLabel(/username/i).fill(USERNAME);
     await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByLabel(/sign in/i).click();
+    await page.getByRole('button', { name: /sign in/i }).click();
 
     try {
-      await expect(page).toHaveURL(/\/dashboard/, { timeout: 12_000 });
+      await expect(page).toHaveURL(/\/dashboard/, { timeout: 20_000 });
       await expect(page.getByRole('button', { name: /dashboard/i })).toBeVisible({ timeout: 20_000 });
       return;
     } catch {

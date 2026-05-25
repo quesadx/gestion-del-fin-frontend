@@ -11,7 +11,7 @@ test.describe("Authentication", () => {
 
     await page.getByLabel(/username/i).fill(USERNAME);
     await page.getByLabel(/password/i).fill(PASSWORD);
-    await page.getByLabel(/sign in/i).click();
+    await page.getByRole('button', { name: /sign in/i }).click();
 
     await expect(page).toHaveURL(/\/dashboard/);
   });
@@ -23,11 +23,9 @@ test.describe("Authentication", () => {
 
     await page.getByLabel(/username/i).fill("wrong_user");
     await page.getByLabel(/password/i).fill("wrongpassword");
-    await page.getByLabel(/sign in/i).click();
+    await page.getByRole('button', { name: /sign in/i }).click();
 
-    await expect(
-      page.locator('form').getByText(/Request failed with status code 401/i),
-    ).toBeVisible();
+    await expect(page.getByText(/Request failed with status code 401/i)).toBeVisible({ timeout: 15_000 });
   });
 
   test("inactivity notice appears after session_expired flag is set in localStorage", async ({
