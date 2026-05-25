@@ -164,6 +164,7 @@ export default function DashboardLayout() {
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [showGlitchOnce, setShowGlitchOnce] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -461,6 +462,26 @@ export default function DashboardLayout() {
               />
             </div>
 
+            {!showEasterEgg ? (
+              <div className="absolute left-0 bottom-0 z-50 p-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEasterEgg(true);
+                    setTimeout(() => {
+                      setShowGlitchOnce(true);
+                      setTimeout(() => setShowGlitchOnce(false), 500);
+                    }, 2500);
+                    setTimeout(() => setShowEasterEgg(false), 5000);
+                  }}
+                  aria-label="Easter egg"
+                  className="rounded-full border border-red-500/30 bg-black/50 p-2.5 text-red-400 backdrop-blur-md transition-all hover:scale-110 hover:border-red-500/60 hover:text-red-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+            ) : null}
+
             <div className="relative z-10 flex h-full w-full items-center justify-center p-4">
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 8 }}
@@ -491,20 +512,6 @@ export default function DashboardLayout() {
 
                 {camps && camps.length > 0 ? (
                   <div className="relative z-10 mt-6 flex h-[78vh] min-h-[560px] w-full items-center justify-center overflow-hidden rounded-[2rem]">
-                    {!showEasterEgg ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowEasterEgg(true);
-                          setTimeout(() => setShowEasterEgg(false), 5000);
-                        }}
-                        aria-label="Easter egg"
-                        className="absolute right-4 top-4 z-50 rounded-full border border-red-500/30 bg-black/50 p-2.5 text-red-400 backdrop-blur-md transition-all hover:scale-110 hover:border-red-500/60 hover:text-red-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
-                      >
-                        <Eye size={18} />
-                      </button>
-                    ) : null}
-
                     {camps.length > 1 ? (
                       <>
                         <button
@@ -651,22 +658,24 @@ export default function DashboardLayout() {
             <div className="absolute inset-0">
               <EvilEye
                 eyeColor="#EF4444"
-                intensity={1.8}
-                pupilSize={0.6}
-                irisWidth={0.25}
-                glowIntensity={0.9}
-                scale={0.9}
-                noiseScale={0.7}
-                pupilFollow={1.0}
-                flameSpeed={1.7}
+                intensity={0.6}
+                pupilSize={0.7}
+                irisWidth={0.35}
+                glowIntensity={0.3}
+                scale={0.6}
+                noiseScale={1.5}
+                pupilFollow={1.5}
+                flameSpeed={3.0}
                 backgroundColor="#000000"
               />
             </div>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <GlitchText speed={0.1} enableShadows={true} enableOnHover={false}>
-                I SEE YOU
-              </GlitchText>
-            </div>
+            {showGlitchOnce && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <GlitchText speed={0.1} enableShadows={false} enableOnHover={false} className="!text-black !opacity-100">
+                  I SEE YOU
+                </GlitchText>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

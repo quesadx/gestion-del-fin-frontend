@@ -16,10 +16,8 @@ export default function GlitchText({
   className = '',
 }: GlitchTextProps) {
   const inlineStyles = {
-    '--after-duration': `${speed * 3}s`,
-    '--before-duration': `${speed * 2}s`,
-    '--after-shadow': enableShadows ? '-5px 0 red' : 'none',
-    '--before-shadow': enableShadows ? '5px 0 cyan' : 'none',
+    '--after-shadow': enableShadows ? '-4px 0 #f97316' : 'none',
+    '--before-shadow': enableShadows ? '4px 0 #ef4444' : 'none',
   } as React.CSSProperties;
 
   const hoverClass = enableOnHover ? 'enable-on-hover' : '';
