@@ -161,13 +161,17 @@ export default function PermissionsPage() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => openEditModal(permission)}
-                  className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                  aria-label={`Edit ${permission.name}`}
+                  title={`Edit ${permission.name}`}
+                  className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
                 >
                   <Edit2 size={12} />
                 </button>
                 <button
                   onClick={() => setDeletingPermission(permission)}
-                  className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                  aria-label={`Delete ${permission.name}`}
+                  title={`Delete ${permission.name}`}
+                  className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -184,7 +188,7 @@ export default function PermissionsPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -202,7 +206,9 @@ export default function PermissionsPage() {
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close modal"
+                  title="Close modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -216,6 +222,7 @@ export default function PermissionsPage() {
                   <input
                     required
                     type="text"
+                    aria-label="Permission key"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. inventory.read"
@@ -228,6 +235,7 @@ export default function PermissionsPage() {
                     Description
                   </label>
                   <textarea
+                    aria-label="Permission description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe what this permission grants access to"
@@ -267,7 +275,7 @@ export default function PermissionsPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div className="flex items-start gap-3">

@@ -217,11 +217,11 @@ export default function RationsPage() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
-                <th className="py-3 px-4 font-semibold">Date</th>
-                <th className="py-3 px-4 font-semibold">Resource</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold">Quantity</th>
-                <th className="py-3 px-4 font-semibold">Description</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Date</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Resource</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Status</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Quantity</th>
+                <th scope="col" className="py-3 px-4 font-semibold">Description</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
@@ -281,7 +281,7 @@ export default function RationsPage() {
               initial={{ scale: 0.95, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -297,7 +297,9 @@ export default function RationsPage() {
                 </div>
                 <button
                   onClick={() => setIsCreateOpen(false)}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close new ration modal"
+                  title="Close new ration modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -307,6 +309,7 @@ export default function RationsPage() {
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">Resource</label>
                   <select
+                    aria-label="Select resource"
                     value={selectedResourceId}
                     onChange={(e) => setSelectedResourceId(Number(e.target.value))}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-secondary cursor-pointer"
@@ -330,6 +333,7 @@ export default function RationsPage() {
                     type="number"
                     min="1"
                     step="any"
+                    aria-label="Ration quantity"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
                     placeholder="e.g. 50"
@@ -342,6 +346,7 @@ export default function RationsPage() {
                     Note (optional)
                   </label>
                   <textarea
+                    aria-label="Ration note"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder="e.g. Breakfast distribution to Sector B survivors"

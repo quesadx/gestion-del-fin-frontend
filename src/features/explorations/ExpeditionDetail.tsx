@@ -203,7 +203,7 @@ export default function ExpeditionDetail() {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl space-y-6"
+        className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl space-y-6"
       >
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -354,10 +354,10 @@ export default function ExpeditionDetail() {
             <table className="w-full text-left font-mono text-xs">
               <thead>
                 <tr className="border-b border-zinc-900 text-zinc-500">
-                  <th className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
+                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
                     Person ID
                   </th>
-                  <th className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">Role</th>
+                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">Role</th>
                 </tr>
               </thead>
               <tbody>
@@ -396,10 +396,10 @@ export default function ExpeditionDetail() {
             <table className="w-full text-left font-mono text-xs">
               <thead>
                 <tr className="border-b border-zinc-900 text-zinc-500">
-                  <th className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
+                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
                     Resource
                   </th>
-                  <th className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right">
+                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right">
                     Quantity
                   </th>
                 </tr>
@@ -448,10 +448,10 @@ export default function ExpeditionDetail() {
               <table className="w-full text-left font-mono text-xs">
                 <thead>
                   <tr className="border-b border-zinc-900 text-zinc-500">
-                    <th className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
+                    <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
                       Resource
                     </th>
-                    <th className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right">
+                    <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right">
                       Quantity Found
                     </th>
                   </tr>
@@ -494,7 +494,7 @@ export default function ExpeditionDetail() {
           <motion.div
             initial={{ scale: 0.95, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+            className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
           >
             <div className="flex justify-between items-start border-b border-zinc-900 pb-4 mb-2">
               <div>
@@ -508,7 +508,9 @@ export default function ExpeditionDetail() {
               </div>
               <button
                 onClick={() => setShowReturnModal(false)}
-                className="p-1 text-zinc-500 hover:text-white rounded"
+                aria-label="Close return modal"
+                title="Close return modal"
+                className="p-1 sm:p-2 text-zinc-500 hover:text-white rounded touch-target"
               >
                 <X size={20} />
               </button>
@@ -535,6 +537,7 @@ export default function ExpeditionDetail() {
                 <input
                   required
                   type="date"
+                  aria-label="Return date"
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
@@ -548,6 +551,7 @@ export default function ExpeditionDetail() {
                 {foundResources.map((row, idx) => (
                   <div key={idx} className="flex gap-2 items-center">
                     <select
+                      aria-label="Found resource type"
                       value={row.resource_type_id || ''}
                       onChange={(e) => {
                         const updated = [...foundResources];
@@ -569,6 +573,7 @@ export default function ExpeditionDetail() {
                     <input
                       type="number"
                       min={1}
+                      aria-label="Found resource quantity"
                       value={row.amount || ''}
                       onChange={(e) => {
                         const updated = [...foundResources];
@@ -584,7 +589,9 @@ export default function ExpeditionDetail() {
                     <button
                       type="button"
                       onClick={() => setFoundResources(foundResources.filter((_, i) => i !== idx))}
-                      className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+                      aria-label="Remove found resource"
+                      title="Remove found resource"
+                      className="p-1.5 sm:p-2 text-zinc-500 hover:text-red-400 transition-colors touch-target"
                     >
                       <X size={14} />
                     </button>
