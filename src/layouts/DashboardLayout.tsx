@@ -139,11 +139,12 @@ export default function DashboardLayout() {
   const [alertDismissed, setAlertDismissed] = useState(false);
 
   // Auto-select the user's home camp on first load, validate it exists in camps list.
+  // Non-admin users cannot use a persisted campId from a different user's session.
   useEffect(() => {
     if (!camps || camps.length === 0) return;
     const campIds = new Set(camps.map((c) => c.id));
 
-    // If currentCampId is invalid, clear it so we can auto-select a valid one.
+    // If currentCampId is invalid (camp deleted), clear it so we can re-select.
     if (currentCampId && !campIds.has(currentCampId)) {
       setCurrentCamp(null);
       return;
@@ -151,6 +152,12 @@ export default function DashboardLayout() {
 
     // Auto-select user's home camp if none selected yet and it's valid.
     if (!currentCampId && user?.camp_id && campIds.has(user.camp_id)) {
+      setCurrentCamp(user.camp_id);
+    }
+
+    // Non-admin users must always use their assigned camp from the JWT.
+    // If localStorage has a stale campId from another session, force-reset.
+    if (currentCampId && user?.camp_id && currentCampId !== user.camp_id && !can(user?.role, '*')) {
       setCurrentCamp(user.camp_id);
     }
   }, [camps, currentCampId, user, setCurrentCamp]);

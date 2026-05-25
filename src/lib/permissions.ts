@@ -2,12 +2,17 @@ export const ROLES = {
   SYSTEM_ADMIN: 'system_admin',
   RESOURCE_MANAGER: 'resource_manager',
   TRAVEL_COORDINATOR: 'travel_coordinator',
-  SURVIVOR: 'survivor',
+  WORKER: 'worker',
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
-// Map of role → array of permission keys they hold
+// Map of role → array of frontend permission keys (local UI gating only).
+// Backend enforces real permissions via permissionMiddleware on every request.
+// `dashboard.read` is a local UI permission — the backend gate for /metrics/*
+// endpoints uses `metrics.dashboard`, `metrics.resources`, etc. The `worker`
+// role has `dashboard.read` to keep the dashboard nav visible; the Dashboard
+// component gates individual data fetches by backend-available permissions.
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   system_admin: ['*'],
   resource_manager: [
@@ -30,7 +35,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'resources.read',
     'inventory.read',
   ],
-  survivor: ['dashboard.read', 'people.read', 'inventory.read', 'resources.read', 'camps.read'],
+  worker: ['dashboard.read', 'people.read', 'inventory.read', 'resources.read', 'camps.read'],
 };
 
 /**

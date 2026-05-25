@@ -36,17 +36,17 @@
 | ID  | Tarea                                                                                                             | Prioridad | Archivos                                                                                         | Status |
 | --- | ----------------------------------------------------------------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------ | ------ |
 | B1  | Gamificación — sistema de logros/progreso visual, niveles, recompensas                                            | 🔴        | `src/features/gamification/` (nuevo), `src/layouts/DashboardLayout.tsx` (widget), `src/types.ts` | ☐      |
-| B2  | Implementar vista de Trabajador — dashboard filtrado solo a recursos asignados                                    | 🔴        | `src/features/dashboard/DashboardOverview.tsx` (role check + filter)                             | ☐      |
+| B2  | Implementar vista de Trabajador — dashboard filtrado solo a recursos asignados                                    | 🔴        | `src/features/dashboard/DashboardOverview.tsx` (role check + filter)                             | ✅ PARCIAL — vista limitada por campamento con endpoints permitidos. "Recursos asignados al trabajador" bloqueado: no existe endpoint backend. |
+| B12 | Unificar roles `worker`/`survivor` — resolver divergencia entre `UserRole` enum y `permissions.ts` ROLES          | 🟡        | `src/types.ts`, `src/lib/permissions.ts`, `src/store/auth.ts`                                    | ✅      |
 | B3  | Disponibilidad laboral visual — reflejar estado en roster (columna trabajable, badges)                            | 🟠        | `src/features/people/PopulationRoster.tsx`                                                       | ☐      |
 | B4  | Reasignación temporal desde roster — botón/bulk action para cubrir profesiones vacías                             | 🟠        | `src/features/people/PopulationRoster.tsx`                                                       | ☐      |
 | B5  | Validar acceso al cambiar campamento — verificar membresía + permisos rol en nuevo campamento                     | 🟠        | `src/layouts/DashboardLayout.tsx` (camp switcher onChange)                                       | ☐      |
 | B6  | Transferencia de PERSONAS en modal TransferList — desbloquear tipo PERSON, añadir selector de persona             | 🟠        | `src/features/transfers/TransferList.tsx`                                                        | ☐      |
 | B7  | Asignar recursos en creación de exploración — selector de miembros + provisiones a asignar                        | 🟠        | `src/features/explorations/ExpeditionList.tsx`, `src/types.ts`                                   | ☐      |
-| B8  | Campos zombie en formulario admisión — signos infección, exposición, nivel amenaza                                | 🟡        | `src/features/admission/AdmissionList.tsx`, `src/types.ts`                                       | ☐      |
+| B8  | Campos zombie en formulario admisión — signos infección, exposición, nivel amenaza                                | 🟡        | `src/features/admission/AdmissionList.tsx`, `src/types.ts`                                       | 🚫 BLOQUEADO — backend no tiene `infection_signs`, `exposure_level`, `threat_level` en Prisma/Zod |
 | B9  | Flujo corregir y re-evaluar IA — botón "corregir" que reenvía datos corregidos a IA                               | 🟡        | `src/features/admission/AdmissionList.tsx`                                                       | ☐      |
 | B10 | Indicador procesamiento automático diario — panel de último ciclo + próximo ciclo                                 | 🟡        | `src/features/inventory/InventoryList.tsx`, `src/features/rations/RationsPage.tsx`               | ☐      |
 | B11 | Documentar patrones de diseño para defensa (justificación técnica)                                                | 🟡        | `.planning/patterns.md` (nuevo)                                                                  | ☐      |
-| B12 | Unificar roles `worker`/`survivor` — resolver divergencia entre `UserRole` enum y `permissions.ts` ROLES          | 🟡        | `src/types.ts`, `src/lib/permissions.ts`, `src/store/auth.ts`                                    | ☐      |
 | B13 | Añadir botón eliminar campamento en CampManagement                                                                | 🟢        | `src/features/camps/CampManagement.tsx`                                                          | ☐      |
 | B14 | Extraer status normalization a utilidad compartida — eliminar código duplicado en PersonDetail y PopulationRoster | 🟢        | `src/lib/utils.ts` (`normalizeStatus`)                                                           | ☐      |
 | B15 | Justificar rol adicional — UI para proponer/argumentar rol extra (RF-02.6)                                        | 🟡        | `src/features/roles/` o nuevo modal                                                              | ☐      |
@@ -93,5 +93,5 @@ SEMANA 7: CIERRE
 |                  | Total  | Completadas |
 | ---------------- | ------ | ----------- |
 | Tareas Persona A | 14     | 0           |
-| Tareas Persona B | 15     | 0           |
+| Tareas Persona B | 15     | 2 (1 bloqueada)  |
 | **Total**        | **29** | **0**       |
