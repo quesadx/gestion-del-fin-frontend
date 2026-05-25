@@ -17,3 +17,5 @@ yarn-error.log*
 node_modules/.cache
 .direnv
 .direnv/
+playwright-report/index.html
+test-results/.last-run.json

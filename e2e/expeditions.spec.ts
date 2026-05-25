@@ -12,7 +12,7 @@ test.describe("Expeditions", () => {
     await expect(
       page
         .locator(".brutalist-border")
-        .or(page.getByText(/no expeditions|no missions/i))
+        .or(page.getByText(/No active or planned expeditions\./i))
         .first(),
     ).toBeVisible({ timeout: 15_000 });
   });
@@ -54,8 +54,8 @@ test.describe("Expeditions", () => {
     await page.getByLabel(/max return/i).fill(fmt(maxDay));
 
     await page
-      .getByRole("button", { name: /confirm mission dispatch/i })
-      .dispatchEvent("click");
+      .getByRole("button", { name: /CONFIRM MISSION DISPATCH/i })
+      .click({ force: true });
 
     await expect(async () => {
       const modalGone = await page
@@ -68,7 +68,7 @@ test.describe("Expeditions", () => {
         .isVisible()
         .catch(() => false);
       const errorVisible = await page
-        .locator(".bg-red-950\\/30")
+        .locator("form .p-3.bg-red-950\\/30")
         .first()
         .isVisible()
         .catch(() => false);

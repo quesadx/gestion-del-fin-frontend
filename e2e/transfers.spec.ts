@@ -23,10 +23,7 @@ test.describe("Transfers", () => {
     await page.getByRole("button", { name: /new transfer/i }).click();
 
     await expect(
-      page
-        .getByRole("dialog")
-        .or(page.getByRole("heading", { name: /transfer|request/i }))
-        .first(),
+      page.getByRole("heading", { name: /Initiate Transfer Request/i }),
     ).toBeVisible({ timeout: 10_000 });
   });
 });
