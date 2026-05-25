@@ -27,7 +27,10 @@
             prettier
             cspell
             pnpm
+            chromium
           ];
+
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
 
           shellHook = ''
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
