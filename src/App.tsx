@@ -193,12 +193,26 @@ export default function App() {
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="dashboard" element={<DashboardOverview />} />
+                    <Route
+                      index
+                      element={
+                        <ProtectedRoute permission={PERM.DASHBOARD_READ}>
+                          <Navigate to="/dashboard" replace />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="dashboard"
+                      element={
+                        <ProtectedRoute permission={PERM.DASHBOARD_READ}>
+                          <DashboardOverview />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path="population"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.PEOPLE_READ}>
                           <PopulationRoster />
                         </ProtectedRoute>
                       }
@@ -214,7 +228,7 @@ export default function App() {
                     <Route
                       path="population/:id"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.PEOPLE_READ}>
                           <PersonDetail />
                         </ProtectedRoute>
                       }
@@ -222,7 +236,7 @@ export default function App() {
                     <Route
                       path="inventory"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.INVENTORY_READ}>
                           <InventoryList />
                         </ProtectedRoute>
                       }
@@ -230,7 +244,7 @@ export default function App() {
                     <Route
                       path="inventory/audit"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.INVENTORY_AUDIT}>
                           <InventoryAuditRoute />
                         </ProtectedRoute>
                       }
@@ -238,7 +252,7 @@ export default function App() {
                     <Route
                       path="admission"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.ADMISSION_READ}>
                           <AdmissionList />
                         </ProtectedRoute>
                       }
@@ -246,7 +260,7 @@ export default function App() {
                     <Route
                       path="expeditions/:id"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.EXPEDITIONS_READ}>
                           <ExpeditionDetail />
                         </ProtectedRoute>
                       }
@@ -254,7 +268,7 @@ export default function App() {
                     <Route
                       path="expeditions"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.EXPEDITIONS_READ}>
                           <ExpeditionList />
                         </ProtectedRoute>
                       }
@@ -262,7 +276,7 @@ export default function App() {
                     <Route
                       path="transfers"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.TRANSFERS_READ}>
                           <TransferList />
                         </ProtectedRoute>
                       }
@@ -270,7 +284,7 @@ export default function App() {
                     <Route
                       path="camps/:id"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.CAMPS_READ}>
                           <CampDetail />
                         </ProtectedRoute>
                       }
@@ -278,7 +292,7 @@ export default function App() {
                     <Route
                       path="camps"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.CAMPS_READ}>
                           <CampManagement />
                         </ProtectedRoute>
                       }
@@ -294,7 +308,7 @@ export default function App() {
                     <Route
                       path="rations"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission={PERM.INVENTORY_READ}>
                           <RationsPage />
                         </ProtectedRoute>
                       }
