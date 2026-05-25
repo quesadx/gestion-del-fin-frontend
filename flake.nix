@@ -6,20 +6,27 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
       in
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            nodejs_20
-            nodePackages.typescript
-            nodePackages.typescript-language-server
-            nodePackages.eslint
-            nodePackages.prettier
-            nodePackages.cspell
+            nodejs
+            typescript
+            typescript-language-server
+            eslint
+            prettier
+            cspell
+            pnpm
           ];
 
           shellHook = ''
@@ -28,12 +35,12 @@
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "Node: $(node --version) | NPM: $(npm --version)"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            
+
             # Alias automáticos para ahorrar tiempo
-            alias ni="npm install"
-            alias nd="npm run dev"
-            alias nb="npm run build"
-            alias nc="npm run check" # Corre lint, spell y build en cadena
+            alias pi="pnpm install"
+            alias pd="pnpm dev"
+            alias pb="pnpm build"
+            alias pc="pnpm check"
           '';
         };
       }
