@@ -18,6 +18,7 @@ import { cn } from '../../lib/utils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { InventorySnapshot, Resource, InventoryItem } from '../../types';
+import BorderGlow from '../../components/BorderGlow';
 
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
@@ -201,64 +202,77 @@ export default function DashboardOverview() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
-                className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
               >
-                <div
-                  className={`w-10 h-10 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
+                <BorderGlow
+                  backgroundColor="#17131b"
+                  borderRadius={16}
+                  glowColor="356 78 62"
+                  glowIntensity={0.7}
+                  glowRadius={24}
+                  edgeSensitivity={20}
+                  coneSpread={18}
+                  animated={false}
+                  className="h-full"
                 >
-                  <stat.icon size={20} />
-                </div>
-                {stat.label === 'Stock Alerts' ? (
-                  <div className="space-y-3">
-                    {criticalCount === 0 && lowCount === 0 ? (
-                      <div className="flex items-center gap-2 text-emerald-500">
-                        <CheckCircle size={16} />
-                        <span className="text-sm font-bold font-mono">All stocks optimal</span>
+                  <div className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors h-full">
+                    <div
+                      className={`w-10 h-10 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
+                    >
+                      <stat.icon size={20} />
+                    </div>
+                    {stat.label === 'Stock Alerts' ? (
+                      <div className="space-y-3">
+                        {criticalCount === 0 && lowCount === 0 ? (
+                          <div className="flex items-center gap-2 text-emerald-500">
+                            <CheckCircle size={16} />
+                            <span className="text-sm font-bold font-mono">All stocks optimal</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {criticalCount > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                                <span className="text-xl font-black font-mono text-red-500">
+                                  {criticalCount}
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                  CRITICAL
+                                </span>
+                              </div>
+                            )}
+                            {lowCount > 0 && (
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                <span className="text-xl font-black font-mono text-amber-500">
+                                  {lowCount}
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                  LOW
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => navigate('/inventory')}
+                          className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
+                        >
+                          View Details →
+                        </button>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          {stat.label}
+                        </p>
                       </div>
                     ) : (
-                      <div className="space-y-1.5">
-                        {criticalCount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                            <span className="text-xl font-black font-mono text-red-500">
-                              {criticalCount}
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                              CRITICAL
-                            </span>
-                          </div>
-                        )}
-                        {lowCount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                            <span className="text-xl font-black font-mono text-amber-500">
-                              {lowCount}
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                              LOW
-                            </span>
-                          </div>
-                        )}
+                      <div>
+                        <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          {stat.label}
+                        </p>
                       </div>
                     )}
-                    <button
-                      onClick={() => navigate('/inventory')}
-                      className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
-                    >
-                      View Details →
-                    </button>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      {stat.label}
-                    </p>
                   </div>
-                ) : (
-                  <div>
-                    <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                      {stat.label}
-                    </p>
-                  </div>
-                )}
+                </BorderGlow>
               </motion.div>
             ))}
       </div>
@@ -361,57 +375,67 @@ export default function DashboardOverview() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
                 {resourceSummaries?.map((res: InventorySnapshot) => (
-                  <div
+                  <BorderGlow
                     key={res.resource_id}
-                    className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group"
+                    backgroundColor="#17131b"
+                    borderRadius={14}
+                    glowColor={res.status === 'CRITICAL' ? '356 82 60' : '36 88 58'}
+                    glowIntensity={0.55}
+                    glowRadius={20}
+                    edgeSensitivity={18}
+                    coneSpread={18}
+                    animated={false}
+                    className="h-full"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-[10px] font-black text-zinc-500 uppercase">
-                        {res.resource_name}
-                      </p>
-                      <div
-                        className={cn(
-                          'w-2 h-2 rounded-full animate-pulse',
-                          res.status === 'CRITICAL'
-                            ? 'bg-red-500'
-                            : res.status === 'LOW'
-                              ? 'bg-amber-500'
-                              : 'bg-emerald-500',
-                        )}
-                      />
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-black font-mono tracking-tight">
-                        {res.quantity}
-                      </span>
-                      <span className="text-[10px] font-mono text-zinc-600 uppercase">
-                        {res.unit}
-                      </span>
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      <p className="text-[9px] font-bold text-zinc-500 uppercase flex justify-between">
-                        Est. Durability
-                        <span
-                          className={cn(
-                            (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
-                          )}
-                        >
-                          {res.projection_days != null ? `${res.projection_days} DAYS` : 'N/A'}
-                        </span>
-                      </p>
-                      <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group h-full">
+                      <div className="flex justify-between items-start mb-2">
+                        <p className="text-[10px] font-black text-zinc-500 uppercase">
+                          {res.resource_name}
+                        </p>
                         <div
                           className={cn(
-                            'h-full',
-                            (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
+                            'w-2 h-2 rounded-full animate-pulse',
+                            res.status === 'CRITICAL'
+                              ? 'bg-red-500'
+                              : res.status === 'LOW'
+                                ? 'bg-amber-500'
+                                : 'bg-emerald-500',
                           )}
-                          style={{
-                            width: `${Math.min((res.projection_days || 0) * 10, 100)}%`,
-                          }}
                         />
                       </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-black font-mono tracking-tight">
+                          {res.quantity}
+                        </span>
+                        <span className="text-[10px] font-mono text-zinc-600 uppercase">
+                          {res.unit}
+                        </span>
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        <p className="text-[9px] font-bold text-zinc-500 uppercase flex justify-between">
+                          Est. Durability
+                          <span
+                            className={cn(
+                              (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
+                            )}
+                          >
+                            {res.projection_days != null ? `${res.projection_days} DAYS` : 'N/A'}
+                          </span>
+                        </p>
+                        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              'h-full',
+                              (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
+                            )}
+                            style={{
+                              width: `${Math.min((res.projection_days || 0) * 10, 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </BorderGlow>
                 ))}
               </div>
             </>

@@ -26,6 +26,7 @@ import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
+import { ShieldAlert } from 'lucide-react';
 
 // ── Connection badge config ───────────────────────────────────────────────────
 
@@ -192,22 +193,22 @@ export default function DashboardLayout() {
       <header className="h-16 shrink-0 border-b border-zinc-900 bg-surface-raised/85 backdrop-blur-md flex items-center justify-between px-6 sm:px-8 sticky top-0 z-40">
         {/* Branding */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-brand-primary rounded flex items-center justify-center font-black text-black italic text-sm shadow-[0_0_15px_rgba(239,68,68,0.25)] select-none">
-            GF
+          <div className="w-8 h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_15px_rgba(239,68,68,0.25)] select-none">
+            <ShieldAlert size={18} />
           </div>
           <div className="leading-none">
-            <p className="font-black text-sm uppercase tracking-tighter text-brand-primary leading-none">
-              Gestion del Fin
+            <p className="font-black text-[15px] sm:text-base uppercase italic tracking-tighter text-brand-primary leading-none">
+              GESTION DEL FIN
             </p>
-            <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-widest mt-0.5 block">
-              Tactical Command Sector // Active
+            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mt-0.5 block">
+              Survival Terminal v4.2.0 // COMMAND AND CONTROL
             </span>
           </div>
         </div>
 
         {/* Camp switcher - left of center */}
         <div className="flex items-center gap-2 bg-zinc-950/40 border border-zinc-900 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm">
-          <Tent className="text-brand-secondary shrink-0" size={13} />
+          <Tent className="text-brand-secondary shrink-0" size={14} />
           <div className="relative flex-1">
             <select
               value={currentCampId ?? ''}
@@ -215,7 +216,7 @@ export default function DashboardLayout() {
                 setCurrentCamp(Number(e.target.value));
                 navigate('/dashboard', { replace: true });
               }}
-              className="w-full bg-transparent border-none text-zinc-300 text-xs font-bold font-mono uppercase tracking-tight focus:outline-none appearance-none cursor-pointer pr-4"
+              className="w-full bg-transparent border-none text-zinc-300 text-[13px] font-bold font-mono uppercase tracking-tight focus:outline-none appearance-none cursor-pointer pr-4"
             >
               {!currentCampId && (
                 <option value="" className="bg-zinc-950">
@@ -236,10 +237,10 @@ export default function DashboardLayout() {
           {/* Server time */}
           {synced && (
             <div className="hidden md:flex items-center gap-2 bg-zinc-950/40 border border-zinc-900 rounded px-3 py-1.5">
-              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">
+              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
                 SVRT
               </span>
-              <span className="text-[11px] font-mono font-bold text-zinc-300 tabular-nums">
+              <span className="text-[13px] font-mono font-bold text-zinc-200 tabular-nums">
                 {timeStr}
               </span>
             </div>
@@ -260,12 +261,12 @@ export default function DashboardLayout() {
 
           {/* User chip */}
           <div className="flex items-center gap-2 bg-zinc-950/60 border border-zinc-900 rounded px-2.5 py-1">
-            <div className="w-5.5 h-5.5 rounded bg-zinc-800 grid place-items-center text-[10px] font-black text-brand-secondary select-none">
+            <div className="w-6 h-6 rounded bg-zinc-800 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
               {user?.username?.[0].toUpperCase()}
             </div>
             <div className="hidden md:block text-left leading-none">
-              <span className="text-[10px] font-bold block">{user?.username}</span>
-              <span className="text-[8px] text-zinc-500 font-mono uppercase tracking-tight mt-0.5 block">
+              <span className="text-[12px] font-bold block">{user?.username}</span>
+              <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-tight mt-0.5 block">
                 {user?.role?.replace(/_/g, ' ')}
               </span>
             </div>
