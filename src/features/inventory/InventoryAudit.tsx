@@ -41,7 +41,7 @@ export default function InventoryAudit() {
     return map;
   }, [resources]);
 
-  const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
+  const { data: auditData, isLoading, error: auditError } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
@@ -158,6 +158,17 @@ export default function InventoryAudit() {
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))}
+        </div>
+      ) : auditError ? (
+        <div className="p-4 bg-red-950/20 border border-red-500/30 rounded-lg">
+          <p className="text-xs font-mono text-red-400 leading-relaxed">
+            {(auditError as { response?: { data?: { error?: { message?: string } } } })?.response
+              ?.data?.error?.message ||
+              (auditError as { response?: { data?: { message?: string } } })?.response?.data
+                ?.message ||
+              (auditError as Error)?.message ||
+              'Failed to load audit records'}
+          </p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-4 py-16 text-center">

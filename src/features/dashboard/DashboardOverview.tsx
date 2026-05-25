@@ -75,9 +75,9 @@ export default function DashboardOverview() {
 
       return items.map((item) => {
         const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
-        const qty = item.quantity ?? 0;
-        const minStock = Number(rt?.minimum_stock ?? 0);
-        const dailyRation = Number(rt?.daily_ration ?? 0);
+        const qty = Math.floor(Number(item.quantity ?? 0));
+        const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));
+        const dailyRation = Math.floor(Number(rt?.daily_ration ?? 0));
         const dailyUsage = dailyRation * survivorCount;
         const projectionDays = dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
         return {
@@ -369,11 +369,18 @@ export default function DashboardOverview() {
                           <Cell
                             key={`cell-${index}`}
                             fill={
-                              entry.status === 'CRITICAL'
-                                ? '#ef4444'
-                                : entry.status === 'LOW'
-                                  ? '#f59e0b'
-                                  : '#10b981'
+                              [
+                                '#ef4444',
+                                '#f59e0b',
+                                '#10b981',
+                                '#3b82f6',
+                                '#8b5cf6',
+                                '#ec4899',
+                                '#06b6d4',
+                                '#f97316',
+                                '#14b8a6',
+                                '#e11d48',
+                              ][index % 10]
                             }
                           />
                         ))}
