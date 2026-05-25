@@ -27,11 +27,46 @@ import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert } from 'lucide-react';
 import { CardBody, CardContainer } from '../components/ui/3d-card';
+import DarkVeil from '../components/backgrounds/DarkVeil';
+import CardSwap, { Card } from '../components/ui/CardSwap';
 
 const PANEL_SHELL =
   'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(78,32,36,0.8)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.28),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
 
 const ALERT_ROW = 'relative flex items-center justify-between gap-4 px-5 py-2.5 sm:px-6';
+
+const CAMP_COLOR_THEMES = [
+  {
+    hueShift: -6,
+    border: 'rgba(239,68,68,0.42)',
+    tint: 'from-red-500/22 via-red-900/15 to-amber-700/16',
+  },
+  {
+    hueShift: 22,
+    border: 'rgba(249,115,22,0.42)',
+    tint: 'from-orange-500/24 via-amber-900/16 to-rose-700/15',
+  },
+  {
+    hueShift: 58,
+    border: 'rgba(234,179,8,0.42)',
+    tint: 'from-yellow-400/20 via-amber-900/14 to-orange-700/16',
+  },
+  {
+    hueShift: 138,
+    border: 'rgba(34,197,94,0.42)',
+    tint: 'from-emerald-500/24 via-green-900/14 to-teal-700/14',
+  },
+  {
+    hueShift: 214,
+    border: 'rgba(14,165,233,0.42)',
+    tint: 'from-sky-500/24 via-cyan-900/16 to-blue-700/15',
+  },
+  {
+    hueShift: 292,
+    border: 'rgba(244,114,182,0.42)',
+    tint: 'from-pink-500/22 via-fuchsia-900/15 to-rose-800/14',
+  },
+];
 
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
@@ -263,7 +298,7 @@ export default function DashboardLayout() {
               transition={{ duration: 0.15 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="w-full max-w-md">
+              <div className="w-full max-w-3xl">
                 <div className="overflow-hidden rounded-2xl border border-red-500/15 bg-[rgba(37,23,26,0.86)] shadow-[0_20px_70px_rgba(0,0,0,0.36),0_0_0_1px_rgba(239,68,68,0.08)] backdrop-blur-xl">
                   <div className="flex items-center justify-between border-b border-red-500/10 px-5 py-4">
                     <div>
@@ -282,24 +317,83 @@ export default function DashboardLayout() {
                     </button>
                   </div>
 
-                  <div className="max-h-[70vh] overflow-y-auto p-2">
-                    {camps?.map((camp) => (
-                      <button
-                        key={camp.id}
-                        onClick={() => {
-                          setCurrentCamp(camp.id);
-                          navigate('/dashboard', { replace: true });
-                          setCampPopupOpen(false);
-                        }}
-                        className={`w-full rounded-xl px-4 py-3 text-left text-xs font-bold font-mono uppercase tracking-[0.12em] transition-colors hover:bg-red-950/35 ${
-                          camp.id === currentCampId
-                            ? 'text-brand-primary bg-red-950/20 border border-red-500/10'
-                            : 'text-zinc-300'
-                        }`}
-                      >
-                        {camp.name}
-                      </button>
-                    ))}
+                  <div className="px-4 pb-7 pt-4">
+                    {camps && camps.length > 0 ? (
+                      <div className="relative h-[420px] w-full">
+                        <CardSwap
+                          width={360}
+                          height={230}
+                          cardDistance={48}
+                          verticalDistance={36}
+                          delay={3600}
+                          pauseOnHover={true}
+                          skewAmount={4}
+                          easing="elastic"
+                        >
+                          {camps.map((camp, index) => {
+                            const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
+                            const isActive = camp.id === currentCampId;
+
+                            return (
+                              <Card key={camp.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setCurrentCamp(camp.id);
+                                    navigate('/dashboard', { replace: true });
+                                    setCampPopupOpen(false);
+                                  }}
+                                  className="relative h-full w-full overflow-hidden rounded-[14px] text-left"
+                                  style={{ border: `1px solid ${theme.border}` }}
+                                >
+                                  <div className="absolute inset-0">
+                                    <DarkVeil
+                                      hueShift={theme.hueShift}
+                                      speed={0.82}
+                                      warpAmount={1.5}
+                                      noiseIntensity={0.02}
+                                      resolutionScale={1}
+                                    />
+                                  </div>
+
+                                  <div
+                                    className={`absolute inset-0 bg-gradient-to-br ${theme.tint} mix-blend-screen`}
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+
+                                  <div className="relative z-10 flex h-full flex-col justify-between p-4">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="rounded-full border border-white/25 bg-black/30 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-200">
+                                        Refuge
+                                      </span>
+
+                                      {isActive ? (
+                                        <span className="rounded-full border border-red-500/45 bg-red-500/14 px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-red-200">
+                                          Active
+                                        </span>
+                                      ) : null}
+                                    </div>
+
+                                    <div>
+                                      <p className="text-[11px] font-mono uppercase tracking-[0.16em] text-zinc-300/85">
+                                        Select destination
+                                      </p>
+                                      <h4 className="mt-1 text-xl font-black uppercase tracking-tight text-white">
+                                        {camp.name}
+                                      </h4>
+                                    </div>
+                                  </div>
+                                </button>
+                              </Card>
+                            );
+                          })}
+                        </CardSwap>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-red-500/12 bg-black/20 px-4 py-6 text-center text-xs font-mono uppercase tracking-[0.14em] text-zinc-400">
+                        No camps available
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
