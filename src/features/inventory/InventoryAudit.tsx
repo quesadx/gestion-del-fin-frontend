@@ -18,7 +18,6 @@ export default function InventoryAudit() {
   const [page, setPage] = useState(1);
   const [selectedType, setSelectedType] = useState<string>('');
 
-  // Fetch resources for name resolution (shares cache with ['resources'] key)
   const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
     queryFn: async () => {
@@ -28,7 +27,6 @@ export default function InventoryAudit() {
     staleTime: 60_000,
   });
 
-  // Build resource ID → name lookup map
   const resourceMap = useMemo(() => {
     const map = new Map<number, string>();
     if (resources && Array.isArray(resources)) {
@@ -39,7 +37,6 @@ export default function InventoryAudit() {
     return map;
   }, [resources]);
 
-  // Fetch chronological audit log
   const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
@@ -57,18 +54,16 @@ export default function InventoryAudit() {
     retry: false,
   });
 
-  // Filter by adjustment type
+  const getEntryType = (entry: InventoryAuditEntry): string | undefined =>
+    entry.type ?? (entry as InventoryAuditEntry & { log_type?: string }).log_type;
+
   const filtered = useMemo(() => {
     const entries = Array.isArray(auditData) ? auditData : [];
     if (entries.length === 0) return [];
-
-    const isSummary = entries[0].resource_name !== undefined;
-    if (isSummary || !selectedType) return entries;
-
-    return entries.filter((e) => e.type === selectedType);
+    if (!selectedType) return entries;
+    return entries.filter((entry) => getEntryType(entry) === selectedType);
   }, [auditData, selectedType]);
 
-  const isSummaryAudit = filtered.length > 0 && filtered[0].resource_name !== undefined;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -87,7 +82,6 @@ export default function InventoryAudit() {
 
   return (
     <div className="space-y-8">
-      {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-black tracking-tighter uppercase text-brand-secondary">
@@ -106,7 +100,6 @@ export default function InventoryAudit() {
         </button>
       </div>
 
-      {/* ── Type Filter ──────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
           Type Filter:
@@ -129,9 +122,7 @@ export default function InventoryAudit() {
         </div>
       </div>
 
-      {/* ── Body ─────────────────────────────────────────────────────── */}
       {!currentCampId ? (
-        /* No camp selected */
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <History className="h-12 w-12 text-zinc-700" />
           <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider">
@@ -139,14 +130,12 @@ export default function InventoryAudit() {
           </p>
         </div>
       ) : isLoading ? (
-        /* Loading skeleton */
         <div className="space-y-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <Skeleton key={i} className="h-12 w-full rounded-lg" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        /* Empty state */
         <div className="flex flex-col items-center gap-4 py-16 text-center">
           <History className="h-12 w-12 text-zinc-700" />
           <div>
@@ -154,7 +143,7 @@ export default function InventoryAudit() {
               No audit records found
             </p>
             <p className="text-xs text-zinc-600 font-mono mt-1">
-              {selectedType && !isSummaryAudit
+              {selectedType
                 ? `No entries of type "${selectedType}" for this camp.`
                 : 'No inventory adjustments have been recorded for this camp.'}
             </p>
@@ -162,59 +151,22 @@ export default function InventoryAudit() {
         </div>
       ) : (
         <>
-          {/* ── Audit Table ────────────────────────────────── */}
           <div className="overflow-x-auto border border-zinc-800 rounded-xl bg-surface-raised/40">
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
-                  {isSummaryAudit ? (
-                    <>
-                      <th className="py-3 px-4 font-semibold">Resource</th>
-                      <th className="py-3 px-4 font-semibold">Unit</th>
-                      <th className="py-3 px-4 font-semibold">Inventory</th>
-                      <th className="py-3 px-4 font-semibold">Log Delta</th>
-                      <th className="py-3 px-4 font-semibold">Discrepancy</th>
-                      <th className="py-3 px-4 font-semibold">Consistent</th>
-                    </>
-                  ) : (
-                    <>
-                      <th className="py-3 px-4 font-semibold">Timestamp</th>
-                      <th className="py-3 px-4 font-semibold">Resource</th>
-                      <th className="py-3 px-4 font-semibold">Type</th>
-                      <th className="py-3 px-4 font-semibold">Quantity</th>
-                      <th className="py-3 px-4 font-semibold">Description</th>
-                      <th className="py-3 px-4 font-semibold">User</th>
-                    </>
-                  )}
+                  <th className="py-3 px-4 font-semibold">Timestamp</th>
+                  <th className="py-3 px-4 font-semibold">Resource</th>
+                  <th className="py-3 px-4 font-semibold">Type</th>
+                  <th className="py-3 px-4 font-semibold">Quantity</th>
+                  <th className="py-3 px-4 font-semibold">Description</th>
+                  <th className="py-3 px-4 font-semibold">User</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/50">
                 {paginated.map((entry) => {
-                  if (isSummaryAudit) {
-                    return (
-                      <tr
-                        key={entry.resource_type_id}
-                        className="hover:bg-zinc-900/40 transition-colors"
-                      >
-                        <td className="py-3 px-4 font-medium text-zinc-100">
-                          {resolveResourceName(entry)}
-                        </td>
-                        <td className="py-3 px-4 text-zinc-400">{entry.unit ?? '—'}</td>
-                        <td className="py-3 px-4 font-mono text-zinc-100">
-                          {entry.inventory_quantity ?? '—'}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-zinc-100">
-                          {entry.log_delta_sum ?? '—'}
-                        </td>
-                        <td className="py-3 px-4 text-zinc-400">{entry.discrepancy ?? '—'}</td>
-                        <td className="py-3 px-4 text-zinc-400 uppercase tracking-wide">
-                          {entry.is_consistent ? 'YES' : 'NO'}
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  const isIn = entry.type === 'MANUAL_IN';
+                  const entryType = getEntryType(entry);
+                  const isIn = entryType === 'MANUAL_IN';
                   return (
                     <tr
                       key={entry.id ?? entry.resource_type_id}
@@ -260,7 +212,6 @@ export default function InventoryAudit() {
             </table>
           </div>
 
-          {/* ── Pagination ─────────────────────────────────── */}
           <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </>
       )}

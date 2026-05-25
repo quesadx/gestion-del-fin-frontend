@@ -68,6 +68,7 @@ export interface InventoryAuditEntry {
   created_at?: string;
   timestamp?: string;
   type?: 'MANUAL_IN' | 'MANUAL_OUT' | string;
+  log_type?: 'MANUAL_IN' | 'MANUAL_OUT' | string;
   quantity?: number;
   description?: string;
   notes?: string;
