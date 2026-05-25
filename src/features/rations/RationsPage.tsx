@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { apiClient } from '../../lib/api';
 import { useCampStore } from '../../store';
+import { useCan, PERM } from '../../lib/permissions';
 import { Sandwich, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
@@ -20,6 +21,7 @@ export default function RationsPage() {
   const [selectedResourceId, setSelectedResourceId] = useState<number>(0);
   const [quantity, setQuantity] = useState('');
   const [note, setNote] = useState('');
+  const canAdjust = useCan(PERM.INVENTORY_ADJUST);
 
   // ── Resources lookup ─────────────────────────────────────────────────
 
@@ -153,13 +155,15 @@ export default function RationsPage() {
             Track and record daily ration distributions
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-        >
-          <Plus size={18} />
-          NEW RATION
-        </button>
+        {canAdjust && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+          >
+            <Plus size={18} />
+            NEW RATION
+          </button>
+        )}
       </div>
 
       <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex items-center gap-4">
