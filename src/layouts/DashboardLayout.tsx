@@ -14,13 +14,15 @@ import {
   Shield,
   Lock,
   Key,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource } from '../types';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
@@ -113,6 +115,7 @@ export default function DashboardLayout() {
   const location = useLocation();
   const { timeStr, synced } = useServerTime();
   const [campPopupOpen, setCampPopupOpen] = useState(false);
+  const [campDeckOffset, setCampDeckOffset] = useState(0);
 
   // Start the ping loop and get the manual retry trigger.
   const { retry } = useConnectionStatus();
@@ -177,6 +180,22 @@ export default function DashboardLayout() {
       setCurrentCamp(user.camp_id);
     }
   }, [camps, currentCampId, user, setCurrentCamp]);
+
+  const normalizedCampDeckOffset = useMemo(() => {
+    if (!camps || camps.length === 0) return 0;
+    return ((campDeckOffset % camps.length) + camps.length) % camps.length;
+  }, [camps, campDeckOffset]);
+
+  const orderedCamps = useMemo(() => {
+    if (!camps || camps.length === 0) return [];
+
+    return [...camps.slice(normalizedCampDeckOffset), ...camps.slice(0, normalizedCampDeckOffset)];
+  }, [camps, normalizedCampDeckOffset]);
+
+  const shiftCampCards = (direction: 1 | -1) => {
+    if (!camps || camps.length <= 1) return;
+    setCampDeckOffset((prev) => (prev + direction + camps.length) % camps.length);
+  };
 
   const handleLogout = () => {
     logout();
@@ -320,17 +339,41 @@ export default function DashboardLayout() {
 
               {camps && camps.length > 0 ? (
                 <div className="relative z-10 mt-6 flex h-[78vh] min-h-[560px] w-full items-center justify-center">
+                  {orderedCamps.length > 1 ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => shiftCampCards(-1)}
+                        aria-label="Show previous camp"
+                        className="absolute left-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-3 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => shiftCampCards(1)}
+                        aria-label="Show next camp"
+                        className="absolute right-0 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-3 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
+                    </>
+                  ) : null}
+
                   <CardSwap
+                    key={`camp-swap-${normalizedCampDeckOffset}`}
                     width={820}
                     height={500}
-                    cardDistance={62}
-                    verticalDistance={44}
+                    cardDistance={86}
+                    verticalDistance={62}
                     delay={5600}
+                    autoPlay={false}
                     pauseOnHover={true}
                     skewAmount={2}
                     easing="linear"
                   >
-                    {camps.map((camp, index) => {
+                    {orderedCamps.map((camp, index) => {
                       const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
                       const isActive = camp.id === currentCampId;
 
@@ -343,7 +386,7 @@ export default function DashboardLayout() {
                               navigate('/dashboard', { replace: true });
                               setCampPopupOpen(false);
                             }}
-                            className="relative h-full w-full overflow-hidden rounded-[14px] text-left transition-transform duration-200 ease-out hover:z-50 hover:-translate-y-10"
+                            className="relative h-full w-full overflow-hidden rounded-[14px] text-left transition-transform duration-200 ease-out hover:z-50 hover:-translate-y-4"
                             style={{ border: `1px solid ${theme.border}` }}
                           >
                             <div className="absolute inset-0">

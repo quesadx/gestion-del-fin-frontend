@@ -43,6 +43,7 @@ interface CardSwapProps {
   cardDistance?: number;
   verticalDistance?: number;
   delay?: number;
+  autoPlay?: boolean;
   pauseOnHover?: boolean;
   onCardClick?: (idx: number) => void;
   skewAmount?: number;
@@ -86,6 +87,7 @@ export default function CardSwap({
   cardDistance = 60,
   verticalDistance = 70,
   delay = 5000,
+  autoPlay = true,
   pauseOnHover = false,
   onCardClick,
   skewAmount = 6,
@@ -124,14 +126,21 @@ export default function CardSwap({
   const tlRef = useRef<gsap.core.Timeline | null>(null);
   const intervalRef = useRef<number | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
+  const isHoveredRef = useRef(false);
 
   useEffect(() => {
     const total = refs.length;
-    refs.forEach((r, i) =>
-      placeNow(r.current, makeSlot(i, cardDistance, verticalDistance, total), skewAmount),
-    );
+    const placeAllToOrder = () => {
+      order.current.forEach((idx, i) => {
+        const el = refs[idx]?.current;
+        placeNow(el, makeSlot(i, cardDistance, verticalDistance, total), skewAmount);
+      });
+    };
+
+    placeAllToOrder();
 
     const swap = () => {
+      if (isHoveredRef.current) return;
       if (order.current.length < 2) return;
 
       const [front, ...rest] = order.current;
@@ -196,14 +205,18 @@ export default function CardSwap({
     };
 
     order.current = Array.from({ length: childArr.length }, (_, i) => i);
-    swap();
-    intervalRef.current = window.setInterval(swap, delay);
+
+    if (autoPlay) {
+      swap();
+      intervalRef.current = window.setInterval(swap, delay);
+    }
 
     if (pauseOnHover) {
       const node = container.current;
       if (!node) return undefined;
 
       const pause = () => {
+        isHoveredRef.current = true;
         if (tlRef.current) {
           tlRef.current.progress(1);
           tlRef.current.kill();
@@ -213,11 +226,14 @@ export default function CardSwap({
           clearInterval(intervalRef.current);
           intervalRef.current = null;
         }
+        placeAllToOrder();
       };
 
       const resume = () => {
-        tlRef.current?.play();
-        intervalRef.current = window.setInterval(swap, delay);
+        isHoveredRef.current = false;
+        if (autoPlay) {
+          intervalRef.current = window.setInterval(swap, delay);
+        }
       };
 
       node.addEventListener('mouseenter', pause);
@@ -227,16 +243,19 @@ export default function CardSwap({
         node.removeEventListener('mouseenter', pause);
         node.removeEventListener('mouseleave', resume);
         if (intervalRef.current) clearInterval(intervalRef.current);
+        tlRef.current?.kill();
       };
     }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
+      tlRef.current?.kill();
     };
   }, [
     cardDistance,
     verticalDistance,
     delay,
+    autoPlay,
     pauseOnHover,
     skewAmount,
     childArr.length,
