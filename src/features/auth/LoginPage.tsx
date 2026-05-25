@@ -160,11 +160,10 @@ export default function LoginPage() {
                   speed="5s"
                   thickness={2}
                 >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin" size={20} />
-                  ) : (
-                    <span className="relative z-10 font-black">REQUEST AUTHORIZATION</span>
-                  )}
+                  <span className="flex w-full items-center justify-center gap-2 relative z-10 font-black">
+                    {isLoading ? <Loader2 className="animate-spin" size={20} /> : null}
+                    <span>{isLoading ? 'AUTHORIZING...' : 'REQUEST AUTHORIZATION'}</span>
+                  </span>
                 </StarBorder>
               </CardItem>
             </form>
