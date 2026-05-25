@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
-import { Expedition } from '../../types';
+import { Expedition, Person } from '../../types';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import {
   Map,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
+import { can } from '../../lib/permissions';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
@@ -26,8 +27,10 @@ const PAGE_SIZE = 10;
 
 export default function ExpeditionList() {
   const { currentCampId } = useCampStore();
-  const { userId } = useAuthStore();
+  const { userId, user } = useAuthStore();
   const queryClient = useQueryClient();
+
+  const canCreate = can(user?.role, 'expeditions.create');
 
   // --- Confirm dialogs ---
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
@@ -41,6 +44,11 @@ export default function ExpeditionList() {
   const [departureDate, setDepartureDate] = useState('');
   const [expectedReturnDate, setExpectedReturnDate] = useState('');
   const [maxReturnDate, setMaxReturnDate] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [allocatedResources, setAllocatedResources] = useState<
+    { resource_type_id: number; amount: number }[]
+  >([]);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // --- Return modal state ---
   const [returningExpedition, setReturningExpedition] = useState<Expedition | null>(null);
@@ -80,6 +88,17 @@ export default function ExpeditionList() {
     },
   });
 
+  const { data: people } = useQuery<Person[]>({
+    queryKey: ['expedition-people', currentCampId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/camps/${currentCampId}/people`);
+      return unwrapList<Person>(res.data);
+    },
+    enabled: !!currentCampId,
+  });
+
+  const healthyPeople = (people ?? []).filter((p) => (p.status || '').toUpperCase() === 'HEALTHY');
+
   // POST /expeditions — all required fields
   const createExpMutation = useMutation({
     mutationFn: async (payload: {
@@ -91,6 +110,8 @@ export default function ExpeditionList() {
       max_return_date: string;
       notes: string;
       status: string;
+      members?: { person_id: number }[];
+      allocated_resources?: { resource_type_id: number; amount: number }[];
     }) => {
       const res = await apiClient.post('/expeditions', payload);
       return res.data;
@@ -108,6 +129,17 @@ export default function ExpeditionList() {
       setDepartureDate('');
       setExpectedReturnDate('');
       setMaxReturnDate('');
+      setSelectedMembers([]);
+      setAllocatedResources([]);
+      setCreateError(null);
+    },
+    onError: (error: unknown) => {
+      const msg =
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ??
+        (error as { message?: string })?.message ??
+        'Unknown error';
+      setCreateError(msg);
     },
   });
 
@@ -200,8 +232,25 @@ export default function ExpeditionList() {
 
   const handleCreateExpedition = (e: React.FormEvent) => {
     e.preventDefault();
+    setCreateError(null);
     if (!destination || !currentCampId || !departureDate || !expectedReturnDate || !maxReturnDate)
       return;
+
+    if (new Date(departureDate).getTime() > new Date(expectedReturnDate).getTime()) {
+      setCreateError('Departure date must be before or equal to expected return date');
+      return;
+    }
+    if (new Date(expectedReturnDate).getTime() > new Date(maxReturnDate).getTime()) {
+      setCreateError('Expected return date must be before or equal to max return date');
+      return;
+    }
+    for (const r of allocatedResources) {
+      if (r.resource_type_id && r.amount <= 0) {
+        setCreateError('Provision amounts must be greater than 0');
+        return;
+      }
+    }
+
     createExpMutation.mutate({
       camp_id: currentCampId,
       created_by: actorId,
@@ -211,6 +260,8 @@ export default function ExpeditionList() {
       max_return_date: maxReturnDate,
       notes,
       status: 'PLANNED',
+      members: selectedMembers.map((id) => ({ person_id: id })),
+      allocated_resources: allocatedResources.filter((r) => r.resource_type_id && r.amount > 0),
     });
   };
 
@@ -249,13 +300,18 @@ export default function ExpeditionList() {
             Critical mission management & tracking logistics
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          CONFIGURE MISSION
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => {
+              setCreateError(null);
+              setIsModalOpen(true);
+            }}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            CONFIGURE MISSION
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6">
@@ -488,6 +544,13 @@ export default function ExpeditionList() {
               </div>
 
               <form onSubmit={handleCreateExpedition} className="space-y-4">
+                {createError && (
+                  <div className="p-3 bg-red-950/30 border border-red-500/30 rounded-lg flex items-start gap-2">
+                    <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-400 font-mono leading-relaxed">{createError}</p>
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
                     Destination Landmark
@@ -558,6 +621,117 @@ export default function ExpeditionList() {
                   />
                 </div>
 
+                <div className="space-y-2 border-t border-zinc-900 pt-4">
+                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                    Squad Members ({selectedMembers.length} selected)
+                  </p>
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                    {healthyPeople.length === 0 && (
+                      <p className="col-span-2 text-[11px] text-zinc-600 font-mono text-center py-2">
+                        No healthy survivors available.
+                      </p>
+                    )}
+                    {healthyPeople.map((person) => (
+                      <button
+                        key={person.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedMembers((prev) =>
+                            prev.includes(person.id)
+                              ? prev.filter((id) => id !== person.id)
+                              : [...prev, person.id],
+                          )
+                        }
+                        className={cn(
+                          'p-2 text-left border rounded text-xs transition-all',
+                          selectedMembers.includes(person.id)
+                            ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
+                            : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
+                        )}
+                      >
+                        <span className="font-bold block truncate">{person.full_name}</span>
+                        <span className="text-[10px] font-mono opacity-60">
+                          {person.profession_name || 'UNASSIGNED'}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t border-zinc-900 pt-4">
+                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                    Allocated Provisions
+                  </p>
+                  {allocatedResources.map((row, idx) => {
+                    const selectedIds = new Set(
+                      allocatedResources
+                        .filter((_, i) => i !== idx)
+                        .map((r) => r.resource_type_id)
+                        .filter(Boolean),
+                    );
+                    return (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <select
+                          value={row.resource_type_id || ''}
+                          onChange={(e) => {
+                            const updated = [...allocatedResources];
+                            updated[idx] = {
+                              ...updated[idx],
+                              resource_type_id: Number(e.target.value),
+                            };
+                            setAllocatedResources(updated);
+                          }}
+                          className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
+                        >
+                          <option value="">Select resource…</option>
+                          {(resources ?? []).map((r) => (
+                            <option key={r.id} value={r.id} disabled={selectedIds.has(r.id)}>
+                              {r.name} ({r.unit})
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="number"
+                          min={1}
+                          value={row.amount || ''}
+                          onChange={(e) => {
+                            const updated = [...allocatedResources];
+                            updated[idx] = {
+                              ...updated[idx],
+                              amount: Number(e.target.value),
+                            };
+                            setAllocatedResources(updated);
+                          }}
+                          placeholder="Qty"
+                          className="w-20 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setAllocatedResources(allocatedResources.filter((_, i) => i !== idx))
+                          }
+                          className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAllocatedResources([
+                        ...allocatedResources,
+                        { resource_type_id: 0, amount: 0 },
+                      ])
+                    }
+                    className="text-[10px] font-bold text-brand-primary uppercase hover:text-brand-primary/80 transition-colors"
+                  >
+                    + ADD PROVISION
+                  </button>
+                </div>
+
+                {/* Create modal buttons */}
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
                   <button
                     type="button"

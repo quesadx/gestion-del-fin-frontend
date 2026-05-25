@@ -2,16 +2,22 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore, useCampStore } from '../../store';
+import { can } from '../../lib/permissions';
 import { Camp } from '../../types';
-import { Plus, Edit2, MapPin, Activity, X } from 'lucide-react';
+import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
 
 export default function CampManagement() {
+  const { user } = useAuthStore();
+  const { currentCampId, setCurrentCamp } = useCampStore();
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCamp, setEditingCamp] = useState<Camp | null>(null);
+  const [deletingCamp, setDeletingCamp] = useState<Camp | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Form states
   const [name, setName] = useState('');
@@ -48,6 +54,32 @@ export default function CampManagement() {
       queryClient.invalidateQueries({ queryKey: ['camps'] });
       setIsModalOpen(false);
       resetForm();
+    },
+  });
+
+  const canDelete = can(user?.role, 'camps.delete');
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiClient.delete(`/camps/${id}`);
+      return res.data;
+    },
+    onSuccess: (_data, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ['camps'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
+      if (currentCampId === deletedId) {
+        setCurrentCamp(null);
+      }
+      setDeletingCamp(null);
+      setDeleteError(null);
+    },
+    onError: (error: unknown) => {
+      const msg =
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ??
+        (error as { message?: string })?.message ??
+        'Unknown error';
+      setDeleteError(msg);
     },
   });
 
@@ -164,6 +196,17 @@ export default function CampManagement() {
                     >
                       <Edit2 size={12} />
                     </button>
+                    {canDelete && (
+                      <button
+                        onClick={() => {
+                          setDeleteError(null);
+                          setDeletingCamp(camp);
+                        }}
+                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -316,6 +359,56 @@ export default function CampManagement() {
           </div>
         )}
       </AnimatePresence>
+
+      {deletingCamp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-surface-raised brutalist-border rounded-xl p-6 max-w-sm w-full space-y-5"
+          >
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-lg shrink-0 bg-red-950/30 text-red-500">
+                <AlertTriangle size={20} />
+              </div>
+              <div className="space-y-1 pt-0.5">
+                <h3 className="font-black uppercase tracking-tight text-sm">Delete Refuge</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed font-mono">
+                  Permanently delete <strong>{deletingCamp.name}</strong>? This action cannot be
+                  undone. Deletion will fail if the camp still has associated people, inventory,
+                  expeditions, or transfers.
+                </p>
+              </div>
+            </div>
+
+            {deleteError && (
+              <div className="p-3 bg-red-950/30 border border-red-500/30 rounded-lg">
+                <p className="text-xs text-red-400 font-mono">{deleteError}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setDeletingCamp(null);
+                  setDeleteError(null);
+                }}
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase disabled:opacity-40"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={() => deleteMutation.mutate(deletingCamp.id)}
+                disabled={deleteMutation.isPending}
+                className="flex-1 py-2 text-xs font-black uppercase rounded transition-colors disabled:opacity-40 bg-red-600 hover:bg-red-500 text-white"
+              >
+                {deleteMutation.isPending ? 'DELETING...' : 'CONFIRM DELETE'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -26,8 +26,17 @@ export function formatDate(date: string | Date | null | undefined) {
 }
 
 /**
- * Formats a currency or number with units
+ * Normalizes a person status string to the canonical enum value.
+ * Used consistently across PersonDetail and PopulationRoster to avoid
+ * duplicated if-else chains.
  */
-export function formatQuantity(value: number, unit: string) {
-  return `${value.toLocaleString()} ${unit}`;
+export type PersonStatus = 'HEALTHY' | 'SICK' | 'INJURED' | 'AWAY' | 'DEAD';
+
+export function normalizePersonStatus(raw: string | null | undefined): PersonStatus {
+  const s = (raw ?? '').toUpperCase();
+  if (s === 'SICK') return 'SICK';
+  if (s === 'INJURED') return 'INJURED';
+  if (s === 'AWAY') return 'AWAY';
+  if (s === 'DEAD') return 'DEAD';
+  return 'HEALTHY';
 }

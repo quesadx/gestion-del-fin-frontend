@@ -7,6 +7,7 @@ import { Skeleton, SkeletonList } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Pagination } from '../../components/Pagination';
 import { motion, AnimatePresence } from 'motion/react';
+import { Person } from '../../types';
 import {
   ArrowRight,
   Plus,
@@ -22,6 +23,7 @@ import {
   Ban,
   CheckCheck,
   Package,
+  UserPlus,
 } from 'lucide-react';
 
 // ── Local types ───────────────────────────────────────────────────────────────
@@ -208,11 +210,14 @@ export default function TransferList() {
   const [scheduleDate, setScheduleDate] = useState('');
 
   // Create form state
+  const [transferType, setTransferType] = useState<'RESOURCE' | 'PERSON'>('RESOURCE');
   const [targetCamp, setTargetCamp] = useState<number | null>(null);
   const [resourceItems, setResourceItems] = useState<
     { resource_type_id: number; amount: number }[]
   >([{ resource_type_id: 0, amount: 0 }]);
+  const [personItems, setPersonItems] = useState<number[]>([]);
   const [notes, setNotes] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // ── Queries ──────────────────────────────────────────────────────────────
   const { data: transfers, isLoading } = useQuery<Transfer[]>({
@@ -252,6 +257,15 @@ export default function TransferList() {
     },
   });
 
+  const { data: people } = useQuery<Person[]>({
+    queryKey: ['transfer-people', currentCampId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/camps/${currentCampId}/people`);
+      return unwrapList<Person>(res.data);
+    },
+    enabled: !!currentCampId,
+  });
+
   // ── Lookup helpers ───────────────────────────────────────────────────────
   const getResourceName = (id?: number | null): string => {
     if (!id) return '—';
@@ -268,6 +282,11 @@ export default function TransferList() {
     return camps?.find((c) => c.id === id)?.name ?? `Camp #${id}`;
   };
 
+  const getPersonName = (id?: number | null): string => {
+    if (!id) return 'Unknown';
+    return people?.find((p) => p.id === id)?.full_name ?? `Person #${id}`;
+  };
+
   // ── Shared invalidation ──────────────────────────────────────────────────
   const invalidateTransfers = () => {
     queryClient.invalidateQueries({ queryKey: ['transfers'] });
@@ -279,18 +298,44 @@ export default function TransferList() {
   // ── Mutations ────────────────────────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async () => {
+      const items: Array<{
+        item_type: 'RESOURCE' | 'PERSON';
+        resource_type_id?: number;
+        quantity?: number;
+        person_id?: number;
+      }> = [];
+
+      if (transferType === 'RESOURCE') {
+        for (const i of resourceItems) {
+          if (i.resource_type_id > 0 && i.amount > 0) {
+            items.push({
+              item_type: 'RESOURCE',
+              resource_type_id: i.resource_type_id,
+              quantity: i.amount,
+            });
+          }
+        }
+      } else {
+        for (const pid of personItems) {
+          items.push({ item_type: 'PERSON', person_id: pid });
+        }
+        for (const i of resourceItems) {
+          if (i.resource_type_id > 0 && i.amount > 0) {
+            items.push({
+              item_type: 'RESOURCE',
+              resource_type_id: i.resource_type_id,
+              quantity: i.amount,
+            });
+          }
+        }
+      }
+
       const body = {
         requesting_camp: currentCampId,
         target_camp: targetCamp,
-        type: 'RESOURCE',
+        type: transferType,
         requested_by: userId,
-        items: resourceItems
-          .filter((i) => i.resource_type_id > 0 && i.amount > 0)
-          .map((i) => ({
-            item_type: 'RESOURCE',
-            resource_type_id: i.resource_type_id,
-            quantity: i.amount,
-          })),
+        items,
         ...(notes.trim() ? { notes: notes.trim() } : {}),
       };
       const res = await apiClient.post('/transfers', body);
@@ -299,9 +344,20 @@ export default function TransferList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transfers'] });
       setIsCreateOpen(false);
+      setTransferType('RESOURCE');
       setTargetCamp(null);
       setResourceItems([{ resource_type_id: 0, amount: 0 }]);
+      setPersonItems([]);
       setNotes('');
+      setCreateError(null);
+    },
+    onError: (error: unknown) => {
+      const msg =
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ??
+        (error as { message?: string })?.message ??
+        'Unknown error';
+      setCreateError(msg);
     },
   });
 
@@ -626,10 +682,17 @@ export default function TransferList() {
                             {detail.items.map((item, idx) => (
                               <tr key={idx} className="hover:bg-white/5 transition-colors">
                                 <td className="p-3 font-medium text-zinc-200 flex items-center gap-2">
-                                  <Package size={12} className="text-zinc-600 shrink-0" />
-                                  {item.item_type === 'RESOURCE'
-                                    ? getResourceName(item.resource_type_id)
-                                    : `Person #${item.person_id}`}
+                                  {item.item_type === 'RESOURCE' ? (
+                                    <>
+                                      <Package size={12} className="text-zinc-600 shrink-0" />
+                                      {getResourceName(item.resource_type_id)}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserPlus size={12} className="text-zinc-600 shrink-0" />
+                                      {getPersonName(item.person_id)}
+                                    </>
+                                  )}
                                 </td>
                                 <td className="p-3 text-right font-mono font-bold text-zinc-200">
                                   {item.quantity ?? '—'}
@@ -860,10 +923,17 @@ export default function TransferList() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
+                  setCreateError(null);
                   createMutation.mutate();
                 }}
                 className="space-y-5"
               >
+                {createError && (
+                  <div className="p-3 bg-red-950/30 border border-red-500/30 rounded-lg flex items-start gap-2">
+                    <AlertTriangle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                    <p className="text-xs text-red-400 font-mono leading-relaxed">{createError}</p>
+                  </div>
+                )}
                 {/* Destination camp */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
@@ -886,21 +956,100 @@ export default function TransferList() {
                   </select>
                 </div>
 
-                {/* Transfer type (locked) */}
+                {/* Transfer type toggle */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
                     Transfer Type
                   </label>
-                  <div className="px-3 py-2 bg-zinc-950/50 border border-zinc-800 rounded text-xs text-zinc-600 font-mono">
-                    RESOURCE — only resource transfers are supported via this interface
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTransferType('RESOURCE');
+                        setPersonItems([]);
+                      }}
+                      className={cn(
+                        'flex-1 py-2 text-xs font-bold uppercase rounded border transition-all',
+                        transferType === 'RESOURCE'
+                          ? 'bg-brand-primary/10 border-brand-primary text-brand-primary'
+                          : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
+                      )}
+                    >
+                      <Package size={14} className="inline mr-1.5" />
+                      RESOURCE
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTransferType('PERSON')}
+                      className={cn(
+                        'flex-1 py-2 text-xs font-bold uppercase rounded border transition-all',
+                        transferType === 'PERSON'
+                          ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
+                          : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
+                      )}
+                    >
+                      <UserPlus size={14} className="inline mr-1.5" />
+                      PERSON
+                    </button>
                   </div>
                 </div>
 
-                {/* Resource rows */}
+                {/* Person selector (PERSON type only) */}
+                {transferType === 'PERSON' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                        People to Transfer <span className="text-red-500">*</span>
+                      </label>
+                      <span className="text-[10px] font-mono text-zinc-600">
+                        {personItems.length} selected
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                      {(people ?? []).length === 0 && (
+                        <p className="col-span-2 text-[11px] text-zinc-600 font-mono text-center py-2">
+                          No personnel available.
+                        </p>
+                      )}
+                      {(people ?? [])
+                        .filter((p) => (p.status || '').toUpperCase() !== 'DEAD')
+                        .map((person) => (
+                          <button
+                            key={person.id}
+                            type="button"
+                            onClick={() =>
+                              setPersonItems((prev) =>
+                                prev.includes(person.id)
+                                  ? prev.filter((id) => id !== person.id)
+                                  : [...prev, person.id],
+                              )
+                            }
+                            className={cn(
+                              'p-2 text-left border rounded text-xs transition-all',
+                              personItems.includes(person.id)
+                                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
+                                : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
+                            )}
+                          >
+                            <span className="font-bold block truncate">{person.full_name}</span>
+                            <span className="text-[10px] font-mono opacity-60">
+                              {person.profession_name || 'UNASSIGNED'}
+                            </span>
+                          </button>
+                        ))}
+                    </div>
+                    <p className="text-[9px] text-zinc-600 font-mono">
+                      PERSON transfers require at least one resource item for travel rations.
+                    </p>
+                  </div>
+                )}
+
+                {/* Resource rows (both types) */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Resources to Transfer <span className="text-red-500">*</span>
+                      {transferType === 'PERSON' ? 'Travel Rations' : 'Resources to Transfer'}{' '}
+                      <span className="text-red-500">*</span>
                     </label>
                     <button
                       type="button"
@@ -910,62 +1059,70 @@ export default function TransferList() {
                       className="text-[10px] font-bold uppercase text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
                     >
                       <Plus size={11} />
-                      ADD RESOURCE
+                      ADD {transferType === 'PERSON' ? 'RATION' : 'RESOURCE'}
                     </button>
                   </div>
 
                   <div className="space-y-2">
-                    {resourceItems.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <select
-                          required
-                          value={item.resource_type_id || ''}
-                          onChange={(e) => {
-                            const updated = [...resourceItems];
-                            updated[idx] = {
-                              ...updated[idx],
-                              resource_type_id: Number(e.target.value),
-                            };
-                            setResourceItems(updated);
-                          }}
-                          className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary min-w-0"
-                        >
-                          <option value="">— Select resource —</option>
-                          {resources?.map((r) => (
-                            <option key={r.id} value={r.id}>
-                              {r.name} ({r.unit})
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          required
-                          type="number"
-                          min={1}
-                          value={item.amount || ''}
-                          onChange={(e) => {
-                            const updated = [...resourceItems];
-                            updated[idx] = {
-                              ...updated[idx],
-                              amount: Number(e.target.value),
-                            };
-                            setResourceItems(updated);
-                          }}
-                          placeholder="Qty"
-                          className="w-20 shrink-0 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary"
-                        />
-                        {resourceItems.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setResourceItems((prev) => prev.filter((_, i) => i !== idx))
-                            }
-                            className="p-2 shrink-0 text-zinc-600 hover:text-red-500 transition-colors rounded hover:bg-red-950/20"
+                    {resourceItems.map((item, idx) => {
+                      const selectedIds = new Set(
+                        resourceItems
+                          .filter((_, i) => i !== idx)
+                          .map((r) => r.resource_type_id)
+                          .filter(Boolean),
+                      );
+                      return (
+                        <div key={idx} className="flex items-center gap-2">
+                          <select
+                            required
+                            value={item.resource_type_id || ''}
+                            onChange={(e) => {
+                              const updated = [...resourceItems];
+                              updated[idx] = {
+                                ...updated[idx],
+                                resource_type_id: Number(e.target.value),
+                              };
+                              setResourceItems(updated);
+                            }}
+                            className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary min-w-0"
                           >
-                            <X size={14} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                            <option value="">— Select resource —</option>
+                            {resources?.map((r) => (
+                              <option key={r.id} value={r.id} disabled={selectedIds.has(r.id)}>
+                                {r.name} ({r.unit})
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            required
+                            type="number"
+                            min={1}
+                            value={item.amount || ''}
+                            onChange={(e) => {
+                              const updated = [...resourceItems];
+                              updated[idx] = {
+                                ...updated[idx],
+                                amount: Number(e.target.value),
+                              };
+                              setResourceItems(updated);
+                            }}
+                            placeholder="Qty"
+                            className="w-20 shrink-0 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary"
+                          />
+                          {resourceItems.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setResourceItems((prev) => prev.filter((_, i) => i !== idx))
+                              }
+                              className="p-2 shrink-0 text-zinc-600 hover:text-red-500 transition-colors rounded hover:bg-red-950/20"
+                            >
+                              <X size={14} />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -997,6 +1154,7 @@ export default function TransferList() {
                     disabled={
                       createMutation.isPending ||
                       !targetCamp ||
+                      (transferType === 'PERSON' && personItems.length === 0) ||
                       resourceItems.every((i) => !i.resource_type_id || !i.amount)
                     }
                     className="flex-2 py-2.5 bg-brand-primary text-black text-xs font-black uppercase rounded hover:bg-brand-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
