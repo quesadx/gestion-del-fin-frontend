@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
-import { can, PERM } from '../../lib/permissions';
+import { can, useCan, PERM } from '../../lib/permissions';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
@@ -31,6 +31,9 @@ export default function ExpeditionList() {
   const queryClient = useQueryClient();
 
   const canCreate = can(PERM.EXPEDITIONS_CREATE);
+  const canManage = useCan(PERM.EXPEDITIONS_MANAGE);
+  const canUpdate = useCan(PERM.EXPEDITIONS_UPDATE);
+  const canDelete = useCan(PERM.EXPEDITIONS_DELETE);
 
   // --- Confirm dialogs ---
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
@@ -418,40 +421,69 @@ export default function ExpeditionList() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-zinc-900 lg:pl-6">
-                    {exp.status === 'PLANNED' && (
-                      <button
-                        onClick={() =>
-                          updateStatusMutation.mutate({
-                            id: exp.id,
-                            status: 'ONGOING',
-                          })
-                        }
-                        disabled={updateStatusMutation.isPending}
-                        className="px-3 py-1.5 bg-brand-primary text-black font-extrabold text-[10px] uppercase rounded hover:bg-brand-primary/90 transition-colors cursor-pointer disabled:opacity-50"
-                      >
-                        DEPLOY SQUAD
-                      </button>
-                    )}
+                    {exp.status === 'PLANNED' &&
+                      (canManage ? (
+                        <button
+                          onClick={() =>
+                            updateStatusMutation.mutate({
+                              id: exp.id,
+                              status: 'ONGOING',
+                            })
+                          }
+                          disabled={updateStatusMutation.isPending}
+                          className="px-3 py-1.5 bg-brand-primary text-black font-extrabold text-[10px] uppercase rounded hover:bg-brand-primary/90 transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          DEPLOY SQUAD
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          title="No tienes permiso para realizar esta acción"
+                          className="px-3 py-1.5 bg-brand-primary/30 text-black/50 font-extrabold text-[10px] uppercase rounded cursor-not-allowed"
+                        >
+                          DEPLOY SQUAD
+                        </button>
+                      ))}
                     {exp.status === 'ONGOING' && (
                       <>
-                        <button
-                          onClick={() => {
-                            setFoundResources([]);
-                            setReturnMemberStatus('HEALTHY');
-                            setReturningExpedition(exp);
-                          }}
-                          disabled={updateStatusMutation.isPending}
-                          className="px-3 py-1.5 bg-emerald-600 text-white font-extrabold text-[10px] uppercase rounded hover:bg-emerald-500 transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                          CONFIRM RETURN
-                        </button>
-                        <button
-                          onClick={() => setConfirmCancelId(exp.id)}
-                          disabled={updateStatusMutation.isPending}
-                          className="px-3 py-1.5 bg-red-600 text-white font-extrabold text-[10px] uppercase rounded hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50"
-                        >
-                          MARK LOST
-                        </button>
+                        {canManage ? (
+                          <button
+                            onClick={() => {
+                              setFoundResources([]);
+                              setReturnMemberStatus('HEALTHY');
+                              setReturningExpedition(exp);
+                            }}
+                            disabled={updateStatusMutation.isPending}
+                            className="px-3 py-1.5 bg-emerald-600 text-white font-extrabold text-[10px] uppercase rounded hover:bg-emerald-500 transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            CONFIRM RETURN
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            title="No tienes permiso para realizar esta acción"
+                            className="px-3 py-1.5 bg-emerald-600/30 text-white/50 font-extrabold text-[10px] uppercase rounded cursor-not-allowed"
+                          >
+                            CONFIRM RETURN
+                          </button>
+                        )}
+                        {canManage ? (
+                          <button
+                            onClick={() => setConfirmCancelId(exp.id)}
+                            disabled={updateStatusMutation.isPending}
+                            className="px-3 py-1.5 bg-red-600 text-white font-extrabold text-[10px] uppercase rounded hover:bg-red-500 transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            MARK LOST
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            title="No tienes permiso para realizar esta acción"
+                            className="px-3 py-1.5 bg-red-600/30 text-white/50 font-extrabold text-[10px] uppercase rounded cursor-not-allowed"
+                          >
+                            MARK LOST
+                          </button>
+                        )}
                       </>
                     )}
                     <Link
@@ -460,21 +492,25 @@ export default function ExpeditionList() {
                     >
                       VIEW DETAILS
                     </Link>
-                    <button
-                      onClick={() => handleEditExpClick(exp)}
-                      className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer"
-                      title="Edit details"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(exp.id)}
-                      disabled={deleteExpMutation.isPending}
-                      className="p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer"
-                      title="Delete log"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {canUpdate && (
+                      <button
+                        onClick={() => handleEditExpClick(exp)}
+                        className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer"
+                        title="Edit details"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => setConfirmDeleteId(exp.id)}
+                        disabled={deleteExpMutation.isPending}
+                        className="p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer"
+                        title="Delete log"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
