@@ -5,7 +5,7 @@ import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { Person, Camp } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
 import { can } from '../../lib/permissions';
-import { cn, formatDate } from '../../lib/utils';
+import { cn, formatDate, normalizePersonStatus } from '../../lib/utils';
 import {
   ArrowLeft,
   AlertCircle,
@@ -256,16 +256,7 @@ export default function PersonDetail() {
     setEditName(person.full_name);
     setEditAge(String(person.age ?? ''));
 
-    // Normalize string status (same logic as PopulationRoster)
-    let norm = 'HEALTHY';
-    const s = (person.status || '').toUpperCase();
-    if (s === 'HEALTHY') norm = 'HEALTHY';
-    else if (s === 'INJURED') norm = 'INJURED';
-    else if (s === 'SICK') norm = 'SICK';
-    else if (s === 'AWAY') norm = 'AWAY';
-    else if (s === 'DEAD') norm = 'DEAD';
-
-    setEditStatus(norm);
+    setEditStatus(normalizePersonStatus(person.status));
     setEditProfessionId(person.profession_id ?? null);
     setEditSkillsSummary(person.skills_summary ?? '');
     setEditPhotoUrl(person.photo_url ?? '');
@@ -322,15 +313,15 @@ export default function PersonDetail() {
 
   // ── Status badge helper ────────────────────────────────────────────────
 
-  const renderStatusBadge = (status: string) => {
-    const s = (status || '').toUpperCase();
-    const isHealthy = s === 'HEALTHY';
-    const isSick = s === 'SICK';
-    const isInjured = s === 'INJURED';
-    const isAway = s === 'AWAY';
-    const isDeceased = s === 'DEAD';
+  const renderStatusBadge = (raw: string) => {
+    const status = normalizePersonStatus(raw);
+    const isHealthy = status === 'HEALTHY';
+    const isSick = status === 'SICK';
+    const isInjured = status === 'INJURED';
+    const isAway = status === 'AWAY';
+    const isDeceased = status === 'DEAD';
 
-    const label = s;
+    const label = status;
 
     return (
       <div
@@ -639,7 +630,7 @@ export default function PersonDetail() {
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={() => {
-              setStatusNewStatus(person?.status || 'HEALTHY');
+              setStatusNewStatus(normalizePersonStatus(person?.status));
               setShowStatusLogModal(true);
             }}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-purple-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-purple-500 transition-all"

@@ -46,10 +46,10 @@
 | B8  | Campos zombie en formulario admisión — signos infección, exposición, nivel amenaza                                | 🟡        | `src/features/admission/AdmissionList.tsx`, `src/types.ts`                                       | 🚫 BLOQUEADO — backend no tiene `infection_signs`, `exposure_level`, `threat_level` en Prisma/Zod |
 | B9  | Flujo corregir y re-evaluar IA — botón "corregir" que reenvía datos corregidos a IA                               | 🟡        | `src/features/admission/AdmissionList.tsx`                                                       | ✅ PARCIAL — crea nueva admisión y rechaza la anterior; no existe endpoint backend para re-evaluar IA sobre el mismo registro |
 | B10 | Indicador procesamiento automático diario — panel de último ciclo + próximo ciclo                                 | 🟡        | `src/features/inventory/InventoryList.tsx`, `src/features/rations/RationsPage.tsx`               | ✅ PARCIAL — panel visible con consumo diario y próx. ciclo; no existe endpoint backend que exponga estado de jobs cron |
-| B11 | Documentar patrones de diseño para defensa (justificación técnica)                                                | 🟡        | `.planning/patterns.md` (nuevo)                                                                  | ☐      |
-| B13 | Añadir botón eliminar campamento en CampManagement                                                                | 🟢        | `src/features/camps/CampManagement.tsx`                                                          | ☐      |
-| B14 | Extraer status normalization a utilidad compartida — eliminar código duplicado en PersonDetail y PopulationRoster | 🟢        | `src/lib/utils.ts` (`normalizeStatus`)                                                           | ☐      |
-| B15 | Justificar rol adicional — UI para proponer/argumentar rol extra (RF-02.6)                                        | 🟡        | `src/features/roles/` o nuevo modal                                                              | ☐      |
+| B11 | Documentar patrones de diseño para defensa (justificación técnica)                                                | 🟡        | `.planning/patterns.md` (nuevo)                                                                  | ✅      |
+| B13 | Añadir botón eliminar campamento en CampManagement                                                                | 🟢        | `src/features/camps/CampManagement.tsx`                                                          | ✅      |
+| B14 | Extraer status normalization a utilidad compartida — eliminar código duplicado en PersonDetail y PopulationRoster | 🟢        | `src/lib/utils.ts` (`normalizeStatus`)                                                           | ✅      |
+| B15 | Justificar rol adicional — UI para proponer/argumentar rol extra (RF-02.6)                                        | 🟡        | `src/features/roles/` o nuevo modal                                                              | ✅      |
 
 ---
 
@@ -93,5 +93,5 @@ SEMANA 7: CIERRE
 |                  | Total  | Completadas |
 | ---------------- | ------ | ----------- |
 | Tareas Persona A | 14     | 0           |
-| Tareas Persona B | 15     | 10 (1 bloqueada) |
+| Tareas Persona B | 15     | 10 completas, 4 parciales, 1 bloqueada |
 | **Total**        | **29** | **0**       |

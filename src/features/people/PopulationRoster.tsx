@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
-import { cn } from '../../lib/utils';
+import { cn, normalizePersonStatus } from '../../lib/utils';
 import { can } from '../../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
@@ -93,17 +93,7 @@ export default function PopulationRoster() {
     setEditingPerson(person);
     setEditName(person.full_name);
     setEditAge(String(person.age));
-
-    // Normalize string status
-    let norm: 'HEALTHY' | 'INJURED' | 'SICK' | 'AWAY' | 'DEAD' = 'HEALTHY';
-    const s = (person.status || '').toUpperCase();
-    if (s === 'HEALTHY') norm = 'HEALTHY';
-    else if (s === 'SICK') norm = 'SICK';
-    else if (s === 'INJURED') norm = 'INJURED';
-    else if (s === 'AWAY') norm = 'AWAY';
-    else if (s === 'DEAD') norm = 'DEAD';
-
-    setEditStatus(norm);
+    setEditStatus(normalizePersonStatus(person.status));
     setEditProfessionId(person.profession_id ?? null);
   };
 
@@ -150,7 +140,7 @@ export default function PopulationRoster() {
     return professions
       .map((prof) => {
         const assigned = survivors.filter((s) => s.profession_id === prof.id);
-        const active = assigned.filter((s) => ['HEALTHY'].includes((s.status || '').toUpperCase()));
+        const active = assigned.filter((s) => normalizePersonStatus(s.status) === 'HEALTHY');
         return { ...prof, total: assigned.length, active: active.length };
       })
       .filter((p) => p.total > 0 && p.active === 0);
@@ -216,7 +206,7 @@ export default function PopulationRoster() {
     if (!matchesSearch) return false;
     if (statusFilter === 'ALL') return true;
 
-    const personStatus = (s.status || '').toUpperCase();
+    const personStatus = normalizePersonStatus(s.status);
     const filterVal = statusFilter.toUpperCase();
 
     return personStatus === filterVal;
@@ -404,14 +394,14 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4">
                     {(() => {
-                      const s = (person.status || '').toUpperCase();
-                      const isHealthy = s === 'HEALTHY';
-                      const isSick = s === 'SICK';
-                      const isInjured = s === 'INJURED';
-                      const isAway = s === 'AWAY';
-                      const isDeceased = s === 'DEAD';
+                      const status = normalizePersonStatus(person.status);
+                      const isHealthy = status === 'HEALTHY';
+                      const isSick = status === 'SICK';
+                      const isInjured = status === 'INJURED';
+                      const isAway = status === 'AWAY';
+                      const isDeceased = status === 'DEAD';
 
-                      const label = s;
+                      const label = status;
 
                       return (
                         <div
@@ -441,10 +431,10 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4">
                     {(() => {
-                      const s = (person.status || '').toUpperCase();
-                      const isWorkable = s === 'HEALTHY';
-                      const isAway = s === 'AWAY';
-                      const isDeceased = s === 'DEAD';
+                      const status = normalizePersonStatus(person.status);
+                      const isWorkable = status === 'HEALTHY';
+                      const isAway = status === 'AWAY';
+                      const isDeceased = status === 'DEAD';
 
                       if (isDeceased) {
                         return (
@@ -769,7 +759,7 @@ export default function PopulationRoster() {
                       {survivors
                         ?.filter(
                           (p) =>
-                            (p.status || '').toUpperCase() === 'HEALTHY' &&
+                            normalizePersonStatus(p.status) === 'HEALTHY' &&
                             p.profession_id != null &&
                             p.profession_id !== reassignVacantProfId,
                         )
@@ -794,7 +784,7 @@ export default function PopulationRoster() {
                         ))}
                       {survivors?.filter(
                         (p) =>
-                          (p.status || '').toUpperCase() === 'HEALTHY' &&
+                          normalizePersonStatus(p.status) === 'HEALTHY' &&
                           p.profession_id != null &&
                           p.profession_id !== reassignVacantProfId,
                       ).length === 0 && (
