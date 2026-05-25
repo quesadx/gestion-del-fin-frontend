@@ -416,9 +416,9 @@ export default function DashboardLayout() {
               <button
                 onClick={handleLogout}
                 title="Terminate Session"
-                className="p-1 ml-1 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
+                className="p-1.5 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
               >
-                <LogOut size={13} />
+                <LogOut size={16} />
               </button>
             </div>
           </div>

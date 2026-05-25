@@ -252,7 +252,7 @@ export default function DashboardOverview() {
           <p className="text-zinc-500 font-mono text-xs uppercase pl-1">
             {isWorker
               ? 'Camp Resources & Population'
-              : 'Resource & Population Surveillance // Stability Alpha-7'}
+              : 'Resource & Population Surveillance'}
           </p>
         </div>
         <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg">
