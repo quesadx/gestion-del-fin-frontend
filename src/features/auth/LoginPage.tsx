@@ -73,7 +73,7 @@ export default function LoginPage() {
               GESTION-DEL-FIN
             </h1>
             <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-              GESTION-DEL-FIN v1.0.0 // AUTH REQUIRED
+              GESTION-DEL-FIN v1.0.0
             </p>
           </CardItem>
 
@@ -171,30 +171,30 @@ export default function LoginPage() {
 
           <CardItem translateZ={10} className="pt-2 border-t border-zinc-900 space-y-4">
             <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest text-center">
-              AUTHORIZED SECTOR TERMINAL SIGNATURES:
+              SYSTEM ARCHITECTURE:
             </p>
             <div className="grid grid-cols-3 gap-2">
               <div className="p-2 border border-zinc-800 bg-zinc-950/60 rounded text-center">
-                <span className="text-brand-primary font-bold font-mono text-xs">admin</span>
-                <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">
-                  Control
+                <span className="text-brand-primary font-bold font-mono text-xs">web</span>
+                <p className="text-[8px] text-zinc-500 font-mono uppercase whitespace-nowrap mt-0.5">
+                  React TS TW
                 </p>
               </div>
               <div className="p-2 border border-zinc-800 bg-zinc-950/60 rounded text-center">
-                <span className="text-brand-secondary font-bold font-mono text-xs">manager</span>
-                <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">
-                  Resources
+                <span className="text-brand-secondary font-bold font-mono text-xs">api</span>
+                <p className="text-[8px] text-zinc-500 font-mono uppercase whitespace-nowrap mt-0.5">
+                  Node Express PG
                 </p>
               </div>
               <div className="p-2 border border-zinc-800 bg-zinc-950/60 rounded text-center">
-                <span className="text-blue-400 font-bold font-mono text-xs">travel</span>
-                <p className="text-[8px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">
-                  Logistics
+                <span className="text-blue-400 font-bold font-mono text-xs">svc</span>
+                <p className="text-[8px] text-zinc-500 font-mono uppercase whitespace-nowrap mt-0.5">
+                  Go Python VK
                 </p>
               </div>
             </div>
-            <p className="text-[9px] font-mono text-zinc-600 text-center uppercase tracking-wider">
-              Access limit enforced based on security keys.
+            <p className="text-[9px] font-mono text-zinc-600 text-center uppercase">
+              Vercel · Docker · Railway
             </p>
           </CardItem>
         </div>
