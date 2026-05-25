@@ -4,6 +4,11 @@
 
 - ✅ **v1.0-legacy-parity** — Phases 01-10 (shipped 2026-05-24)
 
+## Milestones
+
+- ✅ **v1.0-legacy-parity** — Phases 01-10 (shipped 2026-05-24)
+- ◆ **v1.1-rbac** — Phase 11 (planned 2026-05-25)
+
 ## Phases
 
 <details>
@@ -21,6 +26,8 @@
 - [x] Phase 10: Resource Alerts (1/1 plans) — completed 2026-05-24
 
 </details>
+
+- [ ] Phase 11: RBAC Permissions Integration (4/4 plans) — planned 2026-05-25
 
 ## Dev Rules
 
