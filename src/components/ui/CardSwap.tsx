@@ -133,9 +133,19 @@ export default function CardSwap({
   const intervalRef = useRef<number | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
   const isHoveredRef = useRef(false);
+  const isAnimatingRef = useRef(false);
   const swapRef = useRef<(direction: 1 | -1) => void>(() => {});
   const lastManualSwapTickRef = useRef<number | null>(null);
   const bringToFrontRef = useRef<(idx: number) => void>(() => {});
+
+  const stopCurrentTimeline = useMemo(
+    () => () => {
+      tlRef.current?.kill();
+      tlRef.current = null;
+      isAnimatingRef.current = false;
+    },
+    [],
+  );
 
   useEffect(() => {
     const total = refs.length;
@@ -149,8 +159,10 @@ export default function CardSwap({
     placeAllToOrder();
 
     const swap = (direction: 1 | -1) => {
-      if (isHoveredRef.current) return;
+      if (isHoveredRef.current || isAnimatingRef.current) return;
       if (order.current.length < 2) return;
+
+      isAnimatingRef.current = true;
 
       const tl = gsap.timeline();
       tlRef.current = tl;
@@ -211,6 +223,8 @@ export default function CardSwap({
 
         tl.call(() => {
           order.current = [...rest, front];
+          tlRef.current = null;
+          isAnimatingRef.current = false;
         });
       } else {
         const back = order.current[order.current.length - 1];
@@ -269,6 +283,8 @@ export default function CardSwap({
 
         tl.call(() => {
           order.current = [back, ...rest];
+          tlRef.current = null;
+          isAnimatingRef.current = false;
         });
       }
     };
@@ -278,12 +294,9 @@ export default function CardSwap({
     const bringToFront = (cardIndex: number) => {
       const position = order.current.indexOf(cardIndex);
       if (position <= 0) return;
+      if (isHoveredRef.current || isAnimatingRef.current) return;
 
-      if (tlRef.current) {
-        tlRef.current.progress(1);
-        tlRef.current.kill();
-        tlRef.current = null;
-      }
+      stopCurrentTimeline();
 
       const nextOrder = [cardIndex, ...order.current.filter((idx) => idx !== cardIndex)];
       const tl = gsap.timeline();
@@ -310,6 +323,8 @@ export default function CardSwap({
 
       tl.call(() => {
         order.current = nextOrder;
+        tlRef.current = null;
+        isAnimatingRef.current = false;
       });
     };
 
@@ -328,11 +343,7 @@ export default function CardSwap({
 
       const pause = () => {
         isHoveredRef.current = true;
-        if (tlRef.current) {
-          tlRef.current.progress(1);
-          tlRef.current.kill();
-          tlRef.current = null;
-        }
+        stopCurrentTimeline();
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -354,13 +365,13 @@ export default function CardSwap({
         node.removeEventListener('mouseenter', pause);
         node.removeEventListener('mouseleave', resume);
         if (intervalRef.current) clearInterval(intervalRef.current);
-        tlRef.current?.kill();
+        stopCurrentTimeline();
       };
     }
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      tlRef.current?.kill();
+      stopCurrentTimeline();
     };
   }, [
     cardDistance,
@@ -372,6 +383,7 @@ export default function CardSwap({
     childArr.length,
     refs,
     config,
+    stopCurrentTimeline,
   ]);
 
   useEffect(() => {
@@ -385,7 +397,7 @@ export default function CardSwap({
     if (lastManualSwapTickRef.current === manualSwapTick) return;
     lastManualSwapTickRef.current = manualSwapTick;
 
-    if (isHoveredRef.current) return;
+    if (isHoveredRef.current || isAnimatingRef.current) return;
     swapRef.current(manualSwapDirection);
   }, [autoPlay, manualSwapTick, manualSwapDirection]);
 

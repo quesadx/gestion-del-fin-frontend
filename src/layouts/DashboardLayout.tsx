@@ -22,12 +22,11 @@ import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource } from '../types';
-import { useEffect, useRef, useState } from 'react';
-import { useCallback, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
-import gsap from 'gsap';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert } from 'lucide-react';
 import { CardBody, CardContainer } from '../components/ui/3d-card';
@@ -71,11 +70,6 @@ const CAMP_COLOR_THEMES = [
     tint: 'from-pink-500/22 via-fuchsia-900/15 to-rose-800/14',
   },
 ];
-
-type TiltController = {
-  tiltX: gsap.QuickToFunc;
-  tiltY: gsap.QuickToFunc;
-};
 
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
@@ -125,8 +119,6 @@ export default function DashboardLayout() {
   const [campSwapTick, setCampSwapTick] = useState(0);
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
-  const [hoveredCampIndex, setHoveredCampIndex] = useState<number | null>(null);
-  const tiltControllersRef = useRef(new WeakMap<HTMLButtonElement, TiltController>());
 
   // Start the ping loop and get the manual retry trigger.
   const { retry } = useConnectionStatus();
@@ -175,6 +167,18 @@ export default function DashboardLayout() {
   // Session-only dismiss for the alert banner.
   const [alertDismissed, setAlertDismissed] = useState(false);
 
+  const campCards = useMemo(() => {
+    if (!camps || camps.length === 0) return [];
+    if (!currentCampId) return camps;
+
+    const currentCampIndex = camps.findIndex((camp) => camp.id === currentCampId);
+    if (currentCampIndex < 0) return camps;
+
+    const currentCamp = camps[currentCampIndex];
+    const rest = camps.filter((camp) => camp.id !== currentCampId);
+    return [currentCamp, ...rest];
+  }, [camps, currentCampId]);
+
   // Auto-select the user's home camp on first load, validate it exists in camps list.
   const confirmCampSelection = useCallback(
     (campId: number) => {
@@ -197,29 +201,31 @@ export default function DashboardLayout() {
 
   const openCampPopup = () => {
     if (camps && camps.length > 0) {
-      const fallbackIndex = currentCampId
-        ? camps.findIndex((camp) => camp.id === currentCampId)
-        : -1;
-      setFocusedCampIndex(fallbackIndex >= 0 ? fallbackIndex : 0);
-      setHoveredCampIndex(null);
+      setFocusedCampIndex(0);
     }
     setCampPopupOpen(true);
   };
 
   const confirmCampFromIndex = useCallback(
     (campIndex: number) => {
-      const camp = camps?.[campIndex];
+      const camp = campCards[campIndex];
       if (!camp) return;
       confirmCampSelection(camp.id);
     },
-    [camps, confirmCampSelection],
+    [campCards, confirmCampSelection],
   );
 
   useEffect(() => {
     if (!campPopupOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!camps || camps.length === 0) return;
+      if (!campCards || campCards.length === 0) return;
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setCampPopupOpen(false);
+        return;
+      }
 
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
@@ -241,7 +247,7 @@ export default function DashboardLayout() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [campPopupOpen, camps, focusedCampIndex, confirmCampFromIndex, shiftCampCards]);
+  }, [campPopupOpen, campCards, focusedCampIndex, confirmCampFromIndex, shiftCampCards]);
 
   const handleLogout = () => {
     logout();
@@ -422,57 +428,14 @@ export default function DashboardLayout() {
                     skewAmount={2}
                     easing="linear"
                   >
-                    {camps.map((camp, index) => {
+                    {campCards.map((camp, index) => {
                       const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
                       const isActive = camp.id === currentCampId;
-                      const isHovered = hoveredCampIndex === index;
-
-                      const handleCardMove = (event: MouseEvent<HTMLButtonElement>) => {
-                        const rect = event.currentTarget.getBoundingClientRect();
-                        const x = (event.clientX - rect.left) / rect.width - 0.5;
-                        const y = (event.clientY - rect.top) / rect.height - 0.5;
-
-                        let controller = tiltControllersRef.current.get(event.currentTarget);
-
-                        if (!controller) {
-                          controller = {
-                            tiltX: gsap.quickTo(event.currentTarget, '--tilt-x', {
-                              duration: 0.28,
-                              ease: 'power3.out',
-                            }),
-                            tiltY: gsap.quickTo(event.currentTarget, '--tilt-y', {
-                              duration: 0.28,
-                              ease: 'power3.out',
-                            }),
-                          };
-
-                          tiltControllersRef.current.set(event.currentTarget, controller);
-                        }
-
-                        controller.tiltX(Number((-y * 7).toFixed(2)));
-                        controller.tiltY(Number((x * 7).toFixed(2)));
-                      };
-
-                      const handleCardLeave = (event: MouseEvent<HTMLButtonElement>) => {
-                        const controller = tiltControllersRef.current.get(event.currentTarget);
-
-                        if (controller) {
-                          controller.tiltX(0);
-                          controller.tiltY(0);
-                        }
-
-                        setHoveredCampIndex(null);
-                      };
 
                       return (
                         <Card key={camp.id}>
-                          <button
-                            type="button"
-                            onClick={() => confirmCampSelection(camp.id)}
-                            onMouseEnter={() => setHoveredCampIndex(index)}
-                            onMouseMove={handleCardMove}
-                            onMouseLeave={handleCardLeave}
-                            className={`relative h-full w-full cursor-pointer overflow-hidden rounded-[14px] text-left transform-gpu transition-[box-shadow] duration-300 ease-out hover:z-50 hover:shadow-[0_24px_80px_rgba(0,0,0,0.32)] [transform:perspective(1200px)_rotateX(calc(var(--tilt-x,0)*1deg))_rotateY(calc(var(--tilt-y,0)*1deg))_translateZ(0)] ${isHovered ? 'scale-[1.03]' : ''}`}
+                          <div
+                            className="relative h-full w-full cursor-pointer overflow-hidden rounded-[14px] text-left transition-transform duration-200 ease-out hover:z-50 hover:-translate-y-4"
                             style={{ border: `1px solid ${theme.border}` }}
                           >
                             <div className="absolute inset-0">
@@ -513,7 +476,7 @@ export default function DashboardLayout() {
                                 </div>
                               </div>
                             </div>
-                          </button>
+                          </div>
                         </Card>
                       );
                     })}
