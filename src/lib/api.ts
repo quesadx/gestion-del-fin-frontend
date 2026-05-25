@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/auth';
 import { useConnectionStore } from '../store/connection';
+import { showToast } from './toast';
 
 /**
  * Single Axios instance for the entire app.
@@ -44,6 +45,15 @@ apiClient.interceptors.response.use(
       useAuthStore.getState().logout();
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
+      }
+    }
+
+    if (error.response?.status === 403) {
+      const url = error.config?.url ?? 'unknown';
+      const method = error.config?.method?.toUpperCase() ?? 'GET';
+      console.error(`[api] 403 Forbidden — ${method} ${url}`);
+      if (url === '/roles') {
+        showToast.warning('Access denied for permission list. Some features may be limited.', 8000);
       }
     }
 

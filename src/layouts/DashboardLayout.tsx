@@ -17,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
@@ -148,11 +149,56 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/permissions': 'permissions.read',
 };
 
+const DOCK_SHELL = 'dock-outer flex items-end shadow-[0_0_40px_rgba(0,0,0,0.35)]';
+
+function DockSkeleton() {
+  return (
+    <div className={DOCK_SHELL} style={{ height: 68 }}>
+      <div
+        className="dock-panel flex items-center justify-center gap-3 px-4"
+        style={{ height: 68 }}
+      >
+        {Array.from({ length: 7 }).map((_, i) => (
+          <div
+            key={i}
+            className="w-[50px] h-[50px] rounded-2xl bg-zinc-800/60 animate-pulse"
+            style={{ animationDelay: `${i * 120}ms` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DockError({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div className={DOCK_SHELL} style={{ height: 68 }}>
+      <div
+        className="dock-panel flex items-center justify-center gap-3 px-4"
+        style={{ height: 68 }}
+      >
+        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+        <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider truncate max-w-[300px]">
+          {message}
+        </span>
+        <button
+          onClick={onRetry}
+          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+        >
+          <RefreshCw size={12} />
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
-  const { loaded: permsLoaded } = usePermissions();
+  const { loaded: permsLoaded, error: permsError } = usePermissions();
+  const { triggerPermissionsRetry } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status } = useConnectionStore();
   const navigate = useNavigate();
@@ -319,6 +365,8 @@ export default function DashboardLayout() {
   const visibleNavItems = permsLoaded
     ? NAV_ITEMS.filter((item) => can(NAV_PERMISSIONS[item.to]))
     : [];
+
+  const permsLoading = !permsLoaded && !permsError;
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
@@ -696,7 +744,13 @@ export default function DashboardLayout() {
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <Dock items={dockItems} />
+          {permsLoading ? (
+            <DockSkeleton />
+          ) : permsError ? (
+            <DockError message={permsError} onRetry={triggerPermissionsRetry} />
+          ) : (
+            <Dock items={dockItems} />
+          )}
         </motion.div>
       </div>
     </div>

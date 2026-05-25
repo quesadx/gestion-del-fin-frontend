@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, useCampStore } from './store';
-import { ReactNode, Suspense, lazy, useEffect } from 'react';
+import { ReactNode, Suspense, lazy, useEffect, useRef } from 'react';
 import { apiClient, unwrapList } from './lib/api';
 import { can, PERM } from './lib/permissions';
 import { Role } from './types';
+import { showToast } from './lib/toast';
 
 const PAGE_TITLES: Record<string, string> = {
   '/login': 'Login',
@@ -135,30 +136,67 @@ export default function App() {
     };
   }, [logout]);
 
-  const { token, setPermissions, setPermissionsError } = useAuthStore();
+  const { token, setPermissions, setPermissionsError, permissionsRetry } = useAuthStore();
+  const retryLockedRef = useRef(false);
 
   useEffect(() => {
     if (!token) return;
 
     let cancelled = false;
+    const MAX_RETRIES = 3;
+    const BACKOFF_MS = [1000, 3000, 6000];
 
     async function fetchPermissions() {
-      try {
-        const res = await apiClient.get('/roles');
-        const roles = unwrapList<Role>(res.data);
-        const userRole = useAuthStore.getState().user?.role;
-        const matched = roles.find((r) => r.name === userRole);
-        const permissionNames = matched?.permissions?.map((p) => p.name) ?? [];
-        if (!cancelled) setPermissions(permissionNames);
-      } catch {
-        if (!cancelled) setPermissionsError('Failed to load permissions');
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+        if (cancelled) return;
+
+        try {
+          const res = await apiClient.get('/roles');
+          const roles = unwrapList<Role>(res.data);
+          const userRole = useAuthStore.getState().user?.role;
+          const matched = roles.find((r) => r.name === userRole);
+          const permissionNames = matched?.permissions?.map((p) => p.name) ?? [];
+          if (!cancelled) {
+            setPermissions(permissionNames);
+            retryLockedRef.current = false;
+          }
+          return;
+        } catch (err) {
+          const axiosErr = err as { response?: { status?: number; data?: unknown } };
+          const status = axiosErr?.response?.status ?? 'NETWORK';
+          const detail = axiosErr?.response?.data
+            ? JSON.stringify(axiosErr.response.data).slice(0, 200)
+            : 'no response body';
+
+          console.error(
+            `[permissions] GET /roles → ${status} (attempt ${attempt + 1}/${MAX_RETRIES + 1}): ${detail}`,
+          );
+
+          if (attempt === MAX_RETRIES) {
+            if (!cancelled) {
+              setPermissionsError(
+                `Permission fetch failed (${status}). Navigation limited — retry available.`,
+              );
+              showToast.error(
+                `Failed to load navigation permissions (${status}). Tap retry below.`,
+              );
+              retryLockedRef.current = false;
+            }
+            return;
+          }
+
+          await new Promise((r) => setTimeout(r, BACKOFF_MS[attempt]));
+        }
       }
     }
 
+    retryLockedRef.current = true;
     fetchPermissions();
 
     const onFocus = () => {
-      if (useAuthStore.getState().token && useAuthStore.getState().permissionsLoaded) {
+      const store = useAuthStore.getState();
+      if (store.token && store.permissionsLoaded && !retryLockedRef.current) {
+        retryLockedRef.current = true;
         fetchPermissions();
       }
     };
@@ -167,8 +205,9 @@ export default function App() {
     return () => {
       cancelled = true;
       window.removeEventListener('focus', onFocus);
+      retryLockedRef.current = false;
     };
-  }, [token, setPermissions, setPermissionsError]);
+  }, [token, setPermissions, setPermissionsError, permissionsRetry]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -324,7 +363,7 @@ export default function App() {
                     <Route
                       path="users"
                       element={
-                        <ProtectedRoute permission={PERM.USERS_ALL}>
+                        <ProtectedRoute permission={PERM.USERS_READ}>
                           <UsersPage />
                         </ProtectedRoute>
                       }
@@ -332,7 +371,7 @@ export default function App() {
                     <Route
                       path="roles"
                       element={
-                        <ProtectedRoute permission={PERM.ROLES_ALL}>
+                        <ProtectedRoute permission={PERM.ROLES_READ}>
                           <RolesPage />
                         </ProtectedRoute>
                       }
@@ -340,7 +379,7 @@ export default function App() {
                     <Route
                       path="permissions"
                       element={
-                        <ProtectedRoute permission={PERM.PERMISSIONS_ALL}>
+                        <ProtectedRoute permission={PERM.PERMISSIONS_READ}>
                           <PermissionsPage />
                         </ProtectedRoute>
                       }

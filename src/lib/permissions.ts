@@ -92,12 +92,14 @@ export function usePermissions() {
   const permissions = useAuthStore((s) => s.permissions);
   const loaded = useAuthStore((s) => s.permissionsLoaded);
   const error = useAuthStore((s) => s.permissionsError);
+  const triggerPermissionsRetry = useAuthStore((s) => s.triggerPermissionsRetry);
 
   return {
     can: (p: string) => checkPermission(permissions, p),
     loaded,
     error,
     isAdmin: checkPermission(permissions, '*'),
+    retry: triggerPermissionsRetry,
   };
 }
 

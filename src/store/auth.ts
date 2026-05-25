@@ -22,10 +22,13 @@ interface AuthState {
   permissions: string[];
   permissionsLoaded: boolean;
   permissionsError: string | null;
+  /** Incremented to trigger a re-fetch from the UI. */
+  permissionsRetry: number;
   setAuth: (user: User, token: string) => void;
   logout: () => void;
   setPermissions: (permissions: string[]) => void;
   setPermissionsError: (error: string | null) => void;
+  triggerPermissionsRetry: () => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -37,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
       permissions: [],
       permissionsLoaded: false,
       permissionsError: null,
+      permissionsRetry: 0,
 
       setAuth: (user, token) => {
         const payload = parseJwtPayload(token);
@@ -50,6 +54,8 @@ export const useAuthStore = create<AuthState>()(
           token,
           userId: rawId != null ? Number(rawId) : null,
           permissionsLoaded: false,
+          permissionsError: null,
+          permissionsRetry: 0,
         });
       },
 
@@ -61,12 +67,15 @@ export const useAuthStore = create<AuthState>()(
           permissions: [],
           permissionsLoaded: false,
           permissionsError: null,
+          permissionsRetry: 0,
         }),
 
       setPermissions: (permissions) =>
         set({ permissions, permissionsLoaded: true, permissionsError: null }),
 
-      setPermissionsError: (error) => set({ permissionsError: error, permissionsLoaded: true }),
+      setPermissionsError: (error) => set({ permissionsError: error }),
+
+      triggerPermissionsRetry: () => set((s) => ({ permissionsRetry: s.permissionsRetry + 1 })),
     }),
     { name: 'auth-storage' },
   ),
