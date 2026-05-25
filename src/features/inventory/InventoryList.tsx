@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { useCampStore } from '../../store';
+import { useCan, PERM } from '../../lib/permissions';
 import { InventorySnapshot, Resource } from '../../types';
 import {
   Package,
@@ -36,6 +37,8 @@ export default function InventoryList() {
   const [adjustType, setAdjustType] = useState<'MANUAL_IN' | 'MANUAL_OUT'>('MANUAL_IN');
   const [adjustQuantity, setAdjustQuantity] = useState<string>('');
   const [adjustDescription, setAdjustDescription] = useState<string>('');
+  const canAdjust = useCan(PERM.INVENTORY_ADJUST);
+  const canAudit = useCan(PERM.INVENTORY_AUDIT);
 
   const { data: inventory, isLoading } = useQuery<InventorySnapshot[]>({
     queryKey: ['inventory', currentCampId],
@@ -135,25 +138,29 @@ export default function InventoryList() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => navigate('/inventory/audit')}
-            className="brutalist-border hover:bg-zinc-900 text-zinc-300 font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-          >
-            <History size={18} />
-            VIEW AUDIT TRAIL
-          </button>
-          <button
-            onClick={() => {
-              if (inventory && inventory.length > 0) {
-                setSelectedResourceId(inventory[0].resource_id);
-              }
-              setIsAdjustOpen(true);
-            }}
-            className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-          >
-            <ArrowDownUp size={18} />
-            MANUAL ADJUST
-          </button>
+          {canAudit && (
+            <button
+              onClick={() => navigate('/inventory/audit')}
+              className="brutalist-border hover:bg-zinc-900 text-zinc-300 font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+            >
+              <History size={18} />
+              VIEW AUDIT TRAIL
+            </button>
+          )}
+          {canAdjust && (
+            <button
+              onClick={() => {
+                if (inventory && inventory.length > 0) {
+                  setSelectedResourceId(inventory[0].resource_id);
+                }
+                setIsAdjustOpen(true);
+              }}
+              className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+            >
+              <ArrowDownUp size={18} />
+              MANUAL ADJUST
+            </button>
+          )}
         </div>
       </div>
 
