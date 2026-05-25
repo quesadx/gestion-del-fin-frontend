@@ -2,7 +2,10 @@ import DarkVeil from './DarkVeil';
 
 export default function AppBackground() {
   return (
-    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-surface-base" aria-hidden="true">
+    <div
+      className="pointer-events-none fixed inset-0 z-0 overflow-hidden bg-surface-base"
+      aria-hidden="true"
+    >
       <DarkVeil
         hueShift={56}
         noiseIntensity={0.03}

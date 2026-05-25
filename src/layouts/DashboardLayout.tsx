@@ -20,7 +20,6 @@ import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource } from '../types';
-import { cn } from '../lib/utils';
 import { useEffect, useState } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
@@ -94,7 +93,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
-  const { status, latencyMs } = useConnectionStore();
+  const { status } = useConnectionStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { timeStr, synced } = useServerTime();
@@ -168,8 +167,6 @@ export default function DashboardLayout() {
     logout();
     navigate('/login');
   };
-
-  const badge = CONNECTION_BADGE[status];
 
   const visibleNavItems = NAV_ITEMS.filter((item) => can(user?.role, NAV_PERMISSIONS[item.to]));
 
