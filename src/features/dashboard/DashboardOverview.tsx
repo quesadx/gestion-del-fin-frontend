@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, unwrapList } from '../../lib/api';
-import { useAuthStore, useCampStore } from '../../store';
+import { useCampStore } from '../../store';
 import {
   Users,
   Map,
@@ -20,15 +20,13 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recha
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { InventorySnapshot, Resource, InventoryItem, Person } from '../../types';
 import BorderGlow from '../../components/BorderGlow';
-
-const ADMIN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator'];
+import { useIsAdmin } from '../../lib/permissions';
 
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
-  const { user } = useAuthStore();
   const navigate = useNavigate();
-  const isWorker = user?.role === 'worker';
-  const isAdmin = user?.role ? ADMIN_ROLES.includes(user.role) : false;
+  const isAdmin = useIsAdmin();
+  const isWorker = !isAdmin;
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['dashboard-metrics', currentCampId],
