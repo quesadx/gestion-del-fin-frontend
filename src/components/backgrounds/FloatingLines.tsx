@@ -276,6 +276,7 @@ export default function FloatingLines({
   const currentParallaxRef = useRef(new Vector2(0, 0));
 
   // Refs to hold Three.js state and latest props for the animation loop
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const uniformsRef = useRef<any>(null);
   const interactiveRef = useRef(interactive);
   const parallaxRef = useRef(parallax);
