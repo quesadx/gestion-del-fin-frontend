@@ -1,8 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import { apiClient } from '../../lib/api';
+import { apiClient, unwrapList } from '../../lib/api';
 import { useCampStore } from '../../store';
 import { History, ArrowLeft } from 'lucide-react';
 import { cn, formatDate } from '../../lib/utils';
@@ -17,6 +16,11 @@ export default function InventoryAudit() {
   const { currentCampId } = useCampStore();
   const [page, setPage] = useState(1);
   const [selectedType, setSelectedType] = useState<string>('');
+
+  useEffect(() => {
+    setSelectedType('');
+    setPage(1);
+  }, [currentCampId]);
 
   const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
@@ -40,22 +44,42 @@ export default function InventoryAudit() {
   const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
-      try {
-        const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
-        return res.data?.data ?? res.data ?? [];
-      } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 400) {
-          return [];
-        }
-        throw error;
-      }
+      const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
+      return unwrapList<InventoryAuditEntry>(res.data);
     },
     enabled: !!currentCampId,
     retry: false,
   });
 
-  const getEntryType = (entry: InventoryAuditEntry): string | undefined =>
-    entry.type ?? (entry as InventoryAuditEntry & { log_type?: string }).log_type;
+  const getEntryType = (entry: InventoryAuditEntry): string => {
+    const rawType =
+      entry.type ??
+      (entry as InventoryAuditEntry & { log_type?: string; logType?: string }).log_type ??
+      (entry as InventoryAuditEntry & { log_type?: string; logType?: string }).logType ??
+      '';
+
+    return String(rawType).trim().toUpperCase().replace(/\s+/g, '_').replace(/-/g, '_');
+  };
+
+  const formatTypeLabel = (type: string): string => type.replace(/_/g, ' ');
+
+  const getEntryQuantity = (entry: InventoryAuditEntry): number => {
+    const fallbackEntry = entry as InventoryAuditEntry & {
+      quantity_change?: number;
+      log_delta_sum?: number;
+    };
+
+    const rawQuantity =
+      entry.quantity ?? fallbackEntry.quantity_change ?? fallbackEntry.log_delta_sum ?? 0;
+
+    return Number(rawQuantity) || 0;
+  };
+
+  const typeOptions = useMemo(() => {
+    const entries = Array.isArray(auditData) ? auditData : [];
+    const types = new Set(entries.map((entry) => getEntryType(entry)).filter(Boolean));
+    return ['', ...Array.from(types).sort()];
+  }, [auditData]);
 
   const filtered = useMemo(() => {
     const entries = Array.isArray(auditData) ? auditData : [];
@@ -105,7 +129,7 @@ export default function InventoryAudit() {
           Type Filter:
         </span>
         <div className="flex gap-1">
-          {['', 'MANUAL_IN', 'MANUAL_OUT'].map((type) => (
+          {typeOptions.map((type) => (
             <button
               key={type}
               onClick={() => handleTypeFilter(type)}
@@ -116,7 +140,7 @@ export default function InventoryAudit() {
                   : 'border-zinc-800 text-zinc-400 hover:bg-zinc-900',
               )}
             >
-              {type === '' ? 'ALL' : type === 'MANUAL_IN' ? 'INGRESS' : 'EGRESS'}
+              {type === '' ? 'ALL' : formatTypeLabel(type)}
             </button>
           ))}
         </div>
@@ -166,7 +190,7 @@ export default function InventoryAudit() {
               <tbody className="divide-y divide-zinc-800/50">
                 {paginated.map((entry) => {
                   const entryType = getEntryType(entry);
-                  const isIn = entryType === 'MANUAL_IN';
+                  const quantity = getEntryQuantity(entry);
                   return (
                     <tr
                       key={entry.id ?? entry.resource_type_id}
@@ -182,22 +206,27 @@ export default function InventoryAudit() {
                         <span
                           className={cn(
                             'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider border',
-                            isIn
+                            entryType === 'MANUAL_IN'
                               ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/20'
-                              : 'bg-red-950/40 text-red-400 border-red-500/20',
+                              : entryType === 'MANUAL_OUT'
+                                ? 'bg-red-950/40 text-red-400 border-red-500/20'
+                                : 'bg-zinc-950/40 text-zinc-300 border-zinc-500/20',
                           )}
                         >
-                          {isIn ? 'INGRESS' : 'EGRESS'}
+                          {formatTypeLabel(entryType)}
                         </span>
                       </td>
                       <td
                         className={cn(
                           'py-3 px-4 font-mono font-bold',
-                          isIn ? 'text-emerald-400' : 'text-red-400',
+                          entryType === 'MANUAL_IN'
+                            ? 'text-emerald-400'
+                            : entryType === 'MANUAL_OUT'
+                              ? 'text-red-400'
+                              : 'text-zinc-300',
                         )}
                       >
-                        {isIn ? '+' : '-'}
-                        {entry.quantity}
+                        {quantity}
                       </td>
                       <td className="py-3 px-4 text-zinc-400 max-w-xs truncate">
                         {entry.description || entry.notes || '—'}

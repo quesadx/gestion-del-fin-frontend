@@ -42,6 +42,16 @@ export default function RationsPage() {
     return map;
   }, [resources]);
 
+  const getEntryType = (entry: InventoryAuditEntry): string => {
+    const rawType =
+      entry.type ??
+      (entry as InventoryAuditEntry & { log_type?: string; logType?: string }).log_type ??
+      (entry as InventoryAuditEntry & { log_type?: string; logType?: string }).logType ??
+      '';
+
+    return String(rawType).trim().toUpperCase().replace(/\s+/g, '_').replace(/-/g, '_');
+  };
+
   // ── Audit log (for ration history) ────────────────────────────────────
 
   const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
@@ -196,7 +206,7 @@ export default function RationsPage() {
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
               {rations.map((entry, idx: number) => {
-                const isDisbursed = entry.type === 'MANUAL_OUT';
+                const isDisbursed = getEntryType(entry) === 'MANUAL_OUT';
                 return (
                   <motion.tr
                     key={entry.id ?? idx}
