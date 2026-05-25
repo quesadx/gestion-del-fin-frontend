@@ -42,7 +42,7 @@ export default function ExpeditionDetail() {
 
   const actorId = user?.id ?? 1;
   const canRead = can(PERM.EXPEDITIONS_READ);
-  const canManage = useCan(PERM.EXPEDITIONS_MANAGE);
+  const canManage = useCan(PERM.EXPEDITIONS_UPDATE_STATUS);
 
   useEffect(() => {
     if (!canRead) {

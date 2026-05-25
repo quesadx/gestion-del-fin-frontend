@@ -159,7 +159,7 @@ export default function App() {
                     <Route
                       index
                       element={
-                        <ProtectedRoute permission={PERM.DASHBOARD_READ}>
+                        <ProtectedRoute permission={PERM.METRICS_DASHBOARD}>
                           <Navigate to="/dashboard" replace />
                         </ProtectedRoute>
                       }
@@ -167,7 +167,7 @@ export default function App() {
                     <Route
                       path="dashboard"
                       element={
-                        <ProtectedRoute permission={PERM.DASHBOARD_READ}>
+                        <ProtectedRoute permission={PERM.METRICS_DASHBOARD}>
                           <DashboardOverview />
                         </ProtectedRoute>
                       }

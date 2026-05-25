@@ -31,7 +31,7 @@ export default function ExpeditionList() {
   const queryClient = useQueryClient();
 
   const canCreate = can(PERM.EXPEDITIONS_CREATE);
-  const canManage = useCan(PERM.EXPEDITIONS_MANAGE);
+  const canManage = useCan(PERM.EXPEDITIONS_UPDATE_STATUS);
   const canUpdate = useCan(PERM.EXPEDITIONS_UPDATE);
   const canDelete = useCan(PERM.EXPEDITIONS_DELETE);
 

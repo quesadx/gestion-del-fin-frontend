@@ -133,7 +133,7 @@ const NAV_ITEMS = [
 
 // Permission required to see each nav item
 const NAV_PERMISSIONS: Record<string, string> = {
-  '/dashboard': 'dashboard.read',
+  '/dashboard': 'metrics.dashboard',
   '/population': 'people.read',
   '/inventory': 'inventory.read',
   '/rations': 'inventory.read',
