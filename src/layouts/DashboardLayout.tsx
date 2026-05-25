@@ -29,7 +29,7 @@ import { ShieldAlert } from 'lucide-react';
 import { CardBody, CardContainer } from '../components/ui/3d-card';
 
 const PANEL_SHELL =
-  'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(55,12,14,0.82)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.35),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
+  'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(78,32,36,0.8)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.28),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
 
 const ALERT_ROW = 'relative flex items-center justify-between gap-4 px-5 py-2.5 sm:px-6';
 
@@ -182,7 +182,7 @@ export default function DashboardLayout() {
         tiltXStrength={1600}
         tiltYStrength={1200}
       >
-        <CardBody className="relative z-50 h-16 w-full overflow-visible rounded-3xl border border-red-500/15 bg-[rgba(12,7,8,0.78)] px-5 sm:px-6 shadow-[0_18px_70px_rgba(0,0,0,0.34),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
+        <CardBody className="relative z-50 h-16 w-full overflow-visible rounded-3xl border border-red-500/15 bg-[rgba(37,23,26,0.78)] px-5 sm:px-6 shadow-[0_18px_70px_rgba(0,0,0,0.24),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.12),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.06),transparent_35%)]" />
 
           <div className="relative z-10 flex h-full items-center justify-between gap-4">
@@ -205,7 +205,7 @@ export default function DashboardLayout() {
             <div className="relative">
               <button
                 onClick={() => setCampPopupOpen(true)}
-                className="flex items-center gap-2 bg-[rgba(18,15,23,0.92)] border border-red-500/12 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.04)] cursor-pointer hover:border-red-500/25 transition-colors"
+                className="flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.04)] cursor-pointer hover:border-red-500/25 transition-colors"
               >
                 <Tent className="text-brand-secondary shrink-0" size={14} />
                 <span className="truncate text-zinc-300 text-xs font-bold font-mono uppercase tracking-[0.14em]">
@@ -218,7 +218,7 @@ export default function DashboardLayout() {
             <div className="flex items-center gap-3.5">
               {/* Server time */}
               {synced && (
-                <div className="hidden md:flex items-center gap-2 bg-[rgba(18,15,23,0.92)] border border-red-500/12 rounded px-3 py-1.5 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
+                <div className="hidden md:flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded px-3 py-1.5 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
                   <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.14em]">
                     SVRT
                   </span>
@@ -229,8 +229,8 @@ export default function DashboardLayout() {
               )}
 
               {/* User chip */}
-              <div className="flex items-center gap-2 bg-[rgba(18,15,23,0.92)] border border-red-500/12 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
-                <div className="w-6 h-6 rounded bg-zinc-800 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
+              <div className="flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
+                <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
                   {user?.username?.[0].toUpperCase()}
                 </div>
                 <div className="hidden md:block text-left leading-none">
@@ -264,7 +264,7 @@ export default function DashboardLayout() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="w-full max-w-md">
-                <div className="overflow-hidden rounded-2xl border border-red-500/15 bg-[rgba(12,7,8,0.86)] shadow-[0_20px_70px_rgba(0,0,0,0.5),0_0_0_1px_rgba(239,68,68,0.08)] backdrop-blur-xl">
+                <div className="overflow-hidden rounded-2xl border border-red-500/15 bg-[rgba(37,23,26,0.86)] shadow-[0_20px_70px_rgba(0,0,0,0.36),0_0_0_1px_rgba(239,68,68,0.08)] backdrop-blur-xl">
                   <div className="flex items-center justify-between border-b border-red-500/10 px-5 py-4">
                     <div>
                       <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-brand-primary">
@@ -367,7 +367,7 @@ export default function DashboardLayout() {
                   </div>
                 </div>
               ) : (
-                <div className="mx-4 mt-2 overflow-hidden rounded-2xl border border-amber-500/12 bg-[rgba(12,10,14,0.94)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.35),0_0_0_1px_rgba(245,158,11,0.04)]">
+                <div className="mx-4 mt-2 overflow-hidden rounded-2xl border border-amber-500/12 bg-[rgba(37,23,26,0.94)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.26),0_0_0_1px_rgba(245,158,11,0.04)]">
                   <div className={`${ALERT_ROW} border-l-2 border-amber-500/60`}>
                     <div className="flex items-center gap-2.5">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
@@ -407,7 +407,7 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+      <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <Dock items={dockItems} />
         </motion.div>
