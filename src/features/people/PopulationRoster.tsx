@@ -23,7 +23,7 @@ import {
 import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
 import { cn, normalizePersonStatus } from '../../lib/utils';
-import { can, PERM } from '../../lib/permissions';
+import { can, useCan, PERM } from '../../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -197,6 +197,11 @@ export default function PopulationRoster() {
   });
 
   const canReassign = can(PERM.PEOPLE_PROFESSION_REASSIGN_CREATE);
+  const canCreatePerson = useCan(PERM.PEOPLE_CREATE);
+  const canUpdatePerson = useCan(PERM.PEOPLE_UPDATE);
+  const canDeletePerson = useCan(PERM.PEOPLE_DELETE);
+  const canCreateTransfer = useCan(PERM.TRANSFERS_CREATE);
+  const canCreateAdmission = useCan(PERM.ADMISSION_CREATE);
 
   const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
@@ -225,20 +230,24 @@ export default function PopulationRoster() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/population/new')}
-            className="bg-brand-accent hover:bg-emerald-600 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95"
-          >
-            <UserPlus size={18} />
-            NEW SURVIVOR
-          </button>
-          <button
-            onClick={() => navigate('/admission')}
-            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-          >
-            <UserPlus size={18} />
-            REGISTER INTAKE
-          </button>
+          {canCreatePerson && (
+            <button
+              onClick={() => navigate('/population/new')}
+              className="bg-brand-accent hover:bg-emerald-600 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95"
+            >
+              <UserPlus size={18} />
+              NEW SURVIVOR
+            </button>
+          )}
+          {canCreateAdmission && (
+            <button
+              onClick={() => navigate('/admission')}
+              className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+            >
+              <UserPlus size={18} />
+              REGISTER INTAKE
+            </button>
+          )}
         </div>
       </div>
 
@@ -470,27 +479,33 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end items-center gap-1">
-                      <button
-                        onClick={() => setTransferringPerson(person)}
-                        title="Transfer personnel"
-                        className="p-1.5 text-zinc-600 hover:text-brand-secondary animate-all"
-                      >
-                        <ArrowLeftRight size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleEditClick(person)}
-                        title="Edit profile"
-                        className="p-1.5 text-zinc-600 hover:text-emerald-500 animate-all"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeletePerson(person)}
-                        title="Delete survivor"
-                        className="p-1.5 text-zinc-600 hover:text-red-500 animate-all"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canCreateTransfer && (
+                        <button
+                          onClick={() => setTransferringPerson(person)}
+                          title="Transfer personnel"
+                          className="p-1.5 text-zinc-600 hover:text-brand-secondary animate-all"
+                        >
+                          <ArrowLeftRight size={16} />
+                        </button>
+                      )}
+                      {canUpdatePerson && (
+                        <button
+                          onClick={() => handleEditClick(person)}
+                          title="Edit profile"
+                          className="p-1.5 text-zinc-600 hover:text-emerald-500 animate-all"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      {canDeletePerson && (
+                        <button
+                          onClick={() => setConfirmDeletePerson(person)}
+                          title="Delete survivor"
+                          className="p-1.5 text-zinc-600 hover:text-red-500 animate-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
