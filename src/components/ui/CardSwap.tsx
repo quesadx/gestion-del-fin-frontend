@@ -44,6 +44,9 @@ interface CardSwapProps {
   verticalDistance?: number;
   delay?: number;
   autoPlay?: boolean;
+  manualSwapTick?: number;
+  manualSwapDirection?: 1 | -1;
+  bringToFrontOnClick?: boolean;
   pauseOnHover?: boolean;
   onCardClick?: (idx: number) => void;
   skewAmount?: number;
@@ -88,6 +91,9 @@ export default function CardSwap({
   verticalDistance = 70,
   delay = 5000,
   autoPlay = true,
+  manualSwapTick,
+  manualSwapDirection = 1,
+  bringToFrontOnClick = false,
   pauseOnHover = false,
   onCardClick,
   skewAmount = 6,
@@ -107,11 +113,11 @@ export default function CardSwap({
           }
         : {
             ease: 'power1.inOut',
-            durDrop: 0.8,
-            durMove: 0.8,
-            durReturn: 0.8,
-            promoteOverlap: 0.45,
-            returnDelay: 0.2,
+            durDrop: 0.45,
+            durMove: 0.45,
+            durReturn: 0.45,
+            promoteOverlap: 0.55,
+            returnDelay: 0.08,
           },
     [easing],
   );
@@ -119,7 +125,9 @@ export default function CardSwap({
   const childArr = useMemo(() => Children.toArray(children), [children]);
   const refs = useMemo<RefObject<HTMLDivElement | null>[]>(
     () => childArr.map(() => createRef<HTMLDivElement>()),
-    [childArr],
+    // Keep refs stable across re-renders; only recreate when card count changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [childArr.length],
   );
 
   const order = useRef<number[]>(Array.from({ length: childArr.length }, (_, i) => i));
@@ -127,6 +135,9 @@ export default function CardSwap({
   const intervalRef = useRef<number | null>(null);
   const container = useRef<HTMLDivElement | null>(null);
   const isHoveredRef = useRef(false);
+  const swapRef = useRef<(direction: 1 | -1) => void>(() => {});
+  const lastManualSwapTickRef = useRef<number | null>(null);
+  const bringToFrontRef = useRef<(idx: number) => void>(() => {});
 
   useEffect(() => {
     const total = refs.length;
@@ -139,76 +150,178 @@ export default function CardSwap({
 
     placeAllToOrder();
 
-    const swap = () => {
+    const swap = (direction: 1 | -1) => {
       if (isHoveredRef.current) return;
       if (order.current.length < 2) return;
-
-      const [front, ...rest] = order.current;
-      const elFront = refs[front]?.current;
-      if (!elFront) return;
 
       const tl = gsap.timeline();
       tlRef.current = tl;
 
-      tl.to(elFront, {
-        y: '+=500',
-        duration: config.durDrop,
-        ease: config.ease,
-      });
+      if (direction === 1) {
+        const [front, ...rest] = order.current;
+        const elFront = refs[front]?.current;
+        if (!elFront) return;
 
-      tl.addLabel('promote', `-=${config.durDrop * config.promoteOverlap}`);
-      rest.forEach((idx, i) => {
+        tl.to(elFront, {
+          y: '+=500',
+          duration: config.durDrop,
+          ease: config.ease,
+        });
+
+        tl.addLabel('promote', `-=${config.durDrop * config.promoteOverlap}`);
+        rest.forEach((idx, i) => {
+          const el = refs[idx]?.current;
+          if (!el) return;
+          const slot = makeSlot(i, cardDistance, verticalDistance, refs.length);
+
+          tl.set(el, { zIndex: slot.zIndex }, 'promote');
+          tl.to(
+            el,
+            {
+              x: slot.x,
+              y: slot.y,
+              z: slot.z,
+              duration: config.durMove,
+              ease: config.ease,
+            },
+            `promote+=${i * 0.15}`,
+          );
+        });
+
+        const backSlot = makeSlot(refs.length - 1, cardDistance, verticalDistance, refs.length);
+        tl.addLabel('return', `promote+=${config.durMove * config.returnDelay}`);
+
+        tl.call(
+          () => {
+            gsap.set(elFront, { zIndex: backSlot.zIndex });
+          },
+          undefined,
+          'return',
+        );
+
+        tl.to(
+          elFront,
+          {
+            x: backSlot.x,
+            y: backSlot.y,
+            z: backSlot.z,
+            duration: config.durReturn,
+            ease: config.ease,
+          },
+          'return',
+        );
+
+        tl.call(() => {
+          order.current = [...rest, front];
+        });
+      } else {
+        const back = order.current[order.current.length - 1];
+        const rest = order.current.slice(0, -1);
+        const elBack = refs[back]?.current;
+        if (!elBack) return;
+
+        tl.to(elBack, {
+          y: '+=500',
+          duration: config.durDrop,
+          ease: config.ease,
+        });
+
+        tl.addLabel('promote', `-=${config.durDrop * config.promoteOverlap}`);
+        rest.forEach((idx, i) => {
+          const el = refs[idx]?.current;
+          if (!el) return;
+          const slot = makeSlot(i + 1, cardDistance, verticalDistance, refs.length);
+
+          tl.set(el, { zIndex: slot.zIndex }, 'promote');
+          tl.to(
+            el,
+            {
+              x: slot.x,
+              y: slot.y,
+              z: slot.z,
+              duration: config.durMove,
+              ease: config.ease,
+            },
+            `promote+=${i * 0.15}`,
+          );
+        });
+
+        const frontSlot = makeSlot(0, cardDistance, verticalDistance, refs.length);
+        tl.addLabel('return', `promote+=${config.durMove * config.returnDelay}`);
+
+        tl.call(
+          () => {
+            gsap.set(elBack, { zIndex: frontSlot.zIndex });
+          },
+          undefined,
+          'return',
+        );
+
+        tl.to(
+          elBack,
+          {
+            x: frontSlot.x,
+            y: frontSlot.y,
+            z: frontSlot.z,
+            duration: config.durReturn,
+            ease: config.ease,
+          },
+          'return',
+        );
+
+        tl.call(() => {
+          order.current = [back, ...rest];
+        });
+      }
+    };
+
+    swapRef.current = swap;
+
+    const bringToFront = (cardIndex: number) => {
+      const position = order.current.indexOf(cardIndex);
+      if (position <= 0) return;
+
+      if (tlRef.current) {
+        tlRef.current.progress(1);
+        tlRef.current.kill();
+        tlRef.current = null;
+      }
+
+      const nextOrder = [cardIndex, ...order.current.filter((idx) => idx !== cardIndex)];
+      const tl = gsap.timeline();
+      tlRef.current = tl;
+
+      nextOrder.forEach((idx, slotIndex) => {
         const el = refs[idx]?.current;
         if (!el) return;
-        const slot = makeSlot(i, cardDistance, verticalDistance, refs.length);
 
-        tl.set(el, { zIndex: slot.zIndex }, 'promote');
+        const slot = makeSlot(slotIndex, cardDistance, verticalDistance, refs.length);
+        tl.set(el, { zIndex: slot.zIndex }, 0);
         tl.to(
           el,
           {
             x: slot.x,
             y: slot.y,
             z: slot.z,
-            duration: config.durMove,
+            duration: 0.35,
             ease: config.ease,
           },
-          `promote+=${i * 0.15}`,
+          0,
         );
       });
 
-      const backSlot = makeSlot(refs.length - 1, cardDistance, verticalDistance, refs.length);
-      tl.addLabel('return', `promote+=${config.durMove * config.returnDelay}`);
-
-      tl.call(
-        () => {
-          gsap.set(elFront, { zIndex: backSlot.zIndex });
-        },
-        undefined,
-        'return',
-      );
-
-      tl.to(
-        elFront,
-        {
-          x: backSlot.x,
-          y: backSlot.y,
-          z: backSlot.z,
-          duration: config.durReturn,
-          ease: config.ease,
-        },
-        'return',
-      );
-
       tl.call(() => {
-        order.current = [...rest, front];
+        order.current = nextOrder;
       });
     };
+
+    bringToFrontRef.current = bringToFront;
 
     order.current = Array.from({ length: childArr.length }, (_, i) => i);
 
     if (autoPlay) {
-      swap();
-      intervalRef.current = window.setInterval(swap, delay);
+      swap(1);
+      intervalRef.current = window.setInterval(() => swap(1), delay);
     }
 
     if (pauseOnHover) {
@@ -232,7 +345,7 @@ export default function CardSwap({
       const resume = () => {
         isHoveredRef.current = false;
         if (autoPlay) {
-          intervalRef.current = window.setInterval(swap, delay);
+          intervalRef.current = window.setInterval(() => swap(1), delay);
         }
       };
 
@@ -263,6 +376,21 @@ export default function CardSwap({
     config,
   ]);
 
+  useEffect(() => {
+    if (autoPlay || manualSwapTick === undefined) return;
+
+    if (lastManualSwapTickRef.current === null) {
+      lastManualSwapTickRef.current = manualSwapTick;
+      return;
+    }
+
+    if (lastManualSwapTickRef.current === manualSwapTick) return;
+    lastManualSwapTickRef.current = manualSwapTick;
+
+    if (isHoveredRef.current) return;
+    swapRef.current(manualSwapDirection);
+  }, [autoPlay, manualSwapTick, manualSwapDirection]);
+
   const rendered = childArr.map((child, i) => {
     if (!isValidElement(child)) return child;
     const typedChild = child as CardLikeElement;
@@ -273,6 +401,9 @@ export default function CardSwap({
       ref: refs[i],
       style: { width, height, ...(childProps.style ?? {}) },
       onClick: (e: MouseEvent) => {
+        if (bringToFrontOnClick) {
+          bringToFrontRef.current(i);
+        }
         childProps.onClick?.(e);
         onCardClick?.(i);
       },
