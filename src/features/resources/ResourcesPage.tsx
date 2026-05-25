@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useCan, PERM } from '../../lib/permissions';
 import { Resource } from '../../types';
 import { Package, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,6 +20,9 @@ export default function ResourcesPage() {
   const [dailyRation, setDailyRation] = useState('');
   const [minimumStock, setMinimumStock] = useState('');
   const [autoDaily, setAutoDaily] = useState(false);
+  const canCreate = useCan(PERM.RESOURCES_CREATE);
+  const canUpdate = useCan(PERM.RESOURCES_UPDATE);
+  const canDelete = useCan(PERM.RESOURCES_DELETE);
 
   const { data: resources, isLoading } = useQuery<Resource[]>({
     queryKey: ['resources'],
@@ -139,13 +143,15 @@ export default function ResourcesPage() {
             Define resource categories, units, and ration parameters
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          NEW RESOURCE TYPE
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            NEW RESOURCE TYPE
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -185,18 +191,22 @@ export default function ResourcesPage() {
                     <Package size={24} />
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(resource)}
-                      className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
-                    >
-                      <Edit2 size={12} />
-                    </button>
-                    <button
-                      onClick={() => setDeletingResource(resource)}
-                      className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {canUpdate && (
+                      <button
+                        onClick={() => openEditModal(resource)}
+                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => setDeletingResource(resource)}
+                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
