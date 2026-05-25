@@ -48,8 +48,8 @@ export default function AdmissionList() {
   const [newSkills, setNewSkills] = useState('');
   const [newHealth, setNewHealth] = useState('');
   const [newBackground, setNewBackground] = useState('');
-  const [newPhotoUrl, setNewPhotoUrl] = useState('');
-  const [newIdCardUrl, setNewIdCardUrl] = useState('');
+  const [newPhoto, setNewPhoto] = useState<File | null>(null);
+  const [newIdCard, setNewIdCard] = useState<File | null>(null);
 
   const [selectedProfId, setSelectedProfId] = useState<number | null>(null);
 
@@ -59,6 +59,8 @@ export default function AdmissionList() {
   const [correctSkills, setCorrectSkills] = useState('');
   const [correctHealth, setCorrectHealth] = useState('');
   const [correctBackground, setCorrectBackground] = useState('');
+  const [correctPhoto, setCorrectPhoto] = useState<File | null>(null);
+  const [correctIdCard, setCorrectIdCard] = useState<File | null>(null);
 
   const { data: admissions, isLoading } = useQuery<Admission[]>({
     queryKey: ['admissions', currentCampId],
@@ -107,7 +109,7 @@ export default function AdmissionList() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
       // Clear out selected so view resets
       setSelectedAdmissionId(null);
@@ -121,10 +123,18 @@ export default function AdmissionList() {
       applicant_skills: string;
       health_notes: string;
       background_notes: string;
-      photo_url?: string;
-      id_card_url?: string;
+      photo?: File | null;
+      id_card?: File | null;
     }) => {
-      const body = toFormData(formValues);
+      const body = toFormData({
+        applicant_name: formValues.applicant_name,
+        applicant_age: formValues.applicant_age,
+        applicant_skills: formValues.applicant_skills,
+        health_notes: formValues.health_notes,
+        background_notes: formValues.background_notes,
+        ...(formValues.photo ? { photo: formValues.photo } : {}),
+        ...(formValues.id_card ? { id_card: formValues.id_card } : {}),
+      });
       const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
       return res.data;
     },
@@ -138,8 +148,8 @@ export default function AdmissionList() {
       setNewSkills('');
       setNewHealth('');
       setNewBackground('');
-      setNewPhotoUrl('');
-      setNewIdCardUrl('');
+      setNewPhoto(null);
+      setNewIdCard(null);
     },
   });
 
@@ -155,17 +165,24 @@ export default function AdmissionList() {
         applicant_skills: string;
         health_notes: string;
         background_notes: string;
-        photo_url?: string;
-        id_card_url?: string;
+        photo?: File | null;
+        id_card?: File | null;
       };
     }) => {
-      const body = toFormData(formValues);
+      const body = toFormData({
+        applicant_name: formValues.applicant_name,
+        ...(formValues.applicant_age != null ? { applicant_age: formValues.applicant_age } : {}),
+        applicant_skills: formValues.applicant_skills,
+        health_notes: formValues.health_notes,
+        background_notes: formValues.background_notes,
+        ...(formValues.photo ? { photo: formValues.photo } : {}),
+        ...(formValues.id_card ? { id_card: formValues.id_card } : {}),
+      });
       const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
       await apiClient.patch(`/admission/${oldId}/review`, { final_decision: 'REJECTED' });
       return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admissions'] });
       queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
       setIsCorrectModalOpen(false);
       setSelectedAdmissionId(null);
@@ -181,8 +198,8 @@ export default function AdmissionList() {
       applicant_skills: newSkills,
       health_notes: newHealth,
       background_notes: newBackground,
-      photo_url: newPhotoUrl,
-      id_card_url: newIdCardUrl,
+      photo: newPhoto,
+      id_card: newIdCard,
     });
   };
 
@@ -644,26 +661,24 @@ export default function AdmissionList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Applicant Photo URL (Optional)
+                      Applicant Photo (Optional, max 10MB)
                     </label>
                     <input
-                      type="url"
-                      value={newPhotoUrl}
-                      onChange={(e) => setNewPhotoUrl(e.target.value)}
-                      placeholder="e.g. https://images.unsplash.com/photo-..."
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewPhoto(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Identification Card URL (Optional)
+                      ID Card (Optional, max 10MB)
                     </label>
                     <input
-                      type="url"
-                      value={newIdCardUrl}
-                      onChange={(e) => setNewIdCardUrl(e.target.value)}
-                      placeholder="e.g. https://images.unsplash.com/photo-..."
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewIdCard(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
                 </div>
@@ -724,8 +739,8 @@ export default function AdmissionList() {
                       applicant_skills: correctSkills,
                       health_notes: correctHealth,
                       background_notes: correctBackground,
-                      photo_url: details.photo_url ?? undefined,
-                      id_card_url: details.id_card_url ?? undefined,
+                      photo: correctPhoto,
+                      id_card: correctIdCard,
                     },
                   });
                 }}
@@ -792,6 +807,31 @@ export default function AdmissionList() {
                     rows={2}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
                   />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                      Applicant Photo (Optional, max 10MB)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setCorrectPhoto(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                      ID Card (Optional, max 10MB)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setCorrectIdCard(e.target.files?.[0] ?? null)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">

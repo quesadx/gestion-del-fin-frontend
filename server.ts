@@ -9,7 +9,10 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // express.json() parses JSON bodies only. For multipart/form-data (file uploads),
+  // we use express.raw() to capture the raw body and forward it to the backend as-is.
   app.use(express.json());
+  app.use(express.raw({ type: 'multipart/form-data', limit: '10mb' }));
 
   const proxyRequest = async (req: express.Request, res: express.Response, prefix: string) => {
     const suffix = req.path.replace(new RegExp(`^${prefix}`), '');

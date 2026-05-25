@@ -72,7 +72,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/population': 'people.read',
   '/inventory': 'inventory.read',
   '/rations': 'inventory.read',
-  '/admission': 'admissions.read',
+  '/admission': 'admission.read',
   '/expeditions': 'expeditions.read',
   '/transfers': 'transfers.read',
   '/camps': 'camps.read',
