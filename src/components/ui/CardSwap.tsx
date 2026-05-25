@@ -204,7 +204,11 @@ export default function CardSwap({
       if (!node) return undefined;
 
       const pause = () => {
-        tlRef.current?.pause();
+        if (tlRef.current) {
+          tlRef.current.progress(1);
+          tlRef.current.kill();
+          tlRef.current = null;
+        }
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;

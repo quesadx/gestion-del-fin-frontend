@@ -297,106 +297,103 @@ export default function DashboardLayout() {
               exit={{ scale: 0.95, opacity: 0, y: 8 }}
               transition={{ duration: 0.15 }}
               onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-[96vw]"
             >
-              <div className="w-full max-w-3xl">
-                <div className="overflow-hidden rounded-2xl border border-red-500/15 bg-[rgba(37,23,26,0.86)] shadow-[0_20px_70px_rgba(0,0,0,0.36),0_0_0_1px_rgba(239,68,68,0.08)] backdrop-blur-xl">
-                  <div className="flex items-center justify-between border-b border-red-500/10 px-5 py-4">
-                    <div>
-                      <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-brand-primary">
-                        Refuge selector
-                      </p>
-                      <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                        Choose camp
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => setCampPopupOpen(false)}
-                      className="text-zinc-500 hover:text-zinc-200 transition-colors text-sm font-bold uppercase tracking-[0.18em]"
-                    >
-                      Close
-                    </button>
+              <div className="pointer-events-none absolute inset-x-0 -top-18 z-40 flex items-start justify-center">
+                <div className="pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-white/10 bg-black/25 px-5 py-2.5 backdrop-blur-xl shadow-[0_0_45px_rgba(0,0,0,0.35)]">
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-300">
+                      Refuge selector
+                    </p>
+                    <h3 className="text-sm font-black uppercase tracking-[0.08em] text-white">
+                      Choose camp
+                    </h3>
                   </div>
-
-                  <div className="px-4 pb-7 pt-4">
-                    {camps && camps.length > 0 ? (
-                      <div className="relative h-[420px] w-full">
-                        <CardSwap
-                          width={360}
-                          height={230}
-                          cardDistance={48}
-                          verticalDistance={36}
-                          delay={3600}
-                          pauseOnHover={true}
-                          skewAmount={4}
-                          easing="elastic"
-                        >
-                          {camps.map((camp, index) => {
-                            const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
-                            const isActive = camp.id === currentCampId;
-
-                            return (
-                              <Card key={camp.id}>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setCurrentCamp(camp.id);
-                                    navigate('/dashboard', { replace: true });
-                                    setCampPopupOpen(false);
-                                  }}
-                                  className="relative h-full w-full overflow-hidden rounded-[14px] text-left"
-                                  style={{ border: `1px solid ${theme.border}` }}
-                                >
-                                  <div className="absolute inset-0">
-                                    <DarkVeil
-                                      hueShift={theme.hueShift}
-                                      speed={0.82}
-                                      warpAmount={1.5}
-                                      noiseIntensity={0.02}
-                                      resolutionScale={1}
-                                    />
-                                  </div>
-
-                                  <div
-                                    className={`absolute inset-0 bg-gradient-to-br ${theme.tint} mix-blend-screen`}
-                                  />
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-
-                                  <div className="relative z-10 flex h-full flex-col justify-between p-4">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className="rounded-full border border-white/25 bg-black/30 px-2 py-1 text-[10px] font-mono uppercase tracking-[0.18em] text-zinc-200">
-                                        Refuge
-                                      </span>
-
-                                      {isActive ? (
-                                        <span className="rounded-full border border-red-500/45 bg-red-500/14 px-2 py-1 text-[10px] font-mono font-bold uppercase tracking-[0.14em] text-red-200">
-                                          Active
-                                        </span>
-                                      ) : null}
-                                    </div>
-
-                                    <div>
-                                      <p className="text-[11px] font-mono uppercase tracking-[0.16em] text-zinc-300/85">
-                                        Select destination
-                                      </p>
-                                      <h4 className="mt-1 text-xl font-black uppercase tracking-tight text-white">
-                                        {camp.name}
-                                      </h4>
-                                    </div>
-                                  </div>
-                                </button>
-                              </Card>
-                            );
-                          })}
-                        </CardSwap>
-                      </div>
-                    ) : (
-                      <div className="rounded-xl border border-red-500/12 bg-black/20 px-4 py-6 text-center text-xs font-mono uppercase tracking-[0.14em] text-zinc-400">
-                        No camps available
-                      </div>
-                    )}
-                  </div>
+                  <button
+                    onClick={() => setCampPopupOpen(false)}
+                    className="text-zinc-400 hover:text-zinc-100 transition-colors text-xs font-bold uppercase tracking-[0.18em]"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
+
+              {camps && camps.length > 0 ? (
+                <div className="relative z-10 mt-6 flex h-[78vh] min-h-[560px] w-full items-center justify-center">
+                  <CardSwap
+                    width={820}
+                    height={500}
+                    cardDistance={62}
+                    verticalDistance={44}
+                    delay={5600}
+                    pauseOnHover={true}
+                    skewAmount={2}
+                    easing="linear"
+                  >
+                    {camps.map((camp, index) => {
+                      const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
+                      const isActive = camp.id === currentCampId;
+
+                      return (
+                        <Card key={camp.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCurrentCamp(camp.id);
+                              navigate('/dashboard', { replace: true });
+                              setCampPopupOpen(false);
+                            }}
+                            className="relative h-full w-full overflow-hidden rounded-[14px] text-left transition-transform duration-200 ease-out hover:z-50 hover:-translate-y-10"
+                            style={{ border: `1px solid ${theme.border}` }}
+                          >
+                            <div className="absolute inset-0">
+                              <DarkVeil
+                                hueShift={theme.hueShift}
+                                speed={0.82}
+                                warpAmount={1.5}
+                                noiseIntensity={0.02}
+                                resolutionScale={1}
+                              />
+                            </div>
+
+                            <div
+                              className={`absolute inset-0 bg-gradient-to-br ${theme.tint} mix-blend-screen`}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+
+                            <div className="relative z-10 flex h-full flex-col justify-between p-8">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-xs font-mono uppercase tracking-[0.18em] text-zinc-200">
+                                  Refuge
+                                </span>
+
+                                {isActive ? (
+                                  <span className="rounded-full border border-red-500/45 bg-red-500/14 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-[0.14em] text-red-200">
+                                    Active
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              <div>
+                                <p className="text-sm font-mono uppercase tracking-[0.16em] text-zinc-300/85">
+                                  Select destination
+                                </p>
+                                <h4 className="mt-2 text-4xl font-black uppercase tracking-tight text-white">
+                                  {camp.name}
+                                </h4>
+                              </div>
+                            </div>
+                          </button>
+                        </Card>
+                      );
+                    })}
+                  </CardSwap>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-red-500/12 bg-black/20 px-4 py-6 text-center text-xs font-mono uppercase tracking-[0.14em] text-zinc-400">
+                  No camps available
+                </div>
+              )}
             </motion.div>
           </div>
         )}
