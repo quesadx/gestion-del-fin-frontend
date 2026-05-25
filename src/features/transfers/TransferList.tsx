@@ -376,7 +376,10 @@ export default function TransferList() {
       {/* Split panel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-280px)]">
         {/* ── LEFT: list ───────────────────────────────────────────────── */}
-        <div className="flex flex-col bg-surface-raised brutalist-border rounded-xl overflow-hidden">
+        <div
+          className="flex flex-col bg-surface-raised brutalist-border rounded-xl overflow-hidden"
+          data-testid="transfer-list"
+        >
           <div className="p-4 bg-black/40 border-b border-zinc-900 flex justify-between items-center shrink-0">
             <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
               Transfer Log
