@@ -26,7 +26,7 @@ import { Camp, InventoryItem, Resource } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
-import { can, PERM } from '../lib/permissions';
+import { can, PERM, usePermissions } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert } from 'lucide-react';
@@ -152,6 +152,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
+  const { loaded: permsLoaded } = usePermissions();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status } = useConnectionStore();
   const navigate = useNavigate();
@@ -315,7 +316,9 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
-  const visibleNavItems = NAV_ITEMS.filter((item) => can(NAV_PERMISSIONS[item.to]));
+  const visibleNavItems = permsLoaded
+    ? NAV_ITEMS.filter((item) => can(NAV_PERMISSIONS[item.to]))
+    : [];
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);

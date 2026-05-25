@@ -135,10 +135,10 @@ export default function App() {
     };
   }, [logout]);
 
-  const { token, permissionsLoaded, setPermissions, setPermissionsError } = useAuthStore();
+  const { token, setPermissions, setPermissionsError } = useAuthStore();
 
   useEffect(() => {
-    if (!token || permissionsLoaded) return;
+    if (!token) return;
 
     let cancelled = false;
 
@@ -168,7 +168,7 @@ export default function App() {
       cancelled = true;
       window.removeEventListener('focus', onFocus);
     };
-  }, [token, permissionsLoaded, setPermissions, setPermissionsError]);
+  }, [token, setPermissions, setPermissionsError]);
 
   return (
     <QueryClientProvider client={queryClient}>
