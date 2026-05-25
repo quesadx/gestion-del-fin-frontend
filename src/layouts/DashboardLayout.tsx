@@ -28,26 +28,6 @@ import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert } from 'lucide-react';
 import { CardBody, CardContainer } from '../components/ui/3d-card';
 
-// ── Connection badge config ───────────────────────────────────────────────────
-
-const CONNECTION_BADGE = {
-  checking: {
-    wrapper: 'bg-amber-950/20 text-amber-400 border-amber-500/30',
-    dot: 'bg-amber-400 animate-pulse',
-    label: () => 'CONNECTING...',
-  },
-  connected: {
-    wrapper: 'bg-emerald-950/20 text-emerald-400 border-emerald-500/30',
-    dot: 'bg-emerald-400',
-    label: (latencyMs: number | null) => (latencyMs != null ? `ONLINE · ${latencyMs}ms` : 'ONLINE'),
-  },
-  disconnected: {
-    wrapper: 'bg-red-950/20 text-red-400 border-red-500/30',
-    dot: 'bg-red-400 animate-pulse',
-    label: () => 'SERVER UNREACHABLE',
-  },
-} as const;
-
 const PANEL_SHELL =
   'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(55,12,14,0.82)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.35),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
 
