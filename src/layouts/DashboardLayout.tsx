@@ -92,6 +92,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { timeStr, synced } = useServerTime();
+  const [campPopupOpen, setCampPopupOpen] = useState(false);
 
   // Start the ping loop and get the manual retry trigger.
   const { retry } = useConnectionStatus();
@@ -207,29 +208,57 @@ export default function DashboardLayout() {
         </div>
 
         {/* Camp switcher - left of center */}
-        <div className="flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.03)]">
-          <Tent className="text-brand-secondary shrink-0" size={14} />
-          <div className="relative flex-1">
-            <select
-              value={currentCampId ?? ''}
-              onChange={(e) => {
-                setCurrentCamp(Number(e.target.value));
-                navigate('/dashboard', { replace: true });
-              }}
-              className="w-full bg-transparent border-none text-zinc-300 text-xs font-bold font-mono uppercase tracking-[0.14em] focus:outline-none appearance-none cursor-pointer pr-4"
-            >
-              {!currentCampId && (
-                <option value="" className="bg-zinc-950">
-                  Select Refuge
-                </option>
-              )}
-              {camps?.map((camp) => (
-                <option key={camp.id} value={camp.id} className="bg-zinc-950 text-zinc-300">
-                  {camp.name}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="relative">
+          <button
+            onClick={() => setCampPopupOpen(true)}
+            className="flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.03)] cursor-pointer hover:border-red-500/25 transition-colors"
+          >
+            <Tent className="text-brand-secondary shrink-0" size={14} />
+            <span className="truncate text-zinc-300 text-xs font-bold font-mono uppercase tracking-[0.14em]">
+              {camps?.find((c) => c.id === currentCampId)?.name ?? 'Select Refuge'}
+            </span>
+          </button>
+
+          <AnimatePresence>
+            {campPopupOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-40"
+                  onClick={() => setCampPopupOpen(false)}
+                />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  className="absolute left-0 top-full mt-2 z-50 w-56 bg-[#1b0b0c] border border-red-500/15 rounded-xl overflow-hidden shadow-xl shadow-black/60"
+                >
+                  <div className="py-1">
+                    {camps?.map((camp) => (
+                      <button
+                        key={camp.id}
+                        onClick={() => {
+                          setCurrentCamp(camp.id);
+                          navigate('/dashboard', { replace: true });
+                          setCampPopupOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-xs font-bold font-mono uppercase tracking-[0.12em] transition-colors hover:bg-red-950/40 ${
+                          camp.id === currentCampId
+                            ? 'text-brand-primary bg-red-950/20'
+                            : 'text-zinc-300'
+                        }`}
+                      >
+                        {camp.name}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Right: server time + connection status + user chip */}
