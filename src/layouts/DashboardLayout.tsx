@@ -16,13 +16,14 @@ import {
   Key,
   ChevronLeft,
   ChevronRight,
+  Clock,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource } from '../types';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
@@ -33,6 +34,7 @@ import { CardBody, CardContainer } from '../components/ui/3d-card';
 import DarkVeil from '../components/backgrounds/DarkVeil';
 import FloatingLines from '../components/backgrounds/FloatingLines';
 import CardSwap, { Card } from '../components/ui/CardSwap';
+import StarBorder from '../components/ui/StarBorder';
 
 const PANEL_SHELL =
   'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(78,32,36,0.8)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.28),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
@@ -159,6 +161,7 @@ export default function DashboardLayout() {
   const [campSwapTick, setCampSwapTick] = useState(0);
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
+  const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
   const { retry } = useConnectionStatus();
@@ -265,6 +268,10 @@ export default function DashboardLayout() {
     setFocusedCampIndex(frontCardIndex);
   }, []);
 
+  const handleCardHoverChange = useCallback((hovered: boolean) => {
+    cardHoveredRef.current = hovered;
+  }, []);
+
   useEffect(() => {
     if (!campPopupOpen) return;
 
@@ -279,13 +286,17 @@ export default function DashboardLayout() {
 
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
-        shiftCampCards(-1);
+        if (!cardHoveredRef.current) {
+          shiftCampCards(-1);
+        }
         return;
       }
 
       if (event.key === 'ArrowRight') {
         event.preventDefault();
-        shiftCampCards(1);
+        if (!cardHoveredRef.current) {
+          shiftCampCards(1);
+        }
         return;
       }
 
@@ -358,30 +369,32 @@ export default function DashboardLayout() {
             </div>
 
             {/* Camp switcher - left of center */}
-            <div className="relative">
-              <button
+            <div className="relative flex items-center">
+              <StarBorder
+                as="button"
                 onClick={openCampPopup}
-                className="flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.04)] cursor-pointer hover:border-red-500/25 transition-colors"
+                className="group cursor-pointer hover:scale-[1.02] hover:brightness-110 transition-all duration-200 [&_.inner-content]:!py-0 [&_.inner-content]:!px-0 [&_.inner-content]:!bg-transparent [&_.inner-content]:!border-none [&_.inner-content]:!text-inherit [&_.inner-content]:!text-xs [&_.inner-content]:!rounded-full"
+                color="rgba(239,68,68,0.85)"
+                speed="5s"
+                thickness={2}
               >
-                <Tent className="text-brand-secondary shrink-0" size={14} />
-                <span className="truncate text-zinc-300 text-xs font-bold font-mono uppercase tracking-[0.14em]">
-                  {camps?.find((c) => c.id === currentCampId)?.name ?? 'Select Refuge'}
-                </span>
-              </button>
+                <div className="flex items-center gap-3 px-4 py-1.5">
+                  <Tent className="text-brand-secondary shrink-0" size={18} />
+                  <span className="truncate text-zinc-200 text-sm font-bold font-mono uppercase tracking-[0.16em]">
+                    {camps?.find((c) => c.id === currentCampId)?.name ?? 'Select Refuge'}
+                  </span>
+                </div>
+              </StarBorder>
             </div>
 
             {/* Right: server time + connection status + user chip */}
             <div className="flex items-center gap-3.5">
               {/* Server time */}
               {synced && (
-                <div className="hidden md:flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded px-3 py-1.5 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
-                  <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.14em]">
-                    SVRT
-                  </span>
-                  <span className="text-xs font-mono font-bold text-zinc-200 tabular-nums">
-                    {timeStr}
-                  </span>
-                </div>
+                <span className="hidden md:inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 tabular-nums">
+                  <Clock size={13} className="text-zinc-500" />
+                  {timeStr}
+                </span>
               )}
 
               {/* User chip */}
@@ -411,7 +424,15 @@ export default function DashboardLayout() {
       {/* ── Disconnected banner ──────────────────────────────────────── */}
       <AnimatePresence>
         {campPopupOpen && (
-          <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm">
+          <motion.div
+            key="camp-popup"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setCampPopupOpen(false)}
+            className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm"
+          >
             <div className="pointer-events-none fixed inset-0 z-0 h-[100dvh] w-[100dvw]">
               <FloatingLines
                 linesGradient={activeFloatingLinesTheme.linesGradient}
@@ -499,9 +520,10 @@ export default function DashboardLayout() {
                       pauseOnHover={true}
                       manualSwapTick={campSwapTick}
                       manualSwapDirection={campSwapDirection}
-                      bringToFrontOnClick={true}
-                      onCardClick={() => {}}
+                      bringToFrontOnClick={false}
+                      onCardClick={confirmCampFromIndex}
                       onSwapFinish={handleSwapFinish}
+                      onHoverChange={handleCardHoverChange}
                       skewAmount={2}
                       easing="linear"
                     >
@@ -566,7 +588,7 @@ export default function DashboardLayout() {
                 )}
               </motion.div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {status === 'disconnected' && (

@@ -51,6 +51,7 @@ interface CardSwapProps {
   pauseOnHover?: boolean;
   onCardClick?: (idx: number) => void;
   onSwapFinish?: (frontCardIndex: number) => void;
+  onHoverChange?: (hovered: boolean) => void;
   skewAmount?: number;
   easing?: EasingType;
   children: ReactNode;
@@ -99,6 +100,7 @@ export default function CardSwap({
   pauseOnHover = false,
   onCardClick,
   onSwapFinish,
+  onHoverChange,
   skewAmount = 6,
   easing = 'elastic',
   children,
@@ -143,6 +145,10 @@ export default function CardSwap({
   useEffect(() => {
     onSwapFinishRef.current = onSwapFinish;
   }, [onSwapFinish]);
+  const onHoverChangeRef = useRef(onHoverChange);
+  useEffect(() => {
+    onHoverChangeRef.current = onHoverChange;
+  }, [onHoverChange]);
 
   const stopCurrentTimeline = useMemo(
     () => () => {
@@ -352,6 +358,7 @@ export default function CardSwap({
 
       const pause = () => {
         isHoveredRef.current = true;
+        onHoverChangeRef.current?.(true);
         stopCurrentTimeline();
         if (intervalRef.current) {
           clearInterval(intervalRef.current);
@@ -362,6 +369,7 @@ export default function CardSwap({
 
       const resume = () => {
         isHoveredRef.current = false;
+        onHoverChangeRef.current?.(false);
         if (autoPlay) {
           intervalRef.current = window.setInterval(() => swap(1), delay);
         }
