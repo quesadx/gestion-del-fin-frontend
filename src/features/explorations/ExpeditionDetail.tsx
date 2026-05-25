@@ -354,10 +354,18 @@ export default function ExpeditionDetail() {
             <table className="w-full text-left font-mono text-xs">
               <thead>
                 <tr className="border-b border-zinc-900 text-zinc-500">
-                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
+                  <th
+                    scope="col"
+                    className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]"
+                  >
                     Person ID
                   </th>
-                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">Role</th>
+                  <th
+                    scope="col"
+                    className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]"
+                  >
+                    Role
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -396,10 +404,16 @@ export default function ExpeditionDetail() {
             <table className="w-full text-left font-mono text-xs">
               <thead>
                 <tr className="border-b border-zinc-900 text-zinc-500">
-                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
+                  <th
+                    scope="col"
+                    className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]"
+                  >
                     Resource
                   </th>
-                  <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right">
+                  <th
+                    scope="col"
+                    className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right"
+                  >
                     Quantity
                   </th>
                 </tr>
@@ -448,10 +462,16 @@ export default function ExpeditionDetail() {
               <table className="w-full text-left font-mono text-xs">
                 <thead>
                   <tr className="border-b border-zinc-900 text-zinc-500">
-                    <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]">
+                    <th
+                      scope="col"
+                      className="py-3 px-4 font-bold uppercase tracking-wider text-[10px]"
+                    >
                       Resource
                     </th>
-                    <th scope="col" className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right">
+                    <th
+                      scope="col"
+                      className="py-3 px-4 font-bold uppercase tracking-wider text-[10px] text-right"
+                    >
                       Quantity Found
                     </th>
                   </tr>

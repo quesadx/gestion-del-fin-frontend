@@ -309,22 +309,40 @@ export default function PopulationRoster() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-black/50 border-b border-zinc-800">
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Survivor
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Profession
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Status
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Age
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Workable
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-right">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-right"
+              >
                 Actions
               </th>
             </tr>
@@ -472,22 +490,25 @@ export default function PopulationRoster() {
                     <div className="flex justify-end items-center gap-1">
                       <button
                         onClick={() => setTransferringPerson(person)}
-                        title="Transfer personnel"
-                        className="p-1.5 text-zinc-600 hover:text-brand-secondary animate-all"
+                        aria-label={`Transfer ${person.full_name}`}
+                        title={`Transfer ${person.full_name}`}
+                        className="p-1.5 sm:p-2 text-zinc-600 hover:text-brand-secondary animate-all touch-target"
                       >
                         <ArrowLeftRight size={16} />
                       </button>
                       <button
                         onClick={() => handleEditClick(person)}
-                        title="Edit profile"
-                        className="p-1.5 text-zinc-600 hover:text-emerald-500 animate-all"
+                        aria-label={`Edit ${person.full_name}`}
+                        title={`Edit ${person.full_name}`}
+                        className="p-1.5 sm:p-2 text-zinc-600 hover:text-emerald-500 animate-all touch-target"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button
                         onClick={() => setConfirmDeletePerson(person)}
-                        title="Delete survivor"
-                        className="p-1.5 text-zinc-600 hover:text-red-500 animate-all"
+                        aria-label={`Delete ${person.full_name}`}
+                        title={`Delete ${person.full_name}`}
+                        className="p-1.5 sm:p-2 text-zinc-600 hover:text-red-500 animate-all touch-target"
                       >
                         <Trash2 size={16} />
                       </button>

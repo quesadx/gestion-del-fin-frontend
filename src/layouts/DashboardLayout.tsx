@@ -30,7 +30,7 @@ import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert, Eye } from 'lucide-react';
-import { CardBody, CardContainer } from '../components/ui/3d-card';
+
 import DarkVeil from '../components/backgrounds/DarkVeil';
 import FloatingLines from '../components/backgrounds/FloatingLines';
 import CardSwap, { Card } from '../components/ui/CardSwap';
@@ -346,45 +346,44 @@ export default function DashboardLayout() {
   return (
     <div className="relative z-10 flex flex-col h-screen bg-transparent text-zinc-100 overflow-hidden">
       {/* ── Top header ──────────────────────────────────────────────────── */}
-      <CardContainer
-        className="w-full"
-        containerClassName="mx-4 mt-4 shrink-0 relative z-50 overflow-visible"
-        tiltStrength={1200}
-        tiltXStrength={1600}
-        tiltYStrength={1200}
-      >
-        <CardBody className="relative z-50 h-16 w-full overflow-visible rounded-3xl border border-red-500/15 bg-[rgba(37,23,26,0.78)] px-5 sm:px-6 shadow-[0_18px_70px_rgba(0,0,0,0.24),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
+      <header className="mx-2 sm:mx-4 mt-2 sm:mt-4 shrink-0 relative z-50 overflow-visible">
+        <div className="relative h-14 sm:h-16 w-full overflow-visible rounded-2xl sm:rounded-3xl border border-red-500/15 bg-[rgba(37,23,26,0.78)] px-3 sm:px-6 shadow-[0_18px_70px_rgba(0,0,0,0.24),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.12),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.06),transparent_35%)]" />
 
-          <div className="relative z-10 flex h-full items-center justify-between gap-4">
+          <div className="relative z-10 flex h-full items-center justify-between gap-2 sm:gap-4">
             {/* Branding */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
-                <ShieldAlert size={17} />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
+                <ShieldAlert size={15} />
               </div>
-              <div className="leading-none">
-                <p className="font-black text-sm sm:text-base uppercase tracking-[0.2em] text-brand-primary leading-none">
+              <div className="leading-none hidden xs:block">
+                <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
                   GESTION-DEL-FIN
                 </p>
-                <span className="text-xs font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
+                <span className="text-[10px] sm:text-xs font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
                   Survival Terminal v1.0.0
                 </span>
               </div>
             </div>
 
             {/* Camp switcher - centered */}
-            <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
+            <div className="flex items-center">
               <StarBorder
                 as="button"
                 onClick={openCampPopup}
-                className="group cursor-pointer hover:scale-[1.02] hover:brightness-110 transition-all duration-200 [&_.inner-content]:!py-0 [&_.inner-content]:!px-0 [&_.inner-content]:!bg-transparent [&_.inner-content]:!border-none [&_.inner-content]:!text-inherit [&_.inner-content]:!text-sm [&_.inner-content]:!rounded-full"
+                aria-label={
+                  camps?.find((c) => c.id === currentCampId)?.name
+                    ? `Current refuge: ${camps.find((c) => c.id === currentCampId)?.name}`
+                    : 'Select refuge'
+                }
+                className="group cursor-pointer hover:scale-[1.02] hover:brightness-110 transition-all duration-200 [&_.inner-content]:!py-0 [&_.inner-content]:!px-0 [&_.inner-content]:!bg-transparent [&_.inner-content]:!border-none [&_.inner-content]:!text-inherit [&_.inner-content]:!text-xs [&_.inner-content]:sm:!text-sm [&_.inner-content]:!rounded-full"
                 color="rgba(239,68,68,0.85)"
                 speed="5s"
                 thickness={2}
               >
-                <div className="flex items-center gap-3 px-4 py-1.5">
-                  <Tent className="text-brand-secondary shrink-0" size={18} />
-                  <span className="truncate text-zinc-200 text-sm font-bold font-mono uppercase tracking-[0.16em]">
+                <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1 min-h-[44px] touch-target">
+                  <Tent className="text-brand-secondary shrink-0" size={16} />
+                  <span className="truncate text-zinc-200 text-[11px] sm:text-sm font-bold font-mono uppercase tracking-[0.12em] sm:tracking-[0.16em] max-w-[80px] sm:max-w-[180px]">
                     {camps?.find((c) => c.id === currentCampId)?.name ?? 'Select Refuge'}
                   </span>
                 </div>
@@ -392,19 +391,19 @@ export default function DashboardLayout() {
             </div>
 
             {/* Right: server time + connection status + user info */}
-            <div className="flex items-center gap-3.5">
+            <div className="flex items-center gap-2 sm:gap-3.5">
               {/* Server time */}
               {synced && (
-                <span className="hidden md:inline-flex items-center gap-1.5 text-sm font-mono text-zinc-400 tabular-nums">
+                <span className="hidden lg:inline-flex items-center gap-1.5 text-sm font-mono text-zinc-400 tabular-nums">
                   <Clock size={13} className="text-zinc-500" />
                   {timeStr}
                 </span>
               )}
 
-              <div className="w-px h-6 bg-red-500/20" />
+              <div className="w-px h-5 sm:h-6 bg-red-500/20" />
 
               {/* User info */}
-              <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-xs font-black text-brand-secondary select-none">
+              <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-[10px] sm:text-xs font-black text-brand-secondary select-none">
                 {user?.username?.[0].toUpperCase()}
               </div>
               <div className="hidden md:block text-left leading-none">
@@ -415,15 +414,16 @@ export default function DashboardLayout() {
               </div>
               <button
                 onClick={handleLogout}
+                aria-label="Terminate Session"
                 title="Terminate Session"
-                className="p-1.5 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
+                className="p-1.5 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
               >
                 <LogOut size={16} />
               </button>
             </div>
           </div>
-        </CardBody>
-      </CardContainer>
+        </div>
+      </header>
 
       {/* ── Disconnected banner ──────────────────────────────────────── */}
       <AnimatePresence>
@@ -739,7 +739,7 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-transparent px-6 py-6 sm:px-8 sm:py-8 pb-32">
+      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-32">
         <div className="max-w-7xl mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div

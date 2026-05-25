@@ -70,7 +70,9 @@ function DockItem({
       className={`dock-item ${className}`}
       aria-label={label}
     >
-      <span className="dock-icon">{icon}</span>
+      <span className="dock-icon" aria-hidden="true">
+        {icon}
+      </span>
       <DockLabel isHovered={isHovered}>{label}</DockLabel>
     </motion.button>
   );
@@ -155,9 +157,9 @@ export default function Dock({
           mouseX.set(Infinity);
         }}
         className={`dock-panel ${className}`}
-        style={{ height: panelHeight }}
+        style={{ height: panelHeight, overflowX: 'auto', overflowY: 'hidden' }}
         role="toolbar"
-        aria-label="Application dock"
+        aria-label="Main navigation"
       >
         {items.map((item, index) => (
           <DockItem

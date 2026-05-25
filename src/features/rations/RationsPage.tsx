@@ -217,11 +217,21 @@ export default function RationsPage() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
-                <th scope="col" className="py-3 px-4 font-semibold">Date</th>
-                <th scope="col" className="py-3 px-4 font-semibold">Resource</th>
-                <th scope="col" className="py-3 px-4 font-semibold">Status</th>
-                <th scope="col" className="py-3 px-4 font-semibold">Quantity</th>
-                <th scope="col" className="py-3 px-4 font-semibold">Description</th>
+                <th scope="col" className="py-3 px-4 font-semibold">
+                  Date
+                </th>
+                <th scope="col" className="py-3 px-4 font-semibold">
+                  Resource
+                </th>
+                <th scope="col" className="py-3 px-4 font-semibold">
+                  Status
+                </th>
+                <th scope="col" className="py-3 px-4 font-semibold">
+                  Quantity
+                </th>
+                <th scope="col" className="py-3 px-4 font-semibold">
+                  Description
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">

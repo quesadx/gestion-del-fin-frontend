@@ -138,6 +138,7 @@ export default function InventoryList() {
           <button
             onClick={() => navigate('/inventory/audit')}
             className="brutalist-border hover:bg-zinc-900 text-zinc-300 font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+            aria-label="View inventory audit trail"
           >
             <History size={18} />
             VIEW AUDIT TRAIL
@@ -150,6 +151,7 @@ export default function InventoryList() {
               setIsAdjustOpen(true);
             }}
             className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+            aria-label="Open manual stock adjustment form"
           >
             <ArrowDownUp size={18} />
             MANUAL ADJUST
@@ -157,11 +159,11 @@ export default function InventoryList() {
         </div>
       </div>
 
-      <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex items-center gap-4">
+      <div className="p-3 sm:p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex items-center gap-4">
         <div className="p-2 bg-blue-950/30 rounded-lg border border-blue-500/20 shrink-0">
           <Info size={18} className="text-blue-400" />
         </div>
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <p className="text-[10px] font-bold text-zinc-500 uppercase">Daily Processing</p>
             <p className="text-xs font-mono text-zinc-300">
@@ -185,12 +187,12 @@ export default function InventoryList() {
       </div>
 
       {/* Resource Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading
           ? Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="p-6 bg-surface-raised/40 brutalist-border rounded-xl space-y-6 animate-pulse"
+                className="p-4 sm:p-6 bg-surface-raised/40 brutalist-border rounded-xl space-y-6 animate-pulse"
               >
                 <div className="flex justify-between items-start">
                   <Skeleton className="w-12 h-12 rounded-lg" />
@@ -218,7 +220,7 @@ export default function InventoryList() {
                 key={item.resource_id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`p-6 bg-surface-raised brutalist-border rounded-xl space-y-6 relative overflow-hidden group transition-all hover:bg-zinc-900/80 ${
+                className={`p-4 sm:p-6 bg-surface-raised brutalist-border rounded-xl space-y-6 relative overflow-hidden group transition-all hover:bg-zinc-900/80 ${
                   item.status === 'CRITICAL'
                     ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]'
                     : item.status === 'LOW'
@@ -259,7 +261,10 @@ export default function InventoryList() {
                 <div className="space-y-1">
                   <h3 className="text-xl font-black tracking-tight flex items-center gap-2">
                     {item.resource_name}
-                    <button className="text-zinc-600 hover:text-zinc-400">
+                    <button
+                      className="text-zinc-600 hover:text-zinc-400 touch-target"
+                      aria-label={`View details for ${item.resource_name}`}
+                    >
                       <Info size={14} />
                     </button>
                   </h3>
@@ -345,7 +350,7 @@ export default function InventoryList() {
               initial={{ scale: 0.95, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -364,7 +369,8 @@ export default function InventoryList() {
                     setIsAdjustOpen(false);
                     setAdjustError(null);
                   }}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
+                  aria-label="Close adjustment modal"
                 >
                   <X size={20} />
                 </button>
@@ -388,12 +394,12 @@ export default function InventoryList() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
                       Adjustment Type
                     </label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <button
                         type="button"
                         onClick={() => setAdjustType('MANUAL_IN')}
@@ -403,6 +409,7 @@ export default function InventoryList() {
                             ? 'bg-emerald-950/20 border-emerald-500 text-emerald-400'
                             : 'border-zinc-800 text-zinc-500 hover:bg-zinc-900',
                         )}
+                        aria-label="Set adjustment type to ingress (add)"
                       >
                         <PlusCircle size={14} />
                         INGRESS (ADD)
@@ -416,6 +423,7 @@ export default function InventoryList() {
                             ? 'bg-red-950/20 border-red-500 text-red-400'
                             : 'border-zinc-800 text-zinc-500 hover:bg-zinc-900',
                         )}
+                        aria-label="Set adjustment type to egress (subtract)"
                       >
                         <MinusCircle size={14} />
                         EGRESS (SUB)
@@ -470,6 +478,7 @@ export default function InventoryList() {
                       setAdjustError(null);
                     }}
                     className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
+                    aria-label="Cancel and close adjustment form"
                   >
                     ABORT ADJUSTMENT
                   </button>
@@ -477,6 +486,7 @@ export default function InventoryList() {
                     type="submit"
                     disabled={adjustMutation.isPending || !adjustQuantity}
                     className="flex-1 py-2.5 bg-brand-secondary text-black text-xs font-black uppercase rounded hover:bg-amber-500 transition-colors disabled:opacity-30"
+                    aria-label="Authorize manual stock entry"
                   >
                     {adjustMutation.isPending ? 'TRANSMITTING ACTION...' : 'AUTHORIZE STOCK ENTRY'}
                   </button>
