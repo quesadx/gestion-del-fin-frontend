@@ -391,7 +391,7 @@ export default function DashboardLayout() {
               </StarBorder>
             </div>
 
-            {/* Right: server time + connection status + user chip */}
+            {/* Right: server time + connection status + user info */}
             <div className="flex items-center gap-3.5">
               {/* Server time */}
               {synced && (
@@ -401,25 +401,25 @@ export default function DashboardLayout() {
                 </span>
               )}
 
-              {/* User chip */}
-              <div className="flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
-                <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-xs font-black text-brand-secondary select-none">
-                  {user?.username?.[0].toUpperCase()}
-                </div>
-                <div className="hidden md:block text-left leading-none">
-                  <span className="text-sm font-bold block">{user?.username}</span>
-                  <span className="text-xs text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
-                    {user?.role?.replace(/_/g, ' ')}
-                  </span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  title="Terminate Session"
-                  className="p-1 ml-1 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
-                >
-                  <LogOut size={13} />
-                </button>
+              <div className="w-px h-6 bg-red-500/20" />
+
+              {/* User info */}
+              <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-xs font-black text-brand-secondary select-none">
+                {user?.username?.[0].toUpperCase()}
               </div>
+              <div className="hidden md:block text-left leading-none">
+                <span className="text-sm font-bold block">{user?.username}</span>
+                <span className="text-xs text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
+                  {user?.role?.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                title="Terminate Session"
+                className="p-1 ml-1 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
+              >
+                <LogOut size={13} />
+              </button>
             </div>
           </div>
         </CardBody>
