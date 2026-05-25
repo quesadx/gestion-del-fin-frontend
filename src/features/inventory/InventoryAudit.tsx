@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { apiClient } from '../../lib/api';
 import { useCampStore } from '../../store';
 import { History, ArrowLeft } from 'lucide-react';
@@ -42,10 +43,18 @@ export default function InventoryAudit() {
   const { data: auditData, isLoading } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
-      const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
-      return res.data?.data ?? res.data ?? [];
+      try {
+        const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
+        return res.data?.data ?? res.data ?? [];
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 400) {
+          return [];
+        }
+        throw error;
+      }
     },
     enabled: !!currentCampId,
+    retry: false,
   });
 
   // Filter by adjustment type
