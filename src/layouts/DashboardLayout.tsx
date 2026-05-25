@@ -17,7 +17,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  RefreshCw,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
@@ -170,35 +169,11 @@ function DockSkeleton() {
   );
 }
 
-function DockError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className={DOCK_SHELL} style={{ height: 68 }}>
-      <div
-        className="dock-panel flex items-center justify-center gap-3 px-4"
-        style={{ height: 68 }}
-      >
-        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-        <span className="text-[10px] font-mono text-red-400 uppercase tracking-wider truncate max-w-[300px]">
-          {message}
-        </span>
-        <button
-          onClick={onRetry}
-          className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
-        >
-          <RefreshCw size={12} />
-          Retry
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
-  const { loaded: permsLoaded, error: permsError } = usePermissions();
-  const { triggerPermissionsRetry } = useAuthStore();
+  const { loaded: permsLoaded } = usePermissions();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status } = useConnectionStore();
   const navigate = useNavigate();
@@ -366,7 +341,7 @@ export default function DashboardLayout() {
     ? NAV_ITEMS.filter((item) => can(NAV_PERMISSIONS[item.to]))
     : [];
 
-  const permsLoading = !permsLoaded && !permsError;
+  const permsLoading = !permsLoaded;
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
@@ -744,13 +719,7 @@ export default function DashboardLayout() {
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
       <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          {permsLoading ? (
-            <DockSkeleton />
-          ) : permsError ? (
-            <DockError message={permsError} onRetry={triggerPermissionsRetry} />
-          ) : (
-            <Dock items={dockItems} />
-          )}
+          {permsLoading ? <DockSkeleton /> : <Dock items={dockItems} />}
         </motion.div>
       </div>
     </div>

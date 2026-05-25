@@ -46,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
         const payload = parseJwtPayload(token);
         const rawId = payload.sub ?? payload.id ?? payload.userId ?? payload.user_id ?? null;
         const rawCampId = payload.campId ?? payload.camp_id ?? null;
+        const perms = Array.isArray(user.permissions) ? user.permissions : [];
         set({
           user: {
             ...user,
@@ -53,7 +54,8 @@ export const useAuthStore = create<AuthState>()(
           },
           token,
           userId: rawId != null ? Number(rawId) : null,
-          permissionsLoaded: false,
+          permissions: perms,
+          permissionsLoaded: true,
           permissionsError: null,
           permissionsRetry: 0,
         });
