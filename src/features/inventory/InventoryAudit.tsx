@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
@@ -16,11 +16,6 @@ export default function InventoryAudit() {
   const { currentCampId } = useCampStore();
   const [page, setPage] = useState(1);
   const [selectedType, setSelectedType] = useState<string>('');
-
-  useEffect(() => {
-    setSelectedType('');
-    setPage(1);
-  }, [currentCampId]);
 
   const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
@@ -41,7 +36,11 @@ export default function InventoryAudit() {
     return map;
   }, [resources]);
 
-  const { data: auditData, isLoading, error: auditError } = useQuery<InventoryAuditEntry[]>({
+  const {
+    data: auditData,
+    isLoading,
+    error: auditError,
+  } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/inventory/audit/${currentCampId}`);

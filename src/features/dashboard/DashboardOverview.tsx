@@ -131,7 +131,9 @@ export default function DashboardOverview() {
     if (!element) return;
 
     const next = { width: element.clientWidth, height: element.clientHeight };
-    setChartSize((prev) => (prev.width === next.width && prev.height === next.height ? prev : next));
+    setChartSize((prev) =>
+      prev.width === next.width && prev.height === next.height ? prev : next,
+    );
   }, [resourceSummaries]);
 
   if (!currentCampId) {

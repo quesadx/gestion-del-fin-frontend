@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuthStore } from './store';
+import { useAuthStore, useCampStore } from './store';
 import { ReactNode, Suspense, lazy, useEffect } from 'react';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -87,12 +87,17 @@ const ProtectedRoute = ({ children, roles }: { children: ReactNode; roles?: stri
   return <>{children}</>;
 };
 
+const InventoryAuditRoute = () => {
+  const currentCampId = useCampStore((s) => s.currentCampId);
+  return <InventoryAudit key={currentCampId} />;
+};
+
 function TitleManager() {
   const location = useLocation();
   useEffect(() => {
     const path = location.pathname;
-    const match = Object.entries(PAGE_TITLES).find(([key]) =>
-      key === path || (key.endsWith('/') && path.startsWith(key))
+    const match = Object.entries(PAGE_TITLES).find(
+      ([key]) => key === path || (key.endsWith('/') && path.startsWith(key)),
     );
     const page = match ? match[1] : '';
     document.title = page ? `${page} · GESTION DEL FIN` : 'GESTION DEL FIN';
@@ -138,159 +143,159 @@ export default function App() {
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
-              <Route element={<AuthLayout />}>
-                <Route path="/login" element={<LoginPage />} />
-              </Route>
+                  <Route element={<AuthLayout />}>
+                    <Route path="/login" element={<LoginPage />} />
+                  </Route>
 
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<DashboardOverview />} />
-                <Route
-                  path="population"
-                  element={
-                    <ProtectedRoute>
-                      <PopulationRoster />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="population/new"
-                  element={
-                    <ProtectedRoute roles={['system_admin']}>
-                      <NewPersonPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="population/:id"
-                  element={
-                    <ProtectedRoute>
-                      <PersonDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="inventory"
-                  element={
-                    <ProtectedRoute>
-                      <InventoryList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="inventory/audit"
-                  element={
-                    <ProtectedRoute>
-                      <InventoryAudit />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="admission"
-                  element={
-                    <ProtectedRoute>
-                      <AdmissionList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="expeditions/:id"
-                  element={
-                    <ProtectedRoute>
-                      <ExpeditionDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="expeditions"
-                  element={
-                    <ProtectedRoute>
-                      <ExpeditionList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="transfers"
-                  element={
-                    <ProtectedRoute>
-                      <TransferList />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="camps/:id"
-                  element={
-                    <ProtectedRoute>
-                      <CampDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="camps"
-                  element={
-                    <ProtectedRoute>
-                      <CampManagement />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="resources"
-                  element={
-                    <ProtectedRoute roles={['system_admin', 'resource_manager']}>
-                      <ResourcesPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="rations"
-                  element={
-                    <ProtectedRoute>
-                      <RationsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="professions"
-                  element={
-                    <ProtectedRoute>
-                      <ProfessionsPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="users"
-                  element={
-                    <ProtectedRoute roles={['system_admin']}>
-                      <UsersPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="roles"
-                  element={
-                    <ProtectedRoute roles={['system_admin']}>
-                      <RolesPage />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="permissions"
-                  element={
-                    <ProtectedRoute roles={['system_admin']}>
-                      <PermissionsPage />
-                    </ProtectedRoute>
-                  }
-                />
-              </Route>
+                  <Route
+                    path="/"
+                    element={
+                      <ProtectedRoute>
+                        <DashboardLayout />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Navigate to="/dashboard" replace />} />
+                    <Route path="dashboard" element={<DashboardOverview />} />
+                    <Route
+                      path="population"
+                      element={
+                        <ProtectedRoute>
+                          <PopulationRoster />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="population/new"
+                      element={
+                        <ProtectedRoute roles={['system_admin']}>
+                          <NewPersonPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="population/:id"
+                      element={
+                        <ProtectedRoute>
+                          <PersonDetail />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="inventory"
+                      element={
+                        <ProtectedRoute>
+                          <InventoryList />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="inventory/audit"
+                      element={
+                        <ProtectedRoute>
+                          <InventoryAuditRoute />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="admission"
+                      element={
+                        <ProtectedRoute>
+                          <AdmissionList />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="expeditions/:id"
+                      element={
+                        <ProtectedRoute>
+                          <ExpeditionDetail />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="expeditions"
+                      element={
+                        <ProtectedRoute>
+                          <ExpeditionList />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="transfers"
+                      element={
+                        <ProtectedRoute>
+                          <TransferList />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="camps/:id"
+                      element={
+                        <ProtectedRoute>
+                          <CampDetail />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="camps"
+                      element={
+                        <ProtectedRoute>
+                          <CampManagement />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="resources"
+                      element={
+                        <ProtectedRoute roles={['system_admin', 'resource_manager']}>
+                          <ResourcesPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="rations"
+                      element={
+                        <ProtectedRoute>
+                          <RationsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="professions"
+                      element={
+                        <ProtectedRoute>
+                          <ProfessionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="users"
+                      element={
+                        <ProtectedRoute roles={['system_admin']}>
+                          <UsersPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="roles"
+                      element={
+                        <ProtectedRoute roles={['system_admin']}>
+                          <RolesPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="permissions"
+                      element={
+                        <ProtectedRoute roles={['system_admin']}>
+                          <PermissionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>
             </ErrorBoundary>

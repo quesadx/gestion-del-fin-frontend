@@ -10,7 +10,9 @@ type StarBorderOwnProps = {
   children?: React.ReactNode;
 };
 
-type Props = StarBorderOwnProps & React.ButtonHTMLAttributes<any> & React.HTMLAttributes<any>;
+type Props = StarBorderOwnProps &
+  React.ButtonHTMLAttributes<HTMLElement> &
+  React.HTMLAttributes<HTMLElement>;
 
 const StarBorder = ({
   as: As = 'button',
@@ -29,8 +31,7 @@ const StarBorder = ({
   const Component: React.ElementType = As as React.ElementType;
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <Component className={`star-border-container ${className}`} style={style} {...(rest as any)}>
+    <Component className={`star-border-container ${className}`} style={style} {...rest}>
       <div
         className="border-gradient-bottom"
         style={{

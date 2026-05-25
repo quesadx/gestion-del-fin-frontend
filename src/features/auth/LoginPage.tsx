@@ -63,9 +63,7 @@ export default function LoginPage() {
         <div className="inline-flex items-center justify-center w-16 h-16 bg-brand-primary/10 border border-brand-primary/20 rounded-2xl mb-4 text-brand-primary">
           <ShieldAlert size={32} />
         </div>
-        <h1 className="text-3xl font-black tracking-tighter text-brand-primary">
-          GESTION DEL FIN
-        </h1>
+        <h1 className="text-3xl font-black tracking-tighter text-brand-primary">GESTION DEL FIN</h1>
         <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
           GESTION DEL FIN v1.0.0 // AUTH REQUIRED
         </p>

@@ -23,13 +23,22 @@ function buildGlowVars(glowColor: string, intensity: number) {
   const vars: Record<string, string> = {};
 
   for (let index = 0; index < opacities.length; index++) {
-    vars[`--glow-color${keys[index]}`] = `hsl(${base} / ${Math.min(opacities[index] * intensity, 100)}%)`;
+    vars[`--glow-color${keys[index]}`] =
+      `hsl(${base} / ${Math.min(opacities[index] * intensity, 100)}%)`;
   }
 
   return vars;
 }
 
-const GRADIENT_POSITIONS = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%'];
+const GRADIENT_POSITIONS = [
+  '80% 55%',
+  '69% 34%',
+  '8% 6%',
+  '41% 38%',
+  '86% 85%',
+  '82% 18%',
+  '51% 4%',
+];
 const GRADIENT_KEYS = [
   '--gradient-one',
   '--gradient-two',
@@ -46,7 +55,8 @@ function buildGradientVars(colors: string[]) {
 
   for (let index = 0; index < 7; index++) {
     const color = colors[Math.min(COLOR_MAP[index], colors.length - 1)];
-    vars[GRADIENT_KEYS[index]] = `radial-gradient(at ${GRADIENT_POSITIONS[index]}, ${color} 0px, transparent 50%)`;
+    vars[GRADIENT_KEYS[index]] =
+      `radial-gradient(at ${GRADIENT_POSITIONS[index]}, ${color} 0px, transparent 50%)`;
   }
 
   vars['--gradient-base'] = `linear-gradient(${colors[0]} 0 100%)`;
@@ -203,7 +213,10 @@ export default function BorderGlow({
     card.classList.add('sweep-active');
     card.style.setProperty('--cursor-angle', `${angleStart}deg`);
 
-    animateValue({ duration: 500, onUpdate: (value) => card.style.setProperty('--edge-proximity', `${value}`) });
+    animateValue({
+      duration: 500,
+      onUpdate: (value) => card.style.setProperty('--edge-proximity', `${value}`),
+    });
     animateValue({
       ease: easeInCubic,
       duration: 1500,
@@ -239,7 +252,10 @@ export default function BorderGlow({
     });
   }, [animated]);
 
-  const glowVars = useMemo(() => buildGlowVars(glowColor, glowIntensity), [glowColor, glowIntensity]);
+  const glowVars = useMemo(
+    () => buildGlowVars(glowColor, glowIntensity),
+    [glowColor, glowIntensity],
+  );
   const gradientVars = useMemo(() => buildGradientVars(colors), [colors]);
 
   const style = {

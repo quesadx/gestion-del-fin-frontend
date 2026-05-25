@@ -68,9 +68,7 @@ export function ConfirmDialog({
                     <h3 className="font-black uppercase tracking-tight text-sm text-white">
                       {title}
                     </h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-mono">
-                      {description}
-                    </p>
+                    <p className="text-xs text-zinc-400 leading-relaxed font-mono">{description}</p>
                   </div>
                 </div>
 

@@ -197,7 +197,15 @@ export default function DarkVeil({
       resizeObserver.disconnect();
       window.removeEventListener('resize', resize);
     };
-  }, [hueShift, noiseIntensity, scanlineIntensity, speed, scanlineFrequency, warpAmount, resolutionScale]);
+  }, [
+    hueShift,
+    noiseIntensity,
+    scanlineIntensity,
+    speed,
+    scanlineFrequency,
+    warpAmount,
+    resolutionScale,
+  ]);
 
   return <canvas ref={canvasRef} className="darkveil-canvas" aria-hidden="true" />;
 }

@@ -11,11 +11,7 @@ async function startServer() {
 
   app.use(express.json());
 
-  const proxyRequest = async (
-    req: express.Request,
-    res: express.Response,
-    prefix: string,
-  ) => {
+  const proxyRequest = async (req: express.Request, res: express.Response, prefix: string) => {
     const suffix = req.path.replace(new RegExp(`^${prefix}`), '');
     const querySuffix = req.url.includes('?') ? `?${req.url.split('?')[1]}` : '';
     const contentType = req.headers['content-type'];

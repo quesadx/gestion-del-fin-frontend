@@ -169,7 +169,8 @@ export default function DashboardLayout() {
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
-    const showInventoryAlert = item.to === '/inventory' && (inventoryAlerts?.criticalCount ?? 0) > 0;
+    const showInventoryAlert =
+      item.to === '/inventory' && (inventoryAlerts?.criticalCount ?? 0) > 0;
 
     return {
       icon: (
