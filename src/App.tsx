@@ -1,7 +1,26 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store';
 import { ReactNode, Suspense, lazy, useEffect } from 'react';
+
+const PAGE_TITLES: Record<string, string> = {
+  '/login': 'Login',
+  '/dashboard': 'Dashboard',
+  '/population': 'Population',
+  '/population/new': 'New Person',
+  '/inventory': 'Inventory',
+  '/inventory/audit': 'Audit Trail',
+  '/admission': 'Admissions',
+  '/expeditions': 'Expeditions',
+  '/transfers': 'Transfers',
+  '/camps': 'Refuges',
+  '/resources': 'Resources',
+  '/rations': 'Rations',
+  '/professions': 'Professions',
+  '/users': 'Users',
+  '/roles': 'Roles',
+  '/permissions': 'Permissions',
+};
 import { Skeleton } from './components/Skeleton';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/Toaster';
@@ -68,6 +87,19 @@ const ProtectedRoute = ({ children, roles }: { children: ReactNode; roles?: stri
   return <>{children}</>;
 };
 
+function TitleManager() {
+  const location = useLocation();
+  useEffect(() => {
+    const path = location.pathname;
+    const match = Object.entries(PAGE_TITLES).find(([key]) =>
+      key === path || (key.endsWith('/') && path.startsWith(key))
+    );
+    const page = match ? match[1] : '';
+    document.title = page ? `${page} · GESTION DEL FIN` : 'GESTION DEL FIN';
+  }, [location]);
+  return null;
+}
+
 export default function App() {
   const { logout } = useAuthStore();
 
@@ -98,6 +130,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <TitleManager />
         <div className="relative isolate min-h-screen bg-surface-base">
           <AppBackground />
           <div className="relative z-10">

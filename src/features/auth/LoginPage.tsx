@@ -67,7 +67,7 @@ export default function LoginPage() {
           GESTION DEL FIN
         </h1>
         <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-          Survival Terminal v4.2.0 // COMMAND AND CONTROL
+          GESTION DEL FIN v1.0.0 // AUTH REQUIRED
         </p>
       </div>
 
