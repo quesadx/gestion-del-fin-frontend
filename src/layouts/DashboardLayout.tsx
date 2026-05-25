@@ -190,24 +190,24 @@ export default function DashboardLayout() {
   return (
     <div className="relative z-10 flex flex-col h-screen bg-transparent text-zinc-100 overflow-hidden">
       {/* ── Top header ──────────────────────────────────────────────────── */}
-      <header className="h-16 shrink-0 border-b border-zinc-900 bg-surface-raised/85 backdrop-blur-md flex items-center justify-between px-6 sm:px-8 sticky top-0 z-40">
+      <header className="h-16 shrink-0 border border-red-500/12 bg-[rgba(12,10,14,0.94)] backdrop-blur-md flex items-center justify-between px-5 sm:px-6 rounded-2xl mx-4 mt-4 sticky top-0 z-40 shadow-[0_20px_60px_rgba(0,0,0,0.35),0_0_0_1px_rgba(239,68,68,0.04)]">
         {/* Branding */}
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_15px_rgba(239,68,68,0.25)] select-none">
-            <ShieldAlert size={18} />
+            <ShieldAlert size={17} />
           </div>
           <div className="leading-none">
-            <p className="font-black text-[15px] sm:text-base uppercase italic tracking-tighter text-brand-primary leading-none">
+            <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
               GESTION DEL FIN
             </p>
-            <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mt-0.5 block">
-              Survival Terminal v4.2.0 // COMMAND AND CONTROL
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
+              Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
             </span>
           </div>
         </div>
 
         {/* Camp switcher - left of center */}
-        <div className="flex items-center gap-2 bg-zinc-950/40 border border-zinc-900 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm">
+        <div className="flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded-full px-4 py-1.5 max-w-50 sm:max-w-xs md:max-w-sm shadow-[0_0_0_1px_rgba(239,68,68,0.03)]">
           <Tent className="text-brand-secondary shrink-0" size={14} />
           <div className="relative flex-1">
             <select
@@ -216,7 +216,7 @@ export default function DashboardLayout() {
                 setCurrentCamp(Number(e.target.value));
                 navigate('/dashboard', { replace: true });
               }}
-              className="w-full bg-transparent border-none text-zinc-300 text-[13px] font-bold font-mono uppercase tracking-tight focus:outline-none appearance-none cursor-pointer pr-4"
+              className="w-full bg-transparent border-none text-zinc-300 text-xs font-bold font-mono uppercase tracking-[0.14em] focus:outline-none appearance-none cursor-pointer pr-4"
             >
               {!currentCampId && (
                 <option value="" className="bg-zinc-950">
@@ -236,11 +236,11 @@ export default function DashboardLayout() {
         <div className="flex items-center gap-3.5">
           {/* Server time */}
           {synced && (
-            <div className="hidden md:flex items-center gap-2 bg-zinc-950/40 border border-zinc-900 rounded px-3 py-1.5">
-              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+            <div className="hidden md:flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded px-3 py-1.5 shadow-[0_0_0_1px_rgba(239,68,68,0.03)]">
+              <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.14em]">
                 SVRT
               </span>
-              <span className="text-[13px] font-mono font-bold text-zinc-200 tabular-nums">
+              <span className="text-xs font-mono font-bold text-zinc-200 tabular-nums">
                 {timeStr}
               </span>
             </div>
@@ -249,7 +249,7 @@ export default function DashboardLayout() {
           {/* Live connection badge */}
           <div
             className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[9px] font-mono font-bold uppercase tracking-wider border transition-colors duration-500',
+              'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] font-mono font-bold uppercase tracking-[0.14em] border transition-colors duration-500',
               badge.wrapper,
             )}
           >
@@ -260,13 +260,13 @@ export default function DashboardLayout() {
           </div>
 
           {/* User chip */}
-          <div className="flex items-center gap-2 bg-zinc-950/60 border border-zinc-900 rounded px-2.5 py-1">
+          <div className="flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.03)]">
             <div className="w-6 h-6 rounded bg-zinc-800 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
               {user?.username?.[0].toUpperCase()}
             </div>
             <div className="hidden md:block text-left leading-none">
-              <span className="text-[12px] font-bold block">{user?.username}</span>
-              <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-tight mt-0.5 block">
+              <span className="text-xs font-bold block">{user?.username}</span>
+              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
                 {user?.role?.replace(/_/g, ' ')}
               </span>
             </div>

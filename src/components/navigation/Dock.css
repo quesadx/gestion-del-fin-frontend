@@ -57,7 +57,7 @@
   top: -1.5rem;
   left: 50%;
   width: fit-content;
-  white-space: pre;
+  white-space: nowrap;
   border-radius: 0.375rem;
   border: 1px solid rgba(34, 34, 34, 0.95);
   background-color: rgba(18, 15, 23, 0.95);
