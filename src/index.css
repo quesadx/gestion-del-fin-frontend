@@ -154,6 +154,23 @@
   transition-duration: 150ms;
 }
 
+@keyframes background-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: translate3d(0, -1.5%, 0) scale(1.025);
+    opacity: 0.96;
+  }
+}
+
+.background-drift {
+  animation: background-drift 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 .neon-glow-red {
   text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }

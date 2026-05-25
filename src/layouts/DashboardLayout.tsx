@@ -276,18 +276,7 @@ export default function DashboardLayout() {
             </div>
           )}
 
-          {/* Live connection badge */}
-          <div
-            className={cn(
-              'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[10px] font-mono font-bold uppercase tracking-[0.14em] border transition-colors duration-500',
-              badge.wrapper,
-            )}
-          >
-            <span className={cn('w-1.5 h-1.5 rounded-full shrink-0', badge.dot)} />
-            {status === 'connected'
-              ? badge.label(latencyMs)
-              : (badge as { label: () => string }).label()}
-          </div>
+
 
           {/* User chip */}
           <div className="flex items-center gap-2 bg-[rgba(18,15,23,0.96)] border border-red-500/10 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.03)]">
