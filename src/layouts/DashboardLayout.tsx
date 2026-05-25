@@ -48,6 +48,11 @@ const CONNECTION_BADGE = {
   },
 } as const;
 
+const PANEL_SHELL =
+  'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(55,12,14,0.82)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.35),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
+
+const ALERT_ROW = 'relative flex items-center justify-between gap-4 px-5 py-2.5 sm:px-6';
+
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
 const NAV_ITEMS = [
@@ -308,21 +313,23 @@ export default function DashboardLayout() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="shrink-0 overflow-hidden"
+            className="shrink-0"
           >
-            <div className="bg-red-950/60 border-b border-red-500/30 px-6 py-2.5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider">
-                  Server unreachable — data may be stale. Retrying every 5s.
-                </p>
+            <div className={PANEL_SHELL}>
+              <div className={`${ALERT_ROW} border-l-2 border-red-500/60`}>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                  <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider">
+                    Server unreachable — data may be stale. Retrying every 5s.
+                  </p>
+                </div>
+                <button
+                  onClick={retry}
+                  className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
+                >
+                  Retry Now
+                </button>
               </div>
-              <button
-                onClick={retry}
-                className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
-              >
-                Retry Now
-              </button>
             </div>
           </motion.div>
         )}
@@ -340,38 +347,42 @@ export default function DashboardLayout() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="shrink-0 overflow-hidden"
+              className="shrink-0"
             >
               {inventoryAlerts.criticalCount > 0 ? (
-                <div className="bg-red-950/60 border-b border-red-500/30 px-6 py-2.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                    <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider truncate">
-                      CRITICAL STOCK: {inventoryAlerts.criticalNames.join(', ')}
-                    </p>
+                <div className={PANEL_SHELL}>
+                  <div className={`${ALERT_ROW} border-l-2 border-red-500/60`}>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                      <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider truncate">
+                        CRITICAL STOCK: {inventoryAlerts.criticalNames.join(', ')}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setAlertDismissed(true)}
+                      className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      Dismiss
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setAlertDismissed(true)}
-                    className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    Dismiss
-                  </button>
                 </div>
               ) : (
-                <div className="bg-amber-950/60 border-b border-amber-500/30 px-6 py-2.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                    <p className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider">
-                      LOW STOCK: {inventoryAlerts.lowCount} resource
-                      {inventoryAlerts.lowCount !== 1 ? 's' : ''} below minimum
-                    </p>
+                <div className="mx-4 mt-2 overflow-hidden rounded-2xl border border-amber-500/12 bg-[rgba(12,10,14,0.94)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.35),0_0_0_1px_rgba(245,158,11,0.04)]">
+                  <div className={`${ALERT_ROW} border-l-2 border-amber-500/60`}>
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                      <p className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+                        LOW STOCK: {inventoryAlerts.lowCount} resource
+                        {inventoryAlerts.lowCount !== 1 ? 's' : ''} below minimum
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setAlertDismissed(true)}
+                      className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                    >
+                      Dismiss
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setAlertDismissed(true)}
-                    className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
-                  >
-                    Dismiss
-                  </button>
                 </div>
               )}
             </motion.div>
