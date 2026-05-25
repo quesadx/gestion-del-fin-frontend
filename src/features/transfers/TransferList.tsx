@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { cn, formatDate } from '../../lib/utils';
+import { can, PERM } from '../../lib/permissions';
 import { Skeleton, SkeletonList } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Pagination } from '../../components/Pagination';
@@ -104,24 +105,6 @@ function getStatusShortLabel(status: TransferStatus): string {
   }
 }
 
-function normalizeRole(role: string): string {
-  return role.toLowerCase().replace(/[\s-]+/g, '_');
-}
-
-function canManageTransfers(role: string | undefined): boolean {
-  if (!role) return false;
-  const r = normalizeRole(role);
-  return (
-    r === 'system_admin' || r === 'resource_manager' || r.includes('admin') || r.includes('manager')
-  );
-}
-
-function canCreateTransfers(role: string | undefined): boolean {
-  if (!role) return false;
-  const r = normalizeRole(role);
-  return canManageTransfers(role) || r === 'travel_coordinator' || r.includes('coordinator');
-}
-
 // ── StatusStepper ─────────────────────────────────────────────────────────────
 
 function StatusStepper({ status }: { status: TransferStatus }) {
@@ -194,7 +177,7 @@ function StatusStepper({ status }: { status: TransferStatus }) {
 export default function TransferList() {
   const PAGE_SIZE = 15;
   const { currentCampId } = useCampStore();
-  const { user, userId } = useAuthStore();
+  const { userId } = useAuthStore();
   const queryClient = useQueryClient();
 
   // ── UI state ────────────────────────────────────────────────────────────
@@ -402,8 +385,8 @@ export default function TransferList() {
   });
 
   // ── RBAC ─────────────────────────────────────────────────────────────────
-  const canManage = canManageTransfers(user?.role);
-  const canCreate = canCreateTransfers(user?.role);
+  const canManage = can(PERM.TRANSFERS_ALL);
+  const canCreate = can(PERM.TRANSFERS_CREATE);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
