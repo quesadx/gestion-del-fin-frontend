@@ -197,7 +197,18 @@ export default function DashboardLayout() {
             <select
               value={currentCampId ?? ''}
               onChange={(e) => {
-                setCurrentCamp(Number(e.target.value));
+                const selectedId = Number(e.target.value);
+                if (!selectedId) return;
+
+                // Non-admin users can only access their assigned camp.
+                // Backend campMiddleware already enforces this (returns 403),
+                // but we block early to avoid a confusing error page.
+                if (user?.camp_id && !can(user?.role, '*') && selectedId !== user.camp_id) {
+                  setCurrentCamp(user.camp_id);
+                  return;
+                }
+
+                setCurrentCamp(selectedId);
                 navigate('/dashboard', { replace: true });
               }}
               className="w-full bg-transparent border-none text-zinc-300 text-xs font-bold font-mono uppercase tracking-tight focus:outline-none appearance-none cursor-pointer pr-4"

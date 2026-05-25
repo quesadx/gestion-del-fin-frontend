@@ -20,6 +20,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'transfers.*',
     'camps.read',
     'people.read',
+    'people.profession_reassign.create',
     'expeditions.read',
     'dashboard.read',
     'resources.*',
@@ -27,6 +28,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   ],
   travel_coordinator: [
     'expeditions.*',
+    'expeditions.create',
     'transfers.create',
     'transfers.read',
     'people.read',
