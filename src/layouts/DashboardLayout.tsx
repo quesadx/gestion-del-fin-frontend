@@ -29,12 +29,14 @@ import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, Eye } from 'lucide-react';
 import { CardBody, CardContainer } from '../components/ui/3d-card';
 import DarkVeil from '../components/backgrounds/DarkVeil';
 import FloatingLines from '../components/backgrounds/FloatingLines';
 import CardSwap, { Card } from '../components/ui/CardSwap';
 import StarBorder from '../components/ui/StarBorder';
+import EvilEye from '../components/ui/EvilEye';
+import GlitchText from '../components/ui/GlitchText';
 
 const PANEL_SHELL =
   'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(78,32,36,0.8)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.28),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
@@ -161,6 +163,8 @@ export default function DashboardLayout() {
   const [campSwapTick, setCampSwapTick] = useState(0);
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [showEyePhase, setShowEyePhase] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -363,7 +367,7 @@ export default function DashboardLayout() {
                   GESTION-DEL-FIN
                 </p>
                 <span className="text-xs font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
-                  Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
+                  Survival Terminal v1.0.0
                 </span>
               </div>
             </div>
@@ -458,6 +462,24 @@ export default function DashboardLayout() {
               />
             </div>
 
+            {!showEasterEgg ? (
+              <div className="absolute left-0 bottom-0 z-50 p-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEasterEgg(true);
+                    setShowEyePhase(true);
+                    setTimeout(() => setShowEyePhase(false), 5000);
+                    setTimeout(() => setShowEasterEgg(false), 5500);
+                  }}
+                  aria-label="Easter egg"
+                  className="rounded-full border border-red-500/30 bg-black/50 p-2.5 text-red-400 backdrop-blur-md transition-all hover:scale-110 hover:border-red-500/60 hover:text-red-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+            ) : null}
+
             <div className="relative z-10 flex h-full w-full items-center justify-center p-4">
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 8 }}
@@ -494,7 +516,7 @@ export default function DashboardLayout() {
                           type="button"
                           onClick={() => shiftCampCards(-1)}
                           aria-label="Show previous camp"
-                          className="absolute left-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                          className="absolute left-8 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                         >
                           <ChevronLeft size={30} />
                         </button>
@@ -503,7 +525,7 @@ export default function DashboardLayout() {
                           type="button"
                           onClick={() => shiftCampCards(1)}
                           aria-label="Show next camp"
-                          className="absolute right-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                          className="absolute right-8 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                         >
                           <ChevronRight size={30} />
                         </button>
@@ -615,6 +637,49 @@ export default function DashboardLayout() {
                 </button>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Easter egg overlay ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showEasterEgg && (
+          <motion.div
+            key="easter-egg"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.85 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[999] bg-black/95"
+          >
+            {showEyePhase ? (
+              <div className="absolute inset-0">
+                <EvilEye
+                  eyeColor="#EF4444"
+                  intensity={0.6}
+                  pupilSize={0.7}
+                  irisWidth={0.35}
+                  glowIntensity={0.3}
+                  scale={0.6}
+                  noiseScale={1.5}
+                  pupilFollow={1.5}
+                  flameSpeed={3.0}
+                  backgroundColor="#000000"
+                />
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <GlitchText
+                  speed={0.1}
+                  enableShadows={true}
+                  enableOnHover={false}
+                  className="!text-white"
+                >
+                  1000011
+                </GlitchText>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
