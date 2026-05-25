@@ -50,6 +50,7 @@ interface CardSwapProps {
   bringToFrontOnClick?: boolean;
   pauseOnHover?: boolean;
   onCardClick?: (idx: number) => void;
+  onSwapFinish?: (frontCardIndex: number) => void;
   skewAmount?: number;
   easing?: EasingType;
   children: ReactNode;
@@ -97,6 +98,7 @@ export default function CardSwap({
   bringToFrontOnClick = false,
   pauseOnHover = false,
   onCardClick,
+  onSwapFinish,
   skewAmount = 6,
   easing = 'elastic',
   children,
@@ -137,6 +139,10 @@ export default function CardSwap({
   const swapRef = useRef<(direction: 1 | -1) => void>(() => {});
   const lastManualSwapTickRef = useRef<number | null>(null);
   const bringToFrontRef = useRef<(idx: number) => void>(() => {});
+  const onSwapFinishRef = useRef(onSwapFinish);
+  useEffect(() => {
+    onSwapFinishRef.current = onSwapFinish;
+  }, [onSwapFinish]);
 
   const stopCurrentTimeline = useMemo(
     () => () => {
@@ -225,6 +231,7 @@ export default function CardSwap({
           order.current = [...rest, front];
           tlRef.current = null;
           isAnimatingRef.current = false;
+          onSwapFinishRef.current?.(order.current[0]);
         });
       } else {
         const back = order.current[order.current.length - 1];
@@ -285,6 +292,7 @@ export default function CardSwap({
           order.current = [back, ...rest];
           tlRef.current = null;
           isAnimatingRef.current = false;
+          onSwapFinishRef.current?.(order.current[0]);
         });
       }
     };
@@ -325,6 +333,7 @@ export default function CardSwap({
         order.current = nextOrder;
         tlRef.current = null;
         isAnimatingRef.current = false;
+        onSwapFinishRef.current?.(order.current[0]);
       });
     };
 

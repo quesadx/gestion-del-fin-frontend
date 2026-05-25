@@ -241,7 +241,6 @@ export default function DashboardLayout() {
       if (!camps || camps.length <= 1) return;
       setCampSwapDirection(direction);
       setCampSwapTick((prev) => prev + 1);
-      setFocusedCampIndex((prev) => (prev + direction + camps.length) % camps.length);
     },
     [camps],
   );
@@ -261,6 +260,10 @@ export default function DashboardLayout() {
     },
     [campCards, confirmCampSelection],
   );
+
+  const handleSwapFinish = useCallback((frontCardIndex: number) => {
+    setFocusedCampIndex(frontCardIndex);
+  }, []);
 
   useEffect(() => {
     if (!campPopupOpen) return;
@@ -409,39 +412,30 @@ export default function DashboardLayout() {
       <AnimatePresence>
         {campPopupOpen && (
           <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm">
-            <AnimatePresence initial={false} mode="sync">
-              <motion.div
-                key={activeFloatingLinesTheme.key}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="pointer-events-none fixed inset-0 z-0 h-[100dvh] w-[100dvw]"
-              >
-                <FloatingLines
-                  linesGradient={activeFloatingLinesTheme.linesGradient}
-                  enabledWaves={['top', 'middle', 'bottom']}
-                  lineCount={[10, 14, 18]}
-                  lineDistance={[8, 6, 4]}
-                  bendRadius={4.8}
-                  bendStrength={-0.35}
-                  interactive={false}
-                  parallax={true}
-                  parallaxStrength={0.08}
-                  animationSpeed={0.9}
-                  mixBlendMode="screen"
-                />
-                <div
-                  className="absolute inset-0"
-                  style={{
-                    backgroundImage:
-                      `radial-gradient(circle at 50% 35%, ${activeFloatingLinesTheme.glow}, transparent 56%),` +
-                      `radial-gradient(circle at 16% 78%, ${activeFloatingLinesTheme.mist}, transparent 32%),` +
-                      'linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.44))',
-                  }}
-                />
-              </motion.div>
-            </AnimatePresence>
+            <div className="pointer-events-none fixed inset-0 z-0 h-[100dvh] w-[100dvw]">
+              <FloatingLines
+                linesGradient={activeFloatingLinesTheme.linesGradient}
+                enabledWaves={['top', 'middle', 'bottom']}
+                lineCount={[10, 14, 18]}
+                lineDistance={[8, 6, 4]}
+                bendRadius={4.8}
+                bendStrength={-0.35}
+                interactive={false}
+                parallax={true}
+                parallaxStrength={0.08}
+                animationSpeed={0.9}
+                mixBlendMode="screen"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage:
+                    `radial-gradient(circle at 50% 35%, ${activeFloatingLinesTheme.glow}, transparent 56%),` +
+                    `radial-gradient(circle at 16% 78%, ${activeFloatingLinesTheme.mist}, transparent 32%),` +
+                    'linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.44))',
+                }}
+              />
+            </div>
 
             <div className="relative z-10 flex h-full w-full items-center justify-center p-4">
               <motion.div
@@ -506,7 +500,8 @@ export default function DashboardLayout() {
                       manualSwapTick={campSwapTick}
                       manualSwapDirection={campSwapDirection}
                       bringToFrontOnClick={true}
-                      onCardClick={(idx) => setFocusedCampIndex(idx)}
+                      onCardClick={() => {}}
+                      onSwapFinish={handleSwapFinish}
                       skewAmount={2}
                       easing="linear"
                     >

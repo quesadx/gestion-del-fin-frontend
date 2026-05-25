@@ -280,6 +280,13 @@ export default function FloatingLines({
   const parallaxStrengthRef = useRef(parallaxStrength);
   const mouseDampingRef = useRef(mouseDamping);
 
+  const targetLineGradientRef = useRef<Vector3[]>(
+    Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1)),
+  );
+  const currentLineGradientRef = useRef<Vector3[]>(
+    Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1)),
+  );
+
   const getLineCount = (waveType: WaveName) => {
     if (typeof lineCount === 'number') return lineCount;
     if (!enabledWaves.includes(waveType)) return 0;
@@ -369,6 +376,18 @@ export default function FloatingLines({
 
     uniformsRef.current = uniforms;
 
+    // Initialize gradient transition refs from initial props
+    if (linesGradient && linesGradient.length > 0) {
+      const stops = linesGradient.slice(0, MAX_GRADIENT_STOPS);
+      uniforms.lineGradientCount.value = stops.length;
+      stops.forEach((hex, i) => {
+        const color = hexToVec3(hex);
+        targetLineGradientRef.current[i] = color;
+        currentLineGradientRef.current[i] = color.clone();
+        (uniforms.lineGradient.value as Vector3[])[i].set(color.x, color.y, color.z);
+      });
+    }
+
     const material = new ShaderMaterial({
       uniforms: uniforms as never,
       vertexShader,
@@ -421,7 +440,7 @@ export default function FloatingLines({
         const offsetY = -(y - centerY) / rect.height;
         targetParallaxRef.current.set(
           offsetX * parallaxStrengthRef.current,
-          offsetY * parallaxStrengthRef.current
+          offsetY * parallaxStrengthRef.current,
         );
       }
     };
@@ -452,6 +471,11 @@ export default function FloatingLines({
         (uniforms.parallaxOffset.value as Vector2).copy(currentParallaxRef.current);
       }
 
+      for (let i = 0; i < MAX_GRADIENT_STOPS; i++) {
+        currentLineGradientRef.current[i].lerp(targetLineGradientRef.current[i], 0.06);
+        (uniforms.lineGradient.value as Vector3[])[i].copy(currentLineGradientRef.current[i]);
+      }
+
       renderer.render(scene, camera);
       raf = requestAnimationFrame(renderLoop);
     };
@@ -469,7 +493,8 @@ export default function FloatingLines({
       renderer.forceContextLoss();
       renderer.domElement.remove();
     };
-  }, []); // Empty dependency array ensures the canvas is NEVER recreated
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures the canvas is NEVER recreated — linesGradient used only for initial setup
 
   // 2. UPDATE EFFECT: Runs when props change, instantly updating shader uniforms
   useEffect(() => {
@@ -490,17 +515,17 @@ export default function FloatingLines({
     u.topWavePosition.value.set(
       topWavePosition?.x ?? 10.0,
       topWavePosition?.y ?? 0.5,
-      topWavePosition?.rotate ?? -0.4
+      topWavePosition?.rotate ?? -0.4,
     );
     u.middleWavePosition.value.set(
       middleWavePosition?.x ?? 5.0,
       middleWavePosition?.y ?? 0.0,
-      middleWavePosition?.rotate ?? 0.2
+      middleWavePosition?.rotate ?? 0.2,
     );
     u.bottomWavePosition.value.set(
       bottomWavePosition?.x ?? 2.0,
       bottomWavePosition?.y ?? -0.7,
-      bottomWavePosition?.rotate ?? 0.4
+      bottomWavePosition?.rotate ?? 0.4,
     );
 
     u.interactive.value = interactive;
@@ -514,7 +539,7 @@ export default function FloatingLines({
       u.lineGradientCount.value = stops.length;
       stops.forEach((hex: string, i: number) => {
         const color = hexToVec3(hex);
-        (u.lineGradient.value as Vector3[])[i].set(color.x, color.y, color.z);
+        targetLineGradientRef.current[i].set(color.x, color.y, color.z);
       });
     } else {
       u.lineGradientCount.value = 0;
