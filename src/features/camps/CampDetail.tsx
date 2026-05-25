@@ -134,7 +134,7 @@ export default function CampDetail() {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl space-y-6"
+        className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl space-y-6"
       >
         {/* Header row */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">

@@ -61,7 +61,7 @@ export default function LoginPage() {
 
   return (
     <CardContainer className="w-full" containerClassName="w-full py-0">
-      <CardBody className="relative w-full overflow-hidden rounded-3xl border border-red-500/15 bg-[rgba(12,7,8,0.78)] p-6 sm:p-8 shadow-[0_24px_90px_rgba(0,0,0,0.45),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
+      <CardBody className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-red-500/15 bg-[rgba(12,7,8,0.78)] p-4 sm:p-8 shadow-[0_24px_90px_rgba(0,0,0,0.45),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.16),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.08),transparent_36%)]" />
 
         <div className="relative z-10 space-y-8">

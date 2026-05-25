@@ -133,7 +133,7 @@ export default function InventoryAudit() {
               key={type}
               onClick={() => handleTypeFilter(type)}
               className={cn(
-                'px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider rounded border transition-colors',
+                'px-3 py-1.5 sm:py-2 text-[11px] font-bold uppercase tracking-wider rounded border transition-colors touch-target',
                 selectedType === type
                   ? 'bg-brand-secondary/20 border-brand-secondary text-brand-secondary'
                   : 'border-zinc-800 text-zinc-400 hover:bg-zinc-900',
@@ -189,12 +189,24 @@ export default function InventoryAudit() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
-                  <th className="py-3 px-4 font-semibold">Timestamp</th>
-                  <th className="py-3 px-4 font-semibold">Resource</th>
-                  <th className="py-3 px-4 font-semibold">Type</th>
-                  <th className="py-3 px-4 font-semibold">Quantity</th>
-                  <th className="py-3 px-4 font-semibold">Description</th>
-                  <th className="py-3 px-4 font-semibold">User</th>
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Timestamp
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Resource
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Type
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Quantity
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    Description
+                  </th>
+                  <th scope="col" className="py-3 px-4 font-semibold">
+                    User
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/50">

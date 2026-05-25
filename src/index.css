@@ -252,4 +252,42 @@
       -webkit-overflow-scrolling: touch;
     }
   }
+
+  /* Skip to content link - visually hidden until focused */
+  .skip-to-content {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    background: var(--color-brand-primary);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: top 0.1s;
+  }
+
+  .skip-to-content:focus {
+    top: 0;
+  }
+
+  /* Focus-visible ring for keyboard users */
+  *:focus-visible {
+    outline: 2px solid var(--color-brand-primary);
+    outline-offset: 2px;
+  }
+
+  /* Remove focus outline for mouse users */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Touch-friendly tap targets */
+  @media (pointer: coarse) {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
 }
