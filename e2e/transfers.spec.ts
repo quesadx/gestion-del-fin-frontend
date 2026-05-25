@@ -1,11 +1,14 @@
 import { test, expect } from "@playwright/test";
 
+const USERNAME = process.env.E2E_USERNAME ?? "admin_master";
+const PASSWORD = process.env.E2E_PASSWORD ?? "password";
+
 test.describe("Transfers", () => {
   test.beforeEach(async ({ page }) => {
     // Log in as admin_master before each test
     await page.goto("/login");
-    await page.getByLabel(/username/i).fill("admin_master");
-    await page.getByLabel(/password/i).fill("password");
+    await page.getByLabel(/username/i).fill(USERNAME);
+    await page.getByLabel(/password/i).fill(PASSWORD);
     await page.getByRole("button", { name: /login|sign in|enter/i }).click();
     await page.waitForURL(/\/dashboard/);
   });
