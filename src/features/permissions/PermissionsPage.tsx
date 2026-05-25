@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useCan, PERM } from '../../lib/permissions';
 import { Permission } from '../../types';
 import { Key, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -14,6 +15,9 @@ export default function PermissionsPage() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const canCreate = useCan(PERM.PERMISSIONS_ALL);
+  const canUpdate = useCan(PERM.PERMISSIONS_ALL);
+  const canDelete = useCan(PERM.PERMISSIONS_ALL);
 
   const { data: permissions, isLoading } = useQuery<Permission[]>({
     queryKey: ['permissions'],
@@ -107,13 +111,15 @@ export default function PermissionsPage() {
             Define granular access control permissions
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          NEW PERMISSION
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            NEW PERMISSION
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -159,18 +165,22 @@ export default function PermissionsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => openEditModal(permission)}
-                  className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
-                >
-                  <Edit2 size={12} />
-                </button>
-                <button
-                  onClick={() => setDeletingPermission(permission)}
-                  className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
-                >
-                  <Trash2 size={12} />
-                </button>
+                {canUpdate && (
+                  <button
+                    onClick={() => openEditModal(permission)}
+                    className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => setDeletingPermission(permission)}
+                    className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}
