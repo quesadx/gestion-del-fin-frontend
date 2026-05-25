@@ -29,6 +29,7 @@ export default function InventoryList() {
   // Modals
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [adjustError, setAdjustError] = useState<string | null>(null);
 
   // Form states for manual adjustment
   const [selectedResourceId, setSelectedResourceId] = useState<number>(1);
@@ -50,15 +51,15 @@ export default function InventoryList() {
       const resourceTypes = (resRes.data?.data ?? resRes.data ?? []) as Resource[];
       return items.map((item) => {
         const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
-        const qty = item.quantity ?? 0;
-        const minStock = Number(rt?.minimum_stock ?? 0);
+        const qty = Math.floor(Number(item.quantity ?? 0));
+        const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));
         return {
           resource_id: item.resource_type_id,
           resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
           unit: rt?.unit ?? '',
           quantity: qty,
           minimum_stock: minStock,
-          daily_ration: Number(rt?.daily_ration ?? 0),
+          daily_ration: Math.floor(Number(rt?.daily_ration ?? 0)),
           daily_usage: 0,
           projection_days: null,
           status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK',
@@ -93,12 +94,22 @@ export default function InventoryList() {
       setIsAdjustOpen(false);
       setAdjustQuantity('');
       setAdjustDescription('');
+      setAdjustError(null);
+    },
+    onError: (err) => {
+      const msg =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ||
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+        (err as Error)?.message ||
+        'Adjustment failed';
+      setAdjustError(msg);
     },
   });
 
   const handleAdjustSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const qty = Number(adjustQuantity);
+    const qty = Math.floor(Number(adjustQuantity));
     if (!currentCampId || !selectedResourceId || isNaN(qty) || qty <= 0) return;
 
     adjustMutation.mutate({
@@ -322,7 +333,10 @@ export default function InventoryList() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsAdjustOpen(false)}
+                  onClick={() => {
+                    setIsAdjustOpen(false);
+                    setAdjustError(null);
+                  }}
                   className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
                 >
                   <X size={20} />
@@ -388,12 +402,15 @@ export default function InventoryList() {
                     </label>
                     <input
                       required
-                      type="number"
-                      min="1"
-                      step="any"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={adjustQuantity}
-                      onChange={(e) => setAdjustQuantity(e.target.value)}
-                      placeholder="e.g. 50"
+                      onChange={(e) => {
+                        const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                        setAdjustQuantity(cleaned);
+                      }}
+                      placeholder="e.g. 50000"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-secondary"
                     />
                   </div>
@@ -412,10 +429,19 @@ export default function InventoryList() {
                   />
                 </div>
 
+                {adjustError && (
+                  <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-lg">
+                    <p className="text-xs font-mono text-red-400 leading-relaxed">{adjustError}</p>
+                  </div>
+                )}
+
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
                   <button
                     type="button"
-                    onClick={() => setIsAdjustOpen(false)}
+                    onClick={() => {
+                      setIsAdjustOpen(false);
+                      setAdjustError(null);
+                    }}
                     className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
                   >
                     ABORT ADJUSTMENT

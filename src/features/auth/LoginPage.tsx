@@ -144,7 +144,7 @@ export default function LoginPage() {
           as="button"
           disabled={isLoading}
           type="submit"
-          className="w-full group relative"
+          className="w-full group relative hover:scale-[1.02] hover:brightness-110 transition-all duration-200"
           color="rgba(239,68,68,0.95)"
           speed="5s"
           thickness={2}
