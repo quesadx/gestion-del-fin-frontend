@@ -200,7 +200,7 @@ export default function DashboardLayout() {
           </div>
           <div className="leading-none">
             <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
-              GESTION DEL FIN
+              GESTION-DEL-FIN
             </p>
             <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
               Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
