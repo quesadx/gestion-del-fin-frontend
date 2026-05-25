@@ -404,6 +404,7 @@ export default function TransferList() {
         {canCreate && (
           <button
             onClick={() => setIsCreateOpen(true)}
+            aria-label="Create a new inter-camp transfer request"
             className="bg-brand-primary hover:bg-brand-primary/90 text-black font-semibold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)] uppercase tracking-wider"
           >
             <Plus size={18} />
@@ -419,7 +420,7 @@ export default function TransferList() {
           className="flex flex-col bg-surface-raised brutalist-border rounded-xl overflow-hidden"
           data-testid="transfer-list"
         >
-          <div className="p-4 bg-black/40 border-b border-zinc-900 flex justify-between items-center shrink-0">
+          <div className="p-3 sm:p-4 bg-black/40 border-b border-zinc-900 flex justify-between items-center shrink-0">
             <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
               Transfer Log
             </h3>
@@ -430,7 +431,7 @@ export default function TransferList() {
 
           <div className="flex-1 overflow-auto divide-y divide-zinc-900">
             {isLoading ? (
-              <div className="p-4">
+              <div className="p-3 sm:p-4">
                 <SkeletonList count={5} />
               </div>
             ) : !transfers || transfers.length === 0 ? (
@@ -442,6 +443,7 @@ export default function TransferList() {
                 {canCreate && (
                   <button
                     onClick={() => setIsCreateOpen(true)}
+                    aria-label="Create the first transfer request"
                     className="text-[10px] font-bold uppercase text-brand-primary hover:underline"
                   >
                     + Initiate first transfer
@@ -459,6 +461,7 @@ export default function TransferList() {
                   <button
                     key={transfer.id}
                     onClick={() => setSelectedId(transfer.id)}
+                    aria-label={`View transfer #${transfer.id} from ${reqName} to ${tgtName}`}
                     className={cn(
                       'w-full p-5 text-left transition-all hover:bg-white/5 border-l-4 group relative',
                       isSelected ? 'bg-white/5 border-brand-primary' : 'border-transparent',
@@ -571,7 +574,7 @@ export default function TransferList() {
                 className="flex-1 flex flex-col h-full overflow-hidden"
               >
                 {/* Detail header */}
-                <div className="p-6 border-b border-zinc-900 space-y-4 bg-black/30 shrink-0">
+                <div className="p-4 sm:p-6 border-b border-zinc-900 space-y-4 bg-black/30 shrink-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">
@@ -624,7 +627,7 @@ export default function TransferList() {
                 </div>
 
                 {/* Scrollable body */}
-                <div className="flex-1 overflow-auto p-6 space-y-6 bg-black/20">
+                <div className="flex-1 overflow-auto p-4 sm:p-6 space-y-6 bg-black/20">
                   {/* Scheduled delivery banner */}
                   {detail.scheduled_delivery_date && (
                     <div className="flex items-center gap-3 p-3 bg-blue-950/15 border border-blue-500/25 rounded-lg">
@@ -650,13 +653,22 @@ export default function TransferList() {
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="bg-zinc-900/80">
-                              <th className="text-left p-3 font-black uppercase text-[10px] tracking-wider text-zinc-500">
+                              <th
+                                scope="col"
+                                className="text-left p-3 font-black uppercase text-[10px] tracking-wider text-zinc-500"
+                              >
                                 Resource
                               </th>
-                              <th className="text-right p-3 font-black uppercase text-[10px] tracking-wider text-zinc-500">
+                              <th
+                                scope="col"
+                                className="text-right p-3 font-black uppercase text-[10px] tracking-wider text-zinc-500"
+                              >
                                 Quantity
                               </th>
-                              <th className="text-right p-3 font-black uppercase text-[10px] tracking-wider text-zinc-500">
+                              <th
+                                scope="col"
+                                className="text-right p-3 font-black uppercase text-[10px] tracking-wider text-zinc-500"
+                              >
                                 Unit
                               </th>
                             </tr>
@@ -699,7 +711,7 @@ export default function TransferList() {
 
                   {/* Notes */}
                   {detail.notes && (
-                    <div className="p-4 bg-zinc-900/40 border border-zinc-800 rounded-lg">
+                    <div className="p-3 sm:p-4 bg-zinc-900/40 border border-zinc-800 rounded-lg">
                       <p className="text-[10px] font-black text-zinc-500 uppercase mb-2">Notes</p>
                       <p className="text-xs text-zinc-400 font-mono leading-relaxed">
                         {detail.notes}
@@ -709,7 +721,7 @@ export default function TransferList() {
 
                   {/* Terminal state banners */}
                   {detail.status === 'COMPLETED' && (
-                    <div className="flex items-center gap-3 p-4 bg-green-950/20 border border-green-500/30 rounded-lg">
+                    <div className="flex items-center gap-3 p-3 sm:p-4 bg-green-950/20 border border-green-500/30 rounded-lg">
                       <CheckCheck size={18} className="text-green-400 shrink-0" />
                       <div>
                         <p className="text-xs font-black text-green-400 uppercase">
@@ -723,7 +735,7 @@ export default function TransferList() {
                   )}
 
                   {detail.status === 'REJECTED' && (
-                    <div className="flex items-center gap-3 p-4 bg-red-950/20 border border-red-500/30 rounded-lg">
+                    <div className="flex items-center gap-3 p-3 sm:p-4 bg-red-950/20 border border-red-500/30 rounded-lg">
                       <Ban size={18} className="text-red-500 shrink-0" />
                       <div>
                         <p className="text-xs font-black text-red-500 uppercase">
@@ -754,6 +766,7 @@ export default function TransferList() {
                       <div className="flex gap-3">
                         <button
                           onClick={() => setConfirmRejectId(detail.id)}
+                          aria-label="Reject this pending transfer request"
                           className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
                         >
                           <XCircle size={15} />
@@ -762,6 +775,7 @@ export default function TransferList() {
                         <button
                           onClick={() => approveSrcMutation.mutate(detail.id)}
                           disabled={approveSrcMutation.isPending}
+                          aria-label="Approve this transfer at the source camp"
                           className="flex-2 py-3 text-xs font-black uppercase bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
                         >
                           {approveSrcMutation.isPending ? (
@@ -784,6 +798,7 @@ export default function TransferList() {
                                 type="datetime-local"
                                 value={scheduleDate}
                                 onChange={(e) => setScheduleDate(e.target.value)}
+                                aria-label="Select scheduled delivery date and time"
                                 className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
                               />
                               <button
@@ -796,6 +811,7 @@ export default function TransferList() {
                                   }
                                 }}
                                 disabled={!scheduleDate || scheduleMutation.isPending}
+                                aria-label="Set the scheduled delivery date and time"
                                 className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5"
                               >
                                 {scheduleMutation.isPending ? (
@@ -809,7 +825,8 @@ export default function TransferList() {
                                   setIsScheduling(false);
                                   setScheduleDate('');
                                 }}
-                                className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500"
+                                aria-label="Cancel scheduling and close date picker"
+                                className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
                               >
                                 <X size={13} />
                               </button>
@@ -817,6 +834,7 @@ export default function TransferList() {
                           ) : (
                             <button
                               onClick={() => setIsScheduling(true)}
+                              aria-label="Open date picker to schedule delivery date"
                               className="px-4 py-2 text-xs font-bold uppercase border border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 rounded transition-colors flex items-center gap-2"
                             >
                               <Calendar size={13} />
@@ -828,6 +846,7 @@ export default function TransferList() {
                         <div className="flex gap-3">
                           <button
                             onClick={() => setConfirmRejectId(detail.id)}
+                            aria-label="Reject this source-approved transfer"
                             className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
                           >
                             <XCircle size={15} />
@@ -836,6 +855,7 @@ export default function TransferList() {
                           <button
                             onClick={() => approveTgtMutation.mutate(detail.id)}
                             disabled={approveTgtMutation.isPending}
+                            aria-label="Approve this transfer at the target camp"
                             className="flex-2 py-3 text-xs font-black uppercase bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(16,185,129,0.2)]"
                           >
                             {approveTgtMutation.isPending ? (
@@ -853,6 +873,7 @@ export default function TransferList() {
                       <div className="flex gap-3">
                         <button
                           onClick={() => setConfirmRejectId(detail.id)}
+                          aria-label="Reject this fully approved transfer"
                           className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
                         >
                           <XCircle size={15} />
@@ -860,6 +881,7 @@ export default function TransferList() {
                         </button>
                         <button
                           onClick={() => setConfirmCompleteId(detail.id)}
+                          aria-label="Mark this transfer as completed"
                           className="flex-2 py-3 text-xs font-black uppercase bg-green-700 hover:bg-green-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(34,197,94,0.2)]"
                         >
                           <CheckCheck size={15} />
@@ -879,7 +901,7 @@ export default function TransferList() {
       <AnimatePresence>
         {isCreateOpen && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
             onClick={() => setIsCreateOpen(false)}
           >
             <motion.div
@@ -887,7 +909,7 @@ export default function TransferList() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6 my-auto"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6 my-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal header */}
@@ -926,6 +948,7 @@ export default function TransferList() {
                     required
                     value={targetCamp ?? ''}
                     onChange={(e) => setTargetCamp(e.target.value ? Number(e.target.value) : null)}
+                    aria-label="Select destination camp for transfer"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary"
                   >
                     <option value="">— Select destination camp —</option>
@@ -951,6 +974,7 @@ export default function TransferList() {
                         setTransferType('RESOURCE');
                         setPersonItems([]);
                       }}
+                      aria-label="Switch transfer type to resource items"
                       className={cn(
                         'flex-1 py-2 text-xs font-bold uppercase rounded border transition-all',
                         transferType === 'RESOURCE'
@@ -964,6 +988,7 @@ export default function TransferList() {
                     <button
                       type="button"
                       onClick={() => setTransferType('PERSON')}
+                      aria-label="Switch transfer type to personnel"
                       className={cn(
                         'flex-1 py-2 text-xs font-bold uppercase rounded border transition-all',
                         transferType === 'PERSON'
@@ -988,7 +1013,7 @@ export default function TransferList() {
                         {personItems.length} selected
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
                       {(people ?? []).length === 0 && (
                         <p className="col-span-2 text-[11px] text-zinc-600 font-mono text-center py-2">
                           No personnel available.
@@ -1007,8 +1032,9 @@ export default function TransferList() {
                                   : [...prev, person.id],
                               )
                             }
+                            aria-label={`Select ${person.full_name} (${person.profession_name || 'UNASSIGNED'}) for transfer`}
                             className={cn(
-                              'p-2 text-left border rounded text-xs transition-all',
+                              'p-2 text-left border rounded text-xs transition-all touch-target',
                               personItems.includes(person.id)
                                 ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
                                 : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
@@ -1039,7 +1065,8 @@ export default function TransferList() {
                       onClick={() =>
                         setResourceItems((prev) => [...prev, { resource_type_id: 0, amount: 0 }])
                       }
-                      className="text-[10px] font-bold uppercase text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1"
+                      aria-label={`Add another ${transferType === 'PERSON' ? 'ration' : 'resource'} item to the list`}
+                      className="text-[10px] font-bold uppercase text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1 touch-target"
                     >
                       <Plus size={11} />
                       ADD {transferType === 'PERSON' ? 'RATION' : 'RESOURCE'}
@@ -1067,6 +1094,7 @@ export default function TransferList() {
                               };
                               setResourceItems(updated);
                             }}
+                            aria-label={`Select resource type for item ${idx + 1}`}
                             className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary min-w-0"
                           >
                             <option value="">— Select resource —</option>
@@ -1098,7 +1126,7 @@ export default function TransferList() {
                               onClick={() =>
                                 setResourceItems((prev) => prev.filter((_, i) => i !== idx))
                               }
-                              className="p-2 shrink-0 text-zinc-600 hover:text-red-500 transition-colors rounded hover:bg-red-950/20"
+                              className="p-2 shrink-0 text-zinc-600 hover:text-red-500 transition-colors rounded hover:bg-red-950/20 touch-target"
                             >
                               <X size={14} />
                             </button>
@@ -1128,6 +1156,7 @@ export default function TransferList() {
                   <button
                     type="button"
                     onClick={() => setIsCreateOpen(false)}
+                    aria-label="Cancel and close the transfer creation form"
                     className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
                   >
                     CANCEL
@@ -1140,6 +1169,7 @@ export default function TransferList() {
                       (transferType === 'PERSON' && personItems.length === 0) ||
                       resourceItems.every((i) => !i.resource_type_id || !i.amount)
                     }
+                    aria-label="Submit the transfer request for processing"
                     className="flex-2 py-2.5 bg-brand-primary text-black text-xs font-black uppercase rounded hover:bg-brand-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
                   >
                     {createMutation.isPending ? (
@@ -1160,7 +1190,7 @@ export default function TransferList() {
       <AnimatePresence>
         {confirmRejectId !== null && (
           <div
-            className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm"
             onClick={() => {
               setConfirmRejectId(null);
               setRejectReason('');
@@ -1171,7 +1201,7 @@ export default function TransferList() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 8 }}
               transition={{ duration: 0.15 }}
-              className="bg-surface-raised brutalist-border rounded-xl p-6 max-w-sm w-full space-y-5"
+              className="bg-surface-raised brutalist-border rounded-xl p-4 sm:p-6 max-w-sm w-full space-y-5"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start gap-4">
@@ -1211,6 +1241,7 @@ export default function TransferList() {
                     setRejectReason('');
                   }}
                   disabled={rejectMutation.isPending}
+                  aria-label="Cancel and close the rejection dialog"
                   className="flex-1 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase disabled:opacity-40"
                 >
                   CANCEL
@@ -1225,6 +1256,7 @@ export default function TransferList() {
                     }
                   }}
                   disabled={rejectMutation.isPending || !rejectReason.trim()}
+                  aria-label="Confirm the transfer rejection with provided reason"
                   className="flex-1 py-2 text-xs font-black uppercase rounded transition-colors flex items-center justify-center gap-2 disabled:opacity-40 bg-red-600 hover:bg-red-500 text-white"
                 >
                   {rejectMutation.isPending ? (

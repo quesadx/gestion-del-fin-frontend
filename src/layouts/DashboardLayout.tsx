@@ -29,12 +29,14 @@ import { useServerTime } from '../hooks/useServerTime';
 import { can, PERM, usePermissions } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
-import { ShieldAlert } from 'lucide-react';
-import { CardBody, CardContainer } from '../components/ui/3d-card';
+import { ShieldAlert, Eye } from 'lucide-react';
+
 import DarkVeil from '../components/backgrounds/DarkVeil';
 import FloatingLines from '../components/backgrounds/FloatingLines';
 import CardSwap, { Card } from '../components/ui/CardSwap';
 import StarBorder from '../components/ui/StarBorder';
+import EvilEye from '../components/ui/EvilEye';
+import GlitchText from '../components/ui/GlitchText';
 
 const PANEL_SHELL =
   'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(78,32,36,0.8)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.28),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
@@ -183,6 +185,8 @@ export default function DashboardLayout() {
   const [campSwapTick, setCampSwapTick] = useState(0);
   const [campSwapDirection, setCampSwapDirection] = useState<1 | -1>(1);
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [showEyePhase, setShowEyePhase] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -368,84 +372,84 @@ export default function DashboardLayout() {
   return (
     <div className="relative z-10 flex flex-col h-screen bg-transparent text-zinc-100 overflow-hidden">
       {/* ── Top header ──────────────────────────────────────────────────── */}
-      <CardContainer
-        className="w-full"
-        containerClassName="mx-4 mt-4 shrink-0 relative z-50 overflow-visible"
-        tiltStrength={1200}
-        tiltXStrength={1600}
-        tiltYStrength={1200}
-      >
-        <CardBody className="relative z-50 h-16 w-full overflow-visible rounded-3xl border border-red-500/15 bg-[rgba(37,23,26,0.78)] px-5 sm:px-6 shadow-[0_18px_70px_rgba(0,0,0,0.24),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
+      <header className="mx-2 sm:mx-4 mt-2 sm:mt-4 shrink-0 relative z-50 overflow-visible">
+        <div className="relative h-14 sm:h-16 w-full overflow-visible rounded-2xl sm:rounded-3xl border border-red-500/15 bg-[rgba(37,23,26,0.78)] px-3 sm:px-6 shadow-[0_18px_70px_rgba(0,0,0,0.24),0_0_0_1px_rgba(239,68,68,0.05)] backdrop-blur-xl">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.12),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(245,158,11,0.06),transparent_35%)]" />
 
-          <div className="relative z-10 flex h-full items-center justify-between gap-4">
+          <div className="relative z-10 flex h-full items-center justify-between gap-2 sm:gap-4">
             {/* Branding */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
-                <ShieldAlert size={17} />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
+                <ShieldAlert size={15} />
               </div>
-              <div className="leading-none">
+              <div className="leading-none hidden xs:block">
                 <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
                   GESTION-DEL-FIN
                 </p>
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
-                  Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
+                <span className="text-[10px] sm:text-xs font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
+                  Survival Terminal v1.0.0
                 </span>
               </div>
             </div>
 
-            {/* Camp switcher - left of center */}
-            <div className="relative flex items-center">
+            {/* Camp switcher - centered */}
+            <div className="flex items-center">
               <StarBorder
                 as="button"
                 onClick={openCampPopup}
-                className="group cursor-pointer hover:scale-[1.02] hover:brightness-110 transition-all duration-200 [&_.inner-content]:!py-0 [&_.inner-content]:!px-0 [&_.inner-content]:!bg-transparent [&_.inner-content]:!border-none [&_.inner-content]:!text-inherit [&_.inner-content]:!text-xs [&_.inner-content]:!rounded-full"
+                aria-label={
+                  camps?.find((c) => c.id === currentCampId)?.name
+                    ? `Current refuge: ${camps.find((c) => c.id === currentCampId)?.name}`
+                    : 'Select refuge'
+                }
+                className="group cursor-pointer hover:scale-[1.02] hover:brightness-110 transition-all duration-200 [&_.inner-content]:!py-0 [&_.inner-content]:!px-0 [&_.inner-content]:!bg-transparent [&_.inner-content]:!border-none [&_.inner-content]:!text-inherit [&_.inner-content]:!text-xs [&_.inner-content]:sm:!text-sm [&_.inner-content]:!rounded-full"
                 color="rgba(239,68,68,0.85)"
                 speed="5s"
                 thickness={2}
               >
-                <div className="flex items-center gap-3 px-4 py-1.5">
-                  <Tent className="text-brand-secondary shrink-0" size={18} />
-                  <span className="truncate text-zinc-200 text-sm font-bold font-mono uppercase tracking-[0.16em]">
+                <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-1 min-h-[44px] touch-target">
+                  <Tent className="text-brand-secondary shrink-0" size={16} />
+                  <span className="truncate text-zinc-200 text-[11px] sm:text-sm font-bold font-mono uppercase tracking-[0.12em] sm:tracking-[0.16em] max-w-[80px] sm:max-w-[180px]">
                     {camps?.find((c) => c.id === currentCampId)?.name ?? 'Select Refuge'}
                   </span>
                 </div>
               </StarBorder>
             </div>
 
-            {/* Right: server time + connection status + user chip */}
-            <div className="flex items-center gap-3.5">
+            {/* Right: server time + connection status + user info */}
+            <div className="flex items-center gap-2 sm:gap-3.5">
               {/* Server time */}
               {synced && (
-                <span className="hidden md:inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 tabular-nums">
+                <span className="hidden lg:inline-flex items-center gap-1.5 text-sm font-mono text-zinc-400 tabular-nums">
                   <Clock size={13} className="text-zinc-500" />
                   {timeStr}
                 </span>
               )}
 
-              {/* User chip */}
-              <div className="flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
-                <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
-                  {user?.username?.[0].toUpperCase()}
-                </div>
-                <div className="hidden md:block text-left leading-none">
-                  <span className="text-xs font-bold block">{user?.username}</span>
-                  <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
-                    {user?.role?.replace(/_/g, ' ')}
-                  </span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  title="Terminate Session"
-                  className="p-1 ml-1 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors"
-                >
-                  <LogOut size={13} />
-                </button>
+              <div className="w-px h-5 sm:h-6 bg-red-500/20" />
+
+              {/* User info */}
+              <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-[10px] sm:text-xs font-black text-brand-secondary select-none">
+                {user?.username?.[0].toUpperCase()}
               </div>
+              <div className="hidden md:block text-left leading-none">
+                <span className="text-sm font-bold block">{user?.username}</span>
+                <span className="text-xs text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
+                  {user?.role?.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                aria-label="Terminate Session"
+                title="Terminate Session"
+                className="p-1.5 text-zinc-500 hover:text-brand-primary border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           </div>
-        </CardBody>
-      </CardContainer>
+        </div>
+      </header>
 
       {/* ── Disconnected banner ──────────────────────────────────────── */}
       <AnimatePresence>
@@ -484,6 +488,24 @@ export default function DashboardLayout() {
               />
             </div>
 
+            {!showEasterEgg ? (
+              <div className="absolute left-0 bottom-0 z-50 p-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEasterEgg(true);
+                    setShowEyePhase(true);
+                    setTimeout(() => setShowEyePhase(false), 5000);
+                    setTimeout(() => setShowEasterEgg(false), 5500);
+                  }}
+                  aria-label="Easter egg"
+                  className="rounded-full border border-red-500/30 bg-black/50 p-2.5 text-red-400 backdrop-blur-md transition-all hover:scale-110 hover:border-red-500/60 hover:text-red-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]"
+                >
+                  <Eye size={18} />
+                </button>
+              </div>
+            ) : null}
+
             <div className="relative z-10 flex h-full w-full items-center justify-center p-4">
               <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 8 }}
@@ -520,7 +542,7 @@ export default function DashboardLayout() {
                           type="button"
                           onClick={() => shiftCampCards(-1)}
                           aria-label="Show previous camp"
-                          className="absolute left-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                          className="absolute left-8 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                         >
                           <ChevronLeft size={30} />
                         </button>
@@ -529,7 +551,7 @@ export default function DashboardLayout() {
                           type="button"
                           onClick={() => shiftCampCards(1)}
                           aria-label="Show next camp"
-                          className="absolute right-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                          className="absolute right-8 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
                         >
                           <ChevronRight size={30} />
                         </button>
@@ -629,18 +651,61 @@ export default function DashboardLayout() {
               <div className={`${ALERT_ROW} border-l-2 border-red-500/60`}>
                 <div className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                  <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider">
+                  <p className="text-sm font-mono font-bold text-red-400 uppercase tracking-wider">
                     Server unreachable — data may be stale. Retrying every 5s.
                   </p>
                 </div>
                 <button
                   onClick={retry}
-                  className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="shrink-0 text-xs font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
                 >
                   Retry Now
                 </button>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Easter egg overlay ─────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showEasterEgg && (
+          <motion.div
+            key="easter-egg"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.85 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[999] bg-black/95"
+          >
+            {showEyePhase ? (
+              <div className="absolute inset-0">
+                <EvilEye
+                  eyeColor="#EF4444"
+                  intensity={0.6}
+                  pupilSize={0.7}
+                  irisWidth={0.35}
+                  glowIntensity={0.3}
+                  scale={0.6}
+                  noiseScale={1.5}
+                  pupilFollow={1.5}
+                  flameSpeed={3.0}
+                  backgroundColor="#000000"
+                />
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <GlitchText
+                  speed={0.1}
+                  enableShadows={true}
+                  enableOnHover={false}
+                  className="!text-white"
+                >
+                  1000011
+                </GlitchText>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -664,13 +729,13 @@ export default function DashboardLayout() {
                   <div className={`${ALERT_ROW} border-l-2 border-red-500/60`}>
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                      <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider truncate">
+                      <p className="text-sm font-mono font-bold text-red-400 uppercase tracking-wider truncate">
                         CRITICAL STOCK: {inventoryAlerts.criticalNames.join(', ')}
                       </p>
                     </div>
                     <button
                       onClick={() => setAlertDismissed(true)}
-                      className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="shrink-0 text-xs font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                       Dismiss
                     </button>
@@ -681,14 +746,14 @@ export default function DashboardLayout() {
                   <div className={`${ALERT_ROW} border-l-2 border-amber-500/60`}>
                     <div className="flex items-center gap-2.5">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                      <p className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+                      <p className="text-sm font-mono font-bold text-amber-400 uppercase tracking-wider">
                         LOW STOCK: {inventoryAlerts.lowCount} resource
                         {inventoryAlerts.lowCount !== 1 ? 's' : ''} below minimum
                       </p>
                     </div>
                     <button
                       onClick={() => setAlertDismissed(true)}
-                      className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                      className="shrink-0 text-xs font-black uppercase tracking-wider px-3 py-1 rounded border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
                     >
                       Dismiss
                     </button>
@@ -700,7 +765,7 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-transparent px-6 py-6 sm:px-8 sm:py-8 pb-32">
+      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-32">
         <div className="max-w-7xl mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div

@@ -206,7 +206,9 @@ export default function RolesPage() {
                 {canUpdate && (
                   <button
                     onClick={() => openEditModal(role)}
-                    className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                    aria-label={`Edit ${role.name}`}
+                    title={`Edit ${role.name}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
                   >
                     <Edit2 size={12} />
                   </button>
@@ -214,7 +216,9 @@ export default function RolesPage() {
                 {canDelete && (
                   <button
                     onClick={() => setDeletingRole(role)}
-                    className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                    aria-label={`Delete ${role.name}`}
+                    title={`Delete ${role.name}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -232,7 +236,7 @@ export default function RolesPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -250,7 +254,9 @@ export default function RolesPage() {
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close modal"
+                  title="Close modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -264,6 +270,7 @@ export default function RolesPage() {
                   <input
                     required
                     type="text"
+                    aria-label="Role name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. camp_operator"
@@ -276,6 +283,7 @@ export default function RolesPage() {
                     Justification / Description
                   </label>
                   <textarea
+                    aria-label="Role justification / description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Explain why this role is needed and what it enables..."
@@ -356,7 +364,7 @@ export default function RolesPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div className="flex items-start gap-3">

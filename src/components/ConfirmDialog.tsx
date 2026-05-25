@@ -33,6 +33,10 @@ export function ConfirmDialog({
       {isOpen && (
         <div
           className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          role="alertdialog"
+          aria-modal="true"
+          aria-label={title}
+          aria-describedby="confirm-dialog-description"
           onClick={onCancel}
         >
           <motion.div
@@ -68,7 +72,12 @@ export function ConfirmDialog({
                     <h3 className="font-black uppercase tracking-tight text-sm text-white">
                       {title}
                     </h3>
-                    <p className="text-xs text-zinc-400 leading-relaxed font-mono">{description}</p>
+                    <p
+                      id="confirm-dialog-description"
+                      className="text-xs text-zinc-400 leading-relaxed font-mono"
+                    >
+                      {description}
+                    </p>
                   </div>
                 </div>
 

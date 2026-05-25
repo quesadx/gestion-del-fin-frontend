@@ -242,18 +242,16 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
             {isWorker ? 'Camp Status' : 'Operational Overview'}
           </h1>
-          <p className="text-zinc-500 font-mono text-xs uppercase pl-1">
-            {isWorker
-              ? 'Camp Resources & Population'
-              : 'Resource & Population Surveillance // Stability Alpha-7'}
+          <p className="text-zinc-500 font-mono text-[10px] sm:text-xs uppercase pl-1">
+            {isWorker ? 'Camp Resources & Population' : 'Resource & Population Surveillance'}
           </p>
         </div>
-        <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg">
+        <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg self-start">
           {isWorker ? (
             <HardHat size={18} className="text-amber-500" />
           ) : (

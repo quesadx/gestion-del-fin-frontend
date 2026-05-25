@@ -212,7 +212,9 @@ export default function UsersPage() {
                 {canUpdateUser && (
                   <button
                     onClick={() => openEditModal(user)}
-                    className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                    aria-label={`Edit ${user.username}`}
+                    title={`Edit ${user.username}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
                   >
                     <Edit2 size={12} />
                   </button>
@@ -220,7 +222,9 @@ export default function UsersPage() {
                 {canDeleteUser && (
                   <button
                     onClick={() => setDeletingUser(user)}
-                    className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                    aria-label={`Delete ${user.username}`}
+                    title={`Delete ${user.username}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
                   >
                     <Trash2 size={12} />
                   </button>
@@ -238,7 +242,7 @@ export default function UsersPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -256,7 +260,9 @@ export default function UsersPage() {
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close modal"
+                  title="Close modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -268,6 +274,7 @@ export default function UsersPage() {
                   <input
                     required
                     type="text"
+                    aria-label="Username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="e.g. jdoe"
@@ -283,6 +290,7 @@ export default function UsersPage() {
                     <input
                       required
                       type="password"
+                      aria-label="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimum 8 characters"
@@ -295,6 +303,7 @@ export default function UsersPage() {
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">Role</label>
                   <select
                     required
+                    aria-label="Role"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary"
@@ -314,6 +323,7 @@ export default function UsersPage() {
                   <input
                     type="number"
                     min="0"
+                    aria-label="Camp ID"
                     value={campId}
                     onChange={(e) => setCampId(e.target.value)}
                     placeholder="e.g. 1"
@@ -352,7 +362,7 @@ export default function UsersPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div className="flex items-start gap-3">

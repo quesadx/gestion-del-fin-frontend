@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import {
-  Clock,
+  Timer,
   Mesh,
   OrthographicCamera,
   PlaneGeometry,
@@ -283,7 +283,7 @@ export default function FloatingLines({
   const parallaxStrengthRef = useRef(parallaxStrength);
   const mouseDampingRef = useRef(mouseDamping);
 
-  const clockRef = useRef<Clock | null>(null);
+  const clockRef = useRef<Timer | null>(null);
   const targetLineGradientRef = useRef<Vector3[]>(
     Array.from({ length: MAX_GRADIENT_STOPS }, () => new Vector3(1, 1, 1)),
   );
@@ -409,7 +409,7 @@ export default function FloatingLines({
     const mesh = new Mesh(geometry, material);
     scene.add(mesh);
 
-    const clock = new Clock();
+    const clock = new Timer();
     clockRef.current = clock;
 
     const setSize = () => {
@@ -467,7 +467,7 @@ export default function FloatingLines({
     const renderLoop = () => {
       if (!active) return;
 
-      uniforms.iTime.value = clock.getElapsedTime();
+      uniforms.iTime.value = clock.getElapsed();
 
       if (interactiveRef.current) {
         currentMouseRef.current.lerp(targetMouseRef.current, mouseDampingRef.current);
@@ -482,7 +482,7 @@ export default function FloatingLines({
         (uniforms.parallaxOffset.value as Vector2).copy(currentParallaxRef.current);
       }
 
-      const elapsed = clock.getElapsedTime() - transitionStartTimeRef.current;
+      const elapsed = clock.getElapsed() - transitionStartTimeRef.current;
       const t = Math.min(elapsed / TRANSITION_DURATION, 1);
       const easedT = 1 - Math.pow(1 - t, 3);
       for (let i = 0; i < MAX_GRADIENT_STOPS; i++) {
@@ -553,7 +553,7 @@ export default function FloatingLines({
       const stops = linesGradient.slice(0, MAX_GRADIENT_STOPS);
       u.lineGradientCount.value = stops.length;
 
-      const now = clockRef.current?.getElapsedTime() ?? performance.now() / 1000;
+      const now = clockRef.current?.getElapsed() ?? performance.now() / 1000;
       transitionStartTimeRef.current = now;
       for (let i = 0; i < MAX_GRADIENT_STOPS; i++) {
         transitionStartGradientRef.current[i].copy(currentLineGradientRef.current[i]);

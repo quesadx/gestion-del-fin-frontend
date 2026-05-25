@@ -118,7 +118,7 @@ export default function GamificationWidget() {
   const earnedList = ACHIEVEMENTS.filter((a) => earnedAchievements.includes(a.id));
 
   return (
-    <div className="bg-surface-raised/60 border border-zinc-800 rounded-xl p-5 space-y-4">
+    <div className="bg-surface-raised/60 border border-zinc-800 rounded-xl p-4 sm:p-5 space-y-4">
       <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
         Operational Rank
       </p>

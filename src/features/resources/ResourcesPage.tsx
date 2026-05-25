@@ -194,7 +194,9 @@ export default function ResourcesPage() {
                     {canUpdate && (
                       <button
                         onClick={() => openEditModal(resource)}
-                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                        aria-label={`Edit ${resource.name}`}
+                        title={`Edit ${resource.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
                       >
                         <Edit2 size={12} />
                       </button>
@@ -202,7 +204,9 @@ export default function ResourcesPage() {
                     {canDelete && (
                       <button
                         onClick={() => setDeletingResource(resource)}
-                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                        aria-label={`Delete ${resource.name}`}
+                        title={`Delete ${resource.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -261,7 +265,7 @@ export default function ResourcesPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -277,7 +281,9 @@ export default function ResourcesPage() {
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close modal"
+                  title="Close modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -292,6 +298,7 @@ export default function ResourcesPage() {
                     <input
                       required
                       type="text"
+                      aria-label="Resource name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Canned Beans"
@@ -305,6 +312,7 @@ export default function ResourcesPage() {
                     <input
                       required
                       type="text"
+                      aria-label="Unit of measure"
                       value={unit}
                       onChange={(e) => setUnit(e.target.value)}
                       placeholder="e.g. kg, cans, liters"
@@ -323,6 +331,7 @@ export default function ResourcesPage() {
                       type="number"
                       min="0"
                       step="any"
+                      aria-label="Daily ration per person"
                       value={dailyRation}
                       onChange={(e) => setDailyRation(e.target.value)}
                       placeholder="e.g. 0.5"
@@ -338,6 +347,7 @@ export default function ResourcesPage() {
                       type="number"
                       min="0"
                       step="any"
+                      aria-label="Minimum stock level"
                       value={minimumStock}
                       onChange={(e) => setMinimumStock(e.target.value)}
                       placeholder="e.g. 100"
@@ -396,7 +406,7 @@ export default function ResourcesPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div className="flex items-start gap-3">

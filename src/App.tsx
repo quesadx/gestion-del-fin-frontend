@@ -137,9 +137,12 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <TitleManager />
+        <a href="#main-content" className="skip-to-content">
+          Skip to content
+        </a>
         <div className="relative isolate min-h-screen bg-surface-base">
           <AppBackground />
-          <div className="relative z-10">
+          <div id="main-content" className="relative z-10">
             <Toaster />
             <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>

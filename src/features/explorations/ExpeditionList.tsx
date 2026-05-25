@@ -495,8 +495,9 @@ export default function ExpeditionList() {
                     {canUpdate && (
                       <button
                         onClick={() => handleEditExpClick(exp)}
-                        className="p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer"
-                        title="Edit details"
+                        aria-label="Edit expedition"
+                        title="Edit expedition"
+                        className="p-1.5 sm:p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer touch-target"
                       >
                         <Edit2 size={14} />
                       </button>
@@ -505,8 +506,9 @@ export default function ExpeditionList() {
                       <button
                         onClick={() => setConfirmDeleteId(exp.id)}
                         disabled={deleteExpMutation.isPending}
-                        className="p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer"
-                        title="Delete log"
+                        aria-label="Delete expedition"
+                        title="Delete expedition"
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer touch-target"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -565,7 +567,7 @@ export default function ExpeditionList() {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
             >
               <div className="border-b border-zinc-900 pb-4 mb-2">
                 <p className="text-[10px] font-mono text-brand-primary uppercase tracking-widest leading-none mb-1">
@@ -649,6 +651,7 @@ export default function ExpeditionList() {
                     Mission briefings / allocated assets notes
                   </label>
                   <textarea
+                    aria-label="Mission briefings / allocated assets notes"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="e.g. searching dry food caches. Allocating 4 units of 9mm ammo and basic scout gear."
@@ -708,6 +711,7 @@ export default function ExpeditionList() {
                     return (
                       <div key={idx} className="flex gap-2 items-center">
                         <select
+                          aria-label="Select resource type"
                           value={row.resource_type_id || ''}
                           onChange={(e) => {
                             const updated = [...allocatedResources];
@@ -729,6 +733,7 @@ export default function ExpeditionList() {
                         <input
                           type="number"
                           min={1}
+                          aria-label="Provision quantity"
                           value={row.amount || ''}
                           onChange={(e) => {
                             const updated = [...allocatedResources];
@@ -746,7 +751,9 @@ export default function ExpeditionList() {
                           onClick={() =>
                             setAllocatedResources(allocatedResources.filter((_, i) => i !== idx))
                           }
-                          className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+                          aria-label="Remove allocated provision"
+                          title="Remove allocated provision"
+                          className="p-1.5 sm:p-2 text-zinc-500 hover:text-red-400 transition-colors touch-target"
                         >
                           <X size={14} />
                         </button>
@@ -798,7 +805,7 @@ export default function ExpeditionList() {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4 mb-2">
                 <div>
@@ -814,7 +821,9 @@ export default function ExpeditionList() {
                 </div>
                 <button
                   onClick={() => setEditingExpedition(null)}
-                  className="p-1 text-zinc-500 hover:text-white rounded"
+                  aria-label="Close edit modal"
+                  title="Close edit modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white rounded touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -828,6 +837,7 @@ export default function ExpeditionList() {
                   <input
                     required
                     type="text"
+                    aria-label="Edit destination landmark"
                     value={editDestination}
                     onChange={(e) => setEditDestination(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono uppercase"
@@ -842,6 +852,7 @@ export default function ExpeditionList() {
                     <input
                       required
                       type="date"
+                      aria-label="Edit departure date"
                       value={editDepartureDate}
                       onChange={(e) => setEditDepartureDate(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
@@ -853,6 +864,7 @@ export default function ExpeditionList() {
                     </label>
                     <input
                       type="date"
+                      aria-label="Edit expected return date"
                       value={editExpectedReturn}
                       onChange={(e) => setEditExpectedReturn(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
@@ -864,6 +876,7 @@ export default function ExpeditionList() {
                     </label>
                     <input
                       type="date"
+                      aria-label="Edit max return date"
                       value={editMaxReturn}
                       onChange={(e) => setEditMaxReturn(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
@@ -876,6 +889,7 @@ export default function ExpeditionList() {
                     Mission briefings / notes
                   </label>
                   <textarea
+                    aria-label="Edit mission briefings / notes"
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
                     rows={3}
@@ -911,7 +925,7 @@ export default function ExpeditionList() {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4 mb-2">
                 <div>
@@ -927,7 +941,9 @@ export default function ExpeditionList() {
                 </div>
                 <button
                   onClick={() => setReturningExpedition(null)}
-                  className="p-1 text-zinc-500 hover:text-white rounded"
+                  aria-label="Close return modal"
+                  title="Close return modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white rounded touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -958,6 +974,7 @@ export default function ExpeditionList() {
                   <input
                     required
                     type="date"
+                    aria-label="Return date"
                     value={returnDate}
                     onChange={(e) => setReturnDate(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
@@ -971,6 +988,7 @@ export default function ExpeditionList() {
                   {foundResources.map((row, idx) => (
                     <div key={idx} className="flex gap-2 items-center">
                       <select
+                        aria-label="Found resource type"
                         value={row.resource_type_id || ''}
                         onChange={(e) => {
                           const updated = [...foundResources];
@@ -992,6 +1010,7 @@ export default function ExpeditionList() {
                       <input
                         type="number"
                         min={1}
+                        aria-label="Found resource quantity"
                         value={row.amount || ''}
                         onChange={(e) => {
                           const updated = [...foundResources];
@@ -1009,7 +1028,9 @@ export default function ExpeditionList() {
                         onClick={() =>
                           setFoundResources(foundResources.filter((_, i) => i !== idx))
                         }
-                        className="p-2 text-zinc-500 hover:text-red-400 transition-colors"
+                        aria-label="Remove found resource"
+                        title="Remove found resource"
+                        className="p-1.5 sm:p-2 text-zinc-500 hover:text-red-400 transition-colors touch-target"
                       >
                         <X size={14} />
                       </button>
@@ -1031,6 +1052,7 @@ export default function ExpeditionList() {
                     MEMBER STATUS ON RETURN
                   </label>
                   <select
+                    aria-label="Member status on return"
                     value={returnMemberStatus}
                     onChange={(e) => setReturnMemberStatus(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono uppercase"

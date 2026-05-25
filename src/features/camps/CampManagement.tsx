@@ -196,7 +196,9 @@ export default function CampManagement() {
                     {canUpdateCamp && (
                       <button
                         onClick={() => openEditModal(camp)}
-                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                        aria-label={`Edit ${camp.name}`}
+                        title={`Edit ${camp.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
                       >
                         <Edit2 size={12} />
                       </button>
@@ -207,7 +209,9 @@ export default function CampManagement() {
                           setDeleteError(null);
                           setDeletingCamp(camp);
                         }}
-                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
+                        aria-label={`Delete ${camp.name}`}
+                        title={`Delete ${camp.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -258,7 +262,7 @@ export default function CampManagement() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -274,7 +278,9 @@ export default function CampManagement() {
                 </div>
                 <button
                   onClick={() => setIsModalOpen(false)}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close modal"
+                  title="Close modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -289,6 +295,7 @@ export default function CampManagement() {
                     <input
                       required
                       type="text"
+                      aria-label="Refuge title"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Sector-9 Outpost"
@@ -302,6 +309,7 @@ export default function CampManagement() {
                     <input
                       required
                       type="text"
+                      aria-label="Geographical location"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="e.g. Colorado High Sierra"
@@ -315,6 +323,7 @@ export default function CampManagement() {
                     Overwatch Status
                   </label>
                   <select
+                    aria-label="Overwatch status"
                     value={status}
                     onChange={(e) => setStatus(e.target.value as 'ACTIVE' | 'ABANDONED')}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary cursor-pointer"
@@ -329,6 +338,7 @@ export default function CampManagement() {
                     AI stability intelligence context prompt
                   </label>
                   <textarea
+                    aria-label="AI stability intelligence context prompt"
                     value={aiPrompt}
                     onChange={(e) => setAiPrompt(e.target.value)}
                     placeholder="Focus directives (e.g. community survival, medical prioritize, strict resource rationing, military lockdown...)"
@@ -370,7 +380,7 @@ export default function CampManagement() {
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-surface-raised brutalist-border rounded-xl p-6 max-w-sm w-full space-y-5"
+            className="bg-surface-raised brutalist-border rounded-xl p-4 sm:p-6 max-w-sm w-full space-y-5"
           >
             <div className="flex items-start gap-4">
               <div className="p-2 rounded-lg shrink-0 bg-red-950/30 text-red-500">

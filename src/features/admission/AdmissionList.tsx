@@ -219,6 +219,7 @@ export default function AdmissionList() {
         {canCreate && (
           <button
             onClick={() => setIsCreateModalOpen(true)}
+            aria-label="Register new refugee intake"
             className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)] uppercase tracking-wider"
           >
             <UserPlus size={18} />
@@ -230,7 +231,7 @@ export default function AdmissionList() {
       <div className="h-[calc(100vh-280px)]">
         {/* List Panel - full width */}
         <div className="flex flex-col bg-surface-raised brutalist-border rounded-xl overflow-hidden h-full">
-          <div className="p-4 bg-black/40 border-b border-zinc-900 flex justify-between items-center">
+          <div className="p-3 sm:p-4 bg-black/40 border-b border-zinc-900 flex justify-between items-center">
             <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
               Intake Queue
             </h3>
@@ -241,7 +242,7 @@ export default function AdmissionList() {
           </div>
           <div className="flex-1 overflow-auto divide-y divide-zinc-900">
             {isLoading ? (
-              <div className="p-4">
+              <div className="p-3 sm:p-4">
                 <SkeletonList count={4} />
               </div>
             ) : admissions?.length === 0 ? (
@@ -259,6 +260,7 @@ export default function AdmissionList() {
                   <button
                     key={admission.id}
                     onClick={() => setSelectedAdmissionId(admission.id)}
+                    aria-label={`View details for ${admission.applicant_name || admission.full_name}`}
                     className={cn(
                       'w-full p-5 text-left transition-all hover:bg-white/5 border-l-4 group',
                       selectedAdmissionId === admission.id
@@ -309,7 +311,10 @@ export default function AdmissionList() {
       <AnimatePresence>
         {selectedAdmissionId && (
           <div
-            className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Admission details"
+            className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
             onClick={() => setSelectedAdmissionId(null)}
           >
             <motion.div
@@ -321,7 +326,8 @@ export default function AdmissionList() {
             >
               <button
                 onClick={() => setSelectedAdmissionId(null)}
-                className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-zinc-900/80 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors"
+                aria-label="Close admission details"
+                className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-zinc-900/80 hover:bg-zinc-800 rounded-full text-zinc-400 hover:text-zinc-200 transition-colors touch-target"
               >
                 <XCircle size={16} />
               </button>
@@ -332,15 +338,15 @@ export default function AdmissionList() {
                     <Skeleton className="h-8 w-2/3" />
                     <Skeleton className="h-4 w-1/3" />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Skeleton className="h-20 w-full" />
                     <Skeleton className="h-20 w-full" />
                   </div>
-                  <div className="grid grid-cols-3 gap-6 pt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4">
                     <Skeleton className="h-28 w-full rounded-lg" />
                     <Skeleton className="h-28 col-span-2 w-full rounded-lg" />
                   </div>
-                  <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-lg space-y-3">
+                  <div className="p-4 sm:p-6 bg-zinc-900 border border-zinc-800 rounded-lg space-y-3">
                     <Skeleton className="h-4 w-1/4" />
                     <Skeleton className="h-12 w-full" />
                   </div>
@@ -354,7 +360,7 @@ export default function AdmissionList() {
               ) : (
                 <div className="flex flex-col max-h-[80vh]">
                   {/* Header */}
-                  <div className="p-6 border-b border-zinc-900 space-y-4">
+                  <div className="p-4 sm:p-6 border-b border-zinc-900 space-y-4">
                     <div className="flex items-start justify-between gap-4 pr-8">
                       <div className="min-w-0">
                         <div className="flex items-center gap-3 mb-1">
@@ -412,13 +418,13 @@ export default function AdmissionList() {
 
                   {/* Scrollable content */}
                   <div className="flex-1 overflow-auto">
-                    <div className="p-6 space-y-6">
+                    <div className="p-4 sm:p-6 space-y-6">
                       <section className="space-y-3">
                         <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-brand-primary" />
                           Personal Information
                         </h4>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="p-3 bg-zinc-900/60 border border-zinc-800/60 rounded-lg">
                             <p className="text-[9px] font-bold text-brand-primary uppercase mb-1.5">
                               Skills
@@ -507,7 +513,7 @@ export default function AdmissionList() {
                         </h4>
                         <div className="relative">
                           <div className="absolute -inset-1 bg-linear-to-r from-brand-primary/10 to-brand-secondary/10 rounded-xl blur opacity-30" />
-                          <div className="relative p-4 bg-surface-base border border-zinc-800 rounded-xl space-y-3">
+                          <div className="relative p-3 sm:p-4 bg-surface-base border border-zinc-800 rounded-xl space-y-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-500 uppercase">
                                 <BrainCircuit size={14} className="text-brand-primary" />
@@ -570,6 +576,7 @@ export default function AdmissionList() {
                               Override the AI-suggested profession:
                             </p>
                             <select
+                              aria-label="Override AI-suggested profession"
                               value={selectedProfId ?? ''}
                               onChange={(e) =>
                                 setSelectedProfId(e.target.value ? Number(e.target.value) : null)
@@ -590,12 +597,13 @@ export default function AdmissionList() {
                   </div>
 
                   {/* Actions */}
-                  <div className="p-4 border-t border-zinc-900 bg-surface-raised flex gap-3">
+                  <div className="p-3 sm:p-4 border-t border-zinc-900 bg-surface-raised flex gap-3">
                     {canReview ? (
                       <button
                         onClick={() =>
                           reviewMutation.mutate({ id: details.id, decision: 'REJECTED' })
                         }
+                        aria-label="Reject admission"
                         disabled={
                           reviewMutation.isPending ||
                           getAdmissionDecisionStatus(details) !== 'PENDING'
@@ -625,6 +633,7 @@ export default function AdmissionList() {
                           setCorrectBackground(details.background_notes || '');
                           setIsCorrectModalOpen(true);
                         }}
+                        aria-label="Correct and re-evaluate admission"
                         disabled={
                           correctAndReevaluateMutation.isPending ||
                           getAdmissionDecisionStatus(details) !== 'PENDING'
@@ -644,6 +653,7 @@ export default function AdmissionList() {
                             corrected_profession_id: selectedProfId || undefined,
                           })
                         }
+                        aria-label="Approve admission"
                         disabled={
                           reviewMutation.isPending ||
                           getAdmissionDecisionStatus(details) !== 'PENDING'
@@ -671,12 +681,17 @@ export default function AdmissionList() {
         )}
 
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Register new refugee intake"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
             >
               <div className="border-b border-zinc-900 pb-4 mb-2">
                 <p className="text-[10px] font-mono text-brand-primary uppercase tracking-widest leading-none mb-1">
@@ -788,12 +803,14 @@ export default function AdmissionList() {
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
+                    aria-label="Abort intake registration"
                     className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
                   >
                     ABORT INTAKE
                   </button>
                   <button
                     type="submit"
+                    aria-label="Submit refuge entry"
                     disabled={createAdmissionMutation.isPending}
                     className="flex-2 py-2.5 bg-brand-primary text-black text-xs font-bold uppercase rounded hover:bg-brand-primary/90 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
                   >
@@ -808,12 +825,17 @@ export default function AdmissionList() {
         )}
 
         {isCorrectModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Correct and re-evaluate admission"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto"
+          >
             <motion.div
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
             >
               <div className="border-b border-zinc-900 pb-4 mb-2">
                 <p className="text-[10px] font-mono text-amber-500 uppercase tracking-widest leading-none mb-1">
@@ -939,12 +961,14 @@ export default function AdmissionList() {
                   <button
                     type="button"
                     onClick={() => setIsCorrectModalOpen(false)}
+                    aria-label="Cancel correction"
                     className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
                   >
                     CANCEL
                   </button>
                   <button
                     type="submit"
+                    aria-label="Submit and re-evaluate admission"
                     disabled={correctAndReevaluateMutation.isPending}
                     className="flex-2 py-2.5 bg-amber-600 text-black text-xs font-bold uppercase rounded hover:bg-amber-500 transition-colors disabled:opacity-30 flex items-center justify-center gap-2"
                   >
