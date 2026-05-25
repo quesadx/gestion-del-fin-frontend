@@ -57,22 +57,12 @@ test.describe("Expeditions", () => {
       .getByRole("button", { name: /CONFIRM MISSION DISPATCH/i })
       .click({ force: true });
 
-    await expect(async () => {
-      const modalGone = await page
-        .getByRole("heading", { name: /configure scouting mission/i })
-        .isHidden()
-        .catch(() => true);
-      const expeditionVisible = await page
-        .getByText(/test outpost alpha/i)
-        .first()
-        .isVisible()
-        .catch(() => false);
-      const errorVisible = await page
-        .locator("form .p-3.bg-red-950\\/30")
-        .first()
-        .isVisible()
-        .catch(() => false);
-      expect(modalGone || expeditionVisible || errorVisible).toBeTruthy();
-    }).toPass({ timeout: 25_000 });
+    const modal = page.getByRole("heading", { name: /configure scouting mission/i });
+    await expect(modal).toBeVisible();
+
+    await Promise.any([
+      expect(modal).toBeHidden({ timeout: 25_000 }),
+      expect(page.getByText(/test outpost alpha/i).first()).toBeVisible({ timeout: 25_000 }),
+    ]);
   });
 });

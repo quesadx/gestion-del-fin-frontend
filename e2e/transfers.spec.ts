@@ -9,12 +9,7 @@ test.describe("Transfers", () => {
   test("navigate to /transfers, list loads", async ({ page }) => {
     await page.goto("/transfers");
 
-    await expect(
-      page
-        .locator('[data-testid="transfer-list"]')
-        .or(page.getByText(/no transfers|no pending transfers/i))
-        .first(),
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator('[data-testid="transfer-list"]')).toBeVisible({ timeout: 15_000 });
   });
 
   test('clicking "NEW TRANSFER" opens the create modal', async ({ page }) => {
