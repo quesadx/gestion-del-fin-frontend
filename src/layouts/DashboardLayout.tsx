@@ -31,6 +31,7 @@ import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert } from 'lucide-react';
 import { CardBody, CardContainer } from '../components/ui/3d-card';
 import DarkVeil from '../components/backgrounds/DarkVeil';
+import FloatingLines from '../components/backgrounds/FloatingLines';
 import CardSwap, { Card } from '../components/ui/CardSwap';
 
 const PANEL_SHELL =
@@ -68,6 +69,45 @@ const CAMP_COLOR_THEMES = [
     hueShift: 292,
     border: 'rgba(244,114,182,0.42)',
     tint: 'from-pink-500/22 via-fuchsia-900/15 to-rose-800/14',
+  },
+];
+
+const CAMP_FLOATING_LINES_THEMES = [
+  {
+    key: 'crimson',
+    linesGradient: ['#f87171', '#fb7185', '#fdba74', '#f97316'],
+    glow: 'rgba(248, 113, 113, 0.26)',
+    mist: 'rgba(251, 191, 36, 0.16)',
+  },
+  {
+    key: 'ember',
+    linesGradient: ['#fb923c', '#f97316', '#fbbf24', '#fdba74'],
+    glow: 'rgba(251, 146, 60, 0.24)',
+    mist: 'rgba(251, 191, 36, 0.16)',
+  },
+  {
+    key: 'sun',
+    linesGradient: ['#fde047', '#facc15', '#fb923c', '#f97316'],
+    glow: 'rgba(250, 204, 21, 0.24)',
+    mist: 'rgba(251, 146, 60, 0.16)',
+  },
+  {
+    key: 'forest',
+    linesGradient: ['#4ade80', '#22c55e', '#14b8a6', '#86efac'],
+    glow: 'rgba(34, 197, 94, 0.24)',
+    mist: 'rgba(20, 184, 166, 0.16)',
+  },
+  {
+    key: 'sky',
+    linesGradient: ['#38bdf8', '#60a5fa', '#818cf8', '#a78bfa'],
+    glow: 'rgba(56, 189, 248, 0.24)',
+    mist: 'rgba(129, 140, 248, 0.16)',
+  },
+  {
+    key: 'rose',
+    linesGradient: ['#f472b6', '#ec4899', '#fb7185', '#fda4af'],
+    glow: 'rgba(244, 114, 182, 0.24)',
+    mist: 'rgba(251, 113, 133, 0.16)',
   },
 ];
 
@@ -178,6 +218,13 @@ export default function DashboardLayout() {
     const rest = camps.filter((camp) => camp.id !== currentCampId);
     return [currentCamp, ...rest];
   }, [camps, currentCampId]);
+
+  const activeFloatingLinesTheme = useMemo(() => {
+    return (
+      CAMP_FLOATING_LINES_THEMES[focusedCampIndex % CAMP_FLOATING_LINES_THEMES.length] ??
+      CAMP_FLOATING_LINES_THEMES[0]
+    );
+  }, [focusedCampIndex]);
 
   // Auto-select the user's home camp on first load, validate it exists in camps list.
   const confirmCampSelection = useCallback(
@@ -361,133 +408,169 @@ export default function DashboardLayout() {
       {/* ── Disconnected banner ──────────────────────────────────────── */}
       <AnimatePresence>
         {campPopupOpen && (
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 8 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 8 }}
-              transition={{ duration: 0.15 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-[96vw]"
-            >
-              <div className="pointer-events-none absolute inset-x-0 -top-18 z-40 flex items-start justify-center">
-                <div className="pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-white/10 bg-black/25 px-5 py-2.5 backdrop-blur-xl shadow-[0_0_45px_rgba(0,0,0,0.35)]">
-                  <div>
-                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-300">
-                      Refuge selector
-                    </p>
-                    <h3 className="text-sm font-black uppercase tracking-[0.08em] text-white">
-                      Choose camp
-                    </h3>
+          <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-sm">
+            <AnimatePresence initial={false} mode="sync">
+              <motion.div
+                key={activeFloatingLinesTheme.key}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="pointer-events-none fixed inset-0 z-0 h-[100dvh] w-[100dvw]"
+              >
+                <FloatingLines
+                  linesGradient={activeFloatingLinesTheme.linesGradient}
+                  enabledWaves={['top', 'middle', 'bottom']}
+                  lineCount={[10, 14, 18]}
+                  lineDistance={[8, 6, 4]}
+                  bendRadius={4.8}
+                  bendStrength={-0.35}
+                  interactive={false}
+                  parallax={true}
+                  parallaxStrength={0.08}
+                  animationSpeed={0.9}
+                  mixBlendMode="screen"
+                />
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage:
+                      `radial-gradient(circle at 50% 35%, ${activeFloatingLinesTheme.glow}, transparent 56%),` +
+                      `radial-gradient(circle at 16% 78%, ${activeFloatingLinesTheme.mist}, transparent 32%),` +
+                      'linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.44))',
+                  }}
+                />
+              </motion.div>
+            </AnimatePresence>
+
+            <div className="relative z-10 flex h-full w-full items-center justify-center p-4">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 8 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 8 }}
+                transition={{ duration: 0.15 }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-[96vw]"
+              >
+                <div className="pointer-events-none absolute inset-x-0 -top-18 z-40 flex items-start justify-center">
+                  <div className="pointer-events-auto flex w-full max-w-5xl items-center justify-between rounded-full border border-white/10 bg-black/25 px-5 py-2.5 backdrop-blur-xl shadow-[0_0_45px_rgba(0,0,0,0.35)]">
+                    <div>
+                      <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-zinc-300">
+                        Refuge selector
+                      </p>
+                      <h3 className="text-sm font-black uppercase tracking-[0.08em] text-white">
+                        Choose camp
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setCampPopupOpen(false)}
+                      className="text-zinc-400 hover:text-zinc-100 transition-colors text-xs font-bold uppercase tracking-[0.18em]"
+                    >
+                      Close
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setCampPopupOpen(false)}
-                    className="text-zinc-400 hover:text-zinc-100 transition-colors text-xs font-bold uppercase tracking-[0.18em]"
-                  >
-                    Close
-                  </button>
                 </div>
-              </div>
 
-              {camps && camps.length > 0 ? (
-                <div className="relative z-10 mt-6 flex h-[78vh] min-h-[560px] w-full items-center justify-center">
-                  {camps.length > 1 ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => shiftCampCards(-1)}
-                        aria-label="Show previous camp"
-                        className="absolute left-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
-                      >
-                        <ChevronLeft size={30} />
-                      </button>
+                {camps && camps.length > 0 ? (
+                  <div className="relative z-10 mt-6 flex h-[78vh] min-h-[560px] w-full items-center justify-center overflow-hidden rounded-[2rem]">
+                    {camps.length > 1 ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => shiftCampCards(-1)}
+                          aria-label="Show previous camp"
+                          className="absolute left-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                        >
+                          <ChevronLeft size={30} />
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => shiftCampCards(1)}
-                        aria-label="Show next camp"
-                        className="absolute right-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
-                      >
-                        <ChevronRight size={30} />
-                      </button>
-                    </>
-                  ) : null}
+                        <button
+                          type="button"
+                          onClick={() => shiftCampCards(1)}
+                          aria-label="Show next camp"
+                          className="absolute right-8 top-1/2 z-50 -translate-y-1/2 rounded-full border border-white/20 bg-black/35 p-6 text-zinc-200 backdrop-blur-md transition-colors hover:border-white/35 hover:text-white"
+                        >
+                          <ChevronRight size={30} />
+                        </button>
+                      </>
+                    ) : null}
 
-                  <CardSwap
-                    width={820}
-                    height={500}
-                    cardDistance={120}
-                    verticalDistance={62}
-                    delay={5600}
-                    autoPlay={false}
-                    pauseOnHover={true}
-                    manualSwapTick={campSwapTick}
-                    manualSwapDirection={campSwapDirection}
-                    bringToFrontOnClick={true}
-                    onCardClick={(idx) => setFocusedCampIndex(idx)}
-                    skewAmount={2}
-                    easing="linear"
-                  >
-                    {campCards.map((camp, index) => {
-                      const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
-                      const isActive = camp.id === currentCampId;
+                    <CardSwap
+                      width={820}
+                      height={500}
+                      cardDistance={120}
+                      verticalDistance={62}
+                      delay={5600}
+                      autoPlay={false}
+                      pauseOnHover={true}
+                      manualSwapTick={campSwapTick}
+                      manualSwapDirection={campSwapDirection}
+                      bringToFrontOnClick={true}
+                      onCardClick={(idx) => setFocusedCampIndex(idx)}
+                      skewAmount={2}
+                      easing="linear"
+                    >
+                      {campCards.map((camp, index) => {
+                        const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
+                        const isActive = camp.id === currentCampId;
 
-                      return (
-                        <Card key={camp.id}>
-                          <div
-                            className="relative h-full w-full cursor-pointer overflow-hidden rounded-[14px] text-left transition-transform duration-200 ease-out hover:z-50 hover:-translate-y-4"
-                            style={{ border: `1px solid ${theme.border}` }}
-                          >
-                            <div className="absolute inset-0">
-                              <DarkVeil
-                                hueShift={theme.hueShift}
-                                speed={0.82}
-                                warpAmount={1.5}
-                                noiseIntensity={0.02}
-                                resolutionScale={1}
-                              />
-                            </div>
-
+                        return (
+                          <Card key={camp.id}>
                             <div
-                              className={`absolute inset-0 bg-gradient-to-br ${theme.tint} mix-blend-screen`}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+                              className="relative h-full w-full cursor-pointer overflow-hidden rounded-[14px] text-left transition-transform duration-200 ease-out hover:z-50 hover:-translate-y-4"
+                              style={{ border: `1px solid ${theme.border}` }}
+                            >
+                              <div className="absolute inset-0">
+                                <DarkVeil
+                                  hueShift={theme.hueShift}
+                                  speed={0.82}
+                                  warpAmount={1.5}
+                                  noiseIntensity={0.02}
+                                  resolutionScale={1}
+                                />
+                              </div>
 
-                            <div className="relative z-10 flex h-full flex-col justify-start p-8">
-                              <div className="flex items-start justify-between gap-4">
-                                <div className="space-y-2">
-                                  <span className="inline-flex rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-xs font-mono uppercase tracking-[0.18em] text-zinc-200">
-                                    Refuge
-                                  </span>
+                              <div
+                                className={`absolute inset-0 bg-gradient-to-br ${theme.tint} mix-blend-screen`}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
-                                  {isActive ? (
-                                    <span className="inline-flex rounded-full border border-red-500/45 bg-red-500/14 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-[0.14em] text-red-200">
-                                      Active
+                              <div className="relative z-10 flex h-full flex-col justify-start p-8">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="space-y-2">
+                                    <span className="inline-flex rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-xs font-mono uppercase tracking-[0.18em] text-zinc-200">
+                                      Refuge
                                     </span>
-                                  ) : null}
 
-                                  <p className="text-sm font-mono uppercase tracking-[0.16em] text-zinc-300/85">
-                                    Select destination
-                                  </p>
+                                    {isActive ? (
+                                      <span className="inline-flex rounded-full border border-red-500/45 bg-red-500/14 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-[0.14em] text-red-200">
+                                        Active
+                                      </span>
+                                    ) : null}
 
-                                  <h4 className="text-4xl font-black uppercase tracking-tight text-white">
-                                    {camp.name}
-                                  </h4>
+                                    <p className="text-sm font-mono uppercase tracking-[0.16em] text-zinc-300/85">
+                                      Select destination
+                                    </p>
+
+                                    <h4 className="text-4xl font-black uppercase tracking-tight text-white">
+                                      {camp.name}
+                                    </h4>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </Card>
-                      );
-                    })}
-                  </CardSwap>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-red-500/12 bg-black/20 px-4 py-6 text-center text-xs font-mono uppercase tracking-[0.14em] text-zinc-400">
-                  No camps available
-                </div>
-              )}
-            </motion.div>
+                          </Card>
+                        );
+                      })}
+                    </CardSwap>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-red-500/12 bg-black/20 px-4 py-6 text-center text-xs font-mono uppercase tracking-[0.14em] text-zinc-400">
+                    No camps available
+                  </div>
+                )}
+              </motion.div>
+            </div>
           </div>
         )}
 
