@@ -359,21 +359,21 @@ export default function DashboardLayout() {
                 <ShieldAlert size={17} />
               </div>
               <div className="leading-none">
-                <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
+                <p className="font-black text-sm sm:text-base uppercase tracking-[0.2em] text-brand-primary leading-none">
                   GESTION-DEL-FIN
                 </p>
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
+                <span className="text-xs font-mono text-zinc-500 uppercase tracking-[0.18em] mt-0.5 block">
                   Survival Terminal v1.0.0 // MANAGEMENT INTERFACE
                 </span>
               </div>
             </div>
 
-            {/* Camp switcher - left of center */}
-            <div className="relative flex items-center">
+            {/* Camp switcher - centered */}
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center">
               <StarBorder
                 as="button"
                 onClick={openCampPopup}
-                className="group cursor-pointer hover:scale-[1.02] hover:brightness-110 transition-all duration-200 [&_.inner-content]:!py-0 [&_.inner-content]:!px-0 [&_.inner-content]:!bg-transparent [&_.inner-content]:!border-none [&_.inner-content]:!text-inherit [&_.inner-content]:!text-xs [&_.inner-content]:!rounded-full"
+                className="group cursor-pointer hover:scale-[1.02] hover:brightness-110 transition-all duration-200 [&_.inner-content]:!py-0 [&_.inner-content]:!px-0 [&_.inner-content]:!bg-transparent [&_.inner-content]:!border-none [&_.inner-content]:!text-inherit [&_.inner-content]:!text-sm [&_.inner-content]:!rounded-full"
                 color="rgba(239,68,68,0.85)"
                 speed="5s"
                 thickness={2}
@@ -391,7 +391,7 @@ export default function DashboardLayout() {
             <div className="flex items-center gap-3.5">
               {/* Server time */}
               {synced && (
-                <span className="hidden md:inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 tabular-nums">
+                <span className="hidden md:inline-flex items-center gap-1.5 text-sm font-mono text-zinc-400 tabular-nums">
                   <Clock size={13} className="text-zinc-500" />
                   {timeStr}
                 </span>
@@ -399,12 +399,12 @@ export default function DashboardLayout() {
 
               {/* User chip */}
               <div className="flex items-center gap-2 bg-[rgba(37,23,26,0.92)] border border-red-500/12 rounded px-2.5 py-1 shadow-[0_0_0_1px_rgba(239,68,68,0.04)]">
-                <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-[11px] font-black text-brand-secondary select-none">
+                <div className="w-6 h-6 rounded bg-zinc-700 grid place-items-center text-xs font-black text-brand-secondary select-none">
                   {user?.username?.[0].toUpperCase()}
                 </div>
                 <div className="hidden md:block text-left leading-none">
-                  <span className="text-xs font-bold block">{user?.username}</span>
-                  <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
+                  <span className="text-sm font-bold block">{user?.username}</span>
+                  <span className="text-xs text-zinc-500 font-mono uppercase tracking-[0.1em] mt-0.5 block">
                     {user?.role?.replace(/_/g, ' ')}
                   </span>
                 </div>
@@ -603,13 +603,13 @@ export default function DashboardLayout() {
               <div className={`${ALERT_ROW} border-l-2 border-red-500/60`}>
                 <div className="flex items-center gap-2.5">
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                  <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider">
+                  <p className="text-sm font-mono font-bold text-red-400 uppercase tracking-wider">
                     Server unreachable — data may be stale. Retrying every 5s.
                   </p>
                 </div>
                 <button
                   onClick={retry}
-                  className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
+                  className="shrink-0 text-xs font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
                 >
                   Retry Now
                 </button>
@@ -638,13 +638,13 @@ export default function DashboardLayout() {
                   <div className={`${ALERT_ROW} border-l-2 border-red-500/60`}>
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                      <p className="text-[11px] font-mono font-bold text-red-400 uppercase tracking-wider truncate">
+                      <p className="text-sm font-mono font-bold text-red-400 uppercase tracking-wider truncate">
                         CRITICAL STOCK: {inventoryAlerts.criticalNames.join(', ')}
                       </p>
                     </div>
                     <button
                       onClick={() => setAlertDismissed(true)}
-                      className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
+                      className="shrink-0 text-xs font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
                     >
                       Dismiss
                     </button>
@@ -655,14 +655,14 @@ export default function DashboardLayout() {
                   <div className={`${ALERT_ROW} border-l-2 border-amber-500/60`}>
                     <div className="flex items-center gap-2.5">
                       <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                      <p className="text-[11px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+                      <p className="text-sm font-mono font-bold text-amber-400 uppercase tracking-wider">
                         LOW STOCK: {inventoryAlerts.lowCount} resource
                         {inventoryAlerts.lowCount !== 1 ? 's' : ''} below minimum
                       </p>
                     </div>
                     <button
                       onClick={() => setAlertDismissed(true)}
-                      className="shrink-0 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                      className="shrink-0 text-xs font-black uppercase tracking-wider px-3 py-1 rounded border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
                     >
                       Dismiss
                     </button>
