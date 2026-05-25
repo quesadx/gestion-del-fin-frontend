@@ -143,6 +143,26 @@ export default function RationsPage() {
         </button>
       </div>
 
+      <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex items-center gap-4">
+        <div className="p-2 bg-amber-950/30 rounded-lg border border-amber-500/20 shrink-0">
+          <Sandwich size={18} className="text-amber-500" />
+        </div>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase">Daily Ration Cycle</p>
+            <p className="text-xs font-mono text-zinc-300">
+              Automatic consumption runs daily via server cron. Manual audits shown below.
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase">Next Cycle</p>
+            <p className="text-xs font-mono text-zinc-500">
+              Daily at ~00:00 (server cron) — last cycle info not exposed via API
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* ── Body ────────────────────────────────────────────────────── */}
       {!currentCampId ? (
         /* No camp selected */

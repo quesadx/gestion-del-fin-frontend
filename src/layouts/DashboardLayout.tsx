@@ -15,16 +15,17 @@ import {
   Lock,
   Key,
 } from 'lucide-react';
-import { useAuthStore, useCampStore, useConnectionStore } from '../store';
+import { useAuthStore, useCampStore, useConnectionStore, useGamificationStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource } from '../types';
 import { cn } from '../lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { can } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
+import GamificationWidget from '../features/gamification/GamificationWidget';
 
 // ── Connection badge config ───────────────────────────────────────────────────
 
@@ -84,12 +85,24 @@ const NAV_PERMISSIONS: Record<string, string> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, userId } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status, latencyMs } = useConnectionStore();
+  const { recordLogin, ensureUserLoaded } = useGamificationStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { timeStr, synced } = useServerTime();
+
+  const hasRecordedRef = useRef(false);
+  useEffect(() => {
+    if (user && userId) {
+      ensureUserLoaded(userId);
+      if (!hasRecordedRef.current) {
+        hasRecordedRef.current = true;
+        recordLogin();
+      }
+    }
+  }, [user, userId, recordLogin, ensureUserLoaded]);
 
   // Start the ping loop and get the manual retry trigger.
   const { retry } = useConnectionStatus();
@@ -356,18 +369,23 @@ export default function DashboardLayout() {
 
       {/* ── Page content ────────────────────────────────────────────────── */}
       <main className="flex-1 overflow-y-auto bg-surface-base px-6 py-6 sm:px-8 sm:py-8 pb-32">
-        <div className="max-w-7xl mx-auto w-full">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+        <div className="max-w-7xl mx-auto w-full flex gap-6">
+          <div className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+          <div className="hidden lg:block w-64 shrink-0">
+            <GamificationWidget />
+          </div>
         </div>
       </main>
 

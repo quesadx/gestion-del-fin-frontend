@@ -146,6 +146,33 @@ export default function InventoryList() {
         </div>
       </div>
 
+      <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex items-center gap-4">
+        <div className="p-2 bg-blue-950/30 rounded-lg border border-blue-500/20 shrink-0">
+          <Info size={18} className="text-blue-400" />
+        </div>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase">Daily Processing</p>
+            <p className="text-xs font-mono text-zinc-300">
+              {(inventory ?? []).reduce((sum, r) => sum + (r.daily_ration ?? 0), 0)} total daily
+              ration units
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase">Resources in Storage</p>
+            <p className="text-xs font-mono text-zinc-300">
+              {inventory?.length ?? '—'} resource types tracked
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase">Processing Cycle</p>
+            <p className="text-xs font-mono text-zinc-500">
+              Daily auto-rations &amp; alerts via server cron
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Resource Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading

@@ -110,7 +110,7 @@ export default function DashboardOverview() {
       const unit = item.unit ?? item.resource_type?.unit ?? rt?.unit ?? '';
       const qty = item.quantity ?? 0;
       const minStock = Number(rt?.minimum_stock ?? item.minimum_stock ?? 0);
-      const dailyRation = Number(rt?.daily_ration ?? 0);
+      const dailyRation = Number((rt as Resource | undefined)?.daily_ration ?? 0);
       const dailyUsage = dailyRation * survivorCount;
       const projectionDays = dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
       return {
