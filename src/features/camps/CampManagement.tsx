@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { useCampStore } from '../../store';
-import { can, PERM } from '../../lib/permissions';
+import { can, useCan, PERM } from '../../lib/permissions';
 import { Camp } from '../../types';
 import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -57,6 +57,8 @@ export default function CampManagement() {
   });
 
   const canDelete = can(PERM.CAMPS_DELETE);
+  const canCreateCamp = useCan(PERM.CAMPS_CREATE);
+  const canUpdateCamp = useCan(PERM.CAMPS_UPDATE);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -133,13 +135,15 @@ export default function CampManagement() {
             Multi-Refuge Setup & Command Guidelines
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          REGISTER NEW REFUGE
-        </button>
+        {canCreateCamp && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            REGISTER NEW REFUGE
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -189,12 +193,14 @@ export default function CampManagement() {
                     >
                       {camp.status}
                     </span>
-                    <button
-                      onClick={() => openEditModal(camp)}
-                      className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
-                    >
-                      <Edit2 size={12} />
-                    </button>
+                    {canUpdateCamp && (
+                      <button
+                        onClick={() => openEditModal(camp)}
+                        className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                    )}
                     {canDelete && (
                       <button
                         onClick={() => {
