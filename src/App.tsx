@@ -175,7 +175,7 @@ export default function App() {
                     <Route
                       path="population"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="people.read">
                           <PopulationRoster />
                         </ProtectedRoute>
                       }
@@ -191,7 +191,7 @@ export default function App() {
                     <Route
                       path="population/:id"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="people.read">
                           <PersonDetail />
                         </ProtectedRoute>
                       }
@@ -199,7 +199,7 @@ export default function App() {
                     <Route
                       path="inventory"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="inventory.read">
                           <InventoryList />
                         </ProtectedRoute>
                       }
@@ -207,7 +207,7 @@ export default function App() {
                     <Route
                       path="inventory/audit"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="inventory.audit.read">
                           <InventoryAuditRoute />
                         </ProtectedRoute>
                       }
@@ -215,7 +215,7 @@ export default function App() {
                     <Route
                       path="admission"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="admission.read">
                           <AdmissionList />
                         </ProtectedRoute>
                       }
@@ -223,7 +223,7 @@ export default function App() {
                     <Route
                       path="expeditions/:id"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="expeditions.read">
                           <ExpeditionDetail />
                         </ProtectedRoute>
                       }
@@ -231,7 +231,7 @@ export default function App() {
                     <Route
                       path="expeditions"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="expeditions.read">
                           <ExpeditionList />
                         </ProtectedRoute>
                       }
@@ -239,7 +239,7 @@ export default function App() {
                     <Route
                       path="transfers"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="transfers.read">
                           <TransferList />
                         </ProtectedRoute>
                       }
@@ -247,7 +247,7 @@ export default function App() {
                     <Route
                       path="camps/:id"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="camps.read">
                           <CampDetail />
                         </ProtectedRoute>
                       }
@@ -255,7 +255,7 @@ export default function App() {
                     <Route
                       path="camps"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="camps.read">
                           <CampManagement />
                         </ProtectedRoute>
                       }
@@ -271,7 +271,7 @@ export default function App() {
                     <Route
                       path="rations"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="inventory.read">
                           <RationsPage />
                         </ProtectedRoute>
                       }
@@ -279,7 +279,7 @@ export default function App() {
                     <Route
                       path="professions"
                       element={
-                        <ProtectedRoute>
+                        <ProtectedRoute permission="professions.read">
                           <ProfessionsPage />
                         </ProtectedRoute>
                       }

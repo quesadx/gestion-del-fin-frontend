@@ -23,6 +23,8 @@ export default function RationsPage() {
   const [quantity, setQuantity] = useState('');
   const [note, setNote] = useState('');
 
+  const canCreateRation = hasPermission(user?.permissions, 'inventory.adjust');
+
   // ── Resources lookup ─────────────────────────────────────────────────
 
   const { data: resources } = useQuery<Resource[]>({
@@ -156,13 +158,15 @@ export default function RationsPage() {
             Track and record daily ration distributions
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-        >
-          <Plus size={18} />
-          NEW RATION
-        </button>
+        {canCreateRation && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+          >
+            <Plus size={18} />
+            NEW RATION
+          </button>
+        )}
       </div>
 
       <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex items-center gap-4">

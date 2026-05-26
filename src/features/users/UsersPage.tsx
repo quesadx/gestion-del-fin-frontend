@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { useAuthStore } from '../../store';
+import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
-import { User } from '../../types';
+import { User, Role } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 
-const KNOWN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator', 'worker'];
-
 export default function UsersPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const currentCampId = useCampStore((s) => s.currentCampId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -20,7 +19,7 @@ export default function UsersPage() {
   // Form states
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('worker');
+  const [roleId, setRoleId] = useState<number | ''>('');
   const [campId, setCampId] = useState('');
 
   const canCreate = hasPermission(user?.permissions, 'users.create');
@@ -36,11 +35,20 @@ export default function UsersPage() {
     enabled: hasPermission(user?.permissions, 'users.read'),
   });
 
+  const { data: roles } = useQuery<Role[]>({
+    queryKey: ['roles'],
+    queryFn: async () => {
+      const res = await apiClient.get('/roles');
+      return res.data?.data ?? res.data;
+    },
+    enabled: hasPermission(user?.permissions, 'roles.read'),
+  });
+
   const createMutation = useMutation({
     mutationFn: async (payload: {
       username: string;
       password: string;
-      role: string;
+      role_id: number;
       camp_id?: number | null;
     }) => {
       const res = await apiClient.post('/users', payload);
@@ -58,7 +66,7 @@ export default function UsersPage() {
       payload,
     }: {
       id: number;
-      payload: { username: string; role: string; camp_id?: number | null };
+      payload: { username: string; role_id: number; camp_id?: number | null };
     }) => {
       const res = await apiClient.put(`/users/${id}`, payload);
       return res.data;
@@ -85,7 +93,7 @@ export default function UsersPage() {
     setEditingUser(null);
     setUsername('');
     setPassword('');
-    setRole('worker');
+    setRoleId('');
     setCampId('');
   };
 
@@ -96,8 +104,8 @@ export default function UsersPage() {
     setEditingUser(null);
     setUsername('');
     setPassword('');
-    setRole('worker');
-    setCampId('');
+    setRoleId(roles?.[0]?.id ?? '');
+    setCampId(currentCampId ? String(currentCampId) : '');
     setIsModalOpen(true);
   };
 
@@ -105,21 +113,23 @@ export default function UsersPage() {
     setEditingUser(user);
     setUsername(user.username);
     setPassword('');
-    setRole(user.role ?? 'worker');
-    setCampId(user.camp_id != null ? String(user.camp_id) : '');
+    setRoleId(roles?.find((r) => r.name === user.role)?.id ?? '');
+    setCampId(
+      user.camp_id != null ? String(user.camp_id) : currentCampId ? String(currentCampId) : '',
+    );
     setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username) return;
+    if (!username || roleId === '') return;
 
     if (editingUser) {
       updateMutation.mutate({
         id: editingUser.id,
         payload: {
           username,
-          role,
+          role_id: roleId,
           camp_id: campId ? Number(campId) : null,
         },
       });
@@ -128,7 +138,7 @@ export default function UsersPage() {
       createMutation.mutate({
         username,
         password,
-        role,
+        role_id: roleId,
         camp_id: campId ? Number(campId) : null,
       });
     }
@@ -308,15 +318,25 @@ export default function UsersPage() {
                   <select
                     required
                     aria-label="Role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
+                    value={roleId}
+                    onChange={(e) => setRoleId(Number(e.target.value))}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary"
                   >
-                    {KNOWN_ROLES.map((r) => (
-                      <option key={r} value={r} className="bg-zinc-950">
-                        {r.replace(/_/g, ' ')}
+                    {!roles ? (
+                      <option value="" disabled className="bg-zinc-950">
+                        Loading roles...
                       </option>
-                    ))}
+                    ) : roles.length === 0 ? (
+                      <option value="" disabled className="bg-zinc-950">
+                        No roles available
+                      </option>
+                    ) : (
+                      roles.map((r) => (
+                        <option key={r.id} value={r.id} className="bg-zinc-950">
+                          {r.name.replace(/_/g, ' ')}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 

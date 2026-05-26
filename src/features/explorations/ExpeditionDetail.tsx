@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { Expedition, ResourceAllocation, Resource } from '../../types';
@@ -42,12 +42,7 @@ export default function ExpeditionDetail() {
 
   const actorId = user?.id ?? 1;
   const canRead = hasPermission(user?.permissions, 'expeditions.read');
-
-  useEffect(() => {
-    if (!canRead) {
-      navigate('/', { replace: true });
-    }
-  }, [canRead, navigate]);
+  const canUpdateStatus = hasPermission(user?.permissions, 'expeditions.update_status');
 
   // Fetch expedition detail
   const {
@@ -133,7 +128,7 @@ export default function ExpeditionDetail() {
   });
 
   if (!canRead) {
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   // ── Loading ────────────────────────────────────────────────────────────
@@ -292,7 +287,7 @@ export default function ExpeditionDetail() {
         )}
 
         {/* Action buttons */}
-        {!isReadonly && (
+        {!isReadonly && canUpdateStatus && (
           <div className="flex flex-wrap items-center gap-3 border-t border-zinc-900/50 pt-4">
             {isPlanned && (
               <button
