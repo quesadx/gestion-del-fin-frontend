@@ -64,13 +64,14 @@ export default function DashboardOverview() {
     enabled: !!currentCampId && canViewMetrics,
   });
 
+  const hasPeopleRead = hasPermission(user?.permissions, 'people.read');
   const { data: peopleList, isLoading: peopleLoading } = useQuery<Person[]>({
     queryKey: ['worker-people', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/camps/${currentCampId}/people`);
       return unwrapList<Person>(res.data);
     },
-    enabled: !!currentCampId && isWorkerView,
+    enabled: !!currentCampId && isWorkerView && hasPeopleRead,
   });
   const survivorCount = isWorkerView ? (peopleList?.length ?? 0) : (metrics?.people?.total ?? 0);
   const healthyCount = isWorkerView

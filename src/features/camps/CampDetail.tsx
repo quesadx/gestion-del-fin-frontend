@@ -16,6 +16,7 @@ export default function CampDetail() {
   const { user } = useAuthStore();
   const hasReadAccess = hasPermission(user?.permissions, 'camps.read');
   const hasInventoryRead = hasPermission(user?.permissions, 'inventory.read');
+  const hasPeopleRead = hasPermission(user?.permissions, 'people.read');
 
   // Camp detail query
   const {
@@ -38,7 +39,7 @@ export default function CampDetail() {
       const res = await apiClient.get(`/camps/${campId}/people`);
       return unwrapList<Person>(res.data);
     },
-    enabled: hasReadAccess && !isNaN(campId),
+    enabled: hasReadAccess && hasPeopleRead && !isNaN(campId),
   });
 
   // Inventory count
