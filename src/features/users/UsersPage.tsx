@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { User } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,6 +12,7 @@ const KNOWN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator', '
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -20,12 +23,17 @@ export default function UsersPage() {
   const [role, setRole] = useState('worker');
   const [campId, setCampId] = useState('');
 
+  const canCreate = hasPermission(user?.permissions, 'users.create');
+  const canUpdate = hasPermission(user?.permissions, 'users.update');
+  const canDelete = hasPermission(user?.permissions, 'users.delete');
+
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
       const res = await apiClient.get('/users');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'users.read'),
   });
 
   const createMutation = useMutation({
@@ -137,13 +145,15 @@ export default function UsersPage() {
             Manage system users and role assignments
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          NEW USER
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            NEW USER
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -203,22 +213,26 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => openEditModal(user)}
-                  aria-label={`Edit ${user.username}`}
-                  title={`Edit ${user.username}`}
-                  className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
-                >
-                  <Edit2 size={12} />
-                </button>
-                <button
-                  onClick={() => setDeletingUser(user)}
-                  aria-label={`Delete ${user.username}`}
-                  title={`Delete ${user.username}`}
-                  className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
-                >
-                  <Trash2 size={12} />
-                </button>
+                {canUpdate && (
+                  <button
+                    onClick={() => openEditModal(user)}
+                    aria-label={`Edit ${user.username}`}
+                    title={`Edit ${user.username}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => setDeletingUser(user)}
+                    aria-label={`Delete ${user.username}`}
+                    title={`Delete ${user.username}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

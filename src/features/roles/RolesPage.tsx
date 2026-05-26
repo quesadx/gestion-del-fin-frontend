@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { Role, Permission } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,6 +10,7 @@ import { Skeleton } from '../../components/Skeleton';
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
@@ -16,12 +19,17 @@ export default function RolesPage() {
   const [description, setDescription] = useState('');
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
 
+  const canCreate = hasPermission(user?.permissions, 'roles.create');
+  const canUpdate = hasPermission(user?.permissions, 'roles.update');
+  const canDelete = hasPermission(user?.permissions, 'roles.delete');
+
   const { data: roles, isLoading } = useQuery<Role[]>({
     queryKey: ['roles'],
     queryFn: async () => {
       const res = await apiClient.get('/roles');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'roles.read'),
   });
 
   const { data: permissions } = useQuery<Permission[]>({
@@ -30,6 +38,7 @@ export default function RolesPage() {
       const res = await apiClient.get('/permissions');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'permissions.read'),
   });
 
   const createMutation = useMutation({
@@ -136,13 +145,15 @@ export default function RolesPage() {
             Manage role definitions and permission assignments
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          NEW ROLE
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            NEW ROLE
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -197,22 +208,26 @@ export default function RolesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => openEditModal(role)}
-                  aria-label={`Edit ${role.name}`}
-                  title={`Edit ${role.name}`}
-                  className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
-                >
-                  <Edit2 size={12} />
-                </button>
-                <button
-                  onClick={() => setDeletingRole(role)}
-                  aria-label={`Delete ${role.name}`}
-                  title={`Delete ${role.name}`}
-                  className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
-                >
-                  <Trash2 size={12} />
-                </button>
+                {canUpdate && (
+                  <button
+                    onClick={() => openEditModal(role)}
+                    aria-label={`Edit ${role.name}`}
+                    title={`Edit ${role.name}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => setDeletingRole(role)}
+                    aria-label={`Delete ${role.name}`}
+                    title={`Delete ${role.name}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, useCampStore } from './store';
+import { hasPermission } from './lib/permissions';
 import { ReactNode, Suspense, lazy, useEffect } from 'react';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -72,17 +73,28 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: (failureCount, error: unknown) => {
-        const axiosError = error as { response?: unknown } | null;
+        const axiosError = error as { response?: { status?: number } } | null;
         if (!axiosError?.response) return false;
+        if (axiosError.response.status === 403) return false;
         return failureCount < 1;
       },
     },
   },
 });
 
-const ProtectedRoute = ({ children, roles }: { children: ReactNode; roles?: string[] }) => {
+const ProtectedRoute = ({
+  children,
+  roles,
+  permission,
+}: {
+  children: ReactNode;
+  roles?: string[];
+  permission?: string;
+}) => {
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
+  if (permission && !hasPermission(user?.permissions, permission))
+    return <Navigate to="/" replace />;
   if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
@@ -171,7 +183,7 @@ export default function App() {
                     <Route
                       path="population/new"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission="people.create">
                           <NewPersonPage />
                         </ProtectedRoute>
                       }
@@ -251,7 +263,7 @@ export default function App() {
                     <Route
                       path="resources"
                       element={
-                        <ProtectedRoute roles={['system_admin', 'resource_manager']}>
+                        <ProtectedRoute permission="resources.read">
                           <ResourcesPage />
                         </ProtectedRoute>
                       }
@@ -275,7 +287,7 @@ export default function App() {
                     <Route
                       path="users"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission="users.read">
                           <UsersPage />
                         </ProtectedRoute>
                       }
@@ -283,7 +295,7 @@ export default function App() {
                     <Route
                       path="roles"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission="roles.read">
                           <RolesPage />
                         </ProtectedRoute>
                       }
@@ -291,7 +303,7 @@ export default function App() {
                     <Route
                       path="permissions"
                       element={
-                        <ProtectedRoute roles={['system_admin']}>
+                        <ProtectedRoute permission="permissions.read">
                           <PermissionsPage />
                         </ProtectedRoute>
                       }

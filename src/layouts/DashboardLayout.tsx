@@ -26,7 +26,8 @@ import { Camp, InventoryItem, Resource } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
-import { can } from '../lib/permissions';
+import { hasPermission, canAccessCamp } from '../lib/permissions';
+import { useDeniedPermissionsStore } from '../store/deniedPermissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert, Eye } from 'lucide-react';
@@ -135,7 +136,7 @@ const NAV_ITEMS = [
 
 // Permission required to see each nav item
 const NAV_PERMISSIONS: Record<string, string> = {
-  '/dashboard': 'dashboard.read',
+  '/dashboard': 'metrics.dashboard',
   '/population': 'people.read',
   '/inventory': 'inventory.read',
   '/rations': 'inventory.read',
@@ -143,7 +144,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/expeditions': 'expeditions.read',
   '/transfers': 'transfers.read',
   '/camps': 'camps.read',
-  '/resources': 'resources.*',
+  '/resources': 'resources.read',
   '/professions': 'professions.read',
   '/users': 'users.read',
   '/roles': 'roles.read',
@@ -156,6 +157,7 @@ export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status } = useConnectionStore();
+  useDeniedPermissionsStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { timeStr, synced } = useServerTime();
@@ -176,39 +178,53 @@ export default function DashboardLayout() {
       const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
   // ── Inventory alerts (shared query key — reused by nav dot) ─────────
   const { data: inventoryAlerts } = useQuery({
     queryKey: ['inventory-alerts', currentCampId],
     queryFn: async () => {
-      const [invRes, resRes] = await Promise.all([
-        apiClient.get(`/inventory/${currentCampId}`),
-        apiClient.get('/resources'),
-      ]);
-      const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
-      const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
+      try {
+        const [invRes, resRes] = await Promise.all([
+          apiClient.get(`/inventory/${currentCampId}`),
+          apiClient.get('/resources'),
+        ]);
+        const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
+        const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
 
-      const criticalNames: string[] = [];
-      let lowCount = 0;
+        const criticalNames: string[] = [];
+        let lowCount = 0;
 
-      items.forEach((item) => {
-        const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
-        const qty = item.quantity ?? 0;
-        const minStock = Number(rt?.minimum_stock ?? 0);
-        const name = rt?.name ?? `Resource #${item.resource_type_id}`;
+        items.forEach((item) => {
+          const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
+          const qty = item.quantity ?? 0;
+          const minStock = Number(rt?.minimum_stock ?? 0);
+          const name = rt?.name ?? `Resource #${item.resource_type_id}`;
 
-        if (qty < minStock / 2) {
-          criticalNames.push(name);
-        } else if (qty < minStock) {
-          lowCount++;
-        }
-      });
+          if (qty < minStock / 2) {
+            criticalNames.push(name);
+          } else if (qty < minStock) {
+            lowCount++;
+          }
+        });
 
-      return { criticalCount: criticalNames.length, criticalNames, lowCount };
+        return { criticalCount: criticalNames.length, criticalNames, lowCount };
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) return { criticalCount: 0, criticalNames: [], lowCount: 0 };
+        throw err;
+      }
     },
-    enabled: !!currentCampId && can(user?.role, 'inventory.read'),
-    refetchInterval: 30_000,
+    enabled:
+      !!currentCampId &&
+      hasPermission(user?.permissions, 'inventory.read') &&
+      canAccessCamp(currentCampId),
+    refetchInterval: (query) => {
+      const err = query.state.error as { response?: { status?: number } } | null;
+      if (err?.response?.status === 403) return false;
+      return 30_000;
+    },
   });
 
   // Session-only dismiss for the alert banner.
@@ -319,7 +335,9 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
-  const visibleNavItems = NAV_ITEMS.filter((item) => can(user?.role, NAV_PERMISSIONS[item.to]));
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
+    hasPermission(user?.permissions, NAV_PERMISSIONS[item.to]),
+  );
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
@@ -356,7 +374,7 @@ export default function DashboardLayout() {
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
                 <ShieldAlert size={15} />
               </div>
-              <div className="leading-none hidden xs:block">
+              <div className="leading-none hidden sm:block">
                 <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
                   GESTION-DEL-FIN
                 </p>
@@ -561,6 +579,7 @@ export default function DashboardLayout() {
                       {campCards.map((camp, index) => {
                         const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
                         const isActive = camp.id === currentCampId;
+                        const isHome = camp.id === user?.camp_id;
 
                         return (
                           <Card key={camp.id}>
@@ -589,6 +608,12 @@ export default function DashboardLayout() {
                                     <span className="inline-flex rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-xs font-mono uppercase tracking-[0.18em] text-zinc-200">
                                       Refuge
                                     </span>
+
+                                    {isHome ? (
+                                      <span className="inline-flex rounded-full border border-amber-500/45 bg-amber-500/14 px-3 py-1.5 ml-2 text-xs font-mono font-bold uppercase tracking-[0.14em] text-amber-200">
+                                        My Refuge
+                                      </span>
+                                    ) : null}
 
                                     {isActive ? (
                                       <span className="inline-flex rounded-full border border-red-500/45 bg-red-500/14 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-[0.14em] text-red-200">
@@ -699,7 +724,7 @@ export default function DashboardLayout() {
           !alertDismissed &&
           inventoryAlerts &&
           (inventoryAlerts.criticalCount > 0 || inventoryAlerts.lowCount > 0) &&
-          can(user?.role, 'inventory.read') && (
+          hasPermission(user?.permissions, 'inventory.read') && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}

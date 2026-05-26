@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { Camp } from '../../types';
 import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -31,6 +31,7 @@ export default function CampManagement() {
       const res = await apiClient.get('/camps');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
   const createMutation = useMutation({
@@ -57,7 +58,9 @@ export default function CampManagement() {
     },
   });
 
-  const canDelete = can(user?.role, 'camps.delete');
+  const canCreate = hasPermission(user?.permissions, 'camps.create');
+  const canUpdate = hasPermission(user?.permissions, 'camps.update');
+  const canDelete = hasPermission(user?.permissions, 'camps.delete');
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -134,13 +137,15 @@ export default function CampManagement() {
             Multi-Refuge Setup & Command Guidelines
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          REGISTER NEW REFUGE
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            REGISTER NEW REFUGE
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -190,14 +195,16 @@ export default function CampManagement() {
                     >
                       {camp.status}
                     </span>
-                    <button
-                      onClick={() => openEditModal(camp)}
-                      aria-label={`Edit ${camp.name}`}
-                      title={`Edit ${camp.name}`}
-                      className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
-                    >
-                      <Edit2 size={12} />
-                    </button>
+                    {canUpdate && (
+                      <button
+                        onClick={() => openEditModal(camp)}
+                        aria-label={`Edit ${camp.name}`}
+                        title={`Edit ${camp.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                    )}
                     {canDelete && (
                       <button
                         onClick={() => {

@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { useCampStore } from '../../store';
+import { useCampStore, useAuthStore } from '../../store';
+import { hasPermission, canAccessCamp } from '../../lib/permissions';
+import { useDeniedPermissionsStore } from '../../store/deniedPermissions';
 import { InventorySnapshot, Resource } from '../../types';
 import {
   Package,
@@ -23,8 +25,10 @@ const PAGE_SIZE = 12;
 
 export default function InventoryList() {
   const { currentCampId } = useCampStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useDeniedPermissionsStore();
 
   // Modals
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
@@ -37,36 +41,53 @@ export default function InventoryList() {
   const [adjustQuantity, setAdjustQuantity] = useState<string>('');
   const [adjustDescription, setAdjustDescription] = useState<string>('');
 
+  const canAdjust = hasPermission(user?.permissions, 'inventory.adjust');
+  const canAuditRead = hasPermission(user?.permissions, 'inventory.audit.read');
+
   const { data: inventory, isLoading } = useQuery<InventorySnapshot[]>({
     queryKey: ['inventory', currentCampId],
     queryFn: async () => {
-      const [invRes, resRes] = await Promise.all([
-        apiClient.get(`/inventory/${currentCampId}`),
-        apiClient.get('/resources'),
-      ]);
-      const items = (invRes.data?.data ?? invRes.data ?? []) as Array<{
-        resource_type_id: number;
-        quantity?: number;
-      }>;
-      const resourceTypes = (resRes.data?.data ?? resRes.data ?? []) as Resource[];
-      return items.map((item) => {
-        const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
-        const qty = Math.floor(Number(item.quantity ?? 0));
-        const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));
-        return {
-          resource_id: item.resource_type_id,
-          resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
-          unit: rt?.unit ?? '',
-          quantity: qty,
-          minimum_stock: minStock,
-          daily_ration: Math.floor(Number(rt?.daily_ration ?? 0)),
-          daily_usage: 0,
-          projection_days: null,
-          status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK',
-        } satisfies InventorySnapshot;
-      }) as InventorySnapshot[];
+      try {
+        const [invRes, resRes] = await Promise.all([
+          apiClient.get(`/inventory/${currentCampId}`),
+          apiClient.get('/resources'),
+        ]);
+        const items = (invRes.data?.data ?? invRes.data ?? []) as Array<{
+          resource_type_id: number;
+          quantity?: number;
+        }>;
+        const resourceTypes = (resRes.data?.data ?? resRes.data ?? []) as Resource[];
+        return items.map((item) => {
+          const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
+          const qty = Math.floor(Number(item.quantity ?? 0));
+          const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));
+          return {
+            resource_id: item.resource_type_id,
+            resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
+            unit: rt?.unit ?? '',
+            quantity: qty,
+            minimum_stock: minStock,
+            daily_ration: Math.floor(Number(rt?.daily_ration ?? 0)),
+            daily_usage: 0,
+            projection_days: null,
+            status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK',
+          } satisfies InventorySnapshot;
+        }) as InventorySnapshot[];
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) return [] as InventorySnapshot[];
+        throw err;
+      }
     },
-    enabled: !!currentCampId,
+    enabled:
+      !!currentCampId &&
+      hasPermission(user?.permissions, 'inventory.read') &&
+      canAccessCamp(currentCampId),
+    retry: (failureCount, error: unknown) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 403) return false;
+      return failureCount < 1;
+    },
   });
 
   const totalPages = Math.max(1, Math.ceil((inventory?.length ?? 0) / PAGE_SIZE));
@@ -135,27 +156,31 @@ export default function InventoryList() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => navigate('/inventory/audit')}
-            className="brutalist-border hover:bg-zinc-900 text-zinc-300 font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-            aria-label="View inventory audit trail"
-          >
-            <History size={18} />
-            VIEW AUDIT TRAIL
-          </button>
-          <button
-            onClick={() => {
-              if (inventory && inventory.length > 0) {
-                setSelectedResourceId(inventory[0].resource_id);
-              }
-              setIsAdjustOpen(true);
-            }}
-            className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-            aria-label="Open manual stock adjustment form"
-          >
-            <ArrowDownUp size={18} />
-            MANUAL ADJUST
-          </button>
+          {canAuditRead && (
+            <button
+              onClick={() => navigate('/inventory/audit')}
+              className="brutalist-border hover:bg-zinc-900 text-zinc-300 font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+              aria-label="View inventory audit trail"
+            >
+              <History size={18} />
+              VIEW AUDIT TRAIL
+            </button>
+          )}
+          {canAdjust && (
+            <button
+              onClick={() => {
+                if (inventory && inventory.length > 0) {
+                  setSelectedResourceId(inventory[0].resource_id);
+                }
+                setIsAdjustOpen(true);
+              }}
+              className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+              aria-label="Open manual stock adjustment form"
+            >
+              <ArrowDownUp size={18} />
+              MANUAL ADJUST
+            </button>
+          )}
         </div>
       </div>
 

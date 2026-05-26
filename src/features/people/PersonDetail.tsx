@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { Person, Camp } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate, normalizePersonStatus } from '../../lib/utils';
 import {
   ArrowLeft,
@@ -41,7 +41,19 @@ export default function PersonDetail() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
-  const hasReadPermission = can(user?.role, 'people.read');
+  const hasReadPermission = hasPermission(user?.permissions, 'people.read');
+  const canUpdate = hasPermission(user?.permissions, 'people.update');
+  const canDelete = hasPermission(user?.permissions, 'people.delete');
+  const canStatusLog = hasPermission(user?.permissions, 'people.status_log.create');
+  const canReassignProfession = hasPermission(
+    user?.permissions,
+    'people.profession_reassign.create',
+  );
+  const canOverrideContribution = hasPermission(
+    user?.permissions,
+    'people.contribution_override.create',
+  );
+  const canTransferPerson = hasPermission(user?.permissions, 'transfers.create');
 
   // ── Person query ───────────────────────────────────────────────────────
 
@@ -599,27 +611,33 @@ export default function PersonDetail() {
 
       {/* Action buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <button
-          onClick={openEditModal}
-          className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-emerald-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-emerald-500 transition-all"
-        >
-          <Edit2 size={16} />
-          EDIT PROFILE
-        </button>
-        <button
-          onClick={() => setTransferringPerson(true)}
-          className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-amber-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-amber-500 transition-all"
-        >
-          <ArrowLeftRight size={16} />
-          TRANSFER PERSONNEL
-        </button>
-        <button
-          onClick={() => setConfirmDelete(true)}
-          className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-red-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-red-500 transition-all"
-        >
-          <Trash2 size={16} />
-          DELETE RECORD
-        </button>
+        {canUpdate && (
+          <button
+            onClick={openEditModal}
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-emerald-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-emerald-500 transition-all"
+          >
+            <Edit2 size={16} />
+            EDIT PROFILE
+          </button>
+        )}
+        {canTransferPerson && (
+          <button
+            onClick={() => setTransferringPerson(true)}
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-amber-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-amber-500 transition-all"
+          >
+            <ArrowLeftRight size={16} />
+            TRANSFER PERSONNEL
+          </button>
+        )}
+        {canDelete && (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-red-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-red-500 transition-all"
+          >
+            <Trash2 size={16} />
+            DELETE RECORD
+          </button>
+        )}
       </div>
 
       {/* Personnel Actions */}
@@ -628,30 +646,36 @@ export default function PersonDetail() {
           Personnel Actions
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          <button
-            onClick={() => {
-              setStatusNewStatus(normalizePersonStatus(person?.status));
-              setShowStatusLogModal(true);
-            }}
-            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-purple-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-purple-500 transition-all"
-          >
-            <Clock size={16} />
-            LOG STATUS CHANGE
-          </button>
-          <button
-            onClick={() => setShowReassignModal(true)}
-            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-brand-secondary/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-brand-secondary transition-all"
-          >
-            <RefreshCw size={16} />
-            REASSIGN PROFESSION
-          </button>
-          <button
-            onClick={() => setShowOverrideModal(true)}
-            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-blue-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-blue-500 transition-all"
-          >
-            <DollarSign size={16} />
-            OVERRIDE CONTRIBUTION
-          </button>
+          {canStatusLog && (
+            <button
+              onClick={() => {
+                setStatusNewStatus(normalizePersonStatus(person?.status));
+                setShowStatusLogModal(true);
+              }}
+              className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-purple-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-purple-500 transition-all"
+            >
+              <Clock size={16} />
+              LOG STATUS CHANGE
+            </button>
+          )}
+          {canReassignProfession && (
+            <button
+              onClick={() => setShowReassignModal(true)}
+              className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-brand-secondary/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-brand-secondary transition-all"
+            >
+              <RefreshCw size={16} />
+              REASSIGN PROFESSION
+            </button>
+          )}
+          {canOverrideContribution && (
+            <button
+              onClick={() => setShowOverrideModal(true)}
+              className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-blue-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-blue-500 transition-all"
+            >
+              <DollarSign size={16} />
+              OVERRIDE CONTRIBUTION
+            </button>
+          )}
         </div>
       </div>
 

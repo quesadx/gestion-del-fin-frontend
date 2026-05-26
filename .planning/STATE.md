@@ -1,6 +1,6 @@
 # Project State
 
-**Last Updated:** 2026-05-25
+**Last Updated:** 2026-05-26
 
 ## Current Milestone
 
@@ -37,9 +37,11 @@ See: .planning/PROJECT.md (updated 2026-05-24)
 |---|-------------|------|--------|-----------|
 | 260525-qt1 | topbar user info container + separator | 2026-05-25 | 3035fa0 | [260525-qt1-topbar-user-info-separator](./quick/260525-qt1-topbar-user-info-separator/) |
 | 260525-qt2 | UI mobile responsive + accessibility features | 2026-05-25 | 5467357 | [260525-qt2-ui-mobile-responsive-accessibility](./quick/260525-qt2-ui-mobile-responsive-accessibility/) |
+| 260526-qt3 | permission-driven UI gating via user.permissions | 2026-05-26 | 89bc64c | [260526-qt3-permission-based-ui-gating](./quick/260526-qt3-permission-based-ui-gating/) |
 
 ## Last Activity
 
 - Milestone v1.0-legacy-parity — Shipped 2026-05-24
 - 2026-05-25 - Completed quick task 260525-qt1: topbar user info container + separator
 - 2026-05-25 - Completed quick task 260525-qt2: UI mobile responsive + accessibility features
+- 2026-05-26 - Completed quick task 260526-qt3: permission-driven UI gating via user.permissions

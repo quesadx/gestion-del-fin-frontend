@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
@@ -30,7 +30,10 @@ export default function ExpeditionList() {
   const { userId, user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const canCreate = can(user?.role, 'expeditions.create');
+  const canCreate = hasPermission(user?.permissions, 'expeditions.create');
+  const canUpdate = hasPermission(user?.permissions, 'expeditions.update');
+  const canUpdateStatus = hasPermission(user?.permissions, 'expeditions.update_status');
+  const canDelete = hasPermission(user?.permissions, 'expeditions.delete');
 
   // --- Confirm dialogs ---
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
@@ -74,9 +77,8 @@ export default function ExpeditionList() {
       const res = await apiClient.get(`/expeditions?camp_id=${currentCampId}`);
       return unwrapList<Expedition>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'expeditions.read'),
   });
-
   const totalPages = Math.max(1, Math.ceil((expeditions?.length ?? 0) / PAGE_SIZE));
   const paginatedExpeditions = (expeditions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -86,6 +88,7 @@ export default function ExpeditionList() {
       const res = await apiClient.get('/resources');
       return unwrapList<{ id: number; name: string; unit: string }>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
   const { data: people } = useQuery<Person[]>({
@@ -94,7 +97,7 @@ export default function ExpeditionList() {
       const res = await apiClient.get(`/camps/${currentCampId}/people`);
       return unwrapList<Person>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
   });
 
   const healthyPeople = (people ?? []).filter((p) => (p.status || '').toUpperCase() === 'HEALTHY');
@@ -418,7 +421,7 @@ export default function ExpeditionList() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-zinc-900 lg:pl-6">
-                    {exp.status === 'PLANNED' && (
+                    {exp.status === 'PLANNED' && canUpdateStatus && (
                       <button
                         onClick={() =>
                           updateStatusMutation.mutate({
@@ -432,7 +435,7 @@ export default function ExpeditionList() {
                         DEPLOY SQUAD
                       </button>
                     )}
-                    {exp.status === 'ONGOING' && (
+                    {exp.status === 'ONGOING' && canUpdateStatus && (
                       <>
                         <button
                           onClick={() => {
@@ -460,23 +463,27 @@ export default function ExpeditionList() {
                     >
                       VIEW DETAILS
                     </Link>
-                    <button
-                      onClick={() => handleEditExpClick(exp)}
-                      aria-label="Edit expedition"
-                      title="Edit expedition"
-                      className="p-1.5 sm:p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer touch-target"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(exp.id)}
-                      disabled={deleteExpMutation.isPending}
-                      aria-label="Delete expedition"
-                      title="Delete expedition"
-                      className="p-1.5 sm:p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer touch-target"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {canUpdate && (
+                      <button
+                        onClick={() => handleEditExpClick(exp)}
+                        aria-label="Edit expedition"
+                        title="Edit expedition"
+                        className="p-1.5 sm:p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer touch-target"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => setConfirmDeleteId(exp.id)}
+                        disabled={deleteExpMutation.isPending}
+                        aria-label="Delete expedition"
+                        title="Delete expedition"
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer touch-target"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

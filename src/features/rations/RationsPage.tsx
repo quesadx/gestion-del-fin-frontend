@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { apiClient } from '../../lib/api';
-import { useCampStore } from '../../store';
+import { useCampStore, useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { Sandwich, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
@@ -11,6 +12,7 @@ import { InventoryAuditEntry, Resource } from '../../types';
 
 export default function RationsPage() {
   const { currentCampId } = useCampStore();
+  const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
   // Modal state
@@ -30,6 +32,7 @@ export default function RationsPage() {
       return res.data?.data ?? res.data ?? [];
     },
     staleTime: 60_000,
+    enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
   const resourceMap = useMemo(() => {
@@ -67,7 +70,7 @@ export default function RationsPage() {
         throw error;
       }
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.audit.read'),
     retry: false,
   });
 

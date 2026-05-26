@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { ArrowLeft, Loader2, UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -30,7 +30,7 @@ export default function NewPersonPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
-  const hasSystemAdminAccess = can(user?.role, '*');
+  const canAccess = hasPermission(user?.permissions, 'people.create');
 
   const {
     register,
@@ -57,7 +57,7 @@ export default function NewPersonPage() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
-    enabled: hasSystemAdminAccess,
+    enabled: canAccess,
   });
 
   // ── Create mutation ─────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ export default function NewPersonPage() {
     createPersonMutation.mutate(data);
   };
 
-  if (!hasSystemAdminAccess) {
+  if (!canAccess) {
     return <Navigate to="/" replace />;
   }
 

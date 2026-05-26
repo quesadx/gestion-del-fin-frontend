@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { Resource } from '../../types';
 import { Package, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -9,6 +11,7 @@ import { Skeleton } from '../../components/Skeleton';
 
 export default function ResourcesPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
@@ -20,12 +23,17 @@ export default function ResourcesPage() {
   const [minimumStock, setMinimumStock] = useState('');
   const [autoDaily, setAutoDaily] = useState(false);
 
+  const canCreate = hasPermission(user?.permissions, 'resources.create');
+  const canUpdate = hasPermission(user?.permissions, 'resources.update');
+  const canDelete = hasPermission(user?.permissions, 'resources.delete');
+
   const { data: resources, isLoading } = useQuery<Resource[]>({
     queryKey: ['resources'],
     queryFn: async () => {
       const res = await apiClient.get('/resources');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
   const createMutation = useMutation({
@@ -139,13 +147,15 @@ export default function ResourcesPage() {
             Define resource categories, units, and ration parameters
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          NEW RESOURCE TYPE
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            NEW RESOURCE TYPE
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -185,22 +195,26 @@ export default function ResourcesPage() {
                     <Package size={24} />
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(resource)}
-                      aria-label={`Edit ${resource.name}`}
-                      title={`Edit ${resource.name}`}
-                      className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
-                    >
-                      <Edit2 size={12} />
-                    </button>
-                    <button
-                      onClick={() => setDeletingResource(resource)}
-                      aria-label={`Delete ${resource.name}`}
-                      title={`Delete ${resource.name}`}
-                      className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {canUpdate && (
+                      <button
+                        onClick={() => openEditModal(resource)}
+                        aria-label={`Edit ${resource.name}`}
+                        title={`Edit ${resource.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => setDeletingResource(resource)}
+                        aria-label={`Delete ${resource.name}`}
+                        title={`Delete ${resource.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
