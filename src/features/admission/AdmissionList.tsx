@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { Admission } from '../../types';
 import { BrainCircuit, ShieldAlert, UserPlus, CheckCircle2, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,7 +29,9 @@ export default function AdmissionList() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const canReevaluate = can(user?.role, 'admission.create') && can(user?.role, 'admission.review');
+  const canReevaluate =
+    hasPermission(user?.permissions, 'admission.create') &&
+    hasPermission(user?.permissions, 'admission.review');
   const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 

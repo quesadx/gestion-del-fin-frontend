@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { Camp } from '../../types';
 import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -57,7 +57,7 @@ export default function CampManagement() {
     },
   });
 
-  const canDelete = can(user?.role, 'camps.delete');
+  const canDelete = hasPermission(user?.permissions, 'camps.delete');
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { Person, Camp } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate, normalizePersonStatus } from '../../lib/utils';
 import {
   ArrowLeft,
@@ -41,7 +41,7 @@ export default function PersonDetail() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
-  const hasReadPermission = can(user?.role, 'people.read');
+  const hasReadPermission = hasPermission(user?.permissions, 'people.read');
 
   // ── Person query ───────────────────────────────────────────────────────
 

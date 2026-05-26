@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton, SkeletonList } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -102,24 +103,6 @@ function getStatusShortLabel(status: TransferStatus): string {
     default:
       return status;
   }
-}
-
-function normalizeRole(role: string): string {
-  return role.toLowerCase().replace(/[\s-]+/g, '_');
-}
-
-function canManageTransfers(role: string | undefined): boolean {
-  if (!role) return false;
-  const r = normalizeRole(role);
-  return (
-    r === 'system_admin' || r === 'resource_manager' || r.includes('admin') || r.includes('manager')
-  );
-}
-
-function canCreateTransfers(role: string | undefined): boolean {
-  if (!role) return false;
-  const r = normalizeRole(role);
-  return canManageTransfers(role) || r === 'travel_coordinator' || r.includes('coordinator');
 }
 
 // ── StatusStepper ─────────────────────────────────────────────────────────────
@@ -402,8 +385,8 @@ export default function TransferList() {
   });
 
   // ── RBAC ─────────────────────────────────────────────────────────────────
-  const canManage = canManageTransfers(user?.role);
-  const canCreate = canCreateTransfers(user?.role);
+  const canManage = hasPermission(user?.permissions, 'transfers.*');
+  const canCreate = hasPermission(user?.permissions, 'transfers.create');
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (

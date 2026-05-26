@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { Camp, Person, InventoryItem, Expedition } from '../../types';
 import { useAuthStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
 import { MapPin, Users, Box, Map, ArrowLeft, AlertCircle, Activity, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -14,7 +14,7 @@ export default function CampDetail() {
   const campId = Number(id);
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const hasReadAccess = can(user?.role, 'camps.read');
+  const hasReadAccess = hasPermission(user?.permissions, 'camps.read');
 
   // Camp detail query
   const {

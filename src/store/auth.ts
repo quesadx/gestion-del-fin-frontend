@@ -38,6 +38,8 @@ export const useAuthStore = create<AuthState>()(
           user: {
             ...user,
             camp_id: rawCampId != null ? Number(rawCampId) : null,
+            permissions:
+              user.permissions ?? (Array.isArray(payload.permissions) ? payload.permissions : []),
           },
           token,
           userId: rawId != null ? Number(rawId) : null,

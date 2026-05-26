@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { Expedition, ResourceAllocation, Resource } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
 import {
   MapPin,
@@ -41,7 +41,7 @@ export default function ExpeditionDetail() {
   >([]);
 
   const actorId = user?.id ?? 1;
-  const canRead = can(user?.role, 'expeditions.read');
+  const canRead = hasPermission(user?.permissions, 'expeditions.read');
 
   useEffect(() => {
     if (!canRead) {

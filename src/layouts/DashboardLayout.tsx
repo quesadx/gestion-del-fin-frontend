@@ -26,7 +26,7 @@ import { Camp, InventoryItem, Resource } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
-import { can } from '../lib/permissions';
+import { hasPermission } from '../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert, Eye } from 'lucide-react';
@@ -207,7 +207,7 @@ export default function DashboardLayout() {
 
       return { criticalCount: criticalNames.length, criticalNames, lowCount };
     },
-    enabled: !!currentCampId && can(user?.role, 'inventory.read'),
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.read'),
     refetchInterval: 30_000,
   });
 
@@ -319,7 +319,9 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
-  const visibleNavItems = NAV_ITEMS.filter((item) => can(user?.role, NAV_PERMISSIONS[item.to]));
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
+    hasPermission(user?.permissions, NAV_PERMISSIONS[item.to]),
+  );
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
@@ -699,7 +701,7 @@ export default function DashboardLayout() {
           !alertDismissed &&
           inventoryAlerts &&
           (inventoryAlerts.criticalCount > 0 || inventoryAlerts.lowCount > 0) &&
-          can(user?.role, 'inventory.read') && (
+          hasPermission(user?.permissions, 'inventory.read') && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}

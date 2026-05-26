@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import {
   Users,
   Map,
@@ -21,14 +22,12 @@ import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { InventorySnapshot, Resource, InventoryItem, Person } from '../../types';
 import BorderGlow from '../../components/BorderGlow';
 
-const ADMIN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator'];
-
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const isWorker = user?.role === 'worker';
-  const isAdmin = user?.role ? ADMIN_ROLES.includes(user.role) : false;
+  const isAdmin = hasPermission(user?.permissions, 'metrics.dashboard');
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['dashboard-metrics', currentCampId],

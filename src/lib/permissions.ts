@@ -53,21 +53,37 @@ export function can(role: string | null | undefined, permission: string): boolea
   const perms = ROLE_PERMISSIONS[role];
   if (!perms) return false;
 
-  for (const p of perms) {
-    // Full wildcard — role can do everything
-    if (p === '*') return true;
+  return matchPermission(perms, permission);
+}
 
-    // Exact match
+function matchPermission(permissions: string[] | null | undefined, permission: string): boolean {
+  if (!permissions || permissions.length === 0) return false;
+
+  for (const p of permissions) {
+    if (p === '*') return true;
     if (p === permission) return true;
 
-    // Namespace wildcard: "inventory.*" matches "inventory.read", "inventory.create", etc.
+    // Namespace wildcard in stored permissions: "inventory.*" matches "inventory.read"
     if (p.endsWith('.*')) {
-      const ns = p.slice(0, -2); // e.g. "inventory"
+      const ns = p.slice(0, -2);
       if (permission === ns || permission.startsWith(`${ns}.`)) return true;
+    }
+
+    // Namespace wildcard in requested permission: asking "inventory.*" matches "inventory.read"
+    if (permission.endsWith('.*')) {
+      const ns = permission.slice(0, -2);
+      if (p === ns || p.startsWith(`${ns}.`)) return true;
     }
   }
 
   return false;
+}
+
+export function hasPermission(
+  permissions: string[] | null | undefined,
+  permission: string,
+): boolean {
+  return matchPermission(permissions, permission);
 }
 
 // ── Convenience helpers ───────────────────────────────────────────────────────

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { ArrowLeft, Loader2, UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -30,7 +30,7 @@ export default function NewPersonPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
-  const hasSystemAdminAccess = can(user?.role, '*');
+  const hasSystemAdminAccess = hasPermission(user?.permissions, '*');
 
   const {
     register,

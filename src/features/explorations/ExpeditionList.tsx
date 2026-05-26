@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
@@ -30,7 +30,7 @@ export default function ExpeditionList() {
   const { userId, user } = useAuthStore();
   const queryClient = useQueryClient();
 
-  const canCreate = can(user?.role, 'expeditions.create');
+  const canCreate = hasPermission(user?.permissions, 'expeditions.create');
 
   // --- Confirm dialogs ---
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);

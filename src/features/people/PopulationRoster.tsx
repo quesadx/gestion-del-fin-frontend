@@ -23,7 +23,7 @@ import {
 import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
 import { cn, normalizePersonStatus } from '../../lib/utils';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -196,7 +196,7 @@ export default function PopulationRoster() {
     },
   });
 
-  const canReassign = can(user?.role, 'people.profession_reassign.create');
+  const canReassign = hasPermission(user?.permissions, 'people.profession_reassign.create');
 
   const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
