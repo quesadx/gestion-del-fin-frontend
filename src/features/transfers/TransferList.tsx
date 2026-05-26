@@ -77,6 +77,27 @@ const STATUS_STEP_LABELS = ['PENDING', 'SOURCE\nAPPROVED', 'TARGET\nAPPROVED', '
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/** Build a date input compatible "min" string (YYYY-MM-DD) for today. */
+function getLocalMinDate(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * Convert a datetime-local value (YYYY-MM-DDTHH:MM, local time) into an
+ * ISO-8601 UTC string that the backend expects.
+ *
+ * Uses the Date constructor with numeric parts to avoid browser-parsing
+ * inconsistencies with timezoneless strings.
+ */
+function datetimeLocalToUTCISO(value: string): string {
+  const [datePart, timePart] = value.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const [hh, mm] = (timePart || '00:00').split(':').map(Number);
+  return new Date(y, m - 1, d, hh, mm).toISOString();
+}
+
 function getStatusBadgeClasses(status: TransferStatus): string {
   switch (status) {
     case 'PENDING':
@@ -191,6 +212,11 @@ export default function TransferList() {
   // Schedule delivery inline state
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
+
+  // Approve-source inline date picker
+  const [isApprovingSource, setIsApprovingSource] = useState(false);
+  const [approveSourceDate, setApproveSourceDate] = useState('');
+  const [approveSourceError, setApproveSourceError] = useState<string | null>(null);
 
   // Create form state
   const [transferType, setTransferType] = useState<'RESOURCE' | 'PERSON'>('RESOURCE');
@@ -347,8 +373,30 @@ export default function TransferList() {
   });
 
   const approveSrcMutation = useMutation({
-    mutationFn: async (id: number) => apiClient.patch(`/transfers/${id}/approve-source`, {}),
-    onSuccess: invalidateTransfers,
+    mutationFn: async ({
+      id,
+      scheduled_delivery_date,
+    }: {
+      id: number;
+      scheduled_delivery_date: string;
+    }) =>
+      apiClient.patch(`/transfers/${id}/approve-source`, {
+        scheduled_delivery_date,
+      }),
+    onSuccess: () => {
+      invalidateTransfers();
+      setIsApprovingSource(false);
+      setApproveSourceDate('');
+      setApproveSourceError(null);
+    },
+    onError: (error: unknown) => {
+      const msg =
+        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ??
+        (error as { message?: string })?.message ??
+        'Approval failed';
+      setApproveSourceError(msg);
+    },
   });
 
   const approveTgtMutation = useMutation({
@@ -769,9 +817,90 @@ export default function TransferList() {
                 {/* Action footer — only for actionable statuses + authorized roles */}
                 {canManage && detail.status !== 'COMPLETED' && detail.status !== 'REJECTED' && (
                   <div className="p-5 border-t border-zinc-900 bg-surface-raised shrink-0 space-y-3">
+                    {/* ── PENDING: approve source ─────────────────────────────── */}
                     {detail.status === 'PENDING' && (
-                      <div className="flex gap-3">
-                        {canReject && (
+                      <div className="space-y-3">
+                        {isApprovingSource ? (
+                          <div className="space-y-3 p-4 bg-blue-950/10 border border-blue-500/20 rounded-lg">
+                            <div className="space-y-1">
+                              <p className="text-xs font-black text-blue-400 uppercase tracking-wider">
+                                Scheduled Delivery
+                              </p>
+                              <p className="text-[10px] text-zinc-500 font-mono leading-relaxed">
+                                Set the estimated date and time the shipment will arrive at{' '}
+                                <span className="text-blue-400">
+                                  {detail.target_camp_ref?.name ?? getCampName(detail.target_camp)}
+                                </span>
+                                .
+                              </p>
+                            </div>
+
+                            <div className="flex items-stretch gap-2">
+                              <input
+                                type="date"
+                                value={approveSourceDate}
+                                min={getLocalMinDate()}
+                                onChange={(e) => {
+                                  setApproveSourceDate(e.target.value);
+                                  setApproveSourceError(null);
+                                }}
+                                aria-label="Select scheduled delivery date"
+                                className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-mono"
+                              />
+                              <button
+                                onClick={() => {
+                                  if (approveSourceDate) {
+                                    approveSrcMutation.mutate({
+                                      id: detail.id,
+                                      scheduled_delivery_date: datetimeLocalToUTCISO(
+                                        `${approveSourceDate}T12:00`,
+                                      ),
+                                    });
+                                  }
+                                }}
+                                disabled={!approveSourceDate || approveSrcMutation.isPending}
+                                aria-label="Confirm source approval with scheduled delivery date"
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
+                              >
+                                {approveSrcMutation.isPending ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  'CONFIRM'
+                                )}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setIsApprovingSource(false);
+                                  setApproveSourceDate('');
+                                  setApproveSourceError(null);
+                                }}
+                                aria-label="Cancel source approval"
+                                className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
+                              >
+                                <X size={13} />
+                              </button>
+                            </div>
+
+                            {approveSourceError && (
+                              <div className="flex items-center gap-2 text-red-400">
+                                <AlertTriangle size={12} className="shrink-0" />
+                                <p className="text-[10px] font-mono">{approveSourceError}</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setIsApprovingSource(true)}
+                            disabled={approveSrcMutation.isPending}
+                            aria-label="Approve this transfer at the source camp — requires delivery date"
+                            className="w-full py-3 text-xs font-black uppercase bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
+                          >
+                            <CheckCircle2 size={15} />
+                            APPROVE (SOURCE)
+                          </button>
+                        )}
+
+                        <div className="flex gap-3">
                           <button
                             onClick={() => setConfirmRejectId(detail.id)}
                             aria-label="Reject this pending transfer request"
@@ -780,80 +909,79 @@ export default function TransferList() {
                             <XCircle size={15} />
                             REJECT
                           </button>
-                        )}
-                        {canApproveSource && (
-                          <button
-                            onClick={() => approveSrcMutation.mutate(detail.id)}
-                            disabled={approveSrcMutation.isPending}
-                            aria-label="Approve this transfer at the source camp"
-                            className="flex-2 py-3 text-xs font-black uppercase bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
-                          >
-                            {approveSrcMutation.isPending ? (
-                              <Loader2 size={15} className="animate-spin" />
-                            ) : (
-                              <CheckCircle2 size={15} />
-                            )}
-                            APPROVE (SOURCE)
-                          </button>
-                        )}
+                        </div>
                       </div>
                     )}
 
+                    {/* ── APPROVED_SOURCE: edit delivery date ────────────────── */}
                     {detail.status === 'APPROVED_SOURCE' && (
                       <div className="space-y-3">
-                        {/* Schedule delivery */}
                         {canSchedule && (
-                          <div className="flex items-center gap-2">
+                          <>
                             {isScheduling ? (
-                              <>
-                                <input
-                                  type="datetime-local"
-                                  value={scheduleDate}
-                                  onChange={(e) => setScheduleDate(e.target.value)}
-                                  aria-label="Select scheduled delivery date and time"
-                                  className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
-                                />
-                                <button
-                                  onClick={() => {
-                                    if (scheduleDate) {
-                                      scheduleMutation.mutate({
-                                        id: detail.id,
-                                        date: new Date(scheduleDate).toISOString(),
-                                      });
-                                    }
-                                  }}
-                                  disabled={!scheduleDate || scheduleMutation.isPending}
-                                  aria-label="Set the scheduled delivery date and time"
-                                  className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5"
-                                >
-                                  {scheduleMutation.isPending ? (
-                                    <Loader2 size={12} className="animate-spin" />
-                                  ) : (
-                                    'SET'
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setIsScheduling(false);
-                                    setScheduleDate('');
-                                  }}
-                                  aria-label="Cancel scheduling and close date picker"
-                                  className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
-                                >
-                                  <X size={13} />
-                                </button>
-                              </>
+                              <div className="space-y-3 p-4 bg-zinc-900/60 border border-zinc-700/50 rounded-lg">
+                                <div className="space-y-1">
+                                  <p className="text-xs font-black text-zinc-300 uppercase tracking-wider">
+                                    Update Delivery ETA
+                                  </p>
+                                  <p className="text-[10px] text-zinc-500 font-mono leading-relaxed">
+                                    Change the estimated arrival date for this transfer.
+                                  </p>
+                                </div>
+
+                                <div className="flex items-stretch gap-2">
+                                  <input
+                                    type="date"
+                                    value={scheduleDate}
+                                    min={getLocalMinDate()}
+                                    onChange={(e) => setScheduleDate(e.target.value)}
+                                    aria-label="Select updated delivery date"
+                                    className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      if (scheduleDate) {
+                                        scheduleMutation.mutate({
+                                          id: detail.id,
+                                          date: datetimeLocalToUTCISO(`${scheduleDate}T12:00`),
+                                        });
+                                      }
+                                    }}
+                                    disabled={!scheduleDate || scheduleMutation.isPending}
+                                    aria-label="Update the scheduled delivery date"
+                                    className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                                  >
+                                    {scheduleMutation.isPending ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                      'UPDATE'
+                                    )}
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setIsScheduling(false);
+                                      setScheduleDate('');
+                                    }}
+                                    aria-label="Cancel scheduling and close date picker"
+                                    className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </div>
+                              </div>
                             ) : (
                               <button
                                 onClick={() => setIsScheduling(true)}
-                                aria-label="Open date picker to schedule delivery date"
+                                aria-label="Open date picker to update or set the delivery date"
                                 className="px-4 py-2 text-xs font-bold uppercase border border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 rounded transition-colors flex items-center gap-2"
                               >
                                 <Calendar size={13} />
-                                SCHEDULE DELIVERY
+                                {detail.scheduled_delivery_date
+                                  ? 'EDIT DELIVERY DATE'
+                                  : 'SET DELIVERY DATE'}
                               </button>
                             )}
-                          </div>
+                          </>
                         )}
 
                         <div className="flex gap-3">
@@ -867,7 +995,7 @@ export default function TransferList() {
                               REJECT
                             </button>
                           )}
-                          {canApproveTarget && (
+                          {canApproveTarget && detail.target_camp === currentCampId && (
                             <button
                               onClick={() => approveTgtMutation.mutate(detail.id)}
                               disabled={approveTgtMutation.isPending}
