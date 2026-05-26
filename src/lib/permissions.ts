@@ -75,11 +75,26 @@ function matchPermission(permissions: string[] | null | undefined, permission: s
   return false;
 }
 
+import { useDeniedPermissionsStore } from '../store/deniedPermissions';
+import { useAuthStore } from '../store/auth';
+
 export function hasPermission(
   permissions: string[] | null | undefined,
   permission: string,
 ): boolean {
+  const denied = useDeniedPermissionsStore.getState().denied;
+  if (denied.has(permission)) return false;
   return matchPermission(permissions, permission);
+}
+
+/**
+ * Returns true if the current user can access camp-scoped data for the
+ * given camp ID. Non-admin users can only access their own camp.
+ */
+export function canAccessCamp(campId: number): boolean {
+  const { isAdmin, user } = useAuthStore.getState();
+  if (isAdmin) return true;
+  return campId === user?.camp_id;
 }
 
 // ── Convenience helpers ───────────────────────────────────────────────────────

@@ -73,8 +73,9 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: (failureCount, error: unknown) => {
-        const axiosError = error as { response?: unknown } | null;
+        const axiosError = error as { response?: { status?: number } } | null;
         if (!axiosError?.response) return false;
+        if (axiosError.response.status === 403) return false;
         return failureCount < 1;
       },
     },

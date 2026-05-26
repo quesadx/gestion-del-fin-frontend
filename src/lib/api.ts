@@ -49,11 +49,13 @@ apiClient.interceptors.response.use(
     }
 
     if (error.response?.status === 403) {
-      const msg =
-        error.response?.data?.error?.message ??
-        error.response?.data?.message ??
-        'You do not have permission to perform this action.';
-      showToast.error(typeof msg === 'string' ? msg : 'Forbidden');
+      if (error.config?.method !== 'get') {
+        const msg =
+          error.response?.data?.error?.message ??
+          error.response?.data?.message ??
+          'You do not have permission to perform this action.';
+        showToast.error(typeof msg === 'string' ? msg : 'Forbidden');
+      }
     }
 
     return Promise.reject(error);

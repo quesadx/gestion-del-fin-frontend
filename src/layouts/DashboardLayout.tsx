@@ -26,7 +26,8 @@ import { Camp, InventoryItem, Resource } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
-import { hasPermission } from '../lib/permissions';
+import { hasPermission, canAccessCamp } from '../lib/permissions';
+import { useDeniedPermissionsStore } from '../store/deniedPermissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
 import { ShieldAlert, Eye } from 'lucide-react';
@@ -156,6 +157,7 @@ export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status } = useConnectionStore();
+  useDeniedPermissionsStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { timeStr, synced } = useServerTime();
@@ -183,33 +185,46 @@ export default function DashboardLayout() {
   const { data: inventoryAlerts } = useQuery({
     queryKey: ['inventory-alerts', currentCampId],
     queryFn: async () => {
-      const [invRes, resRes] = await Promise.all([
-        apiClient.get(`/inventory/${currentCampId}`),
-        apiClient.get('/resources'),
-      ]);
-      const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
-      const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
+      try {
+        const [invRes, resRes] = await Promise.all([
+          apiClient.get(`/inventory/${currentCampId}`),
+          apiClient.get('/resources'),
+        ]);
+        const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
+        const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
 
-      const criticalNames: string[] = [];
-      let lowCount = 0;
+        const criticalNames: string[] = [];
+        let lowCount = 0;
 
-      items.forEach((item) => {
-        const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
-        const qty = item.quantity ?? 0;
-        const minStock = Number(rt?.minimum_stock ?? 0);
-        const name = rt?.name ?? `Resource #${item.resource_type_id}`;
+        items.forEach((item) => {
+          const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
+          const qty = item.quantity ?? 0;
+          const minStock = Number(rt?.minimum_stock ?? 0);
+          const name = rt?.name ?? `Resource #${item.resource_type_id}`;
 
-        if (qty < minStock / 2) {
-          criticalNames.push(name);
-        } else if (qty < minStock) {
-          lowCount++;
-        }
-      });
+          if (qty < minStock / 2) {
+            criticalNames.push(name);
+          } else if (qty < minStock) {
+            lowCount++;
+          }
+        });
 
-      return { criticalCount: criticalNames.length, criticalNames, lowCount };
+        return { criticalCount: criticalNames.length, criticalNames, lowCount };
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) return { criticalCount: 0, criticalNames: [], lowCount: 0 };
+        throw err;
+      }
     },
-    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.read'),
-    refetchInterval: 30_000,
+    enabled:
+      !!currentCampId &&
+      hasPermission(user?.permissions, 'inventory.read') &&
+      canAccessCamp(currentCampId),
+    refetchInterval: (query) => {
+      const err = query.state.error as { response?: { status?: number } } | null;
+      if (err?.response?.status === 403) return false;
+      return 30_000;
+    },
   });
 
   // Session-only dismiss for the alert banner.

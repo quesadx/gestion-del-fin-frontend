@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
-import { hasPermission } from '../../lib/permissions';
+import { hasPermission, canAccessCamp } from '../../lib/permissions';
+import { useDeniedPermissionsStore } from '../../store/deniedPermissions';
 import { InventorySnapshot, Resource } from '../../types';
 import {
   Package,
@@ -27,6 +28,7 @@ export default function InventoryList() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useDeniedPermissionsStore();
 
   // Modals
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
@@ -45,34 +47,47 @@ export default function InventoryList() {
   const { data: inventory, isLoading } = useQuery<InventorySnapshot[]>({
     queryKey: ['inventory', currentCampId],
     queryFn: async () => {
-      const [invRes, resRes] = await Promise.all([
-        apiClient.get(`/inventory/${currentCampId}`),
-        apiClient.get('/resources'),
-      ]);
-      const items = (invRes.data?.data ?? invRes.data ?? []) as Array<{
-        resource_type_id: number;
-        quantity?: number;
-      }>;
-      const resourceTypes = (resRes.data?.data ?? resRes.data ?? []) as Resource[];
-      return items.map((item) => {
-        const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
-        const qty = Math.floor(Number(item.quantity ?? 0));
-        const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));
-        return {
-          resource_id: item.resource_type_id,
-          resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
-          unit: rt?.unit ?? '',
-          quantity: qty,
-          minimum_stock: minStock,
-          daily_ration: Math.floor(Number(rt?.daily_ration ?? 0)),
-          daily_usage: 0,
-          projection_days: null,
-          status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK',
-        } satisfies InventorySnapshot;
-      }) as InventorySnapshot[];
+      try {
+        const [invRes, resRes] = await Promise.all([
+          apiClient.get(`/inventory/${currentCampId}`),
+          apiClient.get('/resources'),
+        ]);
+        const items = (invRes.data?.data ?? invRes.data ?? []) as Array<{
+          resource_type_id: number;
+          quantity?: number;
+        }>;
+        const resourceTypes = (resRes.data?.data ?? resRes.data ?? []) as Resource[];
+        return items.map((item) => {
+          const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
+          const qty = Math.floor(Number(item.quantity ?? 0));
+          const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));
+          return {
+            resource_id: item.resource_type_id,
+            resource_name: rt?.name ?? `Resource #${item.resource_type_id}`,
+            unit: rt?.unit ?? '',
+            quantity: qty,
+            minimum_stock: minStock,
+            daily_ration: Math.floor(Number(rt?.daily_ration ?? 0)),
+            daily_usage: 0,
+            projection_days: null,
+            status: qty < minStock ? (qty < minStock / 2 ? 'CRITICAL' : 'LOW') : 'OK',
+          } satisfies InventorySnapshot;
+        }) as InventorySnapshot[];
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) return [] as InventorySnapshot[];
+        throw err;
+      }
     },
-    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.read'),
-    retry: 1,
+    enabled:
+      !!currentCampId &&
+      hasPermission(user?.permissions, 'inventory.read') &&
+      canAccessCamp(currentCampId),
+    retry: (failureCount, error: unknown) => {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 403) return false;
+      return failureCount < 1;
+    },
   });
 
   const totalPages = Math.max(1, Math.ceil((inventory?.length ?? 0) / PAGE_SIZE));

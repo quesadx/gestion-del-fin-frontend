@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
 import { Camp, Person, InventoryItem, Expedition } from '../../types';
 import { useAuthStore } from '../../store';
-import { hasPermission } from '../../lib/permissions';
+import { hasPermission, canAccessCamp } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
 import { MapPin, Users, Box, Map, ArrowLeft, AlertCircle, Activity, Calendar } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -48,7 +48,7 @@ export default function CampDetail() {
       const res = await apiClient.get(`/inventory/${campId}`);
       return unwrapList<InventoryItem>(res.data);
     },
-    enabled: hasReadAccess && hasInventoryRead && !isNaN(campId),
+    enabled: hasReadAccess && hasInventoryRead && canAccessCamp(campId) && !isNaN(campId),
   });
 
   // Expeditions
@@ -116,7 +116,8 @@ export default function CampDetail() {
     (e) => e.camp_id === campId && e.status === 'ONGOING',
   );
 
-  const statsLoading = peopleLoading || (hasInventoryRead && inventoryLoading) || expeditionsLoading;
+  const statsLoading =
+    peopleLoading || (hasInventoryRead && inventoryLoading) || expeditionsLoading;
 
   // ── Render ──────────────────────────────────────────────────────────────
 

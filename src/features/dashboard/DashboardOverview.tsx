@@ -3,7 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
-import { hasPermission } from '../../lib/permissions';
+import { hasPermission, canAccessCamp } from '../../lib/permissions';
+import { useDeniedPermissionsStore } from '../../store/deniedPermissions';
 import {
   Users,
   Map,
@@ -25,9 +26,10 @@ import BorderGlow from '../../components/BorderGlow';
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
   const { user } = useAuthStore();
+  useDeniedPermissionsStore();
   const navigate = useNavigate();
   const isWorker = user?.role === 'worker';
-  const isAdmin = hasPermission(user?.permissions, 'metrics.dashboard');
+  const canViewMetrics = hasPermission(user?.permissions, 'metrics.dashboard');
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['dashboard-metrics', currentCampId],
@@ -58,7 +60,7 @@ export default function DashboardOverview() {
         },
       };
     },
-    enabled: !!currentCampId && isAdmin,
+    enabled: !!currentCampId && canViewMetrics,
   });
 
   const { data: peopleList, isLoading: peopleLoading } = useQuery<Person[]>({
@@ -77,15 +79,24 @@ export default function DashboardOverview() {
   const { data: rawInventory, isLoading: resourcesLoading } = useQuery({
     queryKey: ['resource-metrics', currentCampId],
     queryFn: async () => {
-      const [invRes, resRes] = await Promise.all([
-        apiClient.get(`/inventory/${currentCampId}`),
-        apiClient.get('/resources'),
-      ]);
-      const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
-      const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
-      return { items, resourceTypes };
+      try {
+        const [invRes, resRes] = await Promise.all([
+          apiClient.get(`/inventory/${currentCampId}`),
+          apiClient.get('/resources'),
+        ]);
+        const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
+        const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
+        return { items, resourceTypes };
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) return { items: [], resourceTypes: [] };
+        throw err;
+      }
     },
-    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.read'),
+    enabled:
+      !!currentCampId &&
+      hasPermission(user?.permissions, 'inventory.read') &&
+      canAccessCamp(currentCampId),
   });
 
   const resourceSummaries: InventorySnapshot[] = useMemo(() => {
