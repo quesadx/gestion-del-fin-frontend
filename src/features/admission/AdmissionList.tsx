@@ -62,9 +62,8 @@ export default function AdmissionList() {
       const res = await apiClient.get(`/admission/camps/${currentCampId}`);
       return unwrapList<Admission>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'admission.read'),
   });
-
   const totalPages = Math.max(1, Math.ceil((admissions?.length ?? 0) / PAGE_SIZE));
   const paginatedAdmissions = (admissions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -74,7 +73,7 @@ export default function AdmissionList() {
       const res = await apiClient.get(`/admission/${selectedAdmissionId}`);
       return res.data;
     },
-    enabled: !!selectedAdmissionId,
+    enabled: !!selectedAdmissionId && hasPermission(user?.permissions, 'admission.read'),
   });
 
   // Fetch professions dynamically for the correction select
@@ -84,6 +83,7 @@ export default function AdmissionList() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'professions.read'),
   });
 
   const reviewMutation = useMutation({

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useGamificationStore, useCampStore, useAuthStore } from '../../store';
 import { apiClient, unwrapList } from '../../lib/api';
+import { hasPermission } from '../../lib/permissions';
 import { GamificationAchievement, InventoryItem } from '../../types';
 import { Shield, Star, Trophy, Award } from 'lucide-react';
 
@@ -50,7 +51,7 @@ const ICON_MAP: Record<string, typeof Shield> = {
 
 export default function GamificationWidget() {
   const { currentCampId } = useCampStore();
-  const { userId } = useAuthStore();
+  const { userId, user } = useAuthStore();
   const store = useGamificationStore();
 
   const earnedAchievements =
@@ -64,7 +65,7 @@ export default function GamificationWidget() {
       const list = unwrapList<{ reviewed_by?: number | null; final_decision?: string }>(res.data);
       return list.some((a) => a.reviewed_by === userId && a.final_decision === 'ACCEPTED');
     },
-    enabled: !!currentCampId && !!userId,
+    enabled: !!currentCampId && !!userId && hasPermission(user?.permissions, 'admission.read'),
     staleTime: 120_000,
   });
 
@@ -79,7 +80,7 @@ export default function GamificationWidget() {
         return qty > minStock;
       });
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.read'),
     staleTime: 120_000,
   });
 
@@ -93,7 +94,7 @@ export default function GamificationWidget() {
       }>(res.data);
       return list.some((t) => t.requested_by === userId && t.status === 'COMPLETED');
     },
-    enabled: !!userId,
+    enabled: !!userId && hasPermission(user?.permissions, 'transfers.read'),
     staleTime: 120_000,
   });
 

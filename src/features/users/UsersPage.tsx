@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { User } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,6 +12,7 @@ const KNOWN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator', '
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -26,6 +29,7 @@ export default function UsersPage() {
       const res = await apiClient.get('/users');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'users.read'),
   });
 
   const createMutation = useMutation({

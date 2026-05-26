@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { Role, Permission } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,6 +10,7 @@ import { Skeleton } from '../../components/Skeleton';
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
@@ -22,6 +25,7 @@ export default function RolesPage() {
       const res = await apiClient.get('/roles');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'roles.read'),
   });
 
   const { data: permissions } = useQuery<Permission[]>({
@@ -30,6 +34,7 @@ export default function RolesPage() {
       const res = await apiClient.get('/permissions');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'permissions.read'),
   });
 
   const createMutation = useMutation({

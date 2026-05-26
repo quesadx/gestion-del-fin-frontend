@@ -74,9 +74,8 @@ export default function ExpeditionList() {
       const res = await apiClient.get(`/expeditions?camp_id=${currentCampId}`);
       return unwrapList<Expedition>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'expeditions.read'),
   });
-
   const totalPages = Math.max(1, Math.ceil((expeditions?.length ?? 0) / PAGE_SIZE));
   const paginatedExpeditions = (expeditions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -86,6 +85,7 @@ export default function ExpeditionList() {
       const res = await apiClient.get('/resources');
       return unwrapList<{ id: number; name: string; unit: string }>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
   const { data: people } = useQuery<Person[]>({
@@ -94,7 +94,7 @@ export default function ExpeditionList() {
       const res = await apiClient.get(`/camps/${currentCampId}/people`);
       return unwrapList<Person>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
   });
 
   const healthyPeople = (people ?? []).filter((p) => (p.status || '').toUpperCase() === 'HEALTHY');

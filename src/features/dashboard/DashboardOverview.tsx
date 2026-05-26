@@ -85,7 +85,7 @@ export default function DashboardOverview() {
       const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
       return { items, resourceTypes };
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.read'),
   });
 
   const resourceSummaries: InventorySnapshot[] = useMemo(() => {

@@ -209,7 +209,7 @@ export default function TransferList() {
       const res = await apiClient.get(`/transfers?camp_id=${currentCampId}`);
       return unwrapList<Transfer>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'transfers.read'),
   });
 
   const totalPages = Math.max(1, Math.ceil((transfers?.length ?? 0) / PAGE_SIZE));

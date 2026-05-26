@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { useCampStore } from '../../store';
+import { useCampStore, useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { InventorySnapshot, Resource } from '../../types';
 import {
   Package,
@@ -23,6 +24,7 @@ const PAGE_SIZE = 12;
 
 export default function InventoryList() {
   const { currentCampId } = useCampStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -66,7 +68,8 @@ export default function InventoryList() {
         } satisfies InventorySnapshot;
       }) as InventorySnapshot[];
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.read'),
+    retry: 1,
   });
 
   const totalPages = Math.max(1, Math.ceil((inventory?.length ?? 0) / PAGE_SIZE));

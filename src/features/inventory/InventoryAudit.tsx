@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../../lib/api';
-import { useCampStore } from '../../store';
+import { useCampStore, useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { History, ArrowLeft } from 'lucide-react';
 import { cn, formatDate } from '../../lib/utils';
 import { Pagination } from '../../components/Pagination';
@@ -14,6 +15,7 @@ const PAGE_SIZE = 20;
 export default function InventoryAudit() {
   const navigate = useNavigate();
   const { currentCampId } = useCampStore();
+  const { user } = useAuthStore();
   const [page, setPage] = useState(1);
   const [selectedType, setSelectedType] = useState<string>('');
 
@@ -46,7 +48,7 @@ export default function InventoryAudit() {
       const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
       return unwrapList<InventoryAuditEntry>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.audit.read'),
     retry: false,
   });
 

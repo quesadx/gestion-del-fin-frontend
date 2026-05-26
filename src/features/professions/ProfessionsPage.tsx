@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { Profession } from '../../types';
 import { Wrench, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,6 +10,7 @@ import { Skeleton } from '../../components/Skeleton';
 
 export default function ProfessionsPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfession, setEditingProfession] = useState<Profession | null>(null);
   const [deletingProfession, setDeletingProfession] = useState<Profession | null>(null);
@@ -21,6 +24,7 @@ export default function ProfessionsPage() {
       const res = await apiClient.get('/professions');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'professions.read'),
   });
 
   const createMutation = useMutation({

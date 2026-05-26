@@ -132,6 +132,7 @@ export default function PopulationRoster() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'professions.read'),
   });
 
   const professionCoverage = useMemo(() => {

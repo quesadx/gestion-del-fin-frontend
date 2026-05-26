@@ -28,7 +28,13 @@ status: complete
 - `src/features/transfers/TransferList.tsx`: Replaced local `normalizeRole`, `canManageTransfers`, `canCreateTransfers` functions with `hasPermission` from shared lib
 - `src/features/dashboard/DashboardOverview.tsx`: Replaced local `ADMIN_ROLES.includes()` + `isAdmin` with `hasPermission(user?.permissions, 'metrics.dashboard')`
 
-## Files Changed
+### Task 3: Fix un-gated useQuery calls (prevent 403s)
+
+14 additional files — added `enabled: hasPermission(user?.permissions, ...)` to all queries that previously fired with only `!!currentCampId` or no gating at all. This prevents backend 403 Forbidden errors from appearing in the console for non-admin roles.
+
+**Files:** `PopulationRoster.tsx`, `AdmissionList.tsx`, `ExpeditionList.tsx`, `DashboardOverview.tsx`, `InventoryList.tsx`, `InventoryAudit.tsx`, `RationsPage.tsx`, `TransferList.tsx`, `UsersPage.tsx`, `RolesPage.tsx`, `PermissionsPage.tsx`, `ProfessionsPage.tsx`, `ResourcesPage.tsx`, `GamificationWidget.tsx`
+
+## Files Changed (cumulative)
 
 - `src/types.ts` — Added `permissions` field to User
 - `src/lib/permissions.ts` — Added `hasPermission()` + `matchPermission()` helper
