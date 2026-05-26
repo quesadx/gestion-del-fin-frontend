@@ -2,7 +2,10 @@
   "version": "0.2",
   "language": "en",
   "dictionaries": ["typescript", "node", "css"],
-  "words": ["darkveil", "highp", "fract",
+  "words": [
+    "darkveil",
+    "highp",
+    "fract",
     "Zustand",
     "tanstack",
     "shadcn",
@@ -53,7 +56,11 @@
     "Normalise",
     "jdoe",
     "scanline",
-    "SVRT"
+    "SVRT",
+    "lerp",
+    "gsap",
+    "timezoneless",
+    "datetimeLocalToUTCISO"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md", "legacy"]
 }

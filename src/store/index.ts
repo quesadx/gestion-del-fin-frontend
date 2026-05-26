@@ -3,4 +3,5 @@ export { useAuthStore } from './auth';
 export { useCampStore } from './camp';
 export { useConnectionStore } from './connection';
 export { useGamificationStore } from './gamification';
+export { useDeniedPermissionsStore } from './deniedPermissions';
 export type { ConnectionStatus } from './connection';

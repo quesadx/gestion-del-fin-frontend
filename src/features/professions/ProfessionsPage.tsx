@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { Profession } from '../../types';
 import { Wrench, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,6 +10,7 @@ import { Skeleton } from '../../components/Skeleton';
 
 export default function ProfessionsPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfession, setEditingProfession] = useState<Profession | null>(null);
   const [deletingProfession, setDeletingProfession] = useState<Profession | null>(null);
@@ -15,12 +18,17 @@ export default function ProfessionsPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
+  const canCreate = hasPermission(user?.permissions, 'professions.create');
+  const canUpdate = hasPermission(user?.permissions, 'professions.update');
+  const canDelete = hasPermission(user?.permissions, 'professions.delete');
+
   const { data: professions, isLoading } = useQuery<Profession[]>({
     queryKey: ['professions'],
     queryFn: async () => {
       const res = await apiClient.get('/professions');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'professions.read'),
   });
 
   const createMutation = useMutation({
@@ -107,13 +115,15 @@ export default function ProfessionsPage() {
             Define profession types across the population
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          NEW PROFESSION
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            NEW PROFESSION
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -150,18 +160,26 @@ export default function ProfessionsPage() {
                     <Wrench size={24} />
                   </div>
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(profession)}
-                      className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
-                    >
-                      <Edit2 size={12} />
-                    </button>
-                    <button
-                      onClick={() => setDeletingProfession(profession)}
-                      className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
-                    >
-                      <Trash2 size={12} />
-                    </button>
+                    {canUpdate && (
+                      <button
+                        onClick={() => openEditModal(profession)}
+                        aria-label={`Edit ${profession.name}`}
+                        title={`Edit ${profession.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                      >
+                        <Edit2 size={12} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => setDeletingProfession(profession)}
+                        aria-label={`Delete ${profession.name}`}
+                        title={`Delete ${profession.name}`}
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -188,7 +206,7 @@ export default function ProfessionsPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -204,7 +222,9 @@ export default function ProfessionsPage() {
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close modal"
+                  title="Close modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -218,6 +238,7 @@ export default function ProfessionsPage() {
                   <input
                     required
                     type="text"
+                    aria-label="Profession name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Medic, Engineer, Scout"
@@ -230,6 +251,7 @@ export default function ProfessionsPage() {
                     Description
                   </label>
                   <textarea
+                    aria-label="Profession description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Brief role description and typical duties"
@@ -269,7 +291,7 @@ export default function ProfessionsPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div className="flex items-start gap-3">

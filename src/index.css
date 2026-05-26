@@ -5,15 +5,15 @@
   --color-brand-secondary: #f59e0b; /* Warning Amber */
   --color-brand-accent: #10b981; /* Success Green */
 
-  --color-surface-base: #0c0708;
-  --color-surface-raised: #1b0b0c;
-  --color-surface-overlay: #2a0f10;
+  --color-surface-base: #211518;
+  --color-surface-raised: #352228;
+  --color-surface-overlay: #473339;
 
   /* Dock / reddish-dark tones */
-  --color-dock-900: #0c0708; /* very dark */
-  --color-dock-800: #1b0b0c;
-  --color-dock-700: #2a0f10;
-  --color-dock-600: #3a1314;
+  --color-dock-900: #281c20; /* very dark */
+  --color-dock-800: #362329;
+  --color-dock-700: #482e34;
+  --color-dock-600: #5f3b42;
 
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
@@ -47,10 +47,10 @@
     @apply bg-surface-base;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-zinc-800 border-2 border-surface-base;
+    @apply bg-zinc-700 border-2 border-surface-base;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-zinc-700;
+    @apply bg-zinc-600;
   }
 }
 
@@ -58,38 +58,74 @@
 .bg-zinc-950 {
   background-color: var(--color-dock-900) !important;
 }
+.bg-zinc-950\/80 {
+  background-color: rgba(40, 27, 31, 0.8) !important;
+}
 .bg-zinc-950\/60 {
-  background-color: rgba(12, 7, 8, 0.6) !important;
+  background-color: rgba(40, 27, 31, 0.6) !important;
+}
+.bg-zinc-950\/40 {
+  background-color: rgba(40, 27, 31, 0.4) !important;
+}
+.bg-zinc-950\/20 {
+  background-color: rgba(40, 27, 31, 0.2) !important;
 }
 .bg-zinc-900 {
   background-color: var(--color-dock-800) !important;
 }
+.bg-zinc-900\/90 {
+  background-color: rgba(54, 36, 41, 0.9) !important;
+}
 .bg-zinc-900\/80 {
-  background-color: rgba(27, 11, 12, 0.8) !important;
+  background-color: rgba(54, 36, 41, 0.8) !important;
 }
 .bg-zinc-900\/70 {
-  background-color: rgba(27, 11, 12, 0.7) !important;
+  background-color: rgba(54, 36, 41, 0.7) !important;
 }
 .bg-zinc-900\/60 {
-  background-color: rgba(27, 11, 12, 0.6) !important;
+  background-color: rgba(54, 36, 41, 0.6) !important;
 }
 .bg-zinc-900\/50 {
-  background-color: rgba(27, 11, 12, 0.5) !important;
+  background-color: rgba(54, 36, 41, 0.5) !important;
 }
 .bg-zinc-900\/40 {
-  background-color: rgba(27, 11, 12, 0.4) !important;
+  background-color: rgba(54, 36, 41, 0.4) !important;
 }
 .bg-zinc-900\/20 {
-  background-color: rgba(27, 11, 12, 0.2) !important;
+  background-color: rgba(54, 36, 41, 0.2) !important;
 }
 .bg-zinc-800 {
   background-color: var(--color-dock-800) !important;
 }
+.bg-zinc-800\/60 {
+  background-color: rgba(54, 36, 41, 0.6) !important;
+}
+.bg-zinc-800\/50 {
+  background-color: rgba(54, 36, 41, 0.5) !important;
+}
 .bg-zinc-800\/40 {
-  background-color: rgba(27, 11, 12, 0.4) !important;
+  background-color: rgba(54, 36, 41, 0.4) !important;
+}
+.bg-zinc-800\/20 {
+  background-color: rgba(54, 36, 41, 0.2) !important;
 }
 .bg-zinc-700 {
   background-color: var(--color-dock-700) !important;
+}
+.bg-zinc-700\/70 {
+  background-color: rgba(72, 47, 54, 0.7) !important;
+}
+.bg-zinc-700\/60 {
+  background-color: rgba(72, 47, 54, 0.6) !important;
+}
+.bg-zinc-700\/50 {
+  background-color: rgba(72, 47, 54, 0.5) !important;
+}
+.bg-zinc-700\/40 {
+  background-color: rgba(72, 47, 54, 0.4) !important;
+}
+.bg-zinc-700\/20 {
+  background-color: rgba(72, 47, 54, 0.2) !important;
 }
 .bg-zinc-600 {
   background-color: var(--color-dock-600) !important;
@@ -113,11 +149,20 @@
 .border-zinc-800 {
   border-color: var(--color-dock-800) !important;
 }
+.border-zinc-800\/60 {
+  border-color: rgba(54, 36, 41, 0.6) !important;
+}
 .border-zinc-900 {
   border-color: var(--color-dock-900) !important;
 }
+.border-zinc-900\/50 {
+  border-color: rgba(40, 27, 31, 0.5) !important;
+}
 .border-zinc-950 {
   border-color: var(--color-dock-900) !important;
+}
+.border-zinc-700 {
+  border-color: var(--color-dock-700) !important;
 }
 .hover\:border-zinc-700:hover {
   border-color: var(--color-dock-700) !important;
@@ -125,15 +170,15 @@
 
 /* Scrollbar thumb overrides */
 ::-webkit-scrollbar-thumb {
-  background: var(--color-dock-800);
-  border: 2px solid rgba(12, 7, 8, 1);
+  background: var(--color-dock-700);
+  border: 2px solid rgba(19, 13, 16, 1);
 }
 
 .brutalist-border {
   @apply border border-zinc-800;
   box-shadow:
-    0 0 0 1px rgba(239, 68, 68, 0.08),
-    0 0 18px rgba(239, 68, 68, 0.06);
+    0 0 0 1px rgba(239, 68, 68, 0.12),
+    0 0 18px rgba(239, 68, 68, 0.08);
   position: relative;
   isolation: isolate;
 }
@@ -154,6 +199,23 @@
   transition-duration: 150ms;
 }
 
+@keyframes background-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.82;
+  }
+  50% {
+    transform: translate3d(0, -3%, 0) scale(1.05);
+    opacity: 0.96;
+  }
+}
+
+.background-drift {
+  animation: background-drift 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 .neon-glow-red {
   text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
@@ -167,8 +229,13 @@
   bottom: 0;
   right: 0;
   background:
-    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-    linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    linear-gradient(rgba(31, 22, 23, 0) 50%, rgba(0, 0, 0, 0.16) 50%),
+    linear-gradient(
+      90deg,
+      rgba(255, 104, 104, 0.06),
+      rgba(255, 230, 180, 0.02),
+      rgba(140, 190, 255, 0.05)
+    );
   z-index: 2;
   background-size:
     100% 2px,
@@ -183,6 +250,44 @@
       overflow-x: auto;
       white-space: nowrap;
       -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  /* Skip to content link - visually hidden until focused */
+  .skip-to-content {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 9999;
+    padding: 0.5rem 1rem;
+    background: var(--color-brand-primary);
+    color: #000;
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: top 0.1s;
+  }
+
+  .skip-to-content:focus {
+    top: 0;
+  }
+
+  /* Focus-visible ring for keyboard users */
+  *:focus-visible {
+    outline: 2px solid var(--color-brand-primary);
+    outline-offset: 2px;
+  }
+
+  /* Remove focus outline for mouse users */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Touch-friendly tap targets */
+  @media (pointer: coarse) {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
     }
   }
 }

@@ -11,6 +11,7 @@ export interface User {
   role: string; // API returns strings like "ADMIN" — keep as string
   camp_id: number | null;
   is_active?: boolean;
+  permissions?: string[];
 }
 
 export interface Camp {

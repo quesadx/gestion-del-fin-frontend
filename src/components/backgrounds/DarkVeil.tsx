@@ -103,6 +103,7 @@ void main() {
   color += vec3(0.024, 0.012, 0.014) * fbm(uv * 7.0 - vec2(time * 0.12, time * 0.08));
 
   color = hueShiftRGB(color, uHueShift);
+  color = mix(color, color * vec3(1.22, 1.16, 1.12), 0.97);
 
   color += (hash(gl_FragCoord.xy + uTime) - 0.5) * uNoise * 0.72;
   color *= 0.9;

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
+import { useAuthStore } from '../../store';
+import { hasPermission } from '../../lib/permissions';
 import { User } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,6 +12,7 @@ const KNOWN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator', '
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
@@ -20,12 +23,17 @@ export default function UsersPage() {
   const [role, setRole] = useState('worker');
   const [campId, setCampId] = useState('');
 
+  const canCreate = hasPermission(user?.permissions, 'users.create');
+  const canUpdate = hasPermission(user?.permissions, 'users.update');
+  const canDelete = hasPermission(user?.permissions, 'users.delete');
+
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
       const res = await apiClient.get('/users');
       return res.data?.data ?? res.data;
     },
+    enabled: hasPermission(user?.permissions, 'users.read'),
   });
 
   const createMutation = useMutation({
@@ -137,13 +145,15 @@ export default function UsersPage() {
             Manage system users and role assignments
           </p>
         </div>
-        <button
-          onClick={openCreateModal}
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-        >
-          <Plus size={20} />
-          NEW USER
-        </button>
+        {canCreate && (
+          <button
+            onClick={openCreateModal}
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-6 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+          >
+            <Plus size={20} />
+            NEW USER
+          </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -203,18 +213,26 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => openEditModal(user)}
-                  className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400"
-                >
-                  <Edit2 size={12} />
-                </button>
-                <button
-                  onClick={() => setDeletingUser(user)}
-                  className="p-1.5 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400"
-                >
-                  <Trash2 size={12} />
-                </button>
+                {canUpdate && (
+                  <button
+                    onClick={() => openEditModal(user)}
+                    aria-label={`Edit ${user.username}`}
+                    title={`Edit ${user.username}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    onClick={() => setDeletingUser(user)}
+                    aria-label={`Delete ${user.username}`}
+                    title={`Delete ${user.username}`}
+                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             </motion.div>
           ))}
@@ -228,7 +246,7 @@ export default function UsersPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -246,7 +264,9 @@ export default function UsersPage() {
                 </div>
                 <button
                   onClick={closeModal}
-                  className="p-1 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors"
+                  aria-label="Close modal"
+                  title="Close modal"
+                  className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
                 >
                   <X size={20} />
                 </button>
@@ -258,6 +278,7 @@ export default function UsersPage() {
                   <input
                     required
                     type="text"
+                    aria-label="Username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     placeholder="e.g. jdoe"
@@ -273,6 +294,7 @@ export default function UsersPage() {
                     <input
                       required
                       type="password"
+                      aria-label="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Minimum 8 characters"
@@ -285,6 +307,7 @@ export default function UsersPage() {
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">Role</label>
                   <select
                     required
+                    aria-label="Role"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary"
@@ -304,6 +327,7 @@ export default function UsersPage() {
                   <input
                     type="number"
                     min="0"
+                    aria-label="Camp ID"
                     value={campId}
                     onChange={(e) => setCampId(e.target.value)}
                     placeholder="e.g. 1"
@@ -342,7 +366,7 @@ export default function UsersPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div className="flex items-start gap-3">

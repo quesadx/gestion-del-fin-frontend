@@ -7,12 +7,8 @@ export const ROLES = {
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
-// Map of role → array of frontend permission keys (local UI gating only).
+// Map of role → array of backend permission keys (local UI gating only).
 // Backend enforces real permissions via permissionMiddleware on every request.
-// `dashboard.read` is a local UI permission — the backend gate for /metrics/*
-// endpoints uses `metrics.dashboard`, `metrics.resources`, etc. The `worker`
-// role has `dashboard.read` to keep the dashboard nav visible; the Dashboard
-// component gates individual data fetches by backend-available permissions.
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   system_admin: ['*'],
   resource_manager: [
@@ -22,7 +18,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'people.read',
     'people.profession_reassign.create',
     'expeditions.read',
-    'dashboard.read',
+    'metrics.dashboard',
     'resources.*',
     'admission.read',
     'admission.create',
@@ -35,11 +31,11 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     'transfers.read',
     'people.read',
     'camps.read',
-    'dashboard.read',
+    'metrics.dashboard',
     'resources.read',
     'inventory.read',
   ],
-  worker: ['dashboard.read', 'people.read', 'inventory.read', 'resources.read', 'camps.read'],
+  worker: ['metrics.dashboard', 'people.read', 'inventory.read', 'resources.read', 'camps.read'],
 };
 
 /**
@@ -53,21 +49,52 @@ export function can(role: string | null | undefined, permission: string): boolea
   const perms = ROLE_PERMISSIONS[role];
   if (!perms) return false;
 
-  for (const p of perms) {
-    // Full wildcard — role can do everything
-    if (p === '*') return true;
+  return matchPermission(perms, permission);
+}
 
-    // Exact match
+function matchPermission(permissions: string[] | null | undefined, permission: string): boolean {
+  if (!permissions || permissions.length === 0) return false;
+
+  for (const p of permissions) {
+    if (p === '*') return true;
     if (p === permission) return true;
 
-    // Namespace wildcard: "inventory.*" matches "inventory.read", "inventory.create", etc.
+    // Namespace wildcard in stored permissions: "inventory.*" matches "inventory.read"
     if (p.endsWith('.*')) {
-      const ns = p.slice(0, -2); // e.g. "inventory"
+      const ns = p.slice(0, -2);
       if (permission === ns || permission.startsWith(`${ns}.`)) return true;
+    }
+
+    // Namespace wildcard in requested permission: asking "inventory.*" matches "inventory.read"
+    if (permission.endsWith('.*')) {
+      const ns = permission.slice(0, -2);
+      if (p === ns || p.startsWith(`${ns}.`)) return true;
     }
   }
 
   return false;
+}
+
+import { useDeniedPermissionsStore } from '../store/deniedPermissions';
+import { useAuthStore } from '../store/auth';
+
+export function hasPermission(
+  permissions: string[] | null | undefined,
+  permission: string,
+): boolean {
+  const denied = useDeniedPermissionsStore.getState().denied;
+  if (denied.has(permission)) return false;
+  return matchPermission(permissions, permission);
+}
+
+/**
+ * Returns true if the current user can access camp-scoped data for the
+ * given camp ID. Non-admin users can only access their own camp.
+ */
+export function canAccessCamp(campId: number): boolean {
+  const { isAdmin, user } = useAuthStore.getState();
+  if (isAdmin) return true;
+  return campId === user?.camp_id;
 }
 
 // ── Convenience helpers ───────────────────────────────────────────────────────

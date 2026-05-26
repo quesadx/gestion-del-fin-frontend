@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
+import { hasPermission, canAccessCamp } from '../../lib/permissions';
+import { useDeniedPermissionsStore } from '../../store/deniedPermissions';
 import {
   Users,
   Map,
@@ -21,14 +23,13 @@ import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 import { InventorySnapshot, Resource, InventoryItem, Person } from '../../types';
 import BorderGlow from '../../components/BorderGlow';
 
-const ADMIN_ROLES = ['system_admin', 'resource_manager', 'travel_coordinator'];
-
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
   const { user } = useAuthStore();
+  useDeniedPermissionsStore();
   const navigate = useNavigate();
   const isWorker = user?.role === 'worker';
-  const isAdmin = user?.role ? ADMIN_ROLES.includes(user.role) : false;
+  const canViewMetrics = hasPermission(user?.permissions, 'metrics.dashboard');
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['dashboard-metrics', currentCampId],
@@ -59,7 +60,7 @@ export default function DashboardOverview() {
         },
       };
     },
-    enabled: !!currentCampId && isAdmin,
+    enabled: !!currentCampId && canViewMetrics,
   });
 
   const { data: peopleList, isLoading: peopleLoading } = useQuery<Person[]>({
@@ -78,15 +79,24 @@ export default function DashboardOverview() {
   const { data: rawInventory, isLoading: resourcesLoading } = useQuery({
     queryKey: ['resource-metrics', currentCampId],
     queryFn: async () => {
-      const [invRes, resRes] = await Promise.all([
-        apiClient.get(`/inventory/${currentCampId}`),
-        apiClient.get('/resources'),
-      ]);
-      const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
-      const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
-      return { items, resourceTypes };
+      try {
+        const [invRes, resRes] = await Promise.all([
+          apiClient.get(`/inventory/${currentCampId}`),
+          apiClient.get('/resources'),
+        ]);
+        const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
+        const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
+        return { items, resourceTypes };
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) return { items: [], resourceTypes: [] };
+        throw err;
+      }
     },
-    enabled: !!currentCampId,
+    enabled:
+      !!currentCampId &&
+      hasPermission(user?.permissions, 'inventory.read') &&
+      canAccessCamp(currentCampId),
   });
 
   const resourceSummaries: InventorySnapshot[] = useMemo(() => {
@@ -244,18 +254,16 @@ export default function DashboardOverview() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter uppercase">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
             {isWorker ? 'Camp Status' : 'Operational Overview'}
           </h1>
-          <p className="text-zinc-500 font-mono text-xs uppercase pl-1">
-            {isWorker
-              ? 'Camp Resources & Population'
-              : 'Resource & Population Surveillance // Stability Alpha-7'}
+          <p className="text-zinc-500 font-mono text-[10px] sm:text-xs uppercase pl-1">
+            {isWorker ? 'Camp Resources & Population' : 'Resource & Population Surveillance'}
           </p>
         </div>
-        <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg">
+        <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg self-start">
           {isWorker ? (
             <HardHat size={18} className="text-amber-500" />
           ) : (

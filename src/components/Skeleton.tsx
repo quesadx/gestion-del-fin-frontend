@@ -3,14 +3,14 @@ import { cn } from '../lib/utils';
 import BorderGlow from './BorderGlow';
 
 export function Skeleton({ className, ...props }: React.HtmlHTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('animate-pulse rounded bg-zinc-800/40', className)} {...props} />;
+  return <div className={cn('animate-pulse rounded bg-zinc-700/35', className)} {...props} />;
 }
 
 export function SkeletonCard() {
   return (
     <BorderGlow
       className="animate-pulse"
-      backgroundColor="#1b0b0c"
+      backgroundColor="#28171b"
       borderRadius={14}
       glowColor="356 76 58"
       glowIntensity={0.55}
@@ -37,7 +37,7 @@ export function SkeletonList({ count = 4 }: { count?: number }) {
         <BorderGlow
           key={i}
           className=""
-          backgroundColor="#1b0b0c"
+          backgroundColor="#28171b"
           borderRadius={14}
           glowColor="356 76 58"
           glowIntensity={0.5}
@@ -95,7 +95,7 @@ export function SkeletonDetail() {
         </div>
       </div>
       <BorderGlow
-        backgroundColor="#1b0b0c"
+        backgroundColor="#28171b"
         borderRadius={16}
         glowColor="356 76 58"
         glowIntensity={0.55}
@@ -153,7 +153,7 @@ export function SkeletonGrid({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <BorderGlow
           key={i}
-          backgroundColor="#1b0b0c"
+          backgroundColor="#28171b"
           borderRadius={16}
           glowColor="356 76 58"
           glowIntensity={0.5}

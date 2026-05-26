@@ -23,7 +23,7 @@ import {
 import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
 import { cn, normalizePersonStatus } from '../../lib/utils';
-import { can } from '../../lib/permissions';
+import { hasPermission } from '../../lib/permissions';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -123,7 +123,7 @@ export default function PopulationRoster() {
         profession_name: p.profession_name ?? p.professions?.name ?? null,
       }));
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
   });
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
@@ -132,6 +132,7 @@ export default function PopulationRoster() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'professions.read'),
   });
 
   const professionCoverage = useMemo(() => {
@@ -152,6 +153,7 @@ export default function PopulationRoster() {
       const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
   const transferMutation = useMutation({
@@ -196,7 +198,12 @@ export default function PopulationRoster() {
     },
   });
 
-  const canReassign = can(user?.role, 'people.profession_reassign.create');
+  const canReassign = hasPermission(user?.permissions, 'people.profession_reassign.create');
+  const canCreate = hasPermission(user?.permissions, 'people.create');
+  const canUpdate = hasPermission(user?.permissions, 'people.update');
+  const canDelete = hasPermission(user?.permissions, 'people.delete');
+  const canTransfer = hasPermission(user?.permissions, 'transfers.create');
+  const canCreateAdmission = hasPermission(user?.permissions, 'admission.create');
 
   const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
@@ -225,20 +232,24 @@ export default function PopulationRoster() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/population/new')}
-            className="bg-brand-accent hover:bg-emerald-600 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95"
-          >
-            <UserPlus size={18} />
-            NEW SURVIVOR
-          </button>
-          <button
-            onClick={() => navigate('/admission')}
-            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-          >
-            <UserPlus size={18} />
-            REGISTER INTAKE
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => navigate('/population/new')}
+              className="bg-brand-accent hover:bg-emerald-600 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95"
+            >
+              <UserPlus size={18} />
+              NEW SURVIVOR
+            </button>
+          )}
+          {canCreateAdmission && (
+            <button
+              onClick={() => navigate('/admission')}
+              className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+            >
+              <UserPlus size={18} />
+              REGISTER INTAKE
+            </button>
+          )}
         </div>
       </div>
 
@@ -309,22 +320,40 @@ export default function PopulationRoster() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-black/50 border-b border-zinc-800">
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Survivor
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Profession
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Status
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Age
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              >
                 Workable
               </th>
-              <th className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-right">
+              <th
+                scope="col"
+                className="px-6 py-4 text-[10px] font-bold text-zinc-500 uppercase tracking-widest text-right"
+              >
                 Actions
               </th>
             </tr>
@@ -470,27 +499,36 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end items-center gap-1">
-                      <button
-                        onClick={() => setTransferringPerson(person)}
-                        title="Transfer personnel"
-                        className="p-1.5 text-zinc-600 hover:text-brand-secondary animate-all"
-                      >
-                        <ArrowLeftRight size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleEditClick(person)}
-                        title="Edit profile"
-                        className="p-1.5 text-zinc-600 hover:text-emerald-500 animate-all"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeletePerson(person)}
-                        title="Delete survivor"
-                        className="p-1.5 text-zinc-600 hover:text-red-500 animate-all"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canTransfer && (
+                        <button
+                          onClick={() => setTransferringPerson(person)}
+                          aria-label={`Transfer ${person.full_name}`}
+                          title={`Transfer ${person.full_name}`}
+                          className="p-1.5 sm:p-2 text-zinc-600 hover:text-brand-secondary animate-all touch-target"
+                        >
+                          <ArrowLeftRight size={16} />
+                        </button>
+                      )}
+                      {canUpdate && (
+                        <button
+                          onClick={() => handleEditClick(person)}
+                          aria-label={`Edit ${person.full_name}`}
+                          title={`Edit ${person.full_name}`}
+                          className="p-1.5 sm:p-2 text-zinc-600 hover:text-emerald-500 animate-all touch-target"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => setConfirmDeletePerson(person)}
+                          aria-label={`Delete ${person.full_name}`}
+                          title={`Delete ${person.full_name}`}
+                          className="p-1.5 sm:p-2 text-zinc-600 hover:text-red-500 animate-all touch-target"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
