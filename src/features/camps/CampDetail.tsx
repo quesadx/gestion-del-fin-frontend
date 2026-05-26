@@ -275,13 +275,15 @@ export default function CampDetail() {
           <Users size={16} />
           VIEW POPULATION
         </Link>
-        <Link
-          to="/inventory"
-          className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-zinc-700 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-white transition-all"
-        >
-          <Box size={16} />
-          VIEW INVENTORY
-        </Link>
+        {hasInventoryRead && (
+          <Link
+            to="/inventory"
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-zinc-700 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-white transition-all"
+          >
+            <Box size={16} />
+            VIEW INVENTORY
+          </Link>
+        )}
       </div>
     </div>
   );
