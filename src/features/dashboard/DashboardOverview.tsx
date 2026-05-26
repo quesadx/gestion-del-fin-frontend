@@ -28,8 +28,9 @@ export default function DashboardOverview() {
   const { user } = useAuthStore();
   useDeniedPermissionsStore();
   const navigate = useNavigate();
-  const isWorker = user?.role === 'worker';
   const canViewMetrics = hasPermission(user?.permissions, 'metrics.dashboard');
+  const hasExpeditionAccess = hasPermission(user?.permissions, 'expeditions.read');
+  const isWorkerView = !hasExpeditionAccess;
 
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: ['dashboard-metrics', currentCampId],
@@ -63,16 +64,17 @@ export default function DashboardOverview() {
     enabled: !!currentCampId && canViewMetrics,
   });
 
+  const hasPeopleRead = hasPermission(user?.permissions, 'people.read');
   const { data: peopleList, isLoading: peopleLoading } = useQuery<Person[]>({
     queryKey: ['worker-people', currentCampId],
     queryFn: async () => {
       const res = await apiClient.get(`/camps/${currentCampId}/people`);
       return unwrapList<Person>(res.data);
     },
-    enabled: !!currentCampId && isWorker,
+    enabled: !!currentCampId && isWorkerView && hasPeopleRead,
   });
-  const survivorCount = isWorker ? (peopleList?.length ?? 0) : (metrics?.people?.total ?? 0);
-  const healthyCount = isWorker
+  const survivorCount = isWorkerView ? (peopleList?.length ?? 0) : (metrics?.people?.total ?? 0);
+  const healthyCount = isWorkerView
     ? (peopleList?.filter((p) => p.status === 'HEALTHY').length ?? 0)
     : (metrics?.people?.healthy ?? 0);
 
@@ -248,33 +250,35 @@ export default function DashboardOverview() {
     },
   ];
 
-  const statCards = isWorker ? workerCards : adminCards;
+  const statCards = isWorkerView ? workerCards : adminCards;
   const cardCount = statCards.length;
-  const isLoading = isWorker ? peopleLoading : metricsLoading;
+  const isLoading = isWorkerView ? peopleLoading : metricsLoading;
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
-            {isWorker ? 'Camp Status' : 'Operational Overview'}
+            {isWorkerView ? 'Camp Status' : 'Operational Overview'}
           </h1>
           <p className="text-zinc-500 font-mono text-[10px] sm:text-xs uppercase pl-1">
-            {isWorker ? 'Camp Resources & Population' : 'Resource & Population Surveillance'}
+            {isWorkerView ? 'Camp Resources & Population' : 'Resource & Population Surveillance'}
           </p>
         </div>
         <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg self-start">
-          {isWorker ? (
+          {isWorkerView ? (
             <HardHat size={18} className="text-amber-500" />
           ) : (
             <ShieldCheck size={18} className="text-brand-accent" />
           )}
           <div className="text-[10px] font-mono leading-none">
             <p className="text-zinc-300 font-bold uppercase">
-              {isWorker ? 'Worker Access' : 'Integrity Status'}
+              {isWorkerView ? 'Worker Access' : 'Integrity Status'}
             </p>
-            <p className={isWorker ? 'text-amber-500 uppercase' : 'text-brand-accent uppercase'}>
-              {isWorker ? 'Read-Only' : 'Synchronized'}
+            <p
+              className={isWorkerView ? 'text-amber-500 uppercase' : 'text-brand-accent uppercase'}
+            >
+              {isWorkerView ? 'Read-Only' : 'Synchronized'}
             </p>
           </div>
         </div>

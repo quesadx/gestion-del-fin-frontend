@@ -35,8 +35,9 @@ export default function RolesPage() {
   const { data: permissions } = useQuery<Permission[]>({
     queryKey: ['permissions'],
     queryFn: async () => {
-      const res = await apiClient.get('/permissions');
-      return res.data?.data ?? res.data;
+      const res = await apiClient.get('/permissions?per_page=1000');
+      const body = res.data;
+      return body?.data ?? (Array.isArray(body) ? body : []);
     },
     enabled: hasPermission(user?.permissions, 'permissions.read'),
   });

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '../store/auth';
 import { useConnectionStore } from '../store/connection';
 import { showToast } from '../lib/toast';
+import { useDeniedPermissionsStore } from '../store/deniedPermissions';
 
 /**
  * Single Axios instance for the entire app.
@@ -49,6 +50,12 @@ apiClient.interceptors.response.use(
     }
 
     if (error.response?.status === 403) {
+      const permHint =
+        (error.response?.data as { permission?: string })?.permission ??
+        (error.response?.data as { required_permission?: string })?.required_permission;
+      if (permHint) {
+        useDeniedPermissionsStore.getState().markDenied(permHint);
+      }
       if (error.config?.method !== 'get') {
         const msg =
           error.response?.data?.error?.message ??
