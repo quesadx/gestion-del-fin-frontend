@@ -123,7 +123,7 @@ export default function PopulationRoster() {
         profession_name: p.profession_name ?? p.professions?.name ?? null,
       }));
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
   });
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
@@ -153,6 +153,7 @@ export default function PopulationRoster() {
       const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
   const transferMutation = useMutation({
@@ -198,6 +199,11 @@ export default function PopulationRoster() {
   });
 
   const canReassign = hasPermission(user?.permissions, 'people.profession_reassign.create');
+  const canCreate = hasPermission(user?.permissions, 'people.create');
+  const canUpdate = hasPermission(user?.permissions, 'people.update');
+  const canDelete = hasPermission(user?.permissions, 'people.delete');
+  const canTransfer = hasPermission(user?.permissions, 'transfers.create');
+  const canCreateAdmission = hasPermission(user?.permissions, 'admission.create');
 
   const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
@@ -226,20 +232,24 @@ export default function PopulationRoster() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/population/new')}
-            className="bg-brand-accent hover:bg-emerald-600 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95"
-          >
-            <UserPlus size={18} />
-            NEW SURVIVOR
-          </button>
-          <button
-            onClick={() => navigate('/admission')}
-            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-          >
-            <UserPlus size={18} />
-            REGISTER INTAKE
-          </button>
+          {canCreate && (
+            <button
+              onClick={() => navigate('/population/new')}
+              className="bg-brand-accent hover:bg-emerald-600 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95"
+            >
+              <UserPlus size={18} />
+              NEW SURVIVOR
+            </button>
+          )}
+          {canCreateAdmission && (
+            <button
+              onClick={() => navigate('/admission')}
+              className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold uppercase tracking-wider px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-transform active:scale-95 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+            >
+              <UserPlus size={18} />
+              REGISTER INTAKE
+            </button>
+          )}
         </div>
       </div>
 
@@ -489,30 +499,36 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end items-center gap-1">
-                      <button
-                        onClick={() => setTransferringPerson(person)}
-                        aria-label={`Transfer ${person.full_name}`}
-                        title={`Transfer ${person.full_name}`}
-                        className="p-1.5 sm:p-2 text-zinc-600 hover:text-brand-secondary animate-all touch-target"
-                      >
-                        <ArrowLeftRight size={16} />
-                      </button>
-                      <button
-                        onClick={() => handleEditClick(person)}
-                        aria-label={`Edit ${person.full_name}`}
-                        title={`Edit ${person.full_name}`}
-                        className="p-1.5 sm:p-2 text-zinc-600 hover:text-emerald-500 animate-all touch-target"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeletePerson(person)}
-                        aria-label={`Delete ${person.full_name}`}
-                        title={`Delete ${person.full_name}`}
-                        className="p-1.5 sm:p-2 text-zinc-600 hover:text-red-500 animate-all touch-target"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      {canTransfer && (
+                        <button
+                          onClick={() => setTransferringPerson(person)}
+                          aria-label={`Transfer ${person.full_name}`}
+                          title={`Transfer ${person.full_name}`}
+                          className="p-1.5 sm:p-2 text-zinc-600 hover:text-brand-secondary animate-all touch-target"
+                        >
+                          <ArrowLeftRight size={16} />
+                        </button>
+                      )}
+                      {canUpdate && (
+                        <button
+                          onClick={() => handleEditClick(person)}
+                          aria-label={`Edit ${person.full_name}`}
+                          title={`Edit ${person.full_name}`}
+                          className="p-1.5 sm:p-2 text-zinc-600 hover:text-emerald-500 animate-all touch-target"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => setConfirmDeletePerson(person)}
+                          aria-label={`Delete ${person.full_name}`}
+                          title={`Delete ${person.full_name}`}
+                          className="p-1.5 sm:p-2 text-zinc-600 hover:text-red-500 animate-all touch-target"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

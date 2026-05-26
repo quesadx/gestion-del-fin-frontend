@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/auth';
 import { useConnectionStore } from '../store/connection';
+import { showToast } from '../lib/toast';
 
 /**
  * Single Axios instance for the entire app.
@@ -45,6 +46,14 @@ apiClient.interceptors.response.use(
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
+    }
+
+    if (error.response?.status === 403) {
+      const msg =
+        error.response?.data?.error?.message ??
+        error.response?.data?.message ??
+        'You do not have permission to perform this action.';
+      showToast.error(typeof msg === 'string' ? msg : 'Forbidden');
     }
 
     return Promise.reject(error);

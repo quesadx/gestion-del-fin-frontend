@@ -32,6 +32,8 @@ export default function AdmissionList() {
   const canReevaluate =
     hasPermission(user?.permissions, 'admission.create') &&
     hasPermission(user?.permissions, 'admission.review');
+  const canCreate = hasPermission(user?.permissions, 'admission.create');
+  const canReview = hasPermission(user?.permissions, 'admission.review');
   const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
 
@@ -217,14 +219,16 @@ export default function AdmissionList() {
             AI-driven refugee screening & assessment
           </p>
         </div>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          aria-label="Register new refugee intake"
-          className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)] uppercase tracking-wider"
-        >
-          <UserPlus size={18} />
-          REGISTER INTAKE
-        </button>
+        {canCreate && (
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            aria-label="Register new refugee intake"
+            className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)] uppercase tracking-wider"
+          >
+            <UserPlus size={18} />
+            REGISTER INTAKE
+          </button>
+        )}
       </div>
 
       <div className="h-[calc(100vh-280px)]">
@@ -596,61 +600,63 @@ export default function AdmissionList() {
                   </div>
 
                   {/* Actions */}
-                  <div className="p-3 sm:p-4 border-t border-zinc-900 bg-surface-raised flex gap-3">
-                    <button
-                      onClick={() =>
-                        reviewMutation.mutate({ id: details.id, decision: 'REJECTED' })
-                      }
-                      aria-label="Reject admission"
-                      disabled={
-                        reviewMutation.isPending ||
-                        getAdmissionDecisionStatus(details) !== 'PENDING'
-                      }
-                      className="flex-1 bg-zinc-900 hover:bg-red-950/30 text-red-500 border border-red-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
-                    >
-                      <XCircle size={16} />
-                      REJECT
-                    </button>
-                    {canReevaluate && (
+                  {canReview && (
+                    <div className="p-3 sm:p-4 border-t border-zinc-900 bg-surface-raised flex gap-3">
                       <button
-                        onClick={() => {
-                          setCorrectName(details.applicant_name || details.full_name || '');
-                          setCorrectAge(String(details.applicant_age ?? ''));
-                          setCorrectSkills(details.applicant_skills || '');
-                          setCorrectHealth(details.health_notes || '');
-                          setCorrectBackground(details.background_notes || '');
-                          setIsCorrectModalOpen(true);
-                        }}
-                        aria-label="Correct and re-evaluate admission"
+                        onClick={() =>
+                          reviewMutation.mutate({ id: details.id, decision: 'REJECTED' })
+                        }
+                        aria-label="Reject admission"
                         disabled={
-                          correctAndReevaluateMutation.isPending ||
+                          reviewMutation.isPending ||
                           getAdmissionDecisionStatus(details) !== 'PENDING'
                         }
-                        className="flex-1 bg-amber-950/20 hover:bg-amber-950/40 text-amber-500 border border-amber-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
+                        className="flex-1 bg-zinc-900 hover:bg-red-950/30 text-red-500 border border-red-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
                       >
-                        <BrainCircuit size={16} />
-                        CORRECT
+                        <XCircle size={16} />
+                        REJECT
                       </button>
-                    )}
-                    <button
-                      onClick={() =>
-                        reviewMutation.mutate({
-                          id: details.id,
-                          decision: 'ACCEPTED',
-                          corrected_profession_id: selectedProfId || undefined,
-                        })
-                      }
-                      aria-label="Approve admission"
-                      disabled={
-                        reviewMutation.isPending ||
-                        getAdmissionDecisionStatus(details) !== 'PENDING'
-                      }
-                      className="flex-[2] bg-brand-accent hover:bg-emerald-600 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] disabled:opacity-30"
-                    >
-                      <CheckCircle2 size={16} />
-                      APPROVE
-                    </button>
-                  </div>
+                      {canReevaluate && (
+                        <button
+                          onClick={() => {
+                            setCorrectName(details.applicant_name || details.full_name || '');
+                            setCorrectAge(String(details.applicant_age ?? ''));
+                            setCorrectSkills(details.applicant_skills || '');
+                            setCorrectHealth(details.health_notes || '');
+                            setCorrectBackground(details.background_notes || '');
+                            setIsCorrectModalOpen(true);
+                          }}
+                          aria-label="Correct and re-evaluate admission"
+                          disabled={
+                            correctAndReevaluateMutation.isPending ||
+                            getAdmissionDecisionStatus(details) !== 'PENDING'
+                          }
+                          className="flex-1 bg-amber-950/20 hover:bg-amber-950/40 text-amber-500 border border-amber-500/30 font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all disabled:opacity-30"
+                        >
+                          <BrainCircuit size={16} />
+                          CORRECT
+                        </button>
+                      )}
+                      <button
+                        onClick={() =>
+                          reviewMutation.mutate({
+                            id: details.id,
+                            decision: 'ACCEPTED',
+                            corrected_profession_id: selectedProfId || undefined,
+                          })
+                        }
+                        aria-label="Approve admission"
+                        disabled={
+                          reviewMutation.isPending ||
+                          getAdmissionDecisionStatus(details) !== 'PENDING'
+                        }
+                        className="flex-[2] bg-brand-accent hover:bg-emerald-600 text-black font-black py-3 rounded-lg flex items-center justify-center gap-2 text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] disabled:opacity-30"
+                      >
+                        <CheckCircle2 size={16} />
+                        APPROVE
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>

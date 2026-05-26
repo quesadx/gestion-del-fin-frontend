@@ -135,7 +135,7 @@ const NAV_ITEMS = [
 
 // Permission required to see each nav item
 const NAV_PERMISSIONS: Record<string, string> = {
-  '/dashboard': 'dashboard.read',
+  '/dashboard': 'metrics.dashboard',
   '/population': 'people.read',
   '/inventory': 'inventory.read',
   '/rations': 'inventory.read',
@@ -143,7 +143,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/expeditions': 'expeditions.read',
   '/transfers': 'transfers.read',
   '/camps': 'camps.read',
-  '/resources': 'resources.*',
+  '/resources': 'resources.read',
   '/professions': 'professions.read',
   '/users': 'users.read',
   '/roles': 'roles.read',
@@ -176,6 +176,7 @@ export default function DashboardLayout() {
       const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
   // ── Inventory alerts (shared query key — reused by nav dot) ─────────
@@ -358,7 +359,7 @@ export default function DashboardLayout() {
               <div className="w-7 h-7 sm:w-8 sm:h-8 bg-brand-primary/10 border border-brand-primary/20 rounded-xl sm:rounded-2xl flex items-center justify-center text-brand-primary shadow-[0_0_14px_rgba(239,68,68,0.16)] select-none">
                 <ShieldAlert size={15} />
               </div>
-              <div className="leading-none hidden xs:block">
+              <div className="leading-none hidden sm:block">
                 <p className="font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-brand-primary leading-none">
                   GESTION-DEL-FIN
                 </p>
@@ -563,6 +564,7 @@ export default function DashboardLayout() {
                       {campCards.map((camp, index) => {
                         const theme = CAMP_COLOR_THEMES[index % CAMP_COLOR_THEMES.length];
                         const isActive = camp.id === currentCampId;
+                        const isHome = camp.id === user?.camp_id;
 
                         return (
                           <Card key={camp.id}>
@@ -591,6 +593,12 @@ export default function DashboardLayout() {
                                     <span className="inline-flex rounded-full border border-white/25 bg-black/30 px-3 py-1.5 text-xs font-mono uppercase tracking-[0.18em] text-zinc-200">
                                       Refuge
                                     </span>
+
+                                    {isHome ? (
+                                      <span className="inline-flex rounded-full border border-amber-500/45 bg-amber-500/14 px-3 py-1.5 ml-2 text-xs font-mono font-bold uppercase tracking-[0.14em] text-amber-200">
+                                        My Refuge
+                                      </span>
+                                    ) : null}
 
                                     {isActive ? (
                                       <span className="inline-flex rounded-full border border-red-500/45 bg-red-500/14 px-3 py-1.5 text-xs font-mono font-bold uppercase tracking-[0.14em] text-red-200">

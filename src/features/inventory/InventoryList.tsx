@@ -39,6 +39,9 @@ export default function InventoryList() {
   const [adjustQuantity, setAdjustQuantity] = useState<string>('');
   const [adjustDescription, setAdjustDescription] = useState<string>('');
 
+  const canAdjust = hasPermission(user?.permissions, 'inventory.adjust');
+  const canAuditRead = hasPermission(user?.permissions, 'inventory.audit.read');
+
   const { data: inventory, isLoading } = useQuery<InventorySnapshot[]>({
     queryKey: ['inventory', currentCampId],
     queryFn: async () => {
@@ -138,27 +141,31 @@ export default function InventoryList() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => navigate('/inventory/audit')}
-            className="brutalist-border hover:bg-zinc-900 text-zinc-300 font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-            aria-label="View inventory audit trail"
-          >
-            <History size={18} />
-            VIEW AUDIT TRAIL
-          </button>
-          <button
-            onClick={() => {
-              if (inventory && inventory.length > 0) {
-                setSelectedResourceId(inventory[0].resource_id);
-              }
-              setIsAdjustOpen(true);
-            }}
-            className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-            aria-label="Open manual stock adjustment form"
-          >
-            <ArrowDownUp size={18} />
-            MANUAL ADJUST
-          </button>
+          {canAuditRead && (
+            <button
+              onClick={() => navigate('/inventory/audit')}
+              className="brutalist-border hover:bg-zinc-900 text-zinc-300 font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+              aria-label="View inventory audit trail"
+            >
+              <History size={18} />
+              VIEW AUDIT TRAIL
+            </button>
+          )}
+          {canAdjust && (
+            <button
+              onClick={() => {
+                if (inventory && inventory.length > 0) {
+                  setSelectedResourceId(inventory[0].resource_id);
+                }
+                setIsAdjustOpen(true);
+              }}
+              className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
+              aria-label="Open manual stock adjustment form"
+            >
+              <ArrowDownUp size={18} />
+              MANUAL ADJUST
+            </button>
+          )}
         </div>
       </div>
 

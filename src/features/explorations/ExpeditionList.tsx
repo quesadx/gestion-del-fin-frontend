@@ -31,6 +31,9 @@ export default function ExpeditionList() {
   const queryClient = useQueryClient();
 
   const canCreate = hasPermission(user?.permissions, 'expeditions.create');
+  const canUpdate = hasPermission(user?.permissions, 'expeditions.update');
+  const canUpdateStatus = hasPermission(user?.permissions, 'expeditions.update_status');
+  const canDelete = hasPermission(user?.permissions, 'expeditions.delete');
 
   // --- Confirm dialogs ---
   const [confirmCancelId, setConfirmCancelId] = useState<number | null>(null);
@@ -418,7 +421,7 @@ export default function ExpeditionList() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-zinc-900 lg:pl-6">
-                    {exp.status === 'PLANNED' && (
+                    {exp.status === 'PLANNED' && canUpdateStatus && (
                       <button
                         onClick={() =>
                           updateStatusMutation.mutate({
@@ -432,7 +435,7 @@ export default function ExpeditionList() {
                         DEPLOY SQUAD
                       </button>
                     )}
-                    {exp.status === 'ONGOING' && (
+                    {exp.status === 'ONGOING' && canUpdateStatus && (
                       <>
                         <button
                           onClick={() => {
@@ -460,23 +463,27 @@ export default function ExpeditionList() {
                     >
                       VIEW DETAILS
                     </Link>
-                    <button
-                      onClick={() => handleEditExpClick(exp)}
-                      aria-label="Edit expedition"
-                      title="Edit expedition"
-                      className="p-1.5 sm:p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer touch-target"
-                    >
-                      <Edit2 size={14} />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(exp.id)}
-                      disabled={deleteExpMutation.isPending}
-                      aria-label="Delete expedition"
-                      title="Delete expedition"
-                      className="p-1.5 sm:p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer touch-target"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {canUpdate && (
+                      <button
+                        onClick={() => handleEditExpClick(exp)}
+                        aria-label="Edit expedition"
+                        title="Edit expedition"
+                        className="p-1.5 sm:p-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white rounded transition-colors cursor-pointer touch-target"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => setConfirmDeleteId(exp.id)}
+                        disabled={deleteExpMutation.isPending}
+                        aria-label="Delete expedition"
+                        title="Delete expedition"
+                        className="p-1.5 sm:p-2 bg-zinc-950 border border-red-950/40 text-red-500/70 hover:text-red-400 hover:bg-red-950/20 rounded transition-colors cursor-pointer touch-target"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

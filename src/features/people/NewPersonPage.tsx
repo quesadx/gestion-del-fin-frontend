@@ -30,7 +30,7 @@ export default function NewPersonPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const { currentCampId } = useCampStore();
-  const hasSystemAdminAccess = hasPermission(user?.permissions, '*');
+  const canAccess = hasPermission(user?.permissions, 'people.create');
 
   const {
     register,
@@ -57,7 +57,7 @@ export default function NewPersonPage() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
-    enabled: hasSystemAdminAccess,
+    enabled: canAccess,
   });
 
   // ── Create mutation ─────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ export default function NewPersonPage() {
     createPersonMutation.mutate(data);
   };
 
-  if (!hasSystemAdminAccess) {
+  if (!canAccess) {
     return <Navigate to="/" replace />;
   }
 

@@ -15,6 +15,7 @@ export default function CampDetail() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const hasReadAccess = hasPermission(user?.permissions, 'camps.read');
+  const hasInventoryRead = hasPermission(user?.permissions, 'inventory.read');
 
   // Camp detail query
   const {
@@ -47,7 +48,7 @@ export default function CampDetail() {
       const res = await apiClient.get(`/inventory/${campId}`);
       return unwrapList<InventoryItem>(res.data);
     },
-    enabled: hasReadAccess && !isNaN(campId),
+    enabled: hasReadAccess && hasInventoryRead && !isNaN(campId),
   });
 
   // Expeditions
@@ -115,7 +116,7 @@ export default function CampDetail() {
     (e) => e.camp_id === campId && e.status === 'ONGOING',
   );
 
-  const statsLoading = peopleLoading || inventoryLoading || expeditionsLoading;
+  const statsLoading = peopleLoading || (hasInventoryRead && inventoryLoading) || expeditionsLoading;
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -224,22 +225,24 @@ export default function CampDetail() {
               </motion.div>
 
               {/* Inventory items */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
-              >
-                <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500">
-                  <Box size={20} />
-                </div>
-                <div>
-                  <p className="text-2xl font-black font-mono">{inventory?.length ?? 0}</p>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    Inventory Items
-                  </p>
-                </div>
-              </motion.div>
+              {hasInventoryRead && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-amber-500/10 rounded-lg flex items-center justify-center text-amber-500">
+                    <Box size={20} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black font-mono">{inventory?.length ?? 0}</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Inventory Items
+                    </p>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Active expeditions */}
               <motion.div

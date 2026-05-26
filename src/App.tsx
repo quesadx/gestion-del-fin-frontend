@@ -262,7 +262,7 @@ export default function App() {
                     <Route
                       path="resources"
                       element={
-                        <ProtectedRoute permission="resources.*">
+                        <ProtectedRoute permission="resources.read">
                           <ResourcesPage />
                         </ProtectedRoute>
                       }

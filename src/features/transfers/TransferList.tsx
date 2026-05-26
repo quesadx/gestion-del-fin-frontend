@@ -221,7 +221,7 @@ export default function TransferList() {
       const res = await apiClient.get(`/transfers/${selectedId}`);
       return res.data;
     },
-    enabled: !!selectedId,
+    enabled: !!selectedId && hasPermission(user?.permissions, 'transfers.read'),
   });
 
   const { data: camps } = useQuery<CampRef[]>({
@@ -230,6 +230,7 @@ export default function TransferList() {
       const res = await apiClient.get('/camps');
       return unwrapList<CampRef>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
   const { data: resources } = useQuery<ResourceType[]>({
@@ -238,6 +239,7 @@ export default function TransferList() {
       const res = await apiClient.get('/resources');
       return unwrapList<ResourceType>(res.data);
     },
+    enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
   const { data: people } = useQuery<Person[]>({
@@ -246,7 +248,7 @@ export default function TransferList() {
       const res = await apiClient.get(`/camps/${currentCampId}/people`);
       return unwrapList<Person>(res.data);
     },
-    enabled: !!currentCampId,
+    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
   });
 
   // ── Lookup helpers ───────────────────────────────────────────────────────
@@ -385,8 +387,13 @@ export default function TransferList() {
   });
 
   // ── RBAC ─────────────────────────────────────────────────────────────────
-  const canManage = hasPermission(user?.permissions, 'transfers.*');
   const canCreate = hasPermission(user?.permissions, 'transfers.create');
+  const canApproveSource = hasPermission(user?.permissions, 'transfers.approve_source');
+  const canApproveTarget = hasPermission(user?.permissions, 'transfers.approve_target');
+  const canComplete = hasPermission(user?.permissions, 'transfers.complete');
+  const canReject = hasPermission(user?.permissions, 'transfers.reject');
+  const canSchedule = hasPermission(user?.permissions, 'transfers.schedule');
+  const canManage = canApproveSource || canApproveTarget || canComplete || canReject || canSchedule;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -764,129 +771,143 @@ export default function TransferList() {
                   <div className="p-5 border-t border-zinc-900 bg-surface-raised shrink-0 space-y-3">
                     {detail.status === 'PENDING' && (
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => setConfirmRejectId(detail.id)}
-                          aria-label="Reject this pending transfer request"
-                          className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
-                        >
-                          <XCircle size={15} />
-                          REJECT
-                        </button>
-                        <button
-                          onClick={() => approveSrcMutation.mutate(detail.id)}
-                          disabled={approveSrcMutation.isPending}
-                          aria-label="Approve this transfer at the source camp"
-                          className="flex-2 py-3 text-xs font-black uppercase bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
-                        >
-                          {approveSrcMutation.isPending ? (
-                            <Loader2 size={15} className="animate-spin" />
-                          ) : (
-                            <CheckCircle2 size={15} />
-                          )}
-                          APPROVE (SOURCE)
-                        </button>
+                        {canReject && (
+                          <button
+                            onClick={() => setConfirmRejectId(detail.id)}
+                            aria-label="Reject this pending transfer request"
+                            className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
+                          >
+                            <XCircle size={15} />
+                            REJECT
+                          </button>
+                        )}
+                        {canApproveSource && (
+                          <button
+                            onClick={() => approveSrcMutation.mutate(detail.id)}
+                            disabled={approveSrcMutation.isPending}
+                            aria-label="Approve this transfer at the source camp"
+                            className="flex-2 py-3 text-xs font-black uppercase bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
+                          >
+                            {approveSrcMutation.isPending ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <CheckCircle2 size={15} />
+                            )}
+                            APPROVE (SOURCE)
+                          </button>
+                        )}
                       </div>
                     )}
 
                     {detail.status === 'APPROVED_SOURCE' && (
                       <div className="space-y-3">
                         {/* Schedule delivery */}
-                        <div className="flex items-center gap-2">
-                          {isScheduling ? (
-                            <>
-                              <input
-                                type="datetime-local"
-                                value={scheduleDate}
-                                onChange={(e) => setScheduleDate(e.target.value)}
-                                aria-label="Select scheduled delivery date and time"
-                                className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
-                              />
+                        {canSchedule && (
+                          <div className="flex items-center gap-2">
+                            {isScheduling ? (
+                              <>
+                                <input
+                                  type="datetime-local"
+                                  value={scheduleDate}
+                                  onChange={(e) => setScheduleDate(e.target.value)}
+                                  aria-label="Select scheduled delivery date and time"
+                                  className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
+                                />
+                                <button
+                                  onClick={() => {
+                                    if (scheduleDate) {
+                                      scheduleMutation.mutate({
+                                        id: detail.id,
+                                        date: new Date(scheduleDate).toISOString(),
+                                      });
+                                    }
+                                  }}
+                                  disabled={!scheduleDate || scheduleMutation.isPending}
+                                  aria-label="Set the scheduled delivery date and time"
+                                  className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                                >
+                                  {scheduleMutation.isPending ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    'SET'
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsScheduling(false);
+                                    setScheduleDate('');
+                                  }}
+                                  aria-label="Cancel scheduling and close date picker"
+                                  className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </>
+                            ) : (
                               <button
-                                onClick={() => {
-                                  if (scheduleDate) {
-                                    scheduleMutation.mutate({
-                                      id: detail.id,
-                                      date: new Date(scheduleDate).toISOString(),
-                                    });
-                                  }
-                                }}
-                                disabled={!scheduleDate || scheduleMutation.isPending}
-                                aria-label="Set the scheduled delivery date and time"
-                                className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5"
+                                onClick={() => setIsScheduling(true)}
+                                aria-label="Open date picker to schedule delivery date"
+                                className="px-4 py-2 text-xs font-bold uppercase border border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 rounded transition-colors flex items-center gap-2"
                               >
-                                {scheduleMutation.isPending ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  'SET'
-                                )}
+                                <Calendar size={13} />
+                                SCHEDULE DELIVERY
                               </button>
-                              <button
-                                onClick={() => {
-                                  setIsScheduling(false);
-                                  setScheduleDate('');
-                                }}
-                                aria-label="Cancel scheduling and close date picker"
-                                className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
-                              >
-                                <X size={13} />
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => setIsScheduling(true)}
-                              aria-label="Open date picker to schedule delivery date"
-                              className="px-4 py-2 text-xs font-bold uppercase border border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 rounded transition-colors flex items-center gap-2"
-                            >
-                              <Calendar size={13} />
-                              SCHEDULE DELIVERY
-                            </button>
-                          )}
-                        </div>
+                            )}
+                          </div>
+                        )}
 
                         <div className="flex gap-3">
-                          <button
-                            onClick={() => setConfirmRejectId(detail.id)}
-                            aria-label="Reject this source-approved transfer"
-                            className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
-                          >
-                            <XCircle size={15} />
-                            REJECT
-                          </button>
-                          <button
-                            onClick={() => approveTgtMutation.mutate(detail.id)}
-                            disabled={approveTgtMutation.isPending}
-                            aria-label="Approve this transfer at the target camp"
-                            className="flex-2 py-3 text-xs font-black uppercase bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(16,185,129,0.2)]"
-                          >
-                            {approveTgtMutation.isPending ? (
-                              <Loader2 size={15} className="animate-spin" />
-                            ) : (
-                              <CheckCircle2 size={15} />
-                            )}
-                            APPROVE (TARGET)
-                          </button>
+                          {canReject && (
+                            <button
+                              onClick={() => setConfirmRejectId(detail.id)}
+                              aria-label="Reject this source-approved transfer"
+                              className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
+                            >
+                              <XCircle size={15} />
+                              REJECT
+                            </button>
+                          )}
+                          {canApproveTarget && (
+                            <button
+                              onClick={() => approveTgtMutation.mutate(detail.id)}
+                              disabled={approveTgtMutation.isPending}
+                              aria-label="Approve this transfer at the target camp"
+                              className="flex-2 py-3 text-xs font-black uppercase bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(16,185,129,0.2)]"
+                            >
+                              {approveTgtMutation.isPending ? (
+                                <Loader2 size={15} className="animate-spin" />
+                              ) : (
+                                <CheckCircle2 size={15} />
+                              )}
+                              APPROVE (TARGET)
+                            </button>
+                          )}
                         </div>
                       </div>
                     )}
 
                     {detail.status === 'APPROVED_TARGET' && (
                       <div className="flex gap-3">
-                        <button
-                          onClick={() => setConfirmRejectId(detail.id)}
-                          aria-label="Reject this fully approved transfer"
-                          className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
-                        >
-                          <XCircle size={15} />
-                          REJECT
-                        </button>
-                        <button
-                          onClick={() => setConfirmCompleteId(detail.id)}
-                          aria-label="Mark this transfer as completed"
-                          className="flex-2 py-3 text-xs font-black uppercase bg-green-700 hover:bg-green-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(34,197,94,0.2)]"
-                        >
-                          <CheckCheck size={15} />
-                          COMPLETE TRANSFER
-                        </button>
+                        {canReject && (
+                          <button
+                            onClick={() => setConfirmRejectId(detail.id)}
+                            aria-label="Reject this fully approved transfer"
+                            className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
+                          >
+                            <XCircle size={15} />
+                            REJECT
+                          </button>
+                        )}
+                        {canComplete && (
+                          <button
+                            onClick={() => setConfirmCompleteId(detail.id)}
+                            aria-label="Mark this transfer as completed"
+                            className="flex-2 py-3 text-xs font-black uppercase bg-green-700 hover:bg-green-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(34,197,94,0.2)]"
+                          >
+                            <CheckCheck size={15} />
+                            COMPLETE TRANSFER
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>

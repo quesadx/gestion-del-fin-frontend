@@ -26,6 +26,7 @@ export default function InventoryAudit() {
       return res.data?.data ?? res.data ?? [];
     },
     staleTime: 60_000,
+    enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
   const resourceMap = useMemo(() => {
