@@ -60,7 +60,17 @@
     "lerp",
     "gsap",
     "timezoneless",
-    "datetimeLocalToUTCISO"
+    "datetimeLocalToUTCISO",
+    "gamification",
+    "GlareHover",
+    "achievements",
+    "unlocked_at",
+    "xp_reward",
+    "AchievementsPage",
+    "AchievementsStatsPage",
+    "MyAchievementsPage",
+    "lucide",
+    "reward"
   ],
   "ignorePaths": ["node_modules", "dist", "*.lock", "*.json", "*.md", "legacy"]
 }
