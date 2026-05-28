@@ -18,6 +18,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/resources': 'Resources',
   '/rations': 'Rations',
   '/professions': 'Professions',
+  '/achievements': 'Achievements',
+  '/achievements/my': 'My Achievements',
+  '/achievements/stats': 'Achievement Stats',
   '/users': 'Users',
   '/roles': 'Roles',
   '/permissions': 'Permissions',
@@ -48,6 +51,9 @@ const TransferList = lazy(() => import('./features/transfers/TransferList'));
 const ResourcesPage = lazy(() => import('./features/resources/ResourcesPage'));
 const RationsPage = lazy(() => import('./features/rations/RationsPage'));
 const ProfessionsPage = lazy(() => import('./features/professions/ProfessionsPage'));
+const AchievementsPage = lazy(() => import('./features/gamification/AchievementsPage'));
+const MyAchievementsPage = lazy(() => import('./features/gamification/MyAchievementsPage'));
+const AchievementsStatsPage = lazy(() => import('./features/gamification/AchievementsStatsPage'));
 const UsersPage = lazy(() => import('./features/users/UsersPage'));
 const RolesPage = lazy(() => import('./features/roles/RolesPage'));
 const PermissionsPage = lazy(() => import('./features/permissions/PermissionsPage'));
@@ -281,6 +287,30 @@ export default function App() {
                       element={
                         <ProtectedRoute permission="professions.read">
                           <ProfessionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="achievements"
+                      element={
+                        <ProtectedRoute permission="admin.bypass_camp_scoping">
+                          <AchievementsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="achievements/my"
+                      element={
+                        <ProtectedRoute>
+                          <MyAchievementsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="achievements/stats"
+                      element={
+                        <ProtectedRoute permission="metrics.dashboard">
+                          <AchievementsStatsPage />
                         </ProtectedRoute>
                       }
                     />

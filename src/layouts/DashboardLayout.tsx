@@ -30,7 +30,7 @@ import { hasPermission, canAccessCamp } from '../lib/permissions';
 import { useDeniedPermissionsStore } from '../store/deniedPermissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
-import { ShieldAlert, Eye } from 'lucide-react';
+import { ShieldAlert, Eye, Trophy, Award, BarChart3 } from 'lucide-react';
 
 import DarkVeil from '../components/backgrounds/DarkVeil';
 import FloatingLines from '../components/backgrounds/FloatingLines';
@@ -129,6 +129,9 @@ const NAV_ITEMS = [
   { to: '/camps', icon: Tent, label: 'Refuges' },
   { to: '/resources', icon: Package, label: 'Resources' },
   { to: '/professions', icon: Wrench, label: 'Professions' },
+  { to: '/achievements', icon: Trophy, label: 'Achievements' },
+  { to: '/achievements/my', icon: Award, label: 'My Achievements' },
+  { to: '/achievements/stats', icon: BarChart3, label: 'Stats' },
   { to: '/users', icon: Shield, label: 'Users' },
   { to: '/roles', icon: Lock, label: 'Roles' },
   { to: '/permissions', icon: Key, label: 'Permissions' },
@@ -146,6 +149,9 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/camps': 'camps.read',
   '/resources': 'resources.read',
   '/professions': 'professions.read',
+  '/achievements': 'admin.bypass_camp_scoping',
+  '/achievements/my': '',
+  '/achievements/stats': 'metrics.dashboard',
   '/users': 'users.read',
   '/roles': 'roles.read',
   '/permissions': 'permissions.read',
@@ -335,9 +341,11 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
-  const visibleNavItems = NAV_ITEMS.filter((item) =>
-    hasPermission(user?.permissions, NAV_PERMISSIONS[item.to]),
-  );
+  const visibleNavItems = NAV_ITEMS.filter((item) => {
+    const perm = NAV_PERMISSIONS[item.to];
+    if (!perm) return true;
+    return hasPermission(user?.permissions, perm);
+  });
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
