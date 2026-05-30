@@ -7,6 +7,9 @@ import { User, Role } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -15,6 +18,7 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [page, setPage] = useState(1);
 
   // Form states
   const [username, setUsername] = useState('');
@@ -144,6 +148,9 @@ export default function UsersPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil((users?.length ?? 0) / PAGE_SIZE));
+  const paginatedUsers = (users ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -186,7 +193,7 @@ export default function UsersPage() {
               </p>
             </div>
           )}
-          {users?.map((user) => (
+          {paginatedUsers.map((user) => (
             <motion.div
               key={user.id}
               initial={{ opacity: 0, y: 10 }}
@@ -248,6 +255,8 @@ export default function UsersPage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (

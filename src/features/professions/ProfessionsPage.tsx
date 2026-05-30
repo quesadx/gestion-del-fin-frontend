@@ -7,6 +7,9 @@ import { Profession } from '../../types';
 import { Wrench, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 9;
 
 export default function ProfessionsPage() {
   const queryClient = useQueryClient();
@@ -14,6 +17,7 @@ export default function ProfessionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfession, setEditingProfession] = useState<Profession | null>(null);
   const [deletingProfession, setDeletingProfession] = useState<Profession | null>(null);
+  const [page, setPage] = useState(1);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -104,6 +108,9 @@ export default function ProfessionsPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil((professions?.length ?? 0) / PAGE_SIZE));
+  const paginatedProfessions = (professions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -147,7 +154,7 @@ export default function ProfessionsPage() {
               </p>
             </div>
           )}
-          {professions?.map((profession) => (
+          {paginatedProfessions.map((profession) => (
             <motion.div
               key={profession.id}
               initial={{ opacity: 0, y: 15 }}
@@ -198,6 +205,8 @@ export default function ProfessionsPage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (

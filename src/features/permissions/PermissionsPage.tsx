@@ -7,6 +7,9 @@ import { Permission } from '../../types';
 import { Key, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function PermissionsPage() {
   const queryClient = useQueryClient();
@@ -14,6 +17,7 @@ export default function PermissionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
   const [deletingPermission, setDeletingPermission] = useState<Permission | null>(null);
+  const [page, setPage] = useState(1);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -104,6 +108,9 @@ export default function PermissionsPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil((permissions?.length ?? 0) / PAGE_SIZE));
+  const paginatedPermissions = (permissions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -146,7 +153,7 @@ export default function PermissionsPage() {
               </p>
             </div>
           )}
-          {permissions?.map((permission) => (
+          {paginatedPermissions.map((permission) => (
             <motion.div
               key={permission.id}
               initial={{ opacity: 0, y: 10 }}
@@ -194,6 +201,8 @@ export default function PermissionsPage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (

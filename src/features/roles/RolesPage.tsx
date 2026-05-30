@@ -7,6 +7,9 @@ import { Role, Permission } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
@@ -14,6 +17,7 @@ export default function RolesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
+  const [page, setPage] = useState(1);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -135,6 +139,9 @@ export default function RolesPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil((roles?.length ?? 0) / PAGE_SIZE));
+  const paginatedRoles = (roles ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -177,7 +184,7 @@ export default function RolesPage() {
               </p>
             </div>
           )}
-          {roles?.map((role) => (
+          {paginatedRoles.map((role) => (
             <motion.div
               key={role.id}
               initial={{ opacity: 0, y: 10 }}
@@ -234,6 +241,8 @@ export default function RolesPage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (

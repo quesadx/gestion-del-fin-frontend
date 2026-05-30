@@ -3,7 +3,9 @@ import { apiClient, unwrapList } from '../../lib/api';
 import { UserAchievement } from '../../types';
 import { Trophy, Award, Star, Shield, Zap, Flame, Crown, Medal, Lock } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useState } from 'react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
 import { formatDate } from '../../lib/utils';
 import GlareHover from './GlareHover';
 
@@ -31,6 +33,8 @@ interface AchievementDef {
   xp_reward: number;
 }
 
+const PAGE_SIZE = 9;
+
 export default function MyAchievementsPage() {
   const { data: myAchievements, isLoading: myLoading } = useQuery<UserAchievement[]>({
     queryKey: ['my-achievements'],
@@ -53,6 +57,18 @@ export default function MyAchievementsPage() {
   const unlockedMap = new Set(myAchievements?.map((ua) => ua.achievement_id) ?? []);
   const achievements = allAchievements ?? [];
   const unlockedList = myAchievements?.filter((ua) => ua.achievement) ?? [];
+  const lockedList = achievements.filter((a) => !unlockedMap.has(a.id));
+
+  const [unlockedPage, setUnlockedPage] = useState(1);
+  const [lockedPage, setLockedPage] = useState(1);
+
+  const unlockedTotalPages = Math.max(1, Math.ceil(unlockedList.length / PAGE_SIZE));
+  const paginatedUnlocked = unlockedList.slice(
+    (unlockedPage - 1) * PAGE_SIZE,
+    unlockedPage * PAGE_SIZE,
+  );
+  const lockedTotalPages = Math.max(1, Math.ceil(lockedList.length / PAGE_SIZE));
+  const paginatedLocked = lockedList.slice((lockedPage - 1) * PAGE_SIZE, lockedPage * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -84,7 +100,7 @@ export default function MyAchievementsPage() {
                 Unlocked
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {unlockedList.map((ua) => {
+                {paginatedUnlocked.map((ua) => {
                   const ach = ua.achievement!;
                   return (
                     <motion.div
@@ -133,51 +149,60 @@ export default function MyAchievementsPage() {
                   );
                 })}
               </div>
+              {unlockedList.length > PAGE_SIZE && (
+                <Pagination
+                  page={unlockedPage}
+                  totalPages={unlockedTotalPages}
+                  onPageChange={setUnlockedPage}
+                />
+              )}
             </div>
           )}
 
           {/* Locked achievements */}
-          {achievements.length > 0 &&
-            achievements.filter((a) => !unlockedMap.has(a.id)).length > 0 && (
-              <div className="space-y-4">
-                <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-600">
-                  Locked
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {achievements
-                    .filter((a) => !unlockedMap.has(a.id))
-                    .map((ach) => (
-                      <motion.div
-                        key={ach.id}
-                        initial={{ opacity: 0, y: 15 }}
-                        animate={{ opacity: 1, y: 0 }}
-                      >
-                        <div className="p-6 bg-surface-raised/20 border border-zinc-800/50 rounded-xl space-y-4 opacity-50 w-full h-full">
-                          <div className="flex items-start gap-4">
-                            <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-700 border border-zinc-800 shrink-0">
-                              <Lock size={24} />
-                            </div>
-                            <div className="space-y-1 min-w-0">
-                              <h3 className="text-lg font-black uppercase tracking-tight text-zinc-600 truncate">
-                                {ach.name}
-                              </h3>
-                              <p className="text-xs font-mono text-zinc-700 leading-relaxed">
-                                {ach.description}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between pt-2 border-t border-zinc-800/30">
-                            <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
-                              +{ach.xp_reward} XP
-                            </span>
-                            <Lock size={12} className="text-zinc-700" />
-                          </div>
+          {lockedList.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-600">Locked</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {paginatedLocked.map((ach) => (
+                  <motion.div
+                    key={ach.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <div className="p-6 bg-surface-raised/20 border border-zinc-800/50 rounded-xl space-y-4 opacity-50 w-full h-full">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-zinc-900 rounded-lg flex items-center justify-center text-zinc-700 border border-zinc-800 shrink-0">
+                          <Lock size={24} />
                         </div>
-                      </motion.div>
-                    ))}
-                </div>
+                        <div className="space-y-1 min-w-0">
+                          <h3 className="text-lg font-black uppercase tracking-tight text-zinc-600 truncate">
+                            {ach.name}
+                          </h3>
+                          <p className="text-xs font-mono text-zinc-700 leading-relaxed">
+                            {ach.description}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800/30">
+                        <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
+                          +{ach.xp_reward} XP
+                        </span>
+                        <Lock size={12} className="text-zinc-700" />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-            )}
+              {lockedList.length > PAGE_SIZE && (
+                <Pagination
+                  page={lockedPage}
+                  totalPages={lockedTotalPages}
+                  onPageChange={setLockedPage}
+                />
+              )}
+            </div>
+          )}
 
           {unlockedList.length === 0 && achievements.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">

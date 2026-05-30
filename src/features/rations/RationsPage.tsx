@@ -8,6 +8,7 @@ import { Sandwich, Plus, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
 import { InventoryAuditEntry, Resource } from '../../types';
 
 export default function RationsPage() {
@@ -22,6 +23,7 @@ export default function RationsPage() {
   const [selectedResourceId, setSelectedResourceId] = useState<number>(0);
   const [quantity, setQuantity] = useState('');
   const [note, setNote] = useState('');
+  const [page, setPage] = useState(1);
 
   const canCreateRation = hasPermission(user?.permissions, 'inventory.adjust');
 
@@ -146,6 +148,10 @@ export default function RationsPage() {
 
   // ── Render ────────────────────────────────────────────────────────────
 
+  const PAGE_SIZE = 15;
+  const totalPages = Math.max(1, Math.ceil(rations.length / PAGE_SIZE));
+  const paginatedRations = rations.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-8">
       {/* ── Header ──────────────────────────────────────────────────── */}
@@ -242,7 +248,7 @@ export default function RationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/50">
-              {rations.map((entry, idx: number) => {
+              {paginatedRations.map((entry, idx: number) => {
                 const isDisbursed = getEntryType(entry) === 'MANUAL_OUT';
                 return (
                   <motion.tr
@@ -288,6 +294,10 @@ export default function RationsPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {rations.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
 
       {/* ── Create Ration Modal ─────────────────────────────────────── */}
