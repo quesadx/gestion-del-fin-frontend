@@ -22,7 +22,7 @@ import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient, unwrapList } from '../lib/api';
-import { Camp, InventoryItem, Resource } from '../types';
+import { Camp, InventoryItem, Resource, UserAchievement } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
@@ -30,7 +30,7 @@ import { hasPermission, canAccessCamp } from '../lib/permissions';
 import { useDeniedPermissionsStore } from '../store/deniedPermissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
-import { ShieldAlert, Eye, Trophy, Award, BarChart3 } from 'lucide-react';
+import { ShieldAlert, Eye, Trophy } from 'lucide-react';
 
 import DarkVeil from '../components/backgrounds/DarkVeil';
 import FloatingLines from '../components/backgrounds/FloatingLines';
@@ -129,9 +129,6 @@ const NAV_ITEMS = [
   { to: '/camps', icon: Tent, label: 'Refuges' },
   { to: '/resources', icon: Package, label: 'Resources' },
   { to: '/professions', icon: Wrench, label: 'Professions' },
-  { to: '/achievements', icon: Trophy, label: 'Achievements' },
-  { to: '/achievements/my', icon: Award, label: 'My Achievements' },
-  { to: '/achievements/stats', icon: BarChart3, label: 'Stats' },
   { to: '/users', icon: Shield, label: 'Users' },
   { to: '/roles', icon: Lock, label: 'Roles' },
   { to: '/permissions', icon: Key, label: 'Permissions' },
@@ -149,9 +146,6 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/camps': 'camps.read',
   '/resources': 'resources.read',
   '/professions': 'professions.read',
-  '/achievements': 'admin.bypass_camp_scoping',
-  '/achievements/my': '',
-  '/achievements/stats': 'metrics.dashboard',
   '/users': 'users.read',
   '/roles': 'roles.read',
   '/permissions': 'permissions.read',
@@ -173,6 +167,7 @@ export default function DashboardLayout() {
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [showEyePhase, setShowEyePhase] = useState(false);
+  const [achvPopupOpen, setAchvPopupOpen] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -235,6 +230,35 @@ export default function DashboardLayout() {
 
   // Session-only dismiss for the alert banner.
   const [alertDismissed, setAlertDismissed] = useState(false);
+
+  // ── Achievements popup ──────────────────────────────────────────────
+  const { data: myAchvList } = useQuery<UserAchievement[]>({
+    queryKey: ['my-achievements'],
+    queryFn: async () => {
+      const res = await apiClient.get('/achievements/my-achievements');
+      return unwrapList<UserAchievement>(res.data);
+    },
+    enabled: achvPopupOpen,
+    staleTime: 60_000,
+  });
+
+  const { data: achvStats } = useQuery<{
+    total_achievements: number;
+    total_unlocked: number;
+    total_xp?: number;
+  }>({
+    queryKey: ['achievements-stats'],
+    queryFn: async () => {
+      const res = await apiClient.get('/achievements/stats');
+      return (res.data?.data ?? res.data) as {
+        total_achievements: number;
+        total_unlocked: number;
+        total_xp?: number;
+      };
+    },
+    enabled: achvPopupOpen && hasPermission(user?.permissions, 'metrics.dashboard'),
+    staleTime: 60_000,
+  });
 
   const campCards = useMemo(() => {
     if (!camps || camps.length === 0) return [];
@@ -336,16 +360,23 @@ export default function DashboardLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [campPopupOpen, campCards, focusedCampIndex, confirmCampFromIndex, shiftCampCards]);
 
+  useEffect(() => {
+    if (!achvPopupOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAchvPopupOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [achvPopupOpen]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const visibleNavItems = NAV_ITEMS.filter((item) => {
-    const perm = NAV_PERMISSIONS[item.to];
-    if (!perm) return true;
-    return hasPermission(user?.permissions, perm);
-  });
+  const visibleNavItems = NAV_ITEMS.filter((item) =>
+    hasPermission(user?.permissions, NAV_PERMISSIONS[item.to]),
+  );
 
   const dockItems: DockItemData[] = visibleNavItems.map((item) => {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
@@ -425,6 +456,16 @@ export default function DashboardLayout() {
                   {timeStr}
                 </span>
               )}
+
+              {/* Achievements button */}
+              <button
+                onClick={() => setAchvPopupOpen((p) => !p)}
+                aria-label="Achievements"
+                title="Achievements"
+                className="p-1.5 text-zinc-500 hover:text-amber-400 border border-transparent hover:border-amber-500/30 rounded transition-colors touch-target relative"
+              >
+                <Trophy size={16} />
+              </button>
 
               <div className="w-px h-5 sm:h-6 bg-red-500/20" />
 
@@ -676,6 +717,99 @@ export default function DashboardLayout() {
                   className="shrink-0 text-xs font-black uppercase tracking-wider px-3 py-1 rounded border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors"
                 >
                   Retry Now
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Achievements popup ──────────────────────────────────────────── */}
+      {achvPopupOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setAchvPopupOpen(false)} />
+      )}
+      <AnimatePresence>
+        {achvPopupOpen && (
+          <motion.div
+            key="achv-popup"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="mx-2 sm:mx-4 mt-1 relative z-50"
+          >
+            <div className="overflow-hidden rounded-2xl border border-amber-500/15 bg-[rgba(26,20,16,0.96)] backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+              {/* Mini stats */}
+              <div className="flex items-center gap-2 sm:gap-4 px-4 py-3 border-b border-amber-500/10">
+                <div className="flex items-center gap-2 text-amber-500">
+                  <Trophy size={14} />
+                  <span className="text-xs font-black font-mono">{myAchvList?.length ?? 0}</span>
+                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Unlocked
+                  </span>
+                </div>
+                {achvStats && (
+                  <>
+                    <div className="w-px h-4 bg-amber-500/15" />
+                    <span className="text-xs font-black font-mono text-zinc-300">
+                      {achvStats.total_achievements}
+                    </span>
+                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
+                      Total
+                    </span>
+                    {achvStats.total_xp != null && (
+                      <>
+                        <div className="w-px h-4 bg-amber-500/15" />
+                        <span className="text-xs font-black font-mono text-amber-400">
+                          {achvStats.total_xp} XP
+                        </span>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Achievements list */}
+              <div className="max-h-64 overflow-y-auto p-3 space-y-2">
+                {(!myAchvList || myAchvList.length === 0) && (
+                  <p className="text-xs font-mono text-zinc-600 text-center py-6 uppercase tracking-wider">
+                    No achievements unlocked yet
+                  </p>
+                )}
+                {myAchvList?.map((ua) => {
+                  const ach = ua.achievement;
+                  if (!ach) return null;
+                  return (
+                    <div
+                      key={ua.id}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-amber-950/10 border border-amber-500/10 hover:bg-amber-950/20 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded bg-amber-950/30 flex items-center justify-center text-amber-500 shrink-0">
+                        <Trophy size={14} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-amber-300 uppercase tracking-tight truncate">
+                          {ach.name}
+                        </p>
+                        <p className="text-[9px] font-mono text-zinc-500 truncate">
+                          +{ach.xp_reward} XP
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer link to all achievements */}
+              <div className="border-t border-amber-500/10 px-4 py-2.5">
+                <button
+                  onClick={() => {
+                    setAchvPopupOpen(false);
+                    navigate('/achievements');
+                  }}
+                  className="text-[10px] font-black uppercase tracking-wider text-amber-500 hover:text-amber-400 transition-colors w-full text-center"
+                >
+                  View All Achievements →
                 </button>
               </div>
             </div>
