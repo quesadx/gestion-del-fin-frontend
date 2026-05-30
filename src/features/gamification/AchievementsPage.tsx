@@ -4,7 +4,7 @@ import { apiClient, unwrapList } from '../../lib/api';
 import { useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Achievement } from '../../types';
-import { Trophy, Plus, X } from 'lucide-react';
+import { Trophy, Plus, X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import GlareHover from './GlareHover';
@@ -18,6 +18,7 @@ export default function AchievementsPage() {
   const [icon, setIcon] = useState('Trophy');
   const [xpReward, setXpReward] = useState(50);
   const [criteria, setCriteria] = useState('');
+  const [search, setSearch] = useState('');
 
   const canCreate = hasPermission(user?.permissions, 'admin.bypass_camp_scoping');
 
@@ -113,6 +114,18 @@ export default function AchievementsPage() {
         )}
       </div>
 
+      {/* Search */}
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search achievements..."
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-9 pr-3 py-2 text-xs text-zinc-300 placeholder-zinc-600 focus:outline-none focus:border-amber-500/40 transition-colors"
+        />
+      </div>
+
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-pulse">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -135,51 +148,74 @@ export default function AchievementsPage() {
               </p>
             </div>
           )}
-          {achievements?.map((achievement) => (
-            <motion.div
-              key={achievement.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <GlareHover
-                width="100%"
-                height="100%"
-                background="transparent"
-                borderRadius="12px"
-                borderColor="rgba(63,63,70,0.4)"
-                glareColor="#fbbf24"
-                glareOpacity={0.15}
-                glareAngle={-30}
-                glareSize={200}
-                transitionDuration={600}
-                className="h-full"
+          {achievements &&
+            search &&
+            achievements.filter(
+              (a) =>
+                !search ||
+                a.name.toLowerCase().includes(search.toLowerCase()) ||
+                a.description.toLowerCase().includes(search.toLowerCase()),
+            ).length === 0 && (
+              <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
+                <Search size={48} className="mb-4 opacity-30" />
+                <p className="text-sm font-mono uppercase tracking-wider">
+                  No results for "{search}"
+                </p>
+                <p className="text-xs font-mono mt-1 text-zinc-700">Try a different search term</p>
+              </div>
+            )}
+          {achievements
+            ?.filter(
+              (a) =>
+                !search ||
+                a.name.toLowerCase().includes(search.toLowerCase()) ||
+                a.description.toLowerCase().includes(search.toLowerCase()),
+            )
+            .map((achievement) => (
+              <motion.div
+                key={achievement.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
               >
-                <div className="p-6 bg-surface-raised/60 border border-zinc-800 rounded-xl space-y-4 hover:border-zinc-700 transition-colors w-full h-full">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-amber-950/30 rounded-lg flex items-center justify-center text-amber-500 border border-amber-500/20 shrink-0">
-                      <Trophy size={24} />
+                <GlareHover
+                  width="100%"
+                  height="100%"
+                  background="transparent"
+                  borderRadius="12px"
+                  borderColor="rgba(63,63,70,0.4)"
+                  glareColor="#fbbf24"
+                  glareOpacity={0.15}
+                  glareAngle={-30}
+                  glareSize={200}
+                  transitionDuration={600}
+                  className="h-full"
+                >
+                  <div className="p-6 bg-surface-raised/60 border border-zinc-800 rounded-xl space-y-4 hover:border-zinc-700 transition-colors w-full h-full">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 bg-amber-950/30 rounded-lg flex items-center justify-center text-amber-500 border border-amber-500/20 shrink-0">
+                        <Trophy size={24} />
+                      </div>
+                      <div className="space-y-1 min-w-0">
+                        <h3 className="text-lg font-black uppercase tracking-tight text-white truncate">
+                          {achievement.name}
+                        </h3>
+                        <p className="text-xs font-mono text-zinc-500 leading-relaxed">
+                          {achievement.description}
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-1 min-w-0">
-                      <h3 className="text-lg font-black uppercase tracking-tight text-white truncate">
-                        {achievement.name}
-                      </h3>
-                      <p className="text-xs font-mono text-zinc-500 leading-relaxed">
-                        {achievement.description}
-                      </p>
+                    <div className="flex items-center justify-between pt-2 border-t border-zinc-800/50">
+                      <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">
+                        {achievement.xp_reward} XP
+                      </span>
+                      <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">
+                        {achievement.icon}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-zinc-800/50">
-                    <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">
-                      {achievement.xp_reward} XP
-                    </span>
-                    <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">
-                      {achievement.icon}
-                    </span>
-                  </div>
-                </div>
-              </GlareHover>
-            </motion.div>
-          ))}
+                </GlareHover>
+              </motion.div>
+            ))}
         </div>
       )}
 
