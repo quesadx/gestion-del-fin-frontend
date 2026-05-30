@@ -9,6 +9,9 @@ import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle } from 'lucide-
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 6;
 
 export default function CampManagement() {
   const { user } = useAuthStore();
@@ -18,6 +21,7 @@ export default function CampManagement() {
   const [editingCamp, setEditingCamp] = useState<Camp | null>(null);
   const [deletingCamp, setDeletingCamp] = useState<Camp | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   // Form states
   const [name, setName] = useState('');
@@ -126,6 +130,9 @@ export default function CampManagement() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil((camps?.length ?? 0) / PAGE_SIZE));
+  const paginatedCamps = (camps ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -166,7 +173,7 @@ export default function CampManagement() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {camps?.map((camp) => (
+          {paginatedCamps.map((camp) => (
             <motion.div
               key={camp.id}
               initial={{ opacity: 0, y: 15 }}
@@ -256,6 +263,8 @@ export default function CampManagement() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (

@@ -8,6 +8,9 @@ import { Package, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 9;
 
 export default function ResourcesPage() {
   const queryClient = useQueryClient();
@@ -15,6 +18,7 @@ export default function ResourcesPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [deletingResource, setDeletingResource] = useState<Resource | null>(null);
+  const [page, setPage] = useState(1);
 
   // Form states
   const [name, setName] = useState('');
@@ -136,6 +140,9 @@ export default function ResourcesPage() {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil((resources?.length ?? 0) / PAGE_SIZE));
+  const paginatedResources = (resources ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -182,7 +189,7 @@ export default function ResourcesPage() {
               </p>
             </div>
           )}
-          {resources?.map((resource) => (
+          {paginatedResources.map((resource) => (
             <motion.div
               key={resource.id}
               initial={{ opacity: 0, y: 15 }}
@@ -261,6 +268,8 @@ export default function ResourcesPage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (

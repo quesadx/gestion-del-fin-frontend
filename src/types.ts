@@ -178,6 +178,33 @@ export interface GamificationAchievement {
   xpReward: number;
 }
 
+export interface Achievement {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  xp_reward: number;
+  criteria: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+export interface UserAchievement {
+  id: number;
+  achievement_id: number;
+  user_id: number;
+  unlocked_at: string;
+  achievement?: Achievement;
+}
+
+export interface AchievementStats {
+  total_achievements: number;
+  total_unlocked: number;
+  total_users: number;
+  by_role: Record<string, { total: number; unlocked: number }>;
+}
+
 export interface Expedition {
   id: number;
   camp_id: number;
