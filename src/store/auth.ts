@@ -23,6 +23,7 @@ interface AuthState {
   /** Whether the user has admin.bypass_camp_scoping (from JWT `isAdmin`). */
   isAdmin: boolean;
   setAuth: (user: User, token: string) => void;
+  syncRolePermissions: (role: string, permissions: string[]) => void;
   logout: () => void;
 }
 
@@ -50,6 +51,32 @@ export const useAuthStore = create<AuthState>()(
           token,
           userId: rawId != null ? Number(rawId) : null,
           isAdmin,
+        });
+      },
+
+      syncRolePermissions: (role, permissions) => {
+        const nextPermissions = Array.from(new Set(permissions)).sort();
+        set((state) => {
+          if (!state.user) return {};
+
+          const currentPermissions = [...(state.user.permissions ?? [])].sort();
+          const permissionsChanged =
+            currentPermissions.length !== nextPermissions.length ||
+            currentPermissions.some((permission, index) => permission !== nextPermissions[index]);
+          const roleChanged = state.user.role !== role;
+
+          if (!permissionsChanged && !roleChanged) return {};
+
+          useDeniedPermissionsStore.getState().reset();
+
+          return {
+            user: {
+              ...state.user,
+              role,
+              permissions: nextPermissions,
+            },
+            isAdmin: nextPermissions.includes('admin.bypass_camp_scoping'),
+          };
         });
       },
 

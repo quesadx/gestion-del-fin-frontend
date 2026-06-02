@@ -16,7 +16,7 @@ const getPermissionGroup = (permissionName: string) => permissionName.split('.')
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const { user, syncRolePermissions } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
@@ -78,8 +78,14 @@ export default function RolesPage() {
       const res = await apiClient.put(`/roles/${id}`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedRole: Role) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      if (updatedRole.name === user?.role || editingRole?.name === user?.role) {
+        syncRolePermissions(
+          updatedRole.name,
+          updatedRole.permissions?.map((permission) => permission.name) ?? [],
+        );
+      }
       closeModal();
     },
   });
