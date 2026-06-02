@@ -4,12 +4,15 @@ import { apiClient } from '../../lib/api';
 import { useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Role, Permission } from '../../types';
-import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key } from 'lucide-react';
+import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
 const PAGE_SIZE = 10;
+const PERMISSIONS_PAGE_SIZE = 100;
+
+const getPermissionGroup = (permissionName: string) => permissionName.split('.')[0] || 'other';
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
@@ -22,6 +25,7 @@ export default function RolesPage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
+  const [permissionSearch, setPermissionSearch] = useState('');
 
   const canCreate = hasPermission(user?.permissions, 'roles.create');
   const canUpdate = hasPermission(user?.permissions, 'roles.update');
@@ -36,10 +40,12 @@ export default function RolesPage() {
     enabled: hasPermission(user?.permissions, 'roles.read'),
   });
 
-  const { data: permissions } = useQuery<Permission[]>({
-    queryKey: ['permissions'],
+  const { data: permissions, isLoading: isLoadingPermissions } = useQuery<Permission[]>({
+    queryKey: ['permissions', 'role-selector', PERMISSIONS_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/permissions?per_page=1000');
+      const res = await apiClient.get('/permissions', {
+        params: { page: 1, pageSize: PERMISSIONS_PAGE_SIZE },
+      });
       const body = res.data;
       return body?.data ?? (Array.isArray(body) ? body : []);
     },
@@ -95,12 +101,22 @@ export default function RolesPage() {
     );
   };
 
+  const toggleVisiblePermissions = (checked: boolean) => {
+    const visibleIds = filteredPermissions.map((permission) => permission.id);
+    setSelectedPermissionIds((prev) => {
+      if (checked) return Array.from(new Set([...prev, ...visibleIds]));
+      const visibleIdSet = new Set(visibleIds);
+      return prev.filter((id) => !visibleIdSet.has(id));
+    });
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingRole(null);
     setName('');
     setDescription('');
     setSelectedPermissionIds([]);
+    setPermissionSearch('');
   };
 
   const openCreateModal = () => {
@@ -108,6 +124,7 @@ export default function RolesPage() {
     setName('');
     setDescription('');
     setSelectedPermissionIds([]);
+    setPermissionSearch('');
     setIsModalOpen(true);
   };
 
@@ -116,6 +133,7 @@ export default function RolesPage() {
     setName(role.name);
     setDescription(role.description || '');
     setSelectedPermissionIds(role.permissions?.map((p) => p.id) ?? []);
+    setPermissionSearch('');
     setIsModalOpen(true);
   };
 
@@ -123,24 +141,49 @@ export default function RolesPage() {
     e.preventDefault();
     if (!name) return;
 
-    const permIds = selectedPermissionIds.length > 0 ? selectedPermissionIds : undefined;
-
     if (editingRole) {
       updateMutation.mutate({
         id: editingRole.id,
-        payload: { name, description: description || undefined, permission_ids: permIds },
+        payload: {
+          name,
+          description: description || undefined,
+          permission_ids: selectedPermissionIds,
+        },
       });
     } else {
       createMutation.mutate({
         name,
         description: description || undefined,
-        permission_ids: permIds,
+        permission_ids: selectedPermissionIds,
       });
     }
   };
 
   const totalPages = Math.max(1, Math.ceil((roles?.length ?? 0) / PAGE_SIZE));
   const paginatedRoles = (roles ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const allPermissions = permissions ?? [];
+  const permissionSearchTerm = permissionSearch.trim().toLowerCase();
+  const filteredPermissions = permissionSearchTerm
+    ? allPermissions.filter((permission) => {
+        const searchableText = `${permission.name} ${permission.description ?? ''}`.toLowerCase();
+        return searchableText.includes(permissionSearchTerm);
+      })
+    : allPermissions;
+  const permissionGroups = new Map<string, Permission[]>();
+
+  filteredPermissions.forEach((permission) => {
+    const group = getPermissionGroup(permission.name);
+    const permissionsInGroup = permissionGroups.get(group) ?? [];
+    permissionsInGroup.push(permission);
+    permissionGroups.set(group, permissionsInGroup);
+  });
+
+  const groupedPermissions = Array.from(permissionGroups.entries()).map(
+    ([group, groupPermissions]) => ({
+      group,
+      permissions: groupPermissions,
+    }),
+  );
 
   return (
     <div className="space-y-6">
@@ -251,7 +294,7 @@ export default function RolesPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-2xl w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -312,39 +355,103 @@ export default function RolesPage() {
                     <Key size={12} />
                     Permissions
                   </label>
-                  <div className="max-h-48 overflow-y-auto bg-zinc-950/60 border border-zinc-900 rounded p-3 space-y-1">
-                    {permissions?.length === 0 && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                      <Search
+                        size={13}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+                      />
+                      <input
+                        type="search"
+                        aria-label="Search permissions"
+                        value={permissionSearch}
+                        onChange={(e) => setPermissionSearch(e.target.value)}
+                        placeholder="Filter by permission or description"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded pl-8 pr-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:flex">
+                      <button
+                        type="button"
+                        onClick={() => toggleVisiblePermissions(true)}
+                        disabled={filteredPermissions.length === 0}
+                        className="px-3 py-2 text-[10px] font-bold uppercase border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Select visible
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleVisiblePermissions(false)}
+                        disabled={filteredPermissions.length === 0}
+                        className="px-3 py-2 text-[10px] font-bold uppercase border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Clear visible
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto bg-zinc-950/60 border border-zinc-900 rounded p-3 space-y-3">
+                    {isLoadingPermissions && (
+                      <p className="text-xs font-mono text-zinc-600 p-2">Loading permissions...</p>
+                    )}
+                    {!isLoadingPermissions && allPermissions.length === 0 && (
                       <p className="text-xs font-mono text-zinc-600 p-2">
                         No permissions registered yet. Create permissions first.
                       </p>
                     )}
-                    {permissions?.map((perm) => (
-                      <label
-                        key={perm.id}
-                        className="flex items-center gap-2 p-1.5 hover:bg-zinc-900/50 rounded cursor-pointer transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedPermissionIds.includes(perm.id)}
-                          onChange={() => togglePermission(perm.id)}
-                          className="accent-brand-primary shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <span className="text-xs font-mono font-bold text-zinc-300">
-                            {perm.name}
-                          </span>
-                          {perm.description && (
-                            <span className="text-[10px] font-mono text-zinc-600 ml-2">
-                              — {perm.description}
+                    {!isLoadingPermissions &&
+                      allPermissions.length > 0 &&
+                      filteredPermissions.length === 0 && (
+                        <p className="text-xs font-mono text-zinc-600 p-2">
+                          No permissions match this filter.
+                        </p>
+                      )}
+                    {groupedPermissions.map(({ group, permissions: groupPermissions }) => {
+                      const selectedInGroup = groupPermissions.filter((permission) =>
+                        selectedPermissionIds.includes(permission.id),
+                      ).length;
+
+                      return (
+                        <div key={group} className="space-y-1">
+                          <div className="flex items-center justify-between px-1 py-1 border-b border-zinc-900">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-brand-primary">
+                              {group}
                             </span>
-                          )}
+                            <span className="text-[9px] font-mono text-zinc-600">
+                              {selectedInGroup}/{groupPermissions.length} selected
+                            </span>
+                          </div>
+
+                          {groupPermissions.map((perm) => (
+                            <label
+                              key={perm.id}
+                              className="flex items-start gap-2 p-1.5 hover:bg-zinc-900/50 rounded cursor-pointer transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedPermissionIds.includes(perm.id)}
+                                onChange={() => togglePermission(perm.id)}
+                                className="accent-brand-primary shrink-0 mt-0.5"
+                              />
+                              <div className="min-w-0">
+                                <span className="text-xs font-mono font-bold text-zinc-300">
+                                  {perm.name}
+                                </span>
+                                {perm.description && (
+                                  <span className="block text-[10px] font-mono text-zinc-600">
+                                    {perm.description}
+                                  </span>
+                                )}
+                              </div>
+                            </label>
+                          ))}
                         </div>
-                      </label>
-                    ))}
+                      );
+                    })}
                   </div>
                   <p className="text-[9px] font-mono text-zinc-600">
-                    {selectedPermissionIds.length} permission
-                    {selectedPermissionIds.length !== 1 ? 's' : ''} selected
+                    {selectedPermissionIds.length} of {allPermissions.length} permission
+                    {allPermissions.length !== 1 ? 's' : ''} selected
                   </p>
                 </div>
 

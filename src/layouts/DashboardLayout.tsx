@@ -932,7 +932,7 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-50 -translate-x-1/2">
+      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-30 -translate-x-1/2">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <Dock items={dockItems} />
         </motion.div>
