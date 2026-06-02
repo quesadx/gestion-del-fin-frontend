@@ -915,7 +915,7 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-32">
+      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-32 sm:pb-36 lg:pb-40">
         <div className="max-w-7xl mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div

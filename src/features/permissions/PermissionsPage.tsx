@@ -11,6 +11,47 @@ import { Pagination } from '../../components/Pagination';
 
 const PAGE_SIZE = 10;
 
+interface PermissionsResponse {
+  data: Permission[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasNextPage: boolean;
+    totalPages: number;
+  };
+}
+
+const normalizePermissionsResponse = (responseData: unknown, page: number): PermissionsResponse => {
+  if (Array.isArray(responseData)) {
+    return {
+      data: responseData as Permission[],
+      pagination: {
+        page,
+        pageSize: PAGE_SIZE,
+        total: responseData.length,
+        hasNextPage: false,
+        totalPages: Math.max(1, Math.ceil(responseData.length / PAGE_SIZE)),
+      },
+    };
+  }
+
+  const payload = responseData as Partial<PermissionsResponse> | undefined;
+  const data = Array.isArray(payload?.data) ? payload.data : [];
+
+  return {
+    data,
+    pagination: {
+      page: payload?.pagination?.page ?? page,
+      pageSize: payload?.pagination?.pageSize ?? PAGE_SIZE,
+      total: payload?.pagination?.total ?? data.length,
+      hasNextPage: payload?.pagination?.hasNextPage ?? false,
+      totalPages:
+        payload?.pagination?.totalPages ?? Math.max(1, Math.ceil(data.length / PAGE_SIZE)),
+    },
+  };
+};
+
 export default function PermissionsPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
@@ -26,11 +67,13 @@ export default function PermissionsPage() {
   const canUpdatePerm = hasPermission(user?.permissions, 'permissions.update');
   const canDeletePerm = hasPermission(user?.permissions, 'permissions.delete');
 
-  const { data: permissions, isLoading } = useQuery<Permission[]>({
-    queryKey: ['permissions'],
+  const { data: permissionsResponse, isLoading } = useQuery<PermissionsResponse>({
+    queryKey: ['permissions', page, PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/permissions');
-      return res.data?.data ?? res.data;
+      const res = await apiClient.get('/permissions', {
+        params: { page, pageSize: PAGE_SIZE },
+      });
+      return normalizePermissionsResponse(res.data, page);
     },
     enabled: hasPermission(user?.permissions, 'permissions.read'),
   });
@@ -108,8 +151,8 @@ export default function PermissionsPage() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil((permissions?.length ?? 0) / PAGE_SIZE));
-  const paginatedPermissions = (permissions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const permissions = permissionsResponse?.data ?? [];
+  const totalPages = permissionsResponse?.pagination.totalPages ?? 1;
 
   return (
     <div className="space-y-6">
@@ -144,7 +187,7 @@ export default function PermissionsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {permissions?.length === 0 && (
+          {permissions.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
               <Key size={48} className="mb-4 opacity-30" />
               <p className="text-sm font-mono uppercase tracking-wider">No permissions defined</p>
@@ -153,7 +196,7 @@ export default function PermissionsPage() {
               </p>
             </div>
           )}
-          {paginatedPermissions.map((permission) => (
+          {permissions.map((permission) => (
             <motion.div
               key={permission.id}
               initial={{ opacity: 0, y: 10 }}
