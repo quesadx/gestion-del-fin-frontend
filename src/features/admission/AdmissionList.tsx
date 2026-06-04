@@ -1,20 +1,58 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Admission } from '../../types';
-import { BrainCircuit, ShieldAlert, UserPlus, CheckCircle2, XCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  BrainCircuit,
+  ShieldAlert,
+  UserPlus,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton, SkeletonList } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
 const PAGE_SIZE = 15;
+const CORRECTED_INTAKE_ARCHIVE_REASON = 'CORRECTED_INTAKE_ARCHIVE';
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
-const getAdmissionDecisionStatus = (
-  admission?: Partial<Admission> | null,
-): 'PENDING' | 'ACCEPTED' | 'REJECTED' => {
+type AdmissionStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
+type AdmissionStatusFilter = 'ALL' | AdmissionStatus;
+type FeedbackType = 'success' | 'error' | 'warning';
+
+interface AdmissionFormDraft {
+  name: string;
+  age: string;
+  skills: string;
+  health: string;
+  background: string;
+  photo?: File | null;
+  idCard?: File | null;
+}
+
+interface AdmissionFeedback {
+  type: FeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+}
+
+interface AdmissionPayload {
+  applicant_name: string;
+  applicant_age: number;
+  applicant_skills: string;
+  health_notes: string;
+  background_notes: string;
+  photo?: File | null;
+  id_card?: File | null;
+}
+
+const getAdmissionDecisionStatus = (admission?: Partial<Admission> | null): AdmissionStatus => {
   const rawStatus = (admission?.final_decision ?? admission?.ai_decision ?? 'PENDING')
     .toString()
     .toUpperCase();
@@ -22,6 +60,62 @@ const getAdmissionDecisionStatus = (
   if (rawStatus === 'APPROVED') return 'ACCEPTED';
   if (rawStatus === 'ACCEPTED' || rawStatus === 'REJECTED') return rawStatus;
   return 'PENDING';
+};
+
+const isArchivedCorrectedIntake = (admission: Partial<Admission>) =>
+  getAdmissionDecisionStatus(admission) === 'REJECTED' &&
+  admission.correction_reason === CORRECTED_INTAKE_ARCHIVE_REASON;
+
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  const apiError = error as {
+    response?: { data?: { error?: { message?: unknown }; message?: unknown } };
+    message?: unknown;
+  };
+  const message =
+    apiError.response?.data?.error?.message ?? apiError.response?.data?.message ?? apiError.message;
+  return typeof message === 'string' && message.trim() ? message : fallback;
+};
+
+const validateImageFile = (file: File | null | undefined, label: string) => {
+  if (!file) return null;
+  if (!file.type.startsWith('image/')) return `${label} must be an image file.`;
+  if (file.size > MAX_IMAGE_SIZE_BYTES) return `${label} must be 10MB or smaller.`;
+  return null;
+};
+
+const buildAdmissionPayload = (draft: AdmissionFormDraft) => {
+  const applicantName = draft.name.trim();
+  const applicantSkills = draft.skills.trim();
+  const healthNotes = draft.health.trim();
+  const backgroundNotes = draft.background.trim();
+  const age = Number(draft.age);
+
+  if (!applicantName) return { error: 'Applicant full name is required.' };
+  if (applicantName.length > 150)
+    return { error: 'Applicant full name must be 150 characters or less.' };
+  if (!Number.isInteger(age) || age < 0 || age > 255) {
+    return { error: 'Age must be a whole number from 0 to 255.' };
+  }
+  if (!applicantSkills) return { error: 'Applicant skills summary is required.' };
+  if (!healthNotes) return { error: 'Health assessment notes are required.' };
+
+  const photoError = validateImageFile(draft.photo, 'Applicant photo');
+  if (photoError) return { error: photoError };
+
+  const idCardError = validateImageFile(draft.idCard, 'ID card');
+  if (idCardError) return { error: idCardError };
+
+  return {
+    values: {
+      applicant_name: applicantName,
+      applicant_age: age,
+      applicant_skills: applicantSkills,
+      health_notes: healthNotes,
+      background_notes: backgroundNotes,
+      photo: draft.photo,
+      id_card: draft.idCard,
+    } satisfies AdmissionPayload,
+  };
 };
 
 export default function AdmissionList() {
@@ -36,6 +130,8 @@ export default function AdmissionList() {
   const canReview = hasPermission(user?.permissions, 'admission.review');
   const [selectedAdmissionId, setSelectedAdmissionId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<AdmissionStatusFilter>('ALL');
+  const [feedback, setFeedback] = useState<AdmissionFeedback | null>(null);
 
   // Form states for register intake
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -46,6 +142,7 @@ export default function AdmissionList() {
   const [newBackground, setNewBackground] = useState('');
   const [newPhoto, setNewPhoto] = useState<File | null>(null);
   const [newIdCard, setNewIdCard] = useState<File | null>(null);
+  const [createFormError, setCreateFormError] = useState<string | null>(null);
 
   const [selectedProfId, setSelectedProfId] = useState<number | null>(null);
 
@@ -57,6 +154,7 @@ export default function AdmissionList() {
   const [correctBackground, setCorrectBackground] = useState('');
   const [correctPhoto, setCorrectPhoto] = useState<File | null>(null);
   const [correctIdCard, setCorrectIdCard] = useState<File | null>(null);
+  const [correctFormError, setCorrectFormError] = useState<string | null>(null);
 
   const { data: admissions, isLoading } = useQuery<Admission[]>({
     queryKey: ['admissions', currentCampId],
@@ -66,8 +164,37 @@ export default function AdmissionList() {
     },
     enabled: !!currentCampId && hasPermission(user?.permissions, 'admission.read'),
   });
-  const totalPages = Math.max(1, Math.ceil((admissions?.length ?? 0) / PAGE_SIZE));
-  const paginatedAdmissions = (admissions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const activeAdmissions = useMemo(
+    () => (admissions ?? []).filter((admission) => !isArchivedCorrectedIntake(admission)),
+    [admissions],
+  );
+  const statusCounts = useMemo(
+    () =>
+      activeAdmissions.reduce(
+        (counts, admission) => {
+          counts[getAdmissionDecisionStatus(admission)] += 1;
+          counts.ALL += 1;
+          return counts;
+        },
+        { ALL: 0, PENDING: 0, ACCEPTED: 0, REJECTED: 0 } as Record<AdmissionStatusFilter, number>,
+      ),
+    [activeAdmissions],
+  );
+  const filteredAdmissions = useMemo(
+    () =>
+      statusFilter === 'ALL'
+        ? activeAdmissions
+        : activeAdmissions.filter(
+            (admission) => getAdmissionDecisionStatus(admission) === statusFilter,
+          ),
+    [activeAdmissions, statusFilter],
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredAdmissions.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedAdmissions = filteredAdmissions.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   const { data: details, isLoading: detailsLoading } = useQuery({
     queryKey: ['admission-details', selectedAdmissionId],
@@ -93,22 +220,44 @@ export default function AdmissionList() {
       id,
       decision,
       corrected_profession_id,
+      applicantName,
     }: {
       id: number;
       decision: 'ACCEPTED' | 'REJECTED';
       corrected_profession_id?: number;
+      applicantName?: string;
     }) => {
       // Contract: PATCH /admission/:id/review — only final_decision + optional corrected_profession_id
-      await apiClient.patch(`/admission/${id}/review`, {
+      const res = await apiClient.patch(`/admission/${id}/review`, {
         final_decision: decision,
         ...(corrected_profession_id != null ? { corrected_profession_id } : {}),
       });
+      return { admission: res.data as Admission, decision, applicantName };
     },
-    onSuccess: () => {
+    onSuccess: ({ decision, applicantName }) => {
       queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
-      // Clear out selected so view resets
       setSelectedAdmissionId(null);
+      setFeedback(
+        decision === 'ACCEPTED'
+          ? {
+              type: 'success',
+              title: 'ADMISSION ACCEPTED',
+              message: `${applicantName || 'The applicant'} is now part of the active camp roster.`,
+            }
+          : {
+              type: 'warning',
+              title: 'ADMISSION REJECTED',
+              message: `${applicantName || 'The applicant'} was rejected. No camp roster record was created.`,
+            },
+      );
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'REVIEW FAILED',
+        message: getApiErrorMessage(error, 'The admission review could not be completed.'),
+      });
     },
   });
 
@@ -139,6 +288,7 @@ export default function AdmissionList() {
         queryKey: ['admissions', currentCampId],
       });
       setIsCreateModalOpen(false);
+      setCreateFormError(null);
       setNewName('');
       setNewAge('');
       setNewSkills('');
@@ -146,6 +296,20 @@ export default function AdmissionList() {
       setNewBackground('');
       setNewPhoto(null);
       setNewIdCard(null);
+      setFeedback({
+        type: 'success',
+        title: 'INTAKE REGISTERED',
+        message: 'The applicant was submitted to the automated evaluation queue.',
+      });
+    },
+    onError: (error) => {
+      const message = getApiErrorMessage(error, 'The intake could not be registered.');
+      setCreateFormError(message);
+      setFeedback({
+        type: 'error',
+        title: 'INTAKE FAILED',
+        message,
+      });
     },
   });
 
@@ -175,27 +339,77 @@ export default function AdmissionList() {
         ...(formValues.id_card ? { id_card: formValues.id_card } : {}),
       });
       const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
-      await apiClient.patch(`/admission/${oldId}/review`, { final_decision: 'REJECTED' });
+      await apiClient.patch(`/admission/${oldId}/review`, {
+        final_decision: 'REJECTED',
+        correction_reason: CORRECTED_INTAKE_ARCHIVE_REASON,
+      });
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (admission: Admission) => {
       queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
       setIsCorrectModalOpen(false);
+      setCorrectFormError(null);
       setSelectedAdmissionId(null);
+      setCorrectPhoto(null);
+      setCorrectIdCard(null);
+      setStatusFilter(getAdmissionDecisionStatus(admission));
+      setPage(1);
+      setFeedback({
+        type: 'success',
+        title: 'CORRECTION SUBMITTED',
+        message:
+          'The corrected intake was sent for a fresh AI evaluation. The previous version was archived from the active queue.',
+      });
+    },
+    onError: (error) => {
+      const message = getApiErrorMessage(error, 'The correction could not be submitted.');
+      setCorrectFormError(message);
+      setFeedback({
+        type: 'error',
+        title: 'CORRECTION FAILED',
+        message,
+      });
     },
   });
 
   const handleSubmitIntake = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName) return;
-    createAdmissionMutation.mutate({
-      applicant_name: newName,
-      applicant_age: Number(newAge) || 25,
-      applicant_skills: newSkills,
-      health_notes: newHealth,
-      background_notes: newBackground,
+    setCreateFormError(null);
+    const result = buildAdmissionPayload({
+      name: newName,
+      age: newAge,
+      skills: newSkills,
+      health: newHealth,
+      background: newBackground,
       photo: newPhoto,
-      id_card: newIdCard,
+      idCard: newIdCard,
+    });
+    if ('error' in result) {
+      setCreateFormError(result.error);
+      return;
+    }
+    createAdmissionMutation.mutate(result.values);
+  };
+
+  const handleSubmitCorrection = (e: React.FormEvent, oldId: number) => {
+    e.preventDefault();
+    setCorrectFormError(null);
+    const result = buildAdmissionPayload({
+      name: correctName,
+      age: correctAge,
+      skills: correctSkills,
+      health: correctHealth,
+      background: correctBackground,
+      photo: correctPhoto,
+      idCard: correctIdCard,
+    });
+    if ('error' in result) {
+      setCorrectFormError(result.error);
+      return;
+    }
+    correctAndReevaluateMutation.mutate({
+      oldId,
+      formValues: result.values,
     });
   };
 
@@ -221,7 +435,10 @@ export default function AdmissionList() {
         </div>
         {canCreate && (
           <button
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setCreateFormError(null);
+              setIsCreateModalOpen(true);
+            }}
             aria-label="Register new refugee intake"
             className="bg-brand-primary hover:bg-brand-primary/95 text-black font-semibold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all shadow-[0_0_20px_rgba(239,68,68,0.2)] uppercase tracking-wider"
           >
@@ -234,25 +451,57 @@ export default function AdmissionList() {
       <div className="h-[calc(100vh-280px)]">
         {/* List Panel - full width */}
         <div className="flex flex-col bg-surface-raised brutalist-border rounded-xl overflow-hidden h-full">
-          <div className="p-3 sm:p-4 bg-black/40 border-b border-zinc-900 flex justify-between items-center">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
-              Intake Queue
-            </h3>
-            <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
-              {admissions?.filter((a) => getAdmissionDecisionStatus(a) === 'PENDING').length || 0}{' '}
-              PENDING · PAGE {page}/{totalPages}
-            </span>
+          <div className="p-3 sm:p-4 bg-black/40 border-b border-zinc-900 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                Intake Queue
+              </h3>
+              <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded w-fit">
+                {statusCounts.PENDING} PENDING - PAGE {currentPage}/{totalPages}
+              </span>
+            </div>
+            <div
+              className="flex flex-wrap gap-2"
+              role="tablist"
+              aria-label="Admission status filter"
+            >
+              {(['ALL', 'PENDING', 'ACCEPTED', 'REJECTED'] as AdmissionStatusFilter[]).map(
+                (status) => {
+                  const active = statusFilter === status;
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      onClick={() => {
+                        setStatusFilter(status);
+                        setPage(1);
+                      }}
+                      className={cn(
+                        'rounded border px-3 py-1.5 text-[10px] font-black uppercase tracking-wider transition-colors',
+                        active
+                          ? 'border-brand-primary bg-brand-primary text-black'
+                          : 'border-zinc-800 bg-zinc-950/40 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300',
+                      )}
+                    >
+                      {status} {statusCounts[status]}
+                    </button>
+                  );
+                },
+              )}
+            </div>
           </div>
           <div className="flex-1 overflow-auto divide-y divide-zinc-900">
             {isLoading ? (
               <div className="p-3 sm:p-4">
                 <SkeletonList count={4} />
               </div>
-            ) : admissions?.length === 0 ? (
+            ) : filteredAdmissions.length === 0 ? (
               <div className="p-12 text-center space-y-4">
                 <CheckCircle2 size={48} className="mx-auto text-zinc-800" />
                 <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-                  No pending applications.
+                  No {statusFilter === 'ALL' ? 'active' : statusFilter.toLowerCase()} applications.
                 </p>
               </div>
             ) : (
@@ -262,7 +511,10 @@ export default function AdmissionList() {
                 return (
                   <button
                     key={admission.id}
-                    onClick={() => setSelectedAdmissionId(admission.id)}
+                    onClick={() => {
+                      setSelectedProfId(null);
+                      setSelectedAdmissionId(admission.id);
+                    }}
                     aria-label={`View details for ${admission.applicant_name || admission.full_name}`}
                     className={cn(
                       'w-full p-5 text-left transition-all hover:bg-white/5 border-l-4 group',
@@ -306,7 +558,7 @@ export default function AdmissionList() {
           </div>
 
           <div className="p-3 border-t border-zinc-900 flex justify-center">
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
           </div>
         </div>
       </div>
@@ -604,7 +856,11 @@ export default function AdmissionList() {
                     <div className="p-3 sm:p-4 border-t border-zinc-900 bg-surface-raised flex gap-3">
                       <button
                         onClick={() =>
-                          reviewMutation.mutate({ id: details.id, decision: 'REJECTED' })
+                          reviewMutation.mutate({
+                            id: details.id,
+                            decision: 'REJECTED',
+                            applicantName: details.applicant_name || details.full_name,
+                          })
                         }
                         aria-label="Reject admission"
                         disabled={
@@ -624,6 +880,9 @@ export default function AdmissionList() {
                             setCorrectSkills(details.applicant_skills || '');
                             setCorrectHealth(details.health_notes || '');
                             setCorrectBackground(details.background_notes || '');
+                            setCorrectFormError(null);
+                            setCorrectPhoto(null);
+                            setCorrectIdCard(null);
                             setIsCorrectModalOpen(true);
                           }}
                           aria-label="Correct and re-evaluate admission"
@@ -643,6 +902,7 @@ export default function AdmissionList() {
                             id: details.id,
                             decision: 'ACCEPTED',
                             corrected_profession_id: selectedProfId || undefined,
+                            applicantName: details.applicant_name || details.full_name,
                           })
                         }
                         aria-label="Approve admission"
@@ -689,6 +949,24 @@ export default function AdmissionList() {
               </div>
 
               <form onSubmit={handleSubmitIntake} className="space-y-4">
+                <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-3 space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                    Required format
+                  </p>
+                  <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
+                    Name is required and max 150 characters. Age must be a whole number from 0 to
+                    255. Skills and health notes are required. Images are optional, image-only, max
+                    10MB each.
+                  </p>
+                </div>
+
+                {createFormError && (
+                  <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-950/20 p-3 text-red-400">
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                    <p className="text-xs font-mono leading-relaxed">{createFormError}</p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2 space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
@@ -697,8 +975,12 @@ export default function AdmissionList() {
                     <input
                       required
                       type="text"
+                      maxLength={150}
                       value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
+                      onChange={(e) => {
+                        setNewName(e.target.value);
+                        setCreateFormError(null);
+                      }}
                       placeholder="e.g. Marlene Carter"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
                     />
@@ -708,8 +990,14 @@ export default function AdmissionList() {
                     <input
                       required
                       type="number"
+                      min={0}
+                      max={255}
+                      step={1}
                       value={newAge}
-                      onChange={(e) => setNewAge(e.target.value)}
+                      onChange={(e) => {
+                        setNewAge(e.target.value);
+                        setCreateFormError(null);
+                      }}
                       placeholder="e.g. 28"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
                     />
@@ -724,7 +1012,10 @@ export default function AdmissionList() {
                     required
                     type="text"
                     value={newSkills}
-                    onChange={(e) => setNewSkills(e.target.value)}
+                    onChange={(e) => {
+                      setNewSkills(e.target.value);
+                      setCreateFormError(null);
+                    }}
                     placeholder="e.g. combat training, basic surgical operations, scouting, agriculture"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
                   />
@@ -737,7 +1028,10 @@ export default function AdmissionList() {
                   <textarea
                     required
                     value={newHealth}
-                    onChange={(e) => setNewHealth(e.target.value)}
+                    onChange={(e) => {
+                      setNewHealth(e.target.value);
+                      setCreateFormError(null);
+                    }}
                     placeholder="e.g. Minor exhaustions, no active bites or infectious symptoms detected."
                     rows={2}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none"
@@ -750,7 +1044,10 @@ export default function AdmissionList() {
                   </label>
                   <textarea
                     value={newBackground}
-                    onChange={(e) => setNewBackground(e.target.value)}
+                    onChange={(e) => {
+                      setNewBackground(e.target.value);
+                      setCreateFormError(null);
+                    }}
                     placeholder="e.g. Former cargo vehicle driver from the state border. Cooperative and compliant."
                     rows={2}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none"
@@ -765,7 +1062,10 @@ export default function AdmissionList() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setNewPhoto(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        setNewPhoto(e.target.files?.[0] ?? null);
+                        setCreateFormError(null);
+                      }}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
@@ -776,7 +1076,10 @@ export default function AdmissionList() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setNewIdCard(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        setNewIdCard(e.target.files?.[0] ?? null);
+                        setCreateFormError(null);
+                      }}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
@@ -828,30 +1131,30 @@ export default function AdmissionList() {
                   Correct &amp; Re-evaluate
                 </h3>
                 <p className="text-xs text-zinc-500 font-mono mt-1">
-                  Edit the applicant data and resubmit for a fresh AI evaluation. The original
-                  intake will be rejected.
+                  Edit the applicant data and submit a fresh AI evaluation. The previous version is
+                  archived from the active queue.
                 </p>
               </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!correctName) return;
-                  correctAndReevaluateMutation.mutate({
-                    oldId: details.id,
-                    formValues: {
-                      applicant_name: correctName,
-                      applicant_age: correctAge ? Number(correctAge) : undefined,
-                      applicant_skills: correctSkills,
-                      health_notes: correctHealth,
-                      background_notes: correctBackground,
-                      photo: correctPhoto,
-                      id_card: correctIdCard,
-                    },
-                  });
-                }}
-                className="space-y-4"
-              >
+              <form onSubmit={(e) => handleSubmitCorrection(e, details.id)} className="space-y-4">
+                <div className="rounded-lg border border-amber-500/30 bg-amber-950/10 p-3 space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                    Required format
+                  </p>
+                  <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
+                    Name is required and max 150 characters. Age must be a whole number from 0 to
+                    255. Skills and health notes are required. Images are optional, image-only, max
+                    10MB each.
+                  </p>
+                </div>
+
+                {correctFormError && (
+                  <div className="flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-950/20 p-3 text-red-400">
+                    <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+                    <p className="text-xs font-mono leading-relaxed">{correctFormError}</p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2 space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
@@ -860,8 +1163,12 @@ export default function AdmissionList() {
                     <input
                       required
                       type="text"
+                      maxLength={150}
                       value={correctName}
-                      onChange={(e) => setCorrectName(e.target.value)}
+                      onChange={(e) => {
+                        setCorrectName(e.target.value);
+                        setCorrectFormError(null);
+                      }}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -870,8 +1177,14 @@ export default function AdmissionList() {
                     <input
                       required
                       type="number"
+                      min={0}
+                      max={255}
+                      step={1}
                       value={correctAge}
-                      onChange={(e) => setCorrectAge(e.target.value)}
+                      onChange={(e) => {
+                        setCorrectAge(e.target.value);
+                        setCorrectFormError(null);
+                      }}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -885,7 +1198,10 @@ export default function AdmissionList() {
                     required
                     type="text"
                     value={correctSkills}
-                    onChange={(e) => setCorrectSkills(e.target.value)}
+                    onChange={(e) => {
+                      setCorrectSkills(e.target.value);
+                      setCorrectFormError(null);
+                    }}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
                   />
                 </div>
@@ -897,7 +1213,10 @@ export default function AdmissionList() {
                   <textarea
                     required
                     value={correctHealth}
-                    onChange={(e) => setCorrectHealth(e.target.value)}
+                    onChange={(e) => {
+                      setCorrectHealth(e.target.value);
+                      setCorrectFormError(null);
+                    }}
                     rows={2}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
                   />
@@ -909,7 +1228,10 @@ export default function AdmissionList() {
                   </label>
                   <textarea
                     value={correctBackground}
-                    onChange={(e) => setCorrectBackground(e.target.value)}
+                    onChange={(e) => {
+                      setCorrectBackground(e.target.value);
+                      setCorrectFormError(null);
+                    }}
                     rows={2}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
                   />
@@ -923,7 +1245,10 @@ export default function AdmissionList() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setCorrectPhoto(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        setCorrectPhoto(e.target.files?.[0] ?? null);
+                        setCorrectFormError(null);
+                      }}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -934,7 +1259,10 @@ export default function AdmissionList() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => setCorrectIdCard(e.target.files?.[0] ?? null)}
+                      onChange={(e) => {
+                        setCorrectIdCard(e.target.files?.[0] ?? null);
+                        setCorrectFormError(null);
+                      }}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -961,6 +1289,77 @@ export default function AdmissionList() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {feedback && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={feedback.title}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md"
+            onClick={() => setFeedback(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="bg-surface-raised brutalist-border p-5 sm:p-7 rounded-xl max-w-md w-full space-y-5 text-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div
+                className={cn(
+                  'mx-auto flex h-14 w-14 items-center justify-center rounded-xl border',
+                  feedback.type === 'success'
+                    ? 'border-emerald-500/40 bg-emerald-950/20 text-emerald-400'
+                    : feedback.type === 'warning'
+                      ? 'border-amber-500/40 bg-amber-950/20 text-amber-400'
+                      : 'border-red-500/40 bg-red-950/20 text-red-400',
+                )}
+              >
+                {feedback.type === 'success' ? (
+                  <CheckCircle2 size={28} />
+                ) : feedback.type === 'warning' ? (
+                  <AlertTriangle size={28} />
+                ) : (
+                  <XCircle size={28} />
+                )}
+              </div>
+              <div className="space-y-2">
+                <p
+                  className={cn(
+                    'text-[10px] font-mono uppercase tracking-widest',
+                    feedback.type === 'success'
+                      ? 'text-emerald-400'
+                      : feedback.type === 'warning'
+                        ? 'text-amber-400'
+                        : 'text-red-400',
+                  )}
+                >
+                  Admission Protocol
+                </p>
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                  {feedback.title}
+                </h3>
+                <p className="text-xs font-mono leading-relaxed text-zinc-400">
+                  {feedback.message}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFeedback(null)}
+                className={cn(
+                  'w-full rounded px-4 py-2.5 text-xs font-black uppercase tracking-wider text-black transition-colors',
+                  feedback.type === 'success'
+                    ? 'bg-emerald-500 hover:bg-emerald-400'
+                    : feedback.type === 'warning'
+                      ? 'bg-amber-500 hover:bg-amber-400'
+                      : 'bg-brand-primary hover:bg-brand-primary/90',
+                )}
+              >
+                {feedback.actionLabel || 'ACKNOWLEDGE'}
+              </button>
             </motion.div>
           </div>
         )}
