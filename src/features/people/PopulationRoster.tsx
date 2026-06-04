@@ -28,8 +28,24 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Pagination } from '../../components/Pagination';
+import { showToast } from '../../lib/toast';
+import { getApiErrorMessage } from '../../lib/apiErrors';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
 
 const PAGE_SIZE = 20;
+
+type PeopleFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
+const getPeopleActionErrorMessage = (error: unknown, fallback: string) => {
+  const status = (error as { response?: { status?: number } }).response?.status;
+  if (status === 403) return 'Your current role is not authorized to perform this action.';
+  return getApiErrorMessage(error, fallback);
+};
 
 export default function PopulationRoster() {
   const { currentCampId } = useCampStore();
@@ -46,6 +62,7 @@ export default function PopulationRoster() {
   const [reassignModal, setReassignModal] = useState(false);
   const [reassignVacantProfId, setReassignVacantProfId] = useState<number | null>(null);
   const [reassignPersonId, setReassignPersonId] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
 
   // Edit states
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
@@ -55,6 +72,14 @@ export default function PopulationRoster() {
     'HEALTHY',
   );
   const [editProfessionId, setEditProfessionId] = useState<number | null>(null);
+
+  const showErrorFeedback = (title: string, error: unknown, fallback: string) => {
+    setFeedback({
+      type: 'error',
+      title,
+      message: getPeopleActionErrorMessage(error, fallback),
+    });
+  };
 
   const updatePersonMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Person> }) => {
@@ -74,7 +99,14 @@ export default function PopulationRoster() {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setEditingPerson(null);
+      setFeedback({
+        type: 'success',
+        title: 'PROFILE UPDATED',
+        message: 'The personnel record was updated successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('UPDATE FAILED', error, 'Could not update personnel profile.'),
   });
 
   const deletePersonMutation = useMutation({
@@ -86,7 +118,14 @@ export default function PopulationRoster() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
+      setFeedback({
+        type: 'success',
+        title: 'RECORD REMOVED',
+        message: 'The survivor was removed from the camp roster.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('DELETE FAILED', error, 'Could not delete personnel record.'),
   });
 
   const handleEditClick = (person: Person) => {
@@ -100,11 +139,20 @@ export default function PopulationRoster() {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPerson) return;
+    const parsedAge = Number(editAge);
+    if (!editName.trim()) {
+      showToast.warning('Full name is required.');
+      return;
+    }
+    if (!Number.isInteger(parsedAge) || parsedAge < 0 || parsedAge > 255) {
+      showToast.warning('Age must be a whole number from 0 to 255.');
+      return;
+    }
     updatePersonMutation.mutate({
       id: editingPerson.id,
       data: {
-        full_name: editName,
-        age: Number(editAge) || 25,
+        full_name: editName.trim(),
+        age: parsedAge,
         status: editStatus,
         ...(editProfessionId != null ? { profession_id: editProfessionId } : {}),
       },
@@ -170,7 +218,14 @@ export default function PopulationRoster() {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       setTransferringPerson(null);
       setTargetCampId(null);
+      setFeedback({
+        type: 'success',
+        title: 'TRANSFER REQUESTED',
+        message: 'The personnel transfer request was created successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('TRANSFER FAILED', error, 'Could not create personnel transfer.'),
   });
 
   const reassignMutation = useMutation({
@@ -195,7 +250,14 @@ export default function PopulationRoster() {
       setReassignModal(false);
       setReassignVacantProfId(null);
       setReassignPersonId(null);
+      setFeedback({
+        type: 'success',
+        title: 'REASSIGNMENT SAVED',
+        message: 'The temporary profession reassignment was saved successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('REASSIGNMENT FAILED', error, 'Could not save temporary reassignment.'),
   });
 
   const canReassign = hasPermission(user?.permissions, 'people.profession_reassign.create');
@@ -640,6 +702,7 @@ export default function PopulationRoster() {
                   <input
                     required
                     type="text"
+                    maxLength={150}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase"
@@ -654,6 +717,9 @@ export default function PopulationRoster() {
                     <input
                       required
                       type="number"
+                      min={0}
+                      max={255}
+                      step={1}
                       value={editAge}
                       onChange={(e) => setEditAge(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
@@ -878,6 +944,18 @@ export default function PopulationRoster() {
         </p>
         <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Population Roster"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
+      )}
     </div>
   );
 }

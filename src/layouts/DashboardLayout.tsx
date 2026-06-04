@@ -169,6 +169,7 @@ export default function DashboardLayout() {
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [showEyePhase, setShowEyePhase] = useState(false);
   const [achvPopupOpen, setAchvPopupOpen] = useState(false);
+  const [externalModalOpen, setExternalModalOpen] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -370,6 +371,38 @@ export default function DashboardLayout() {
     return () => window.removeEventListener('keydown', handler);
   }, [achvPopupOpen]);
 
+  useEffect(() => {
+    const isModalOverlay = (element: Element) => {
+      const className = element.getAttribute('class') ?? '';
+      return (
+        className.includes('fixed') &&
+        className.includes('inset-0') &&
+        (className.includes('z-50') ||
+          className.includes('z-60') ||
+          className.includes('z-[60]') ||
+          className.includes('z-[999]'))
+      );
+    };
+
+    const detectModal = () => {
+      const hasDialogRole = document.querySelector('[role="dialog"], [role="alertdialog"]');
+      const hasOverlay = Array.from(document.querySelectorAll('.fixed')).some(isModalOverlay);
+      setExternalModalOpen(Boolean(hasDialogRole || hasOverlay));
+    };
+
+    detectModal();
+
+    const observer = new MutationObserver(detectModal);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class', 'role'],
+      childList: true,
+      subtree: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -400,6 +433,7 @@ export default function DashboardLayout() {
         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/70',
     };
   });
+  const dockHidden = campPopupOpen || showEasterEgg || externalModalOpen;
 
   return (
     <div className="relative z-10 flex flex-col h-screen bg-transparent text-zinc-100 overflow-hidden">
@@ -936,11 +970,20 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-40 -translate-x-1/2">
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <Dock items={dockItems} />
-        </motion.div>
-      </div>
+      <AnimatePresence>
+        {!dockHidden && (
+          <motion.div
+            key="bottom-dock"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="fixed bottom-2 sm:bottom-4 left-1/2 z-40 -translate-x-1/2"
+          >
+            <Dock items={dockItems} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

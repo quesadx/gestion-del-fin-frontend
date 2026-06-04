@@ -94,6 +94,28 @@ export interface ResourceLookup {
   daily_ration?: number;
 }
 
+export interface ContributionOverride {
+  id: number;
+  person_id: number;
+  resource_type_id: number;
+  reason: string;
+  amount: number | string;
+  start_date?: string | null;
+  end_date?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
+  resource_type?: {
+    id: number;
+    name: string;
+    unit?: string | null;
+  } | null;
+  users?: {
+    id: number;
+    username: string;
+  } | null;
+}
+
 export interface Person {
   id: number;
   full_name: string;
@@ -107,6 +129,7 @@ export interface Person {
   identification_code?: string | null;
   blood_type?: string | null;
   admitted_at?: string | null;
+  contribution_overrides?: ContributionOverride[];
 }
 
 export interface Admission {

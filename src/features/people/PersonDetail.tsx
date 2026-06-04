@@ -6,6 +6,8 @@ import { Person, Camp } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate, normalizePersonStatus } from '../../lib/utils';
+import { showToast } from '../../lib/toast';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 import {
   ArrowLeft,
   AlertCircle,
@@ -33,6 +35,71 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_OVERRIDE_AMOUNT = 9999999999.99;
+
+type PersonUpdatePayload = {
+  full_name?: string;
+  age?: number;
+  status?: Person['status'];
+  profession_id?: number;
+  skills_summary?: string;
+  photo?: File | null;
+  photo_url?: string | null;
+};
+
+type PeopleFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+  nextPath?: string;
+};
+
+const getPeopleActionErrorMessage = (error: unknown, fallback: string) => {
+  const status = (error as { response?: { status?: number } }).response?.status;
+  if (status === 403) return 'Your current role is not authorized to perform this action.';
+  return getApiErrorMessage(error, fallback);
+};
+
+const validateImageFile = (file: File | null | undefined) => {
+  if (!file) return null;
+  if (!file.type.startsWith('image/')) return 'Photo must be an image file.';
+  if (file.size > MAX_IMAGE_SIZE_BYTES) return 'Photo must be 10MB or smaller.';
+  return null;
+};
+
+const getDateOnlyTime = (value?: string | null) => {
+  if (!value) return null;
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+};
+
+const formatShortDate = (value?: string | null) => {
+  if (!value) return 'Open-ended';
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return 'Invalid date';
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return 'Invalid date';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(date);
+};
+
+const formatOverrideAmount = (amount: number | string, unit?: string | null) => {
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return `${amount}${unit ? ` ${unit}` : ''}`;
+  const signedAmount = `${numericAmount > 0 ? '+' : ''}${numericAmount.toFixed(2)}`;
+  return `${signedAmount}${unit ? ` ${unit}` : ''}`;
+};
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -54,6 +121,9 @@ export default function PersonDetail() {
     'people.contribution_override.create',
   );
   const canTransferPerson = hasPermission(user?.permissions, 'transfers.create');
+  const canReadCamps = hasPermission(user?.permissions, 'camps.read');
+  const canReadProfessions = hasPermission(user?.permissions, 'professions.read');
+  const canReadResources = hasPermission(user?.permissions, 'resources.read');
 
   // ── Person query ───────────────────────────────────────────────────────
 
@@ -83,7 +153,7 @@ export default function PersonDetail() {
       const res = await apiClient.get('/camps');
       return unwrapList<Camp>(res.data);
     },
-    enabled: hasReadPermission,
+    enabled: hasReadPermission && canReadCamps,
   });
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
@@ -92,7 +162,7 @@ export default function PersonDetail() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
-    enabled: hasReadPermission,
+    enabled: hasReadPermission && canReadProfessions,
   });
 
   const { data: resources } = useQuery<{ id: number; name: string }[]>({
@@ -101,21 +171,37 @@ export default function PersonDetail() {
       const res = await apiClient.get('/resources');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
-    enabled: hasReadPermission,
+    enabled: hasReadPermission && canReadResources && canOverrideContribution,
   });
 
   const campName = camps?.find((c) => c.id === person?.camp_id)?.name;
+  const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
+
+  const showErrorFeedback = (title: string, error: unknown, fallback: string) => {
+    setFeedback({
+      type: 'error',
+      title,
+      message: getPeopleActionErrorMessage(error, fallback),
+    });
+  };
+
+  const closeFeedback = () => {
+    const nextPath = feedback?.nextPath;
+    setFeedback(null);
+    if (nextPath) navigate(nextPath);
+  };
 
   // ── Update mutation ────────────────────────────────────────────────────
 
   const updatePersonMutation = useMutation({
-    mutationFn: async ({ data }: { data: Partial<Person> }) => {
+    mutationFn: async ({ data }: { data: PersonUpdatePayload }) => {
       const body = toFormData({
         full_name: data.full_name,
         age: data.age,
         status: data.status,
         profession_id: data.profession_id,
         skills_summary: data.skills_summary,
+        photo: data.photo,
         photo_url: data.photo_url,
       });
       const res = await apiClient.put(`/camps/${currentCampId}/people/${personId}`, body);
@@ -126,7 +212,16 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setEditingPerson(false);
+      setEditPhotoFile(null);
+      setEditPhotoError(null);
+      setFeedback({
+        type: 'success',
+        title: 'PROFILE UPDATED',
+        message: 'The personnel record was updated successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('UPDATE FAILED', error, 'Could not update personnel profile.'),
   });
 
   // ── Delete mutation ────────────────────────────────────────────────────
@@ -139,8 +234,16 @@ export default function PersonDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
-      navigate('/population');
+      setFeedback({
+        type: 'success',
+        title: 'RECORD REMOVED',
+        message: 'The survivor was removed from the camp roster.',
+        actionLabel: 'VIEW ROSTER',
+        nextPath: '/population',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('DELETE FAILED', error, 'Could not delete personnel record.'),
   });
 
   // ── Transfer mutation ──────────────────────────────────────────────────
@@ -159,8 +262,16 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       setTransferringPerson(false);
       setTargetCampId(null);
-      navigate('/population');
+      setFeedback({
+        type: 'success',
+        title: 'TRANSFER REQUESTED',
+        message: 'The personnel transfer request was created successfully.',
+        actionLabel: 'VIEW ROSTER',
+        nextPath: '/population',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('TRANSFER FAILED', error, 'Could not create personnel transfer.'),
   });
 
   // ── Status log mutation ────────────────────────────────────────────────
@@ -176,10 +287,18 @@ export default function PersonDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['person', currentCampId, personId] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setShowStatusLogModal(false);
       setStatusReason('');
       setStatusNewStatus('HEALTHY');
+      setFeedback({
+        type: 'success',
+        title: 'STATUS LOGGED',
+        message: 'The survivor status change was recorded successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('STATUS UPDATE FAILED', error, 'Could not log status change.'),
   });
 
   // ── Reassign mutation ──────────────────────────────────────────────────
@@ -208,12 +327,20 @@ export default function PersonDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['person', currentCampId, personId] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setShowReassignModal(false);
       setReassignProfessionId(null);
       setReassignReason('');
       setReassignStartDate('');
       setReassignEndDate('');
+      setFeedback({
+        type: 'success',
+        title: 'PROFESSION UPDATED',
+        message: 'The profession reassignment was saved successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('REASSIGNMENT FAILED', error, 'Could not reassign profession.'),
   });
 
   // ── Override mutation ──────────────────────────────────────────────────
@@ -250,7 +377,15 @@ export default function PersonDetail() {
       setOverrideReason('');
       setOverrideStartDate('');
       setOverrideEndDate('');
+      setFeedback({
+        type: 'success',
+        title: 'OVERRIDE SAVED',
+        message:
+          'The contribution override was registered and will be applied by the daily production job while active.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('OVERRIDE FAILED', error, 'Could not save contribution override.'),
   });
 
   // ── Edit modal state ───────────────────────────────────────────────────
@@ -262,6 +397,8 @@ export default function PersonDetail() {
   const [editProfessionId, setEditProfessionId] = useState<number | null>(null);
   const [editSkillsSummary, setEditSkillsSummary] = useState('');
   const [editPhotoUrl, setEditPhotoUrl] = useState('');
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
+  const [editPhotoError, setEditPhotoError] = useState<string | null>(null);
 
   const openEditModal = () => {
     if (!person) return;
@@ -272,20 +409,51 @@ export default function PersonDetail() {
     setEditProfessionId(person.profession_id ?? null);
     setEditSkillsSummary(person.skills_summary ?? '');
     setEditPhotoUrl(person.photo_url ?? '');
+    setEditPhotoFile(null);
+    setEditPhotoError(null);
     setEditingPerson(true);
+  };
+
+  const handleEditPhotoChange = (file?: File | null) => {
+    const validationError = validateImageFile(file);
+    setEditPhotoError(validationError);
+    setEditPhotoFile(validationError ? null : (file ?? null));
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!person) return;
+
+    const trimmedName = editName.trim();
+    if (!trimmedName) {
+      showToast.warning('Full name is required.');
+      return;
+    }
+
+    const parsedAge = editAge.trim() === '' ? undefined : Number(editAge);
+    if (
+      parsedAge !== undefined &&
+      (!Number.isInteger(parsedAge) || parsedAge < 0 || parsedAge > 255)
+    ) {
+      showToast.warning('Age must be a whole number from 0 to 255.');
+      return;
+    }
+
+    const imageError = validateImageFile(editPhotoFile);
+    if (imageError) {
+      setEditPhotoError(imageError);
+      return;
+    }
+
     updatePersonMutation.mutate({
       data: {
-        full_name: editName,
-        age: Number(editAge) || 25,
+        full_name: trimmedName,
+        ...(parsedAge !== undefined ? { age: parsedAge } : {}),
         status: editStatus as Person['status'],
         ...(editProfessionId != null ? { profession_id: editProfessionId } : {}),
-        ...(editSkillsSummary ? { skills_summary: editSkillsSummary } : {}),
-        ...(editPhotoUrl ? { photo_url: editPhotoUrl } : {}),
+        ...(editSkillsSummary.trim() ? { skills_summary: editSkillsSummary.trim() } : {}),
+        ...(editPhotoFile ? { photo: editPhotoFile } : {}),
+        ...(!editPhotoFile && editPhotoUrl ? { photo_url: editPhotoUrl } : {}),
       },
     });
   };
@@ -318,6 +486,45 @@ export default function PersonDetail() {
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideStartDate, setOverrideStartDate] = useState('');
   const [overrideEndDate, setOverrideEndDate] = useState('');
+
+  const trimmedOverrideReason = overrideReason.trim();
+  const overrideAmountNumber = Number(overrideAmount);
+  const overrideAmountInvalid =
+    overrideAmount.trim() !== '' &&
+    (!Number.isFinite(overrideAmountNumber) ||
+      Math.abs(overrideAmountNumber) > MAX_OVERRIDE_AMOUNT);
+  const overrideReasonInvalid = trimmedOverrideReason.length > 255;
+  const overrideDateRangeInvalid =
+    !!overrideStartDate &&
+    !!overrideEndDate &&
+    getDateOnlyTime(overrideEndDate)! < getDateOnlyTime(overrideStartDate)!;
+  const canSubmitOverride =
+    overrideResourceTypeId != null &&
+    overrideAmount.trim() !== '' &&
+    trimmedOverrideReason.length > 0 &&
+    !overrideAmountInvalid &&
+    !overrideReasonInvalid &&
+    !overrideDateRangeInvalid &&
+    !overrideMutation.isPending;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayTime = today.getTime();
+  const contributionOverrides = [...(person?.contribution_overrides ?? [])].sort(
+    (a, b) =>
+      (getDateOnlyTime(b.created_at) ?? getDateOnlyTime(b.start_date) ?? 0) -
+      (getDateOnlyTime(a.created_at) ?? getDateOnlyTime(a.start_date) ?? 0),
+  );
+  const getOverrideStatus = (startDate?: string | null, endDate?: string | null) => {
+    const startTime = getDateOnlyTime(startDate);
+    const endTime = getDateOnlyTime(endDate);
+
+    if (startTime != null && startTime > todayTime) return 'SCHEDULED';
+    if (endTime != null && endTime < todayTime) return 'ENDED';
+    return 'ACTIVE';
+  };
+  const activeOverrideCount = contributionOverrides.filter(
+    (override) => getOverrideStatus(override.start_date, override.end_date) === 'ACTIVE',
+  ).length;
 
   if (!hasReadPermission) {
     return <Navigate to="/" replace />;
@@ -609,6 +816,80 @@ export default function PersonDetail() {
         </div>
       </div>
 
+      {canOverrideContribution && (
+        <div>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400">
+              Contribution Overrides
+            </h2>
+            <span className="rounded border border-blue-500/20 bg-blue-950/20 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-blue-400">
+              {activeOverrideCount} active
+            </span>
+          </div>
+
+          <div className="bg-surface-raised brutalist-border rounded-lg overflow-hidden">
+            {contributionOverrides.length === 0 ? (
+              <div className="px-6 py-8 text-center text-[11px] font-mono uppercase tracking-widest text-zinc-600">
+                No contribution overrides recorded.
+              </div>
+            ) : (
+              <div className="divide-y divide-zinc-900">
+                {contributionOverrides.map((override) => {
+                  const amountNumber = Number(override.amount);
+                  const isPositive = Number.isFinite(amountNumber) && amountNumber >= 0;
+                  const status = getOverrideStatus(override.start_date, override.end_date);
+                  const resourceName =
+                    override.resource_type?.name ?? `Resource #${override.resource_type_id}`;
+
+                  return (
+                    <div
+                      key={override.id}
+                      className="grid gap-4 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                    >
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-black uppercase tracking-wider text-zinc-200">
+                            {resourceName}
+                          </span>
+                          <span
+                            className={cn(
+                              'rounded border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider',
+                              status === 'ACTIVE'
+                                ? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-400'
+                                : status === 'SCHEDULED'
+                                  ? 'border-blue-500/30 bg-blue-950/20 text-blue-400'
+                                  : 'border-zinc-700 bg-zinc-950/30 text-zinc-500',
+                            )}
+                          >
+                            {status}
+                          </span>
+                        </div>
+                        <p className="text-xs font-mono leading-relaxed text-zinc-500">
+                          {override.reason}
+                        </p>
+                        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+                          {formatShortDate(override.start_date)} to{' '}
+                          {formatShortDate(override.end_date)}
+                          {override.users?.username ? ` by ${override.users.username}` : ''}
+                        </p>
+                      </div>
+                      <div
+                        className={cn(
+                          'text-right text-sm font-black tabular-nums',
+                          isPositive ? 'text-emerald-400' : 'text-red-400',
+                        )}
+                      >
+                        {formatOverrideAmount(override.amount, override.resource_type?.unit)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Action buttons */}
       <div className="flex flex-col sm:flex-row gap-4">
         {canUpdate && (
@@ -712,6 +993,7 @@ export default function PersonDetail() {
                   <input
                     required
                     type="text"
+                    maxLength={150}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase"
@@ -726,6 +1008,9 @@ export default function PersonDetail() {
                     <input
                       required
                       type="number"
+                      min={0}
+                      max={255}
+                      step={1}
                       value={editAge}
                       onChange={(e) => setEditAge(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
@@ -784,15 +1069,27 @@ export default function PersonDetail() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                    Photo URL (Optional)
+                    Personnel Photo (Optional, max 10MB)
                   </label>
-                  <input
-                    type="url"
-                    value={editPhotoUrl}
-                    onChange={(e) => setEditPhotoUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
-                  />
+                  <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-xs font-mono text-zinc-400 transition-colors hover:border-brand-primary/60">
+                    <Camera size={16} className="shrink-0 text-brand-primary" />
+                    <span className="min-w-0 flex-1 truncate">
+                      {editPhotoFile
+                        ? editPhotoFile.name
+                        : person.photo_url
+                          ? 'Current photo will be kept'
+                          : 'Select image file'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleEditPhotoChange(e.target.files?.[0] ?? null)}
+                      className="sr-only"
+                    />
+                  </label>
+                  {editPhotoError && (
+                    <p className="mt-1 text-[10px] font-mono text-red-500">{editPhotoError}</p>
+                  )}
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
@@ -1136,11 +1433,14 @@ export default function PersonDetail() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (overrideResourceTypeId == null || !overrideAmount || !overrideReason) return;
+                  if (!canSubmitOverride) {
+                    showToast.warning('Check contribution override format before saving.');
+                    return;
+                  }
                   overrideMutation.mutate({
                     resourceTypeId: overrideResourceTypeId,
-                    amount: Number(overrideAmount),
-                    reason: overrideReason,
+                    amount: overrideAmountNumber,
+                    reason: trimmedOverrideReason,
                     startDate: overrideStartDate,
                     endDate: overrideEndDate,
                   });
@@ -1175,13 +1475,21 @@ export default function PersonDetail() {
                   <input
                     required
                     type="number"
-                    min="0"
                     step="0.01"
+                    inputMode="decimal"
                     value={overrideAmount}
                     onChange={(e) => setOverrideAmount(e.target.value)}
                     placeholder="0.00"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
                   />
+                  <p className="text-[10px] text-zinc-600 font-mono">
+                    Format: decimal amount, positive or negative, up to 2 decimals.
+                  </p>
+                  {overrideAmountInvalid && (
+                    <p className="text-[10px] text-red-500 font-mono">
+                      Amount must be a valid number within backend range.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -1190,12 +1498,19 @@ export default function PersonDetail() {
                   </label>
                   <textarea
                     required
+                    maxLength={255}
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
                     rows={2}
                     placeholder="e.g. adjusted contribution due to special circumstances"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono resize-none"
                   />
+                  <div className="flex justify-between gap-3 text-[10px] font-mono">
+                    <span className="text-zinc-600">Required, max 255 characters.</span>
+                    <span className={overrideReasonInvalid ? 'text-red-500' : 'text-zinc-600'}>
+                      {trimmedOverrideReason.length}/255
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1222,6 +1537,11 @@ export default function PersonDetail() {
                     />
                   </div>
                 </div>
+                {overrideDateRangeInvalid && (
+                  <p className="text-[10px] text-red-500 font-mono">
+                    End date cannot be earlier than start date.
+                  </p>
+                )}
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
                   <button
@@ -1233,12 +1553,7 @@ export default function PersonDetail() {
                   </button>
                   <button
                     type="submit"
-                    disabled={
-                      overrideResourceTypeId == null ||
-                      !overrideAmount ||
-                      !overrideReason ||
-                      overrideMutation.isPending
-                    }
+                    disabled={!canSubmitOverride}
                     className="flex-2 py-2.5 bg-blue-600 text-white text-xs font-bold uppercase rounded hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {overrideMutation.isPending ? (
@@ -1271,6 +1586,18 @@ export default function PersonDetail() {
         }}
         onCancel={() => setConfirmDelete(false)}
       />
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Population Roster"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={closeFeedback}
+        />
+      )}
     </div>
   );
 }
