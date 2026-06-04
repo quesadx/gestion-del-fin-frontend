@@ -43,6 +43,7 @@ const PANEL_SHELL =
   'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(78,32,36,0.8)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.28),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
 
 const ALERT_ROW = 'relative flex items-center justify-between gap-4 px-5 py-2.5 sm:px-6';
+const MAIN_DOCK_CLEARANCE = 'calc(10rem + env(safe-area-inset-bottom))';
 
 const CAMP_COLOR_THEMES = [
   {
@@ -915,7 +916,10 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-32">
+      <main
+        className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8"
+        style={{ paddingBottom: MAIN_DOCK_CLEARANCE }}
+      >
         <div className="max-w-7xl mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div
@@ -932,7 +936,7 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-50 -translate-x-1/2">
+      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-40 -translate-x-1/2">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
           <Dock items={dockItems} />
         </motion.div>
