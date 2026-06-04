@@ -8,8 +8,86 @@ import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 const PAGE_SIZE = 10;
+const API_LIST_PAGE_SIZE = 100;
+const ROLE_NAME_PATTERN = /^[a-z_]+$/;
+
+type FieldErrors = {
+  name?: string;
+  description?: string;
+};
+
+type RoleFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
+type ApiLikeError = {
+  response?: {
+    status?: number;
+    data?: {
+      error?: {
+        message?: unknown;
+        details?: unknown;
+      };
+      message?: unknown;
+    };
+  };
+};
+
+function formatRoleName(value: string) {
+  return value.replace(/_/g, ' ');
+}
+
+function validateRoleFields(roleName: string, roleDescription: string): FieldErrors {
+  const errors: FieldErrors = {};
+  const trimmedName = roleName.trim();
+
+  if (!trimmedName) {
+    errors.name = 'Role name is required.';
+  } else if (trimmedName.length > 60) {
+    errors.name = 'Role name cannot exceed 60 characters.';
+  } else if (!ROLE_NAME_PATTERN.test(trimmedName)) {
+    errors.name = 'Use lowercase letters and underscores only.';
+  }
+
+  if (roleDescription.length > 255) {
+    errors.description = 'Description cannot exceed 255 characters.';
+  }
+
+  return errors;
+}
+
+function extractValidationDetails(error: unknown) {
+  const details = (error as ApiLikeError).response?.data?.error?.details;
+  if (!Array.isArray(details)) return '';
+
+  return details
+    .map((detail) => {
+      if (detail && typeof detail === 'object' && 'message' in detail) {
+        const message = (detail as { message?: unknown }).message;
+        return typeof message === 'string' ? message : '';
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+function getRoleActionErrorMessage(error: unknown, fallback: string) {
+  const status = (error as ApiLikeError).response?.status;
+  if (status === 403) return 'Your current role is not authorized to perform this action.';
+
+  const validationDetails = extractValidationDetails(error);
+  if (validationDetails) return validationDetails;
+
+  return getApiErrorMessage(error, fallback);
+}
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
@@ -18,6 +96,8 @@ export default function RolesPage() {
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
   const [page, setPage] = useState(1);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [feedback, setFeedback] = useState<RoleFeedback | null>(null);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -30,7 +110,7 @@ export default function RolesPage() {
   const { data: roles, isLoading } = useQuery<Role[]>({
     queryKey: ['roles'],
     queryFn: async () => {
-      const res = await apiClient.get('/roles');
+      const res = await apiClient.get(`/roles?pageSize=${API_LIST_PAGE_SIZE}`);
       return res.data?.data ?? res.data;
     },
     enabled: hasPermission(user?.permissions, 'roles.read'),
@@ -39,7 +119,7 @@ export default function RolesPage() {
   const { data: permissions } = useQuery<Permission[]>({
     queryKey: ['permissions'],
     queryFn: async () => {
-      const res = await apiClient.get('/permissions?per_page=1000');
+      const res = await apiClient.get(`/permissions?pageSize=${API_LIST_PAGE_SIZE}`);
       const body = res.data;
       return body?.data ?? (Array.isArray(body) ? body : []);
     },
@@ -55,9 +135,22 @@ export default function RolesPage() {
       const res = await apiClient.post('/roles', payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (createdRole: Role) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       closeModal();
+      setFeedback({
+        type: 'success',
+        title: 'ROLE CREATED',
+        message: `${formatRoleName(createdRole.name)} was created successfully and is now available for user assignment.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'CREATE FAILED',
+        message: getRoleActionErrorMessage(error, 'The role could not be created.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -72,9 +165,22 @@ export default function RolesPage() {
       const res = await apiClient.put(`/roles/${id}`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedRole: Role) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       closeModal();
+      setFeedback({
+        type: 'success',
+        title: 'ROLE UPDATED',
+        message: `${formatRoleName(updatedRole.name)} was updated successfully with the selected permission bindings.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'UPDATE FAILED',
+        message: getRoleActionErrorMessage(error, 'The role could not be updated.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -83,9 +189,24 @@ export default function RolesPage() {
       const res = await apiClient.delete(`/roles/${id}`);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, deletedRoleId) => {
+      const roleName = roles?.find((role) => role.id === deletedRoleId)?.name ?? 'role';
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       setDeletingRole(null);
+      setFeedback({
+        type: 'success',
+        title: 'ROLE DELETED',
+        message: `${formatRoleName(roleName)} was removed successfully.`,
+      });
+    },
+    onError: (error) => {
+      setDeletingRole(null);
+      setFeedback({
+        type: 'error',
+        title: 'DELETE FAILED',
+        message: getRoleActionErrorMessage(error, 'The role could not be deleted.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -101,6 +222,7 @@ export default function RolesPage() {
     setName('');
     setDescription('');
     setSelectedPermissionIds([]);
+    setFieldErrors({});
   };
 
   const openCreateModal = () => {
@@ -108,6 +230,7 @@ export default function RolesPage() {
     setName('');
     setDescription('');
     setSelectedPermissionIds([]);
+    setFieldErrors({});
     setIsModalOpen(true);
   };
 
@@ -116,31 +239,54 @@ export default function RolesPage() {
     setName(role.name);
     setDescription(role.description || '');
     setSelectedPermissionIds(role.permissions?.map((p) => p.id) ?? []);
+    setFieldErrors({});
     setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
+    const errors = validateRoleFields(name, description);
+    setFieldErrors(errors);
 
-    const permIds = selectedPermissionIds.length > 0 ? selectedPermissionIds : undefined;
+    if (Object.keys(errors).length > 0) {
+      setFeedback({
+        type: 'warning',
+        title: 'CHECK ROLE FORMAT',
+        message:
+          'Correct the highlighted fields before submitting. Role names must use lowercase letters and underscores only.',
+        actionLabel: 'REVIEW',
+      });
+      return;
+    }
+
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
 
     if (editingRole) {
       updateMutation.mutate({
         id: editingRole.id,
-        payload: { name, description: description || undefined, permission_ids: permIds },
+        payload: {
+          name: trimmedName,
+          description: trimmedDescription,
+          permission_ids: selectedPermissionIds,
+        },
       });
     } else {
       createMutation.mutate({
-        name,
-        description: description || undefined,
-        permission_ids: permIds,
+        name: trimmedName,
+        description: trimmedDescription || undefined,
+        permission_ids: selectedPermissionIds,
       });
     }
   };
 
   const totalPages = Math.max(1, Math.ceil((roles?.length ?? 0) / PAGE_SIZE));
-  const paginatedRoles = (roles ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentPage = Math.min(page, totalPages);
+  const paginatedRoles = (roles ?? []).slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+  const descriptionIsTooLong = description.length > 255;
 
   return (
     <div className="space-y-6">
@@ -197,7 +343,7 @@ export default function RolesPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    {role.name.replace(/_/g, ' ')}
+                    {formatRoleName(role.name)}
                   </h3>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     {role.is_system && (
@@ -242,7 +388,7 @@ export default function RolesPage() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (
@@ -278,6 +424,16 @@ export default function RolesPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="rounded border border-zinc-800 bg-zinc-950/40 p-3 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Format requirements
+                  </p>
+                  <p className="text-[10px] font-mono leading-relaxed text-zinc-500">
+                    Role name is required, max 60 characters, lowercase letters and underscores
+                    only. Description is optional and max 255 characters.
+                  </p>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
                     Role Name <span className="text-red-500">*</span>
@@ -286,11 +442,28 @@ export default function RolesPage() {
                     required
                     type="text"
                     aria-label="Role name"
+                    aria-invalid={Boolean(fieldErrors.name)}
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (fieldErrors.name) {
+                        setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                      }
+                    }}
                     placeholder="e.g. camp_operator"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono"
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none font-mono ${
+                      fieldErrors.name
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   />
+                  <p
+                    className={`text-[10px] font-mono ${
+                      fieldErrors.name ? 'text-red-400' : 'text-zinc-600'
+                    }`}
+                  >
+                    {fieldErrors.name ?? 'Required. Use lowercase letters and underscores only.'}
+                  </p>
                 </div>
 
                 <div className="space-y-1">
@@ -299,12 +472,38 @@ export default function RolesPage() {
                   </label>
                   <textarea
                     aria-label="Role justification / description"
+                    aria-invalid={Boolean(fieldErrors.description)}
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => {
+                      setDescription(e.target.value);
+                      if (fieldErrors.description) {
+                        setFieldErrors((prev) => ({ ...prev, description: undefined }));
+                      }
+                    }}
                     placeholder="Explain why this role is needed and what it enables..."
                     rows={3}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none font-mono"
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none resize-none font-mono ${
+                      fieldErrors.description
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   />
+                  <div className="flex items-center justify-between gap-3">
+                    <p
+                      className={`text-[10px] font-mono ${
+                        fieldErrors.description ? 'text-red-400' : 'text-zinc-600'
+                      }`}
+                    >
+                      {fieldErrors.description ?? 'Optional. Max 255 characters.'}
+                    </p>
+                    <p
+                      className={`text-[10px] font-mono ${
+                        descriptionIsTooLong ? 'text-red-400' : 'text-zinc-600'
+                      }`}
+                    >
+                      {description.length}/255
+                    </p>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -392,7 +591,8 @@ export default function RolesPage() {
                     </h3>
                     <p className="text-xs text-zinc-500 font-mono">
                       This will permanently delete this role. Users assigned to this role will lose
-                      their permissions.
+                      their permissions. The backend will reject this action while users remain
+                      assigned to the role.
                     </p>
                   </div>
                 </div>
@@ -400,7 +600,7 @@ export default function RolesPage() {
 
               <div className="p-4 bg-zinc-950/60 rounded border border-zinc-900">
                 <p className="text-sm font-bold text-zinc-200">
-                  {deletingRole.name.replace(/_/g, ' ')}
+                  {formatRoleName(deletingRole.name)}
                 </p>
                 <p className="text-xs text-zinc-500 font-mono mt-1">
                   {deletingRole.permissions?.length ?? 0} permission
@@ -435,6 +635,18 @@ export default function RolesPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Access Control"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
+      )}
     </div>
   );
 }
