@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, toFormData, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
@@ -20,7 +20,6 @@ import {
   AlertCircle,
   MapPinOff,
 } from 'lucide-react';
-import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
 import { cn, normalizePersonStatus } from '../../lib/utils';
 import { hasPermission } from '../../lib/permissions';
@@ -33,6 +32,20 @@ import { getApiErrorMessage } from '../../lib/apiErrors';
 import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
 
 const PAGE_SIZE = 20;
+const SEARCH_PAGE_SIZE = 100;
+
+type RawPerson = Person & { professions?: { name?: string } | null };
+
+interface PeopleResponse {
+  data: Person[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasNextPage: boolean;
+    totalPages: number;
+  };
+}
 
 type PeopleFeedback = {
   type: ActionFeedbackType;
@@ -45,6 +58,46 @@ const getPeopleActionErrorMessage = (error: unknown, fallback: string) => {
   const status = (error as { response?: { status?: number } }).response?.status;
   if (status === 403) return 'Your current role is not authorized to perform this action.';
   return getApiErrorMessage(error, fallback);
+};
+
+const flattenPerson = (person: RawPerson): Person => ({
+  ...person,
+  profession_name: person.profession_name ?? person.professions?.name ?? null,
+});
+
+const normalizePeopleResponse = (responseData: unknown, page: number): PeopleResponse => {
+  if (Array.isArray(responseData)) {
+    const data = responseData.map((person) => flattenPerson(person as RawPerson));
+
+    return {
+      data,
+      pagination: {
+        page,
+        pageSize: PAGE_SIZE,
+        total: data.length,
+        hasNextPage: false,
+        totalPages: Math.max(1, Math.ceil(data.length / PAGE_SIZE)),
+      },
+    };
+  }
+
+  const payload = responseData as Partial<PeopleResponse> | undefined;
+  const data = Array.isArray(payload?.data)
+    ? payload.data.map((person) => flattenPerson(person as RawPerson))
+    : [];
+  const totalPages =
+    payload?.pagination?.totalPages ?? Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+
+  return {
+    data,
+    pagination: {
+      page: payload?.pagination?.page ?? page,
+      pageSize: payload?.pagination?.pageSize ?? PAGE_SIZE,
+      total: payload?.pagination?.total ?? data.length,
+      hasNextPage: payload?.pagination?.hasNextPage ?? false,
+      totalPages: Math.max(1, totalPages),
+    },
+  };
 };
 
 export default function PopulationRoster() {
@@ -63,6 +116,7 @@ export default function PopulationRoster() {
   const [reassignVacantProfId, setReassignVacantProfId] = useState<number | null>(null);
   const [reassignPersonId, setReassignPersonId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
+  const canRead = hasPermission(user?.permissions, 'people.read');
 
   // Edit states
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
@@ -159,20 +213,30 @@ export default function PopulationRoster() {
     });
   };
 
-  const { data: survivors, isLoading } = useQuery<Person[]>({
-    queryKey: ['people', currentCampId],
+  const { data: peopleResponse, isLoading } = useQuery<PeopleResponse>({
+    queryKey: ['people', currentCampId, page, PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get(`/camps/${currentCampId}/people`);
-      // The real API nests profession under person.professions.name —
-      // flatten it to profession_name so the rest of the component works.
-      type RawPerson = Person & { professions?: { name?: string } };
-      return unwrapList<RawPerson>(res.data).map((p) => ({
-        ...p,
-        profession_name: p.profession_name ?? p.professions?.name ?? null,
-      }));
+      const res = await apiClient.get(`/camps/${currentCampId}/people`, {
+        params: { page, pageSize: PAGE_SIZE },
+      });
+      return normalizePeopleResponse(res.data, page);
     },
-    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
+    enabled: !!currentCampId && canRead,
   });
+
+  const { data: searchableSurvivors } = useQuery<Person[]>({
+    queryKey: ['people', currentCampId, 'searchable-list', SEARCH_PAGE_SIZE],
+    queryFn: async () => {
+      const res = await apiClient.get(`/camps/${currentCampId}/people`, {
+        params: { page: 1, pageSize: SEARCH_PAGE_SIZE },
+      });
+      return normalizePeopleResponse(res.data, 1).data;
+    },
+    enabled: !!currentCampId && canRead,
+  });
+
+  const survivors = peopleResponse?.data ?? [];
+  const allSurvivors = searchableSurvivors ?? survivors;
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
     queryKey: ['professions'],
@@ -184,16 +248,16 @@ export default function PopulationRoster() {
   });
 
   const professionCoverage = useMemo(() => {
-    if (!survivors || !professions) return [];
+    if (!professions) return [];
     // group survivors by profession_id, count active ones
     return professions
       .map((prof) => {
-        const assigned = survivors.filter((s) => s.profession_id === prof.id);
+        const assigned = allSurvivors.filter((s) => s.profession_id === prof.id);
         const active = assigned.filter((s) => normalizePersonStatus(s.status) === 'HEALTHY');
         return { ...prof, total: assigned.length, active: active.length };
       })
       .filter((p) => p.total > 0 && p.active === 0);
-  }, [survivors, professions]);
+  }, [allSurvivors, professions]);
 
   const { data: camps } = useQuery<Camp[]>({
     queryKey: ['camps'],
@@ -267,9 +331,12 @@ export default function PopulationRoster() {
   const canTransfer = hasPermission(user?.permissions, 'transfers.create');
   const canCreateAdmission = hasPermission(user?.permissions, 'admission.create');
 
-  const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
-    const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
-    const profMatch = s.profession_name?.toLowerCase().includes(search.toLowerCase());
+  const normalizedSearch = search.trim().toLowerCase();
+  const isFiltering = normalizedSearch.length > 0 || statusFilter !== 'ALL';
+  const visibleSource = isFiltering ? allSurvivors : survivors;
+  const filteredSurvivors = visibleSource.filter((s: Person) => {
+    const nameMatch = s.full_name.toLowerCase().includes(normalizedSearch);
+    const profMatch = s.profession_name?.toLowerCase().includes(normalizedSearch);
     const matchesSearch = nameMatch || profMatch;
 
     if (!matchesSearch) return false;
@@ -281,8 +348,17 @@ export default function PopulationRoster() {
     return personStatus === filterVal;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filteredSurvivors.length / PAGE_SIZE));
-  const paginatedSurvivors = filteredSurvivors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = isFiltering
+    ? Math.max(1, Math.ceil(filteredSurvivors.length / PAGE_SIZE))
+    : (peopleResponse?.pagination.totalPages ?? 1);
+  const currentPage = Math.min(page, totalPages);
+  const paginatedSurvivors = isFiltering
+    ? filteredSurvivors.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : survivors;
+  const personnelCount = isFiltering
+    ? filteredSurvivors.length
+    : (peopleResponse?.pagination.total ?? survivors.length);
+  const personnelCountLabel = isFiltering ? 'Matching personnel' : 'Total personnel';
 
   return (
     <div className="space-y-6 relative">
@@ -860,8 +936,8 @@ export default function PopulationRoster() {
                       Select Healthy Survivor (source)
                     </p>
                     <div className="grid gap-2 max-h-48 overflow-auto pr-1">
-                      {survivors
-                        ?.filter(
+                      {allSurvivors
+                        .filter(
                           (p) =>
                             normalizePersonStatus(p.status) === 'HEALTHY' &&
                             p.profession_id != null &&
@@ -886,7 +962,7 @@ export default function PopulationRoster() {
                             </div>
                           </button>
                         ))}
-                      {survivors?.filter(
+                      {allSurvivors.filter(
                         (p) =>
                           normalizePersonStatus(p.status) === 'HEALTHY' &&
                           p.profession_id != null &&
@@ -918,7 +994,7 @@ export default function PopulationRoster() {
                   }
                   onClick={() => {
                     if (!reassignVacantProfId || !reassignPersonId) return;
-                    const person = survivors?.find((p) => p.id === reassignPersonId);
+                    const person = allSurvivors.find((p) => p.id === reassignPersonId);
                     const fromProfId = person?.profession_id;
                     if (!fromProfId) return;
                     reassignMutation.mutate({
@@ -939,10 +1015,10 @@ export default function PopulationRoster() {
 
       <div className="pt-4 flex items-center justify-between">
         <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
-          Total active personnel: {filteredSurvivors.length} · Showing {paginatedSurvivors.length}{' '}
-          on page {page} of {totalPages}
+          {personnelCountLabel}: {personnelCount} · Showing {paginatedSurvivors.length} on page{' '}
+          {currentPage} of {totalPages}
         </p>
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
       </div>
 
       {feedback && (
