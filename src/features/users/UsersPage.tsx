@@ -13,6 +13,7 @@ import {
   AlertCircle,
   User as UserIcon,
   Filter,
+  RotateCcw,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
@@ -38,6 +39,7 @@ interface UsersResponse {
 }
 
 type RoleFilterValue = 'all' | number;
+type StatusFilterValue = 'all' | 'active' | 'inactive';
 
 type FieldErrors = {
   username?: string;
@@ -131,6 +133,7 @@ export default function UsersPage() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [page, setPage] = useState(1);
   const [roleFilter, setRoleFilter] = useState<RoleFilterValue>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>('all');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [feedback, setFeedback] = useState<UserFeedback | null>(null);
 
@@ -254,6 +257,29 @@ export default function UsersPage() {
     },
   });
 
+  const activateMutation = useMutation({
+    mutationFn: async (targetUser: User) => {
+      const res = await apiClient.put(`/users/${targetUser.id}`, { is_active: true });
+      return res.data as User;
+    },
+    onSuccess: (activatedUser) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setFeedback({
+        type: 'success',
+        title: 'USER REACTIVATED',
+        message: `${activatedUser.username} was reactivated successfully.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'REACTIVATION FAILED',
+        message: getUserActionErrorMessage(error, 'The user account could not be reactivated.'),
+        actionLabel: 'REVIEW',
+      });
+    },
+  });
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingUser(null);
@@ -293,6 +319,11 @@ export default function UsersPage() {
   const getRoleFilterLabel = () => {
     if (roleFilter === 'all') return 'all roles';
     return formatRole(roles?.find((role) => role.id === roleFilter)?.name ?? `role #${roleFilter}`);
+  };
+
+  const getStatusFilterLabel = () => {
+    if (statusFilter === 'all') return 'all statuses';
+    return statusFilter === 'active' ? 'active users' : 'inactive users';
   };
 
   const validateForm = () => {
@@ -344,7 +375,7 @@ export default function UsersPage() {
     setEditingUser(user);
     setUsername(user.username);
     setPassword('');
-    setRoleId(roles?.find((r) => r.name === user.role)?.id ?? '');
+    setRoleId(resolveUserRoleId(user));
     setCampId(
       user.camp_id != null ? String(user.camp_id) : currentCampId ? String(currentCampId) : '',
     );
@@ -392,8 +423,13 @@ export default function UsersPage() {
 
   const users = (usersResponse?.data ?? []).slice().sort((a, b) => b.id - a.id);
   const filteredUsers = users.filter((userRecord) => {
-    if (roleFilter === 'all') return true;
-    return getUserRoleId(userRecord) === roleFilter;
+    const isActive = userRecord.is_active !== false;
+    const matchesRole = roleFilter === 'all' || getUserRoleId(userRecord) === roleFilter;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'active' ? isActive : userRecord.is_active === false);
+
+    return matchesRole && matchesStatus;
   });
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -424,7 +460,7 @@ export default function UsersPage() {
         )}
       </div>
 
-      <div className="flex flex-col gap-2 rounded-xl border border-zinc-900 bg-surface-raised/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="grid gap-3 rounded-xl border border-zinc-900 bg-surface-raised/70 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
         <label className="flex flex-1 flex-col gap-1">
           <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
             <Filter size={13} />
@@ -448,6 +484,31 @@ export default function UsersPage() {
                 {formatRole(role.name)}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="flex flex-1 flex-col gap-1">
+          <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            <Filter size={13} />
+            Status filter
+          </span>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value as StatusFilterValue);
+              setPage(1);
+            }}
+            aria-label="Filter users by active status"
+            className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-300 outline-none transition-colors focus:border-brand-primary"
+          >
+            <option value="all" className="bg-zinc-950">
+              All statuses
+            </option>
+            <option value="active" className="bg-zinc-950">
+              Active users
+            </option>
+            <option value="inactive" className="bg-zinc-950">
+              Inactive users
+            </option>
           </select>
         </label>
         <p className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
@@ -478,76 +539,96 @@ export default function UsersPage() {
           {users.length > 0 && filteredUsers.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
               <Filter size={48} className="mb-4 opacity-30" />
-              <p className="text-sm font-mono uppercase tracking-wider">No users for this role</p>
+              <p className="text-sm font-mono uppercase tracking-wider">No users match filters</p>
               <p className="text-xs font-mono mt-1 text-zinc-700">
-                No accounts match {getRoleFilterLabel()}
+                No accounts match {getRoleFilterLabel()} and {getStatusFilterLabel()}
               </p>
             </div>
           )}
-          {paginatedUsers.map((user) => (
-            <motion.div
-              key={user.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-surface-raised brutalist-border p-5 rounded-xl flex items-center justify-between hover:border-zinc-700 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-zinc-950 rounded-lg flex items-center justify-center text-zinc-500 border border-zinc-800 shrink-0">
-                  <UserIcon size={20} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black uppercase tracking-tight text-white">
-                    {user.username}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-zinc-950/40 text-zinc-400 border-zinc-800">
-                      {getUserRoleLabel(user)}
-                    </span>
-                    <span
-                      className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
-                        user.is_active !== false
-                          ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
-                          : 'bg-red-950/20 text-red-500 border-red-500/30'
-                      }`}
-                    >
-                      {user.is_active !== false ? 'ACTIVE' : 'INACTIVE'}
-                    </span>
-                    {user.camp_id != null && (
-                      <span className="text-[10px] font-mono text-zinc-600">
-                        Camp #{user.camp_id}
+          {paginatedUsers.map((user) => {
+            const isActive = user.is_active !== false;
+
+            return (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-surface-raised brutalist-border p-5 rounded-xl flex items-center justify-between hover:border-zinc-700 transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-zinc-950 rounded-lg flex items-center justify-center text-zinc-500 border border-zinc-800 shrink-0">
+                    <UserIcon size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black uppercase tracking-tight text-white">
+                      {user.username}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-zinc-950/40 text-zinc-400 border-zinc-800">
+                        {getUserRoleLabel(user)}
                       </span>
-                    )}
+                      <span
+                        className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                          isActive
+                            ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
+                            : 'bg-red-950/20 text-red-500 border-red-500/30'
+                        }`}
+                      >
+                        {isActive ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
+                      {user.camp_id != null && (
+                        <span className="text-[10px] font-mono text-zinc-600">
+                          Camp #{user.camp_id}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {canUpdate && (
-                  <button
-                    onClick={() => openEditModal(user)}
-                    aria-label={`Edit ${user.username}`}
-                    title={`Edit ${user.username}`}
-                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
-                  >
-                    <Edit2 size={12} />
-                  </button>
-                )}
-                {canDelete && (
-                  <button
-                    onClick={() => setDeletingUser(user)}
-                    aria-label={`Delete ${user.username}`}
-                    title={`Delete ${user.username}`}
-                    className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                <div className="flex items-center gap-1">
+                  {canUpdate && (
+                    <button
+                      onClick={() => openEditModal(user)}
+                      aria-label={`Edit ${user.username}`}
+                      title={`Edit ${user.username}`}
+                      className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                    >
+                      <Edit2 size={12} />
+                    </button>
+                  )}
+                  {canUpdate && !isActive && (
+                    <button
+                      onClick={() => activateMutation.mutate(user)}
+                      disabled={activateMutation.isPending}
+                      aria-label={`Reactivate ${user.username}`}
+                      title={`Reactivate ${user.username}`}
+                      className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-emerald-500/50 hover:text-emerald-400 rounded transition-colors text-zinc-400 disabled:opacity-40 touch-target"
+                    >
+                      <RotateCcw size={12} />
+                    </button>
+                  )}
+                  {canDelete && isActive && (
+                    <button
+                      onClick={() => setDeletingUser(user)}
+                      aria-label={`Delete ${user.username}`}
+                      title={`Delete ${user.username}`}
+                      className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
-      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination
+        page={currentPage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+        showEdgeButtons
+      />
 
       <AnimatePresence>
         {isModalOpen && (
