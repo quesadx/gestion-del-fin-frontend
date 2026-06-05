@@ -18,6 +18,7 @@ import { Skeleton, SkeletonList } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
 const PAGE_SIZE = 15;
+const API_LIST_PAGE_SIZE = 100;
 const CORRECTED_INTAKE_ARCHIVE_REASON = 'CORRECTED_INTAKE_ARCHIVE';
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 
@@ -44,18 +45,18 @@ interface AdmissionFeedback {
 
 interface AdmissionPayload {
   applicant_name: string;
-  applicant_age: number;
-  applicant_skills: string;
-  health_notes: string;
-  background_notes: string;
+  applicant_age?: number;
+  applicant_skills?: string;
+  health_notes?: string;
+  background_notes?: string;
   photo?: File | null;
   id_card?: File | null;
 }
 
+type AdmissionPayloadResult = { ok: true; values: AdmissionPayload } | { ok: false; error: string };
+
 const getAdmissionDecisionStatus = (admission?: Partial<Admission> | null): AdmissionStatus => {
-  const rawStatus = (admission?.final_decision ?? admission?.ai_decision ?? 'PENDING')
-    .toString()
-    .toUpperCase();
+  const rawStatus = admission?.final_decision?.toString().toUpperCase();
 
   if (rawStatus === 'APPROVED') return 'ACCEPTED';
   if (rawStatus === 'ACCEPTED' || rawStatus === 'REJECTED') return rawStatus;
@@ -83,38 +84,38 @@ const validateImageFile = (file: File | null | undefined, label: string) => {
   return null;
 };
 
-const buildAdmissionPayload = (draft: AdmissionFormDraft) => {
+const buildAdmissionPayload = (draft: AdmissionFormDraft): AdmissionPayloadResult => {
   const applicantName = draft.name.trim();
   const applicantSkills = draft.skills.trim();
   const healthNotes = draft.health.trim();
   const backgroundNotes = draft.background.trim();
-  const age = Number(draft.age);
+  const ageInput = draft.age.trim();
+  const age = ageInput ? Number(ageInput) : undefined;
 
-  if (!applicantName) return { error: 'Applicant full name is required.' };
+  if (!applicantName) return { ok: false, error: 'Applicant full name is required.' };
   if (applicantName.length > 150)
-    return { error: 'Applicant full name must be 150 characters or less.' };
-  if (!Number.isInteger(age) || age < 0 || age > 255) {
-    return { error: 'Age must be a whole number from 0 to 255.' };
+    return { ok: false, error: 'Applicant full name must be 150 characters or less.' };
+  if (age != null && (!Number.isInteger(age) || age < 0 || age > 255)) {
+    return { ok: false, error: 'Age must be a whole number from 0 to 255.' };
   }
-  if (!applicantSkills) return { error: 'Applicant skills summary is required.' };
-  if (!healthNotes) return { error: 'Health assessment notes are required.' };
 
   const photoError = validateImageFile(draft.photo, 'Applicant photo');
-  if (photoError) return { error: photoError };
+  if (photoError) return { ok: false, error: photoError };
 
   const idCardError = validateImageFile(draft.idCard, 'ID card');
-  if (idCardError) return { error: idCardError };
+  if (idCardError) return { ok: false, error: idCardError };
 
   return {
+    ok: true,
     values: {
       applicant_name: applicantName,
-      applicant_age: age,
-      applicant_skills: applicantSkills,
-      health_notes: healthNotes,
-      background_notes: backgroundNotes,
+      ...(age != null ? { applicant_age: age } : {}),
+      ...(applicantSkills ? { applicant_skills: applicantSkills } : {}),
+      ...(healthNotes ? { health_notes: healthNotes } : {}),
+      ...(backgroundNotes ? { background_notes: backgroundNotes } : {}),
       photo: draft.photo,
       id_card: draft.idCard,
-    } satisfies AdmissionPayload,
+    },
   };
 };
 
@@ -157,10 +158,32 @@ export default function AdmissionList() {
   const [correctFormError, setCorrectFormError] = useState<string | null>(null);
 
   const { data: admissions, isLoading } = useQuery<Admission[]>({
-    queryKey: ['admissions', currentCampId],
+    queryKey: ['admissions', currentCampId, API_LIST_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get(`/admission/camps/${currentCampId}`);
-      return unwrapList<Admission>(res.data);
+      const firstPage = await apiClient.get(`/admission/camps/${currentCampId}`, {
+        params: { page: 1, pageSize: API_LIST_PAGE_SIZE },
+      });
+      const firstPageItems = unwrapList<Admission>(firstPage.data);
+      const totalPages = Math.max(
+        1,
+        Number(
+          (firstPage.data as { pagination?: { totalPages?: number } })?.pagination?.totalPages,
+        ) || 1,
+      );
+
+      if (totalPages === 1) return firstPageItems;
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, async (_, index) => {
+          const pageNumber = index + 2;
+          const res = await apiClient.get(`/admission/camps/${currentCampId}`, {
+            params: { page: pageNumber, pageSize: API_LIST_PAGE_SIZE },
+          });
+          return unwrapList<Admission>(res.data);
+        }),
+      );
+
+      return firstPageItems.concat(...remainingPages);
     },
     enabled: !!currentCampId && hasPermission(user?.permissions, 'admission.read'),
   });
@@ -207,9 +230,11 @@ export default function AdmissionList() {
 
   // Fetch professions dynamically for the correction select
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
-    queryKey: ['professions'],
+    queryKey: ['professions', 'admission-selector', API_LIST_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/professions');
+      const res = await apiClient.get('/professions', {
+        params: { page: 1, pageSize: API_LIST_PAGE_SIZE },
+      });
       return unwrapList<{ id: number; name: string }>(res.data);
     },
     enabled: hasPermission(user?.permissions, 'professions.read'),
@@ -227,7 +252,6 @@ export default function AdmissionList() {
       corrected_profession_id?: number;
       applicantName?: string;
     }) => {
-      // Contract: PATCH /admission/:id/review — only final_decision + optional corrected_profession_id
       const res = await apiClient.patch(`/admission/${id}/review`, {
         final_decision: decision,
         ...(corrected_profession_id != null ? { corrected_profession_id } : {}),
@@ -262,15 +286,7 @@ export default function AdmissionList() {
   });
 
   const createAdmissionMutation = useMutation({
-    mutationFn: async (formValues: {
-      applicant_name: string;
-      applicant_age: number;
-      applicant_skills: string;
-      health_notes: string;
-      background_notes: string;
-      photo?: File | null;
-      id_card?: File | null;
-    }) => {
+    mutationFn: async (formValues: AdmissionPayload) => {
       const body = toFormData({
         applicant_name: formValues.applicant_name,
         applicant_age: formValues.applicant_age,
@@ -314,24 +330,10 @@ export default function AdmissionList() {
   });
 
   const correctAndReevaluateMutation = useMutation({
-    mutationFn: async ({
-      oldId,
-      formValues,
-    }: {
-      oldId: number;
-      formValues: {
-        applicant_name: string;
-        applicant_age?: number;
-        applicant_skills: string;
-        health_notes: string;
-        background_notes: string;
-        photo?: File | null;
-        id_card?: File | null;
-      };
-    }) => {
+    mutationFn: async ({ oldId, formValues }: { oldId: number; formValues: AdmissionPayload }) => {
       const body = toFormData({
         applicant_name: formValues.applicant_name,
-        ...(formValues.applicant_age != null ? { applicant_age: formValues.applicant_age } : {}),
+        applicant_age: formValues.applicant_age,
         applicant_skills: formValues.applicant_skills,
         health_notes: formValues.health_notes,
         background_notes: formValues.background_notes,
@@ -384,8 +386,14 @@ export default function AdmissionList() {
       photo: newPhoto,
       idCard: newIdCard,
     });
-    if ('error' in result) {
+    if (!result.ok) {
       setCreateFormError(result.error);
+      setFeedback({
+        type: 'warning',
+        title: 'CHECK INTAKE FORMAT',
+        message: result.error,
+        actionLabel: 'REVIEW',
+      });
       return;
     }
     createAdmissionMutation.mutate(result.values);
@@ -403,8 +411,14 @@ export default function AdmissionList() {
       photo: correctPhoto,
       idCard: correctIdCard,
     });
-    if ('error' in result) {
+    if (!result.ok) {
       setCorrectFormError(result.error);
+      setFeedback({
+        type: 'warning',
+        title: 'CHECK CORRECTION FORMAT',
+        message: result.error,
+        actionLabel: 'REVIEW',
+      });
       return;
     }
     correctAndReevaluateMutation.mutate({
@@ -954,9 +968,9 @@ export default function AdmissionList() {
                     Required format
                   </p>
                   <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
-                    Name is required and max 150 characters. Age must be a whole number from 0 to
-                    255. Skills and health notes are required. Images are optional, image-only, max
-                    10MB each.
+                    Name is required and max 150 characters. Age, skills, health, and background
+                    notes are optional; when age is provided, it must be a whole number from 0 to
+                    255. Images are optional, image-only, max 10MB each.
                   </p>
                 </div>
 
@@ -970,7 +984,7 @@ export default function AdmissionList() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2 space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Applicant Full Name
+                      Applicant Full Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -986,9 +1000,10 @@ export default function AdmissionList() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Age</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                      Age (Optional)
+                    </label>
                     <input
-                      required
                       type="number"
                       min={0}
                       max={255}
@@ -1006,10 +1021,9 @@ export default function AdmissionList() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Applicant Skills summary (comma separated)
+                    Applicant Skills summary (Optional, comma separated)
                   </label>
                   <input
-                    required
                     type="text"
                     value={newSkills}
                     onChange={(e) => {
@@ -1023,10 +1037,9 @@ export default function AdmissionList() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Health assessment notes
+                    Health assessment notes (Optional)
                   </label>
                   <textarea
-                    required
                     value={newHealth}
                     onChange={(e) => {
                       setNewHealth(e.target.value);
@@ -1040,7 +1053,7 @@ export default function AdmissionList() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Historical background notes
+                    Historical background notes (Optional)
                   </label>
                   <textarea
                     value={newBackground}
@@ -1142,9 +1155,9 @@ export default function AdmissionList() {
                     Required format
                   </p>
                   <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
-                    Name is required and max 150 characters. Age must be a whole number from 0 to
-                    255. Skills and health notes are required. Images are optional, image-only, max
-                    10MB each.
+                    Name is required and max 150 characters. Age, skills, health, and background
+                    notes are optional; when age is provided, it must be a whole number from 0 to
+                    255. Images are optional, image-only, max 10MB each.
                   </p>
                 </div>
 
@@ -1158,7 +1171,7 @@ export default function AdmissionList() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2 space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Applicant Full Name
+                      Applicant Full Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
@@ -1173,9 +1186,10 @@ export default function AdmissionList() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-zinc-500 uppercase">Age</label>
+                    <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                      Age (Optional)
+                    </label>
                     <input
-                      required
                       type="number"
                       min={0}
                       max={255}
@@ -1192,10 +1206,9 @@ export default function AdmissionList() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Applicant Skills summary
+                    Applicant Skills summary (Optional)
                   </label>
                   <input
-                    required
                     type="text"
                     value={correctSkills}
                     onChange={(e) => {
@@ -1208,10 +1221,9 @@ export default function AdmissionList() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Health assessment notes
+                    Health assessment notes (Optional)
                   </label>
                   <textarea
-                    required
                     value={correctHealth}
                     onChange={(e) => {
                       setCorrectHealth(e.target.value);
@@ -1224,7 +1236,7 @@ export default function AdmissionList() {
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Historical background notes
+                    Historical background notes (Optional)
                   </label>
                   <textarea
                     value={correctBackground}
