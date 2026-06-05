@@ -4,12 +4,54 @@ import { apiClient } from '../../lib/api';
 import { useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Permission } from '../../types';
-import { Key, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
+import { Key, Plus, Edit2, Trash2, X, AlertCircle, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
 
 const PAGE_SIZE = 10;
+const SEARCH_PAGE_SIZE = 100;
+
+interface PermissionsResponse {
+  data: Permission[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasNextPage: boolean;
+    totalPages: number;
+  };
+}
+
+const normalizePermissionsResponse = (responseData: unknown, page: number): PermissionsResponse => {
+  if (Array.isArray(responseData)) {
+    return {
+      data: responseData as Permission[],
+      pagination: {
+        page,
+        pageSize: PAGE_SIZE,
+        total: responseData.length,
+        hasNextPage: false,
+        totalPages: Math.max(1, Math.ceil(responseData.length / PAGE_SIZE)),
+      },
+    };
+  }
+
+  const payload = responseData as Partial<PermissionsResponse> | undefined;
+  const data = Array.isArray(payload?.data) ? payload.data : [];
+
+  return {
+    data,
+    pagination: {
+      page: payload?.pagination?.page ?? page,
+      pageSize: payload?.pagination?.pageSize ?? PAGE_SIZE,
+      total: payload?.pagination?.total ?? data.length,
+      hasNextPage: payload?.pagination?.hasNextPage ?? false,
+      totalPages:
+        payload?.pagination?.totalPages ?? Math.max(1, Math.ceil(data.length / PAGE_SIZE)),
+    },
+  };
+};
 
 export default function PermissionsPage() {
   const queryClient = useQueryClient();
@@ -18,6 +60,7 @@ export default function PermissionsPage() {
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
   const [deletingPermission, setDeletingPermission] = useState<Permission | null>(null);
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -26,11 +69,25 @@ export default function PermissionsPage() {
   const canUpdatePerm = hasPermission(user?.permissions, 'permissions.update');
   const canDeletePerm = hasPermission(user?.permissions, 'permissions.delete');
 
-  const { data: permissions, isLoading } = useQuery<Permission[]>({
-    queryKey: ['permissions'],
+  const { data: permissionsResponse, isLoading } = useQuery<PermissionsResponse>({
+    queryKey: ['permissions', page, PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/permissions');
-      return res.data?.data ?? res.data;
+      const res = await apiClient.get('/permissions', {
+        params: { page, pageSize: PAGE_SIZE },
+      });
+      return normalizePermissionsResponse(res.data, page);
+    },
+    enabled: hasPermission(user?.permissions, 'permissions.read'),
+  });
+
+  const { data: searchablePermissions } = useQuery<Permission[]>({
+    queryKey: ['permissions', 'searchable-list', SEARCH_PAGE_SIZE],
+    queryFn: async () => {
+      const res = await apiClient.get('/permissions', {
+        params: { page: 1, pageSize: SEARCH_PAGE_SIZE },
+      });
+      const body = res.data;
+      return body?.data ?? (Array.isArray(body) ? body : []);
     },
     enabled: hasPermission(user?.permissions, 'permissions.read'),
   });
@@ -108,8 +165,26 @@ export default function PermissionsPage() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil((permissions?.length ?? 0) / PAGE_SIZE));
-  const paginatedPermissions = (permissions ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const permissions = permissionsResponse?.data ?? [];
+  const allPermissions = searchablePermissions ?? permissions;
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredPermissions = allPermissions.filter((permission) => {
+    if (!normalizedSearch) return true;
+    return (
+      permission.name.toLowerCase().includes(normalizedSearch) ||
+      (permission.description ?? '').toLowerCase().includes(normalizedSearch)
+    );
+  });
+  const totalPages = normalizedSearch
+    ? Math.max(1, Math.ceil(filteredPermissions.length / PAGE_SIZE))
+    : (permissionsResponse?.pagination.totalPages ?? 1);
+  const currentPage = Math.min(page, totalPages);
+  const paginatedPermissions = normalizedSearch
+    ? filteredPermissions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : permissions;
+  const totalPermissionCount = normalizedSearch
+    ? allPermissions.length
+    : (permissionsResponse?.pagination.total ?? permissions.length);
 
   return (
     <div className="space-y-6">
@@ -133,6 +208,30 @@ export default function PermissionsPage() {
         )}
       </div>
 
+      <div className="flex flex-col gap-2 rounded-xl border border-zinc-900 bg-surface-raised/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1">
+          <Search
+            size={15}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+          />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
+            aria-label="Search permissions"
+            placeholder="Filter by permission key or description"
+            className="w-full rounded border border-zinc-800 bg-zinc-950 py-2 pl-9 pr-3 font-mono text-xs text-zinc-300 placeholder-zinc-700 outline-none transition-colors focus:border-brand-primary"
+          />
+        </div>
+        <p className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          Showing {normalizedSearch ? filteredPermissions.length : permissions.length} of{' '}
+          {totalPermissionCount}
+        </p>
+      </div>
+
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -144,12 +243,21 @@ export default function PermissionsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {permissions?.length === 0 && (
+          {permissions.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
               <Key size={48} className="mb-4 opacity-30" />
               <p className="text-sm font-mono uppercase tracking-wider">No permissions defined</p>
               <p className="text-xs font-mono mt-1 text-zinc-700">
                 Register the first permission to begin configuring access
+              </p>
+            </div>
+          )}
+          {normalizedSearch && allPermissions.length > 0 && filteredPermissions.length === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
+              <Search size={48} className="mb-4 opacity-30" />
+              <p className="text-sm font-mono uppercase tracking-wider">No matching permissions</p>
+              <p className="text-xs font-mono mt-1 text-zinc-700">
+                Try another permission key or description
               </p>
             </div>
           )}
@@ -202,7 +310,7 @@ export default function PermissionsPage() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (
