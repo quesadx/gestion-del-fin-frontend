@@ -8,7 +8,8 @@ export enum UserRole {
 export interface User {
   id: number;
   username: string;
-  role: string; // API returns strings like "ADMIN" — keep as string
+  role: string; // Auth responses include the role name used for active-session permissions.
+  role_id?: number;
   camp_id: number | null;
   is_active?: boolean;
   permissions?: string[];

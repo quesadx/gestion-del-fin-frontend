@@ -4,12 +4,123 @@ import { apiClient } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { User, Role } from '../../types';
-import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
+import {
+  Shield,
+  Plus,
+  Edit2,
+  Trash2,
+  X,
+  AlertCircle,
+  User as UserIcon,
+  Filter,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 const PAGE_SIZE = 10;
+const API_LIST_PAGE_SIZE = 100;
+const USERNAME_MAX_LENGTH = 60;
+const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MAX_LENGTH = 255;
+
+interface UsersResponse {
+  data: User[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasNextPage: boolean;
+    totalPages: number;
+  };
+}
+
+type RoleFilterValue = 'all' | number;
+
+type FieldErrors = {
+  username?: string;
+  password?: string;
+  roleId?: string;
+  campId?: string;
+};
+
+type UserFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
+type ApiLikeError = {
+  response?: {
+    status?: number;
+    data?: {
+      error?: {
+        message?: unknown;
+        details?: unknown;
+      };
+      message?: unknown;
+    };
+  };
+};
+
+const normalizeUsersResponse = (responseData: unknown, page: number): UsersResponse => {
+  if (Array.isArray(responseData)) {
+    return {
+      data: responseData as User[],
+      pagination: {
+        page,
+        pageSize: API_LIST_PAGE_SIZE,
+        total: responseData.length,
+        hasNextPage: false,
+        totalPages: Math.max(1, Math.ceil(responseData.length / PAGE_SIZE)),
+      },
+    };
+  }
+
+  const payload = responseData as Partial<UsersResponse> | undefined;
+  const data = Array.isArray(payload?.data) ? payload.data : [];
+
+  return {
+    data,
+    pagination: {
+      page: payload?.pagination?.page ?? page,
+      pageSize: payload?.pagination?.pageSize ?? API_LIST_PAGE_SIZE,
+      total: payload?.pagination?.total ?? data.length,
+      hasNextPage: payload?.pagination?.hasNextPage ?? false,
+      totalPages:
+        payload?.pagination?.totalPages ?? Math.max(1, Math.ceil(data.length / PAGE_SIZE)),
+    },
+  };
+};
+
+function extractValidationDetails(error: unknown) {
+  const details = (error as ApiLikeError).response?.data?.error?.details;
+  if (!Array.isArray(details)) return '';
+
+  return details
+    .map((detail) => {
+      if (detail && typeof detail === 'object' && 'message' in detail) {
+        const message = (detail as { message?: unknown }).message;
+        return typeof message === 'string' ? message : '';
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+function getUserActionErrorMessage(error: unknown, fallback: string) {
+  const status = (error as ApiLikeError).response?.status;
+  if (status === 403) return 'Your current role is not authorized to perform this action.';
+
+  const validationDetails = extractValidationDetails(error);
+  if (validationDetails) return validationDetails;
+
+  return getApiErrorMessage(error, fallback);
+}
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -19,6 +130,9 @@ export default function UsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [page, setPage] = useState(1);
+  const [roleFilter, setRoleFilter] = useState<RoleFilterValue>('all');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [feedback, setFeedback] = useState<UserFeedback | null>(null);
 
   // Form states
   const [username, setUsername] = useState('');
@@ -30,19 +144,23 @@ export default function UsersPage() {
   const canUpdate = hasPermission(user?.permissions, 'users.update');
   const canDelete = hasPermission(user?.permissions, 'users.delete');
 
-  const { data: users, isLoading } = useQuery<User[]>({
-    queryKey: ['users'],
+  const { data: usersResponse, isLoading } = useQuery<UsersResponse>({
+    queryKey: ['users', 'list', API_LIST_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/users');
-      return res.data?.data ?? res.data;
+      const res = await apiClient.get('/users', {
+        params: { page: 1, pageSize: API_LIST_PAGE_SIZE },
+      });
+      return normalizeUsersResponse(res.data, 1);
     },
     enabled: hasPermission(user?.permissions, 'users.read'),
   });
 
   const { data: roles } = useQuery<Role[]>({
-    queryKey: ['roles'],
+    queryKey: ['roles', 'user-selector', API_LIST_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/roles');
+      const res = await apiClient.get('/roles', {
+        params: { page: 1, pageSize: API_LIST_PAGE_SIZE },
+      });
       return res.data?.data ?? res.data;
     },
     enabled: hasPermission(user?.permissions, 'roles.read'),
@@ -53,14 +171,29 @@ export default function UsersPage() {
       username: string;
       password: string;
       role_id: number;
-      camp_id?: number | null;
+      camp_id: number;
     }) => {
       const res = await apiClient.post('/users', payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (createdUser: User, payload) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       closeModal();
+      setRoleFilter(createdUser.role_id ?? payload.role_id);
+      setPage(1);
+      setFeedback({
+        type: 'success',
+        title: 'USER CREATED',
+        message: `${createdUser.username} was registered successfully with the selected role.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'CREATE FAILED',
+        message: getUserActionErrorMessage(error, 'The user account could not be created.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -70,14 +203,27 @@ export default function UsersPage() {
       payload,
     }: {
       id: number;
-      payload: { username: string; role_id: number; camp_id?: number | null };
+      payload: { username: string; role_id: number; camp_id: number };
     }) => {
       const res = await apiClient.put(`/users/${id}`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedUser: User) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       closeModal();
+      setFeedback({
+        type: 'success',
+        title: 'USER UPDATED',
+        message: `${updatedUser.username} was updated successfully.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'UPDATE FAILED',
+        message: getUserActionErrorMessage(error, 'The user account could not be updated.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -86,9 +232,25 @@ export default function UsersPage() {
       const res = await apiClient.delete(`/users/${id}`);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, deletedUserId) => {
+      const username =
+        deletingUser?.username ?? usersResponse?.data.find((u) => u.id === deletedUserId)?.username;
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setDeletingUser(null);
+      setFeedback({
+        type: 'success',
+        title: 'USER DEACTIVATED',
+        message: `${username ?? 'The user account'} was deactivated by the backend.`,
+      });
+    },
+    onError: (error) => {
+      setDeletingUser(null);
+      setFeedback({
+        type: 'error',
+        title: 'DELETE FAILED',
+        message: getUserActionErrorMessage(error, 'The user account could not be deactivated.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -99,10 +261,74 @@ export default function UsersPage() {
     setPassword('');
     setRoleId('');
     setCampId('');
+    setFieldErrors({});
   };
 
   const formatRole = (role?: string) =>
     typeof role === 'string' && role.length > 0 ? role.replace(/_/g, ' ') : 'unknown';
+
+  const resolveUserRoleId = (userRecord: User): number | '' => {
+    if (typeof userRecord.role_id === 'number') return userRecord.role_id;
+    return roles?.find((role) => role.name === userRecord.role)?.id ?? '';
+  };
+
+  const getUserRoleId = (userRecord: User) => resolveUserRoleId(userRecord);
+
+  const getUserRoleName = (userRecord: User) => {
+    if (typeof userRecord.role_id === 'number') {
+      const roleById = roles?.find((role) => role.id === userRecord.role_id);
+      if (roleById) return roleById.name;
+    }
+
+    return userRecord.role;
+  };
+
+  const getUserRoleLabel = (userRecord: User) => {
+    const roleName = getUserRoleName(userRecord);
+    if (roleName) return formatRole(roleName);
+    if (typeof userRecord.role_id === 'number') return `role #${userRecord.role_id}`;
+    return 'unknown';
+  };
+
+  const getRoleFilterLabel = () => {
+    if (roleFilter === 'all') return 'all roles';
+    return formatRole(roles?.find((role) => role.id === roleFilter)?.name ?? `role #${roleFilter}`);
+  };
+
+  const validateForm = () => {
+    const errors: FieldErrors = {};
+    const trimmedUsername = username.trim();
+    const trimmedCampId = campId.trim();
+
+    if (!trimmedUsername) {
+      errors.username = 'Username is required.';
+    } else if (trimmedUsername.length > USERNAME_MAX_LENGTH) {
+      errors.username = `Username cannot exceed ${USERNAME_MAX_LENGTH} characters.`;
+    }
+
+    if (!editingUser) {
+      if (!password) {
+        errors.password = 'Password is required.';
+      } else if (password.length < PASSWORD_MIN_LENGTH) {
+        errors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters.`;
+      } else if (password.length > PASSWORD_MAX_LENGTH) {
+        errors.password = `Password cannot exceed ${PASSWORD_MAX_LENGTH} characters.`;
+      }
+    }
+
+    if (roleId === '') {
+      errors.roleId = 'Role is required.';
+    }
+
+    const numericCampId = Number(trimmedCampId);
+    if (!trimmedCampId) {
+      errors.campId = 'Camp ID is required.';
+    } else if (!Number.isInteger(numericCampId) || numericCampId <= 0) {
+      errors.campId = 'Camp ID must be a positive whole number.';
+    }
+
+    return errors;
+  };
 
   const openCreateModal = () => {
     setEditingUser(null);
@@ -110,6 +336,7 @@ export default function UsersPage() {
     setPassword('');
     setRoleId(roles?.[0]?.id ?? '');
     setCampId(currentCampId ? String(currentCampId) : '');
+    setFieldErrors({});
     setIsModalOpen(true);
   };
 
@@ -121,35 +348,59 @@ export default function UsersPage() {
     setCampId(
       user.camp_id != null ? String(user.camp_id) : currentCampId ? String(currentCampId) : '',
     );
+    setFieldErrors({});
     setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || roleId === '') return;
+    const errors = validateForm();
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setFeedback({
+        type: 'warning',
+        title: 'CHECK USER FORMAT',
+        message: 'Correct the highlighted fields before submitting the user account.',
+        actionLabel: 'REVIEW',
+      });
+      return;
+    }
+
+    const trimmedUsername = username.trim();
+    const numericCampId = Number(campId.trim());
+    const numericRoleId = Number(roleId);
 
     if (editingUser) {
       updateMutation.mutate({
         id: editingUser.id,
         payload: {
-          username,
-          role_id: roleId,
-          camp_id: campId ? Number(campId) : null,
+          username: trimmedUsername,
+          role_id: numericRoleId,
+          camp_id: numericCampId,
         },
       });
     } else {
-      if (!password) return;
       createMutation.mutate({
-        username,
+        username: trimmedUsername,
         password,
-        role_id: roleId,
-        camp_id: campId ? Number(campId) : null,
+        role_id: numericRoleId,
+        camp_id: numericCampId,
       });
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil((users?.length ?? 0) / PAGE_SIZE));
-  const paginatedUsers = (users ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const users = (usersResponse?.data ?? []).slice().sort((a, b) => b.id - a.id);
+  const filteredUsers = users.filter((userRecord) => {
+    if (roleFilter === 'all') return true;
+    return getUserRoleId(userRecord) === roleFilter;
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   return (
     <div className="space-y-6">
@@ -173,6 +424,37 @@ export default function UsersPage() {
         )}
       </div>
 
+      <div className="flex flex-col gap-2 rounded-xl border border-zinc-900 bg-surface-raised/70 p-3 sm:flex-row sm:items-center sm:justify-between">
+        <label className="flex flex-1 flex-col gap-1">
+          <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+            <Filter size={13} />
+            Role filter
+          </span>
+          <select
+            value={roleFilter}
+            onChange={(e) => {
+              const value = e.target.value;
+              setRoleFilter(value === 'all' ? 'all' : Number(value));
+              setPage(1);
+            }}
+            aria-label="Filter users by role"
+            className="w-full rounded border border-zinc-800 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-300 outline-none transition-colors focus:border-brand-primary"
+          >
+            <option value="all" className="bg-zinc-950">
+              All roles
+            </option>
+            {roles?.map((role) => (
+              <option key={role.id} value={role.id} className="bg-zinc-950">
+                {formatRole(role.name)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-zinc-600">
+          Showing {filteredUsers.length} of {usersResponse?.pagination.total ?? users.length}
+        </p>
+      </div>
+
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -184,12 +466,21 @@ export default function UsersPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {users?.length === 0 && (
+          {users.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
               <Shield size={48} className="mb-4 opacity-30" />
               <p className="text-sm font-mono uppercase tracking-wider">No users found</p>
               <p className="text-xs font-mono mt-1 text-zinc-700">
                 Create the first system user to begin managing access
+              </p>
+            </div>
+          )}
+          {users.length > 0 && filteredUsers.length === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
+              <Filter size={48} className="mb-4 opacity-30" />
+              <p className="text-sm font-mono uppercase tracking-wider">No users for this role</p>
+              <p className="text-xs font-mono mt-1 text-zinc-700">
+                No accounts match {getRoleFilterLabel()}
               </p>
             </div>
           )}
@@ -210,7 +501,7 @@ export default function UsersPage() {
                   </h3>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-zinc-950/40 text-zinc-400 border-zinc-800">
-                      {formatRole(user.role)}
+                      {getUserRoleLabel(user)}
                     </span>
                     <span
                       className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
@@ -256,7 +547,7 @@ export default function UsersPage() {
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (
@@ -291,46 +582,109 @@ export default function UsersPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <div className="rounded border border-zinc-800 bg-zinc-950/40 p-3 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Format requirements
+                  </p>
+                  <p className="text-[10px] font-mono leading-relaxed text-zinc-500">
+                    Username is required and max 60 characters. Password is required on creation, 8
+                    to 255 characters. Role and Camp ID are required.
+                  </p>
+                </div>
+
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Username</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                    Username <span className="text-red-500">*</span>
+                  </label>
                   <input
                     required
                     type="text"
                     aria-label="Username"
+                    aria-invalid={Boolean(fieldErrors.username)}
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (fieldErrors.username) {
+                        setFieldErrors((prev) => ({ ...prev, username: undefined }));
+                      }
+                    }}
                     placeholder="e.g. jdoe"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none ${
+                      fieldErrors.username
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   />
+                  <p
+                    className={`text-[10px] font-mono ${
+                      fieldErrors.username ? 'text-red-400' : 'text-zinc-600'
+                    }`}
+                  >
+                    {fieldErrors.username ??
+                      `Required. ${username.length}/${USERNAME_MAX_LENGTH} characters.`}
+                  </p>
                 </div>
 
                 {!editingUser && (
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Password
+                      Password <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
                       type="password"
                       aria-label="Password"
+                      aria-invalid={Boolean(fieldErrors.password)}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (fieldErrors.password) {
+                          setFieldErrors((prev) => ({ ...prev, password: undefined }));
+                        }
+                      }}
                       placeholder="Minimum 8 characters"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                      className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none ${
+                        fieldErrors.password
+                          ? 'border-red-500/60 focus:border-red-400'
+                          : 'border-zinc-800 focus:border-brand-primary'
+                      }`}
                     />
+                    <p
+                      className={`text-[10px] font-mono ${
+                        fieldErrors.password ? 'text-red-400' : 'text-zinc-600'
+                      }`}
+                    >
+                      {fieldErrors.password ??
+                        `Required on creation. ${PASSWORD_MIN_LENGTH}-${PASSWORD_MAX_LENGTH} characters.`}
+                    </p>
                   </div>
                 )}
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-zinc-500 uppercase">Role</label>
+                  <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                    Role <span className="text-red-500">*</span>
+                  </label>
                   <select
                     required
                     aria-label="Role"
+                    aria-invalid={Boolean(fieldErrors.roleId)}
                     value={roleId}
-                    onChange={(e) => setRoleId(Number(e.target.value))}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary"
+                    onChange={(e) => {
+                      setRoleId(Number(e.target.value));
+                      if (fieldErrors.roleId) {
+                        setFieldErrors((prev) => ({ ...prev, roleId: undefined }));
+                      }
+                    }}
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none ${
+                      fieldErrors.roleId
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   >
+                    <option value="" disabled className="bg-zinc-950">
+                      Select role
+                    </option>
                     {!roles ? (
                       <option value="" disabled className="bg-zinc-950">
                         Loading roles...
@@ -347,21 +701,46 @@ export default function UsersPage() {
                       ))
                     )}
                   </select>
+                  <p
+                    className={`text-[10px] font-mono ${
+                      fieldErrors.roleId ? 'text-red-400' : 'text-zinc-600'
+                    }`}
+                  >
+                    {fieldErrors.roleId ?? 'Required. Role options are loaded from Roles.'}
+                  </p>
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Camp ID <span className="text-zinc-700 font-normal">(optional)</span>
+                    Camp ID <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
-                    min="0"
+                    min="1"
+                    step="1"
                     aria-label="Camp ID"
+                    aria-invalid={Boolean(fieldErrors.campId)}
                     value={campId}
-                    onChange={(e) => setCampId(e.target.value)}
+                    onChange={(e) => {
+                      setCampId(e.target.value);
+                      if (fieldErrors.campId) {
+                        setFieldErrors((prev) => ({ ...prev, campId: undefined }));
+                      }
+                    }}
                     placeholder="e.g. 1"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none ${
+                      fieldErrors.campId
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   />
+                  <p
+                    className={`text-[10px] font-mono ${
+                      fieldErrors.campId ? 'text-red-400' : 'text-zinc-600'
+                    }`}
+                  >
+                    {fieldErrors.campId ?? 'Required. Must be a positive whole number.'}
+                  </p>
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
@@ -404,10 +783,10 @@ export default function UsersPage() {
                   </div>
                   <div>
                     <h3 className="text-xl font-black uppercase italic tracking-tighter">
-                      Destructive Action
+                      Deactivate Account
                     </h3>
                     <p className="text-xs text-zinc-500 font-mono">
-                      This will permanently delete this user account from the system.
+                      This will deactivate the user account and terminate active sessions.
                     </p>
                   </div>
                 </div>
@@ -416,7 +795,7 @@ export default function UsersPage() {
               <div className="p-4 bg-zinc-950/60 rounded border border-zinc-900">
                 <p className="text-sm font-bold text-zinc-200">{deletingUser.username}</p>
                 <p className="text-xs text-zinc-500 font-mono mt-1">
-                  Role: {formatRole(deletingUser.role)} &middot; Camp:{' '}
+                  Role: {getUserRoleLabel(deletingUser)} &middot; Camp:{' '}
                   {deletingUser.camp_id ?? 'None'}
                 </p>
               </div>
@@ -435,13 +814,25 @@ export default function UsersPage() {
                   disabled={deleteMutation.isPending}
                   className="flex-1 py-2.5 bg-red-600 text-white text-xs font-black uppercase rounded hover:bg-red-700 transition-colors disabled:opacity-30"
                 >
-                  {deleteMutation.isPending ? 'PURGING...' : 'CONFIRM DELETION'}
+                  {deleteMutation.isPending ? 'DEACTIVATING...' : 'CONFIRM DEACTIVATION'}
                 </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Personnel Security"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
+      )}
     </div>
   );
 }
