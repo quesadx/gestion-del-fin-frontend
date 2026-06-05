@@ -20,8 +20,80 @@ import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, CartesianGrid } from 'recharts';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
-import { InventorySnapshot, Resource, InventoryItem, Person } from '../../types';
+import { InventorySnapshot, Resource, InventoryItem, Person, Expedition } from '../../types';
 import BorderGlow from '../../components/BorderGlow';
+
+const API_LIST_PAGE_SIZE = 100;
+
+type DashboardMetrics = {
+  people: {
+    total: number;
+    healthy: number;
+    sick: number;
+    injured: number;
+    away: number;
+    dead: number;
+  };
+  resources: {
+    totalTypes: number;
+    lowStockCount: number;
+  };
+  expeditions: {
+    active: number;
+    planned: number;
+    completed: number;
+  };
+  transfers: {
+    pending: number;
+    inTransit: number;
+  };
+};
+
+type DashboardTransfer = {
+  id: number;
+  requesting_camp: number;
+  target_camp: number;
+  status: 'PENDING' | 'APPROVED_SOURCE' | 'APPROVED_TARGET' | 'COMPLETED' | 'REJECTED';
+};
+
+type DashboardProfile = 'admin' | 'operations' | 'resources' | 'limited';
+
+type StatCard = {
+  label: string;
+  value: number;
+  icon: typeof Users;
+  color: string;
+  bg: string;
+  kind?: 'stock';
+};
+
+const getTotalPagesFromResponse = (responseData: unknown) =>
+  Math.max(
+    1,
+    Number((responseData as { pagination?: { totalPages?: number } })?.pagination?.totalPages) || 1,
+  );
+
+async function fetchAllPaginated<T>(url: string, params: Record<string, unknown> = {}) {
+  const firstPage = await apiClient.get(url, {
+    params: { ...params, page: 1, pageSize: API_LIST_PAGE_SIZE },
+  });
+  const firstPageItems = unwrapList<T>(firstPage.data);
+  const totalPages = getTotalPagesFromResponse(firstPage.data);
+
+  if (totalPages === 1) return firstPageItems;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, async (_, index) => {
+      const pageNumber = index + 2;
+      const res = await apiClient.get(url, {
+        params: { ...params, page: pageNumber, pageSize: API_LIST_PAGE_SIZE },
+      });
+      return unwrapList<T>(res.data);
+    }),
+  );
+
+  return firstPageItems.concat(...remainingPages);
+}
 
 export default function DashboardOverview() {
   const { currentCampId } = useCampStore();
@@ -29,65 +101,67 @@ export default function DashboardOverview() {
   useDeniedPermissionsStore();
   const navigate = useNavigate();
   const canViewMetrics = hasPermission(user?.permissions, 'metrics.dashboard');
-  const hasExpeditionAccess = hasPermission(user?.permissions, 'expeditions.read');
-  const isWorkerView = !hasExpeditionAccess;
+  const canBypassCampScoping = hasPermission(user?.permissions, 'admin.bypass_camp_scoping');
+  const canReadPeople = hasPermission(user?.permissions, 'people.read');
+  const canReadInventory = hasPermission(user?.permissions, 'inventory.read');
+  const canReadResources = hasPermission(user?.permissions, 'resources.read');
+  const canReadExpeditions = hasPermission(user?.permissions, 'expeditions.read');
+  const canReadTransfers = hasPermission(user?.permissions, 'transfers.read');
+  const canViewSelectedCamp = Boolean(
+    currentCampId && (canBypassCampScoping || canAccessCamp(currentCampId)),
+  );
+  const canUseTokenMetrics = Boolean(
+    currentCampId && user?.camp_id === currentCampId && canViewMetrics,
+  );
 
-  const { data: metrics, isLoading: metricsLoading } = useQuery({
-    queryKey: ['dashboard-metrics', currentCampId],
+  const { data: tokenMetrics, isLoading: metricsLoading } = useQuery<DashboardMetrics>({
+    queryKey: ['dashboard-metrics', user?.camp_id],
     queryFn: async () => {
       const res = await apiClient.get('/metrics/dashboard');
       const d = res.data ?? {};
       return {
         people: {
-          total: d.survivor_count ?? d.people?.total ?? 0,
-          healthy: d.healthy_count ?? d.people?.healthy ?? 0,
-          sick: d.sick_count ?? d.people?.sick ?? 0,
-          injured: d.injured_count ?? d.people?.injured ?? 0,
-          away: d.absent_count ?? d.people?.away ?? 0,
-          dead: d.dead_count ?? d.people?.dead ?? 0,
+          total: Number(d.survivor_count ?? d.people?.total ?? 0),
+          healthy: Number(d.healthy_count ?? d.people?.healthy ?? 0),
+          sick: Number(d.sick_count ?? d.people?.sick ?? 0),
+          injured: Number(d.injured_count ?? d.people?.injured ?? 0),
+          away: Number(d.absent_count ?? d.people?.away ?? 0),
+          dead: Number(d.dead_count ?? d.people?.dead ?? 0),
         },
         resources: {
-          total_types: d.resource_types_count ?? d.resources?.total_types ?? 0,
-          low_stock: d.resources?.low_stock ?? Array(d.low_resource_alerts_count ?? 0).fill({}),
+          totalTypes: Number(d.resource_types_count ?? d.resources?.total_types ?? 0),
+          lowStockCount: Number(d.low_resource_alerts_count ?? d.resources?.low_stock?.length ?? 0),
         },
         expeditions: {
-          active: d.active_expeditions_count ?? d.expeditions?.active ?? 0,
-          planned: d.planned_expeditions_count ?? d.expeditions?.planned ?? 0,
-          completed: d.completed_expeditions_count ?? d.expeditions?.completed ?? 0,
+          active: Number(d.active_expeditions_count ?? d.expeditions?.active ?? 0),
+          planned: Number(d.planned_expeditions_count ?? d.expeditions?.planned ?? 0),
+          completed: Number(d.completed_expeditions_count ?? d.expeditions?.completed ?? 0),
         },
         transfers: {
-          pending: d.pending_transfers_count ?? d.transfers?.pending ?? 0,
-          in_transit: d.in_transit_transfers_count ?? d.transfers?.in_transit ?? 0,
+          pending: Number(d.pending_transfers_count ?? d.transfers?.pending ?? 0),
+          inTransit: Number(d.in_transit_transfers_count ?? d.transfers?.in_transit ?? 0),
         },
       };
     },
-    enabled: !!currentCampId && canViewMetrics,
+    enabled: canUseTokenMetrics,
   });
 
-  const hasPeopleRead = hasPermission(user?.permissions, 'people.read');
   const { data: peopleList, isLoading: peopleLoading } = useQuery<Person[]>({
-    queryKey: ['worker-people', currentCampId],
+    queryKey: ['people', currentCampId, 'dashboard'],
     queryFn: async () => {
-      const res = await apiClient.get(`/camps/${currentCampId}/people`);
-      return unwrapList<Person>(res.data);
+      return fetchAllPaginated<Person>(`/camps/${currentCampId}/people`);
     },
-    enabled: !!currentCampId && isWorkerView && hasPeopleRead,
+    enabled: canViewSelectedCamp && canReadPeople,
   });
-  const survivorCount = isWorkerView ? (peopleList?.length ?? 0) : (metrics?.people?.total ?? 0);
-  const healthyCount = isWorkerView
-    ? (peopleList?.filter((p) => p.status === 'HEALTHY').length ?? 0)
-    : (metrics?.people?.healthy ?? 0);
 
   const { data: rawInventory, isLoading: resourcesLoading } = useQuery({
     queryKey: ['resource-metrics', currentCampId],
     queryFn: async () => {
       try {
-        const [invRes, resRes] = await Promise.all([
-          apiClient.get(`/inventory/${currentCampId}`),
-          apiClient.get('/resources'),
+        const [items, resourceTypes] = await Promise.all([
+          fetchAllPaginated<InventoryItem>(`/inventory/${currentCampId}`),
+          canReadResources ? fetchAllPaginated<Resource>('/resources') : Promise.resolve([]),
         ]);
-        const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
-        const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
         return { items, resourceTypes };
       } catch (err) {
         const status = (err as { response?: { status?: number } })?.response?.status;
@@ -95,11 +169,37 @@ export default function DashboardOverview() {
         throw err;
       }
     },
-    enabled:
-      !!currentCampId &&
-      hasPermission(user?.permissions, 'inventory.read') &&
-      canAccessCamp(currentCampId),
+    enabled: canViewSelectedCamp && canReadInventory,
   });
+
+  const { data: expeditions, isLoading: expeditionsLoading } = useQuery<Expedition[]>({
+    queryKey: ['expeditions', currentCampId, 'dashboard'],
+    queryFn: async () => {
+      return fetchAllPaginated<Expedition>('/expeditions', { camp_id: currentCampId });
+    },
+    enabled: canViewSelectedCamp && canReadExpeditions,
+  });
+
+  const { data: transfers, isLoading: transfersLoading } = useQuery<DashboardTransfer[]>({
+    queryKey: ['transfers', currentCampId, 'dashboard'],
+    queryFn: async () => {
+      return fetchAllPaginated<DashboardTransfer>('/transfers', { camp_id: currentCampId });
+    },
+    enabled: canViewSelectedCamp && canReadTransfers,
+  });
+
+  const survivorCount = canReadPeople
+    ? (peopleList?.filter((p) => p.status !== 'DEAD').length ?? 0)
+    : (tokenMetrics?.people.total ?? 0);
+  const healthyCount = canReadPeople
+    ? (peopleList?.filter((p) => p.status === 'HEALTHY').length ?? 0)
+    : (tokenMetrics?.people.healthy ?? 0);
+  const activeExpeditionsCount = canReadExpeditions
+    ? (expeditions?.filter((expedition) => expedition.status === 'ONGOING').length ?? 0)
+    : (tokenMetrics?.expeditions.active ?? 0);
+  const pendingTransfersCount = canReadTransfers
+    ? (transfers?.filter((transfer) => transfer.status === 'PENDING').length ?? 0)
+    : (tokenMetrics?.transfers.pending ?? 0);
 
   const resourceSummaries: InventorySnapshot[] = useMemo(() => {
     if (!rawInventory) return [];
@@ -108,15 +208,16 @@ export default function DashboardOverview() {
 
     return items.map((item) => {
       const rt = resourceTypes.find((r) => r.id === item.resource_type_id) ?? item.resource_type;
+      const resourceLookup = resourceTypes.find((r) => r.id === item.resource_type_id);
       const name =
         item.resource_name ??
         item.resource_type?.name ??
         rt?.name ??
         `Resource #${item.resource_type_id}`;
       const unit = item.unit ?? item.resource_type?.unit ?? rt?.unit ?? '';
-      const qty = item.quantity ?? 0;
+      const qty = Number(item.quantity ?? 0);
       const minStock = Number(rt?.minimum_stock ?? item.minimum_stock ?? 0);
-      const dailyRation = Number((rt as Resource | undefined)?.daily_ration ?? 0);
+      const dailyRation = Number(resourceLookup?.daily_ration ?? 0);
       const dailyUsage = dailyRation * survivorCount;
       const projectionDays = dailyUsage > 0 ? Math.floor(qty / dailyUsage) : null;
       return {
@@ -135,6 +236,59 @@ export default function DashboardOverview() {
       } satisfies InventorySnapshot;
     }) as InventorySnapshot[];
   }, [rawInventory, survivorCount]);
+
+  const dashboardProfile: DashboardProfile = canBypassCampScoping
+    ? 'admin'
+    : canReadExpeditions || canReadTransfers
+      ? 'operations'
+      : canReadInventory || canReadResources
+        ? 'resources'
+        : 'limited';
+
+  const profileCopy: Record<
+    DashboardProfile,
+    {
+      title: string;
+      subtitle: string;
+      label: string;
+      status: string;
+      icon: typeof Users;
+      className: string;
+    }
+  > = {
+    admin: {
+      title: 'Operational Overview',
+      subtitle: 'Selected Refuge Administrative Telemetry',
+      label: 'Admin Scope',
+      status: 'Camp Selected',
+      icon: ShieldCheck,
+      className: 'text-brand-accent uppercase',
+    },
+    operations: {
+      title: 'Operations Dashboard',
+      subtitle: 'Expedition & Transfer Surveillance',
+      label: 'Operations Scope',
+      status: 'Camp Bound',
+      icon: Map,
+      className: 'text-brand-secondary uppercase',
+    },
+    resources: {
+      title: 'Resource Dashboard',
+      subtitle: 'Camp Resource & Inventory Surveillance',
+      label: 'Resource Scope',
+      status: 'Camp Bound',
+      icon: Box,
+      className: 'text-brand-secondary uppercase',
+    },
+    limited: {
+      title: 'Camp Status',
+      subtitle: 'Limited Camp Telemetry',
+      label: 'Limited Scope',
+      status: 'Camp Bound',
+      icon: HardHat,
+      className: 'text-amber-500 uppercase',
+    },
+  };
 
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
   const [chartSize, setChartSize] = useState({ width: 0, height: 0 });
@@ -185,101 +339,118 @@ export default function DashboardOverview() {
     );
   }
 
+  if (!canViewSelectedCamp) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center text-center space-y-4">
+        <ShieldCheck size={48} className="text-zinc-800" />
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold">Refuge Access Restricted</h2>
+          <p className="text-zinc-500 text-sm max-w-sm">
+            Your current role can only load dashboard data for its assigned refuge.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const criticalCount = (resourceSummaries ?? []).filter((r) => r.status === 'CRITICAL').length;
   const lowCount = (resourceSummaries ?? []).filter((r) => r.status === 'LOW').length;
+  const stockAlertCount = canReadInventory
+    ? criticalCount + lowCount
+    : (tokenMetrics?.resources.lowStockCount ?? 0);
+  const resourceTypeCount = canReadInventory
+    ? resourceSummaries.length
+    : (tokenMetrics?.resources.totalTypes ?? 0);
+  const profile = profileCopy[dashboardProfile];
+  const ProfileIcon = profile.icon;
 
-  const adminCards = [
-    {
-      label: 'Survivors',
-      value: metrics?.people?.total,
-      icon: Users,
-      color: 'text-blue-500',
-      bg: 'bg-blue-500/10',
-    },
-    {
-      label: 'Active Expeditions',
-      value: metrics?.expeditions?.active,
-      icon: Map,
-      color: 'text-amber-500',
-      bg: 'bg-amber-500/10',
-    },
-    {
-      label: 'Stock Alerts',
-      value: metrics?.resources?.low_stock?.length ?? 0,
-      icon: AlertTriangle,
-      color: 'text-red-500',
-      bg: 'bg-red-500/10',
-    },
-    {
-      label: 'Pending Transfers',
-      value: metrics?.transfers?.pending,
-      icon: ClipboardList,
-      color: 'text-brand-primary',
-      bg: 'bg-brand-primary/10',
-    },
-  ];
+  const statCards: StatCard[] = [];
 
-  const workerCards = [
-    {
+  if (canReadPeople || tokenMetrics) {
+    statCards.push({
       label: 'Survivors',
       value: survivorCount,
       icon: Users,
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
-    },
-    {
+    });
+  }
+
+  if (canReadPeople) {
+    statCards.push({
       label: 'Healthy',
       value: healthyCount,
       icon: ShieldCheck,
       color: 'text-emerald-500',
       bg: 'bg-emerald-500/10',
-    },
-    {
+    });
+  }
+
+  if (canReadExpeditions || tokenMetrics) {
+    statCards.push({
+      label: 'Active Expeditions',
+      value: activeExpeditionsCount,
+      icon: Map,
+      color: 'text-amber-500',
+      bg: 'bg-amber-500/10',
+    });
+  }
+
+  if (canReadTransfers || tokenMetrics) {
+    statCards.push({
+      label: 'Pending Transfers',
+      value: pendingTransfersCount,
+      icon: ClipboardList,
+      color: 'text-brand-primary',
+      bg: 'bg-brand-primary/10',
+    });
+  }
+
+  if (canReadInventory || tokenMetrics) {
+    statCards.push({
       label: 'Stock Alerts',
-      value: criticalCount + lowCount,
+      value: stockAlertCount,
       icon: AlertTriangle,
       color: 'text-red-500',
       bg: 'bg-red-500/10',
-    },
-    {
+      kind: 'stock',
+    });
+  }
+
+  if (canReadInventory || canReadResources) {
+    statCards.push({
       label: 'Resource Types',
-      value: resourceSummaries?.length ?? 0,
+      value: resourceTypeCount,
       icon: Box,
       color: 'text-brand-primary',
       bg: 'bg-brand-primary/10',
-    },
-  ];
+    });
+  }
 
-  const statCards = isWorkerView ? workerCards : adminCards;
-  const cardCount = statCards.length;
-  const isLoading = isWorkerView ? peopleLoading : metricsLoading;
+  const cardCount = Math.max(statCards.length, 1);
+  const isLoading =
+    (canUseTokenMetrics && metricsLoading) ||
+    (canReadPeople && peopleLoading) ||
+    (canReadInventory && resourcesLoading) ||
+    (canReadExpeditions && expeditionsLoading) ||
+    (canReadTransfers && transfersLoading);
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
-            {isWorkerView ? 'Camp Status' : 'Operational Overview'}
+            {profile.title}
           </h1>
           <p className="text-zinc-500 font-mono text-[10px] sm:text-xs uppercase pl-1">
-            {isWorkerView ? 'Camp Resources & Population' : 'Resource & Population Surveillance'}
+            {profile.subtitle}
           </p>
         </div>
         <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg self-start">
-          {isWorkerView ? (
-            <HardHat size={18} className="text-amber-500" />
-          ) : (
-            <ShieldCheck size={18} className="text-brand-accent" />
-          )}
+          <ProfileIcon size={18} className={profile.className} />
           <div className="text-[10px] font-mono leading-none">
-            <p className="text-zinc-300 font-bold uppercase">
-              {isWorkerView ? 'Worker Access' : 'Integrity Status'}
-            </p>
-            <p
-              className={isWorkerView ? 'text-amber-500 uppercase' : 'text-brand-accent uppercase'}
-            >
-              {isWorkerView ? 'Read-Only' : 'Synchronized'}
-            </p>
+            <p className="text-zinc-300 font-bold uppercase">{profile.label}</p>
+            <p className={profile.className}>{profile.status}</p>
           </div>
         </div>
       </div>
@@ -287,85 +458,108 @@ export default function DashboardOverview() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {isLoading
           ? Array.from({ length: cardCount }).map((_, i) => <SkeletonCard key={i} />)
-          : statCards.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <BorderGlow
-                  backgroundColor="#1b0b0c"
-                  borderRadius={16}
-                  glowColor="356 78 62"
-                  glowIntensity={0.7}
-                  glowRadius={24}
-                  edgeSensitivity={20}
-                  coneSpread={18}
-                  animated={false}
-                  className="h-full"
+          : statCards.length === 0
+            ? [
+                <div
+                  key="empty-dashboard"
+                  className="col-span-full h-32 flex items-center justify-center text-zinc-600 font-mono text-xs uppercase tracking-widest border border-zinc-900 rounded-xl"
                 >
-                  <div className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors h-full">
-                    <div
-                      className={`w-10 h-10 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
-                    >
-                      <stat.icon size={20} />
+                  No dashboard telemetry available for this role.
+                </div>,
+              ]
+            : statCards.map((stat, i) => (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <BorderGlow
+                    backgroundColor="#1b0b0c"
+                    borderRadius={16}
+                    glowColor="356 78 62"
+                    glowIntensity={0.7}
+                    glowRadius={24}
+                    edgeSensitivity={20}
+                    coneSpread={18}
+                    animated={false}
+                    className="h-full"
+                  >
+                    <div className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors h-full">
+                      <div
+                        className={`w-10 h-10 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
+                      >
+                        <stat.icon size={20} />
+                      </div>
+                      {stat.kind === 'stock' ? (
+                        <div className="space-y-3">
+                          {stockAlertCount === 0 ? (
+                            <div className="flex items-center gap-2 text-emerald-500">
+                              <CheckCircle size={16} />
+                              <span className="text-sm font-bold font-mono">
+                                All stocks optimal
+                              </span>
+                            </div>
+                          ) : canReadInventory ? (
+                            <div className="space-y-1.5">
+                              {criticalCount > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                                  <span className="text-xl font-black font-mono text-red-500">
+                                    {criticalCount}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                    CRITICAL
+                                  </span>
+                                </div>
+                              )}
+                              {lowCount > 0 && (
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                                  <span className="text-xl font-black font-mono text-amber-500">
+                                    {lowCount}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                    LOW
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                              <span className="text-xl font-black font-mono text-red-500">
+                                {stockAlertCount}
+                              </span>
+                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                                ALERTS
+                              </span>
+                            </div>
+                          )}
+                          {canReadInventory && (
+                            <button
+                              onClick={() => navigate('/inventory')}
+                              className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
+                            >
+                              View Details →
+                            </button>
+                          )}
+                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            {stat.label}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
+                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            {stat.label}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    {stat.label === 'Stock Alerts' ? (
-                      <div className="space-y-3">
-                        {criticalCount === 0 && lowCount === 0 ? (
-                          <div className="flex items-center gap-2 text-emerald-500">
-                            <CheckCircle size={16} />
-                            <span className="text-sm font-bold font-mono">All stocks optimal</span>
-                          </div>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {criticalCount > 0 && (
-                              <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                                <span className="text-xl font-black font-mono text-red-500">
-                                  {criticalCount}
-                                </span>
-                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                  CRITICAL
-                                </span>
-                              </div>
-                            )}
-                            {lowCount > 0 && (
-                              <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                                <span className="text-xl font-black font-mono text-amber-500">
-                                  {lowCount}
-                                </span>
-                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                  LOW
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => navigate('/inventory')}
-                          className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
-                        >
-                          View Details →
-                        </button>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                          {stat.label}
-                        </p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
-                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                          {stat.label}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </BorderGlow>
-              </motion.div>
-            ))}
+                  </BorderGlow>
+                </motion.div>
+              ))}
       </div>
 
       <div className="space-y-6">
@@ -378,7 +572,11 @@ export default function DashboardOverview() {
             <span className="text-[10px] font-mono text-zinc-600">Real-time Telemetry Active</span>
           </div>
 
-          {resourcesLoading ? (
+          {!canReadInventory ? (
+            <div className="h-40 flex items-center justify-center text-zinc-600 font-mono text-xs uppercase tracking-widest border border-zinc-900 rounded-xl">
+              Inventory telemetry unavailable for this role.
+            </div>
+          ) : resourcesLoading ? (
             <div className="space-y-6 animate-pulse">
               <div className="h-64 bg-surface-raised/30 brutalist-border rounded-xl p-6 flex flex-col justify-between">
                 <Skeleton className="h-4 w-1/4" />

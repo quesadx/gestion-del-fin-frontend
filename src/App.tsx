@@ -88,6 +88,46 @@ const queryClient = new QueryClient({
   },
 });
 
+const ROUTE_FALLBACKS: Array<{ to: string; permission?: string }> = [
+  { to: '/dashboard', permission: 'metrics.dashboard' },
+  { to: '/population', permission: 'people.read' },
+  { to: '/inventory', permission: 'inventory.read' },
+  { to: '/rations', permission: 'inventory.read' },
+  { to: '/admission', permission: 'admission.read' },
+  { to: '/expeditions', permission: 'expeditions.read' },
+  { to: '/transfers', permission: 'transfers.read' },
+  { to: '/camps', permission: 'camps.read' },
+  { to: '/resources', permission: 'resources.read' },
+  { to: '/professions', permission: 'professions.read' },
+  { to: '/users', permission: 'users.read' },
+  { to: '/roles', permission: 'roles.read' },
+  { to: '/permissions', permission: 'permissions.read' },
+  { to: '/achievements/my' },
+];
+
+const getFallbackRoute = (permissions: string[] | undefined, currentPath: string) => {
+  const fallback = ROUTE_FALLBACKS.find(({ to, permission }) => {
+    if (to === currentPath) return false;
+    return !permission || hasPermission(permissions, permission);
+  });
+
+  return fallback?.to;
+};
+
+const PermissionFallback = () => (
+  <div className="min-h-[60vh] flex items-center justify-center px-4">
+    <div className="max-w-md w-full bg-surface-raised brutalist-border rounded-xl p-6 text-center space-y-3">
+      <p className="text-[10px] font-mono uppercase tracking-widest text-brand-primary">
+        Access Control
+      </p>
+      <h2 className="text-2xl font-black uppercase italic tracking-tighter">Permission Required</h2>
+      <p className="text-xs font-mono leading-relaxed text-zinc-400">
+        Your current role is not authorized to access this section.
+      </p>
+    </div>
+  </div>
+);
+
 const ProtectedRoute = ({
   children,
   roles,
@@ -98,10 +138,16 @@ const ProtectedRoute = ({
   permission?: string;
 }) => {
   const { user } = useAuthStore();
+  const location = useLocation();
   if (!user) return <Navigate to="/login" replace />;
-  if (permission && !hasPermission(user?.permissions, permission))
-    return <Navigate to="/" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  if (permission && !hasPermission(user?.permissions, permission)) {
+    const fallback = getFallbackRoute(user.permissions, location.pathname);
+    return fallback ? <Navigate to={fallback} replace /> : <PermissionFallback />;
+  }
+  if (roles && !roles.includes(user.role)) {
+    const fallback = getFallbackRoute(user.permissions, location.pathname);
+    return fallback ? <Navigate to={fallback} replace /> : <PermissionFallback />;
+  }
   return <>{children}</>;
 };
 
@@ -177,7 +223,14 @@ export default function App() {
                     }
                   >
                     <Route index element={<Navigate to="/dashboard" replace />} />
-                    <Route path="dashboard" element={<DashboardOverview />} />
+                    <Route
+                      path="dashboard"
+                      element={
+                        <ProtectedRoute permission="metrics.dashboard">
+                          <DashboardOverview />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path="population"
                       element={
