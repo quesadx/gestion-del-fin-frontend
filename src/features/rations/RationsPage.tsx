@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { apiClient } from '../../lib/api';
+import { apiClient, fetchAllPaginated } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Sandwich, Plus, X } from 'lucide-react';
@@ -31,10 +31,7 @@ export default function RationsPage() {
 
   const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return res.data?.data ?? res.data ?? [];
-    },
+    queryFn: () => fetchAllPaginated<Resource>('/resources'),
     staleTime: 60_000,
     enabled: hasPermission(user?.permissions, 'resources.read'),
   });
@@ -308,7 +305,7 @@ export default function RationsPage() {
               initial={{ scale: 0.95, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, toFormData, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, toFormData, unwrapList } from '../../lib/api';
 import { Person, Camp } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
@@ -167,10 +167,7 @@ export default function PersonDetail() {
 
   const { data: resources } = useQuery<{ id: number; name: string }[]>({
     queryKey: ['resources'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return unwrapList<{ id: number; name: string }>(res.data);
-    },
+    queryFn: () => fetchAllPaginated<{ id: number; name: string }>('/resources'),
     enabled: hasReadPermission && canReadResources && canOverrideContribution,
   });
 
@@ -968,7 +965,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -1120,7 +1117,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="space-y-1">
                 <h3 className="text-2xl font-black uppercase italic tracking-tighter">
@@ -1183,7 +1180,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -1277,7 +1274,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -1411,7 +1408,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">

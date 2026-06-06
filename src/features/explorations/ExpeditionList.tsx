@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { Expedition, Person } from '../../types';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -84,10 +84,7 @@ export default function ExpeditionList() {
 
   const { data: resources } = useQuery<{ id: number; name: string; unit: string }[]>({
     queryKey: ['resources'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return unwrapList<{ id: number; name: string; unit: string }>(res.data);
-    },
+    queryFn: () => fetchAllPaginated<{ id: number; name: string; unit: string }>('/resources'),
     enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
@@ -538,7 +535,7 @@ export default function ExpeditionList() {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="border-b border-zinc-900 pb-4 mb-2">
                 <p className="text-[10px] font-mono text-brand-primary uppercase tracking-widest leading-none mb-1">
@@ -776,7 +773,7 @@ export default function ExpeditionList() {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4 mb-2">
                 <div>
@@ -896,7 +893,7 @@ export default function ExpeditionList() {
               initial={{ scale: 0.95, opacity: 0, y: 10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4 mb-2">
                 <div>

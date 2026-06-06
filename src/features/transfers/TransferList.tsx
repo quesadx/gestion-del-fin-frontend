@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
@@ -261,10 +261,7 @@ export default function TransferList() {
 
   const { data: resources } = useQuery<ResourceType[]>({
     queryKey: ['resources-list'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return unwrapList<ResourceType>(res.data);
-    },
+    queryFn: () => fetchAllPaginated<ResourceType>('/resources'),
     enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
@@ -1058,7 +1055,7 @@ export default function TransferList() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6 my-auto"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6 my-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal header */}

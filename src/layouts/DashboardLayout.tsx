@@ -21,7 +21,7 @@ import {
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../lib/api';
+import { apiClient, fetchAllPaginated, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource, UserAchievement } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
@@ -191,10 +191,10 @@ export default function DashboardLayout() {
       try {
         const [invRes, resRes] = await Promise.all([
           apiClient.get(`/inventory/${currentCampId}`),
-          apiClient.get('/resources'),
+          fetchAllPaginated<Resource>('/resources'),
         ]);
         const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
-        const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
+        const resourceTypes: Resource[] = resRes;
 
         const criticalNames: string[] = [];
         let lowCount = 0;

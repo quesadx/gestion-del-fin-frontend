@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated } from '../../lib/api';
 import { Expedition, ResourceAllocation, Resource } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
@@ -61,10 +61,7 @@ export default function ExpeditionDetail() {
   // Fetch resources list for resource name resolution
   const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return unwrapList<Resource>(res.data);
-    },
+    queryFn: () => fetchAllPaginated<Resource>('/resources'),
     enabled: canRead,
   });
 
@@ -509,7 +506,7 @@ export default function ExpeditionDetail() {
           <motion.div
             initial={{ scale: 0.95, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full space-y-6"
+            className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-xl w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
           >
             <div className="flex justify-between items-start border-b border-zinc-900 pb-4 mb-2">
               <div>

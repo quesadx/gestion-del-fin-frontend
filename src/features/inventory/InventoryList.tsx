@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib/api';
+import { apiClient, fetchAllPaginated } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { hasPermission, canAccessCamp } from '../../lib/permissions';
 import { useDeniedPermissionsStore } from '../../store/deniedPermissions';
@@ -44,19 +44,24 @@ export default function InventoryList() {
   const canAdjust = hasPermission(user?.permissions, 'inventory.adjust');
   const canAuditRead = hasPermission(user?.permissions, 'inventory.audit.read');
 
+  const { data: resources, isLoading: resourcesLoading } = useQuery<Resource[]>({
+    queryKey: ['resources'],
+    queryFn: () => fetchAllPaginated<Resource>('/resources'),
+    enabled: hasPermission(user?.permissions, 'resources.read'),
+  });
+
   const { data: inventory, isLoading } = useQuery<InventorySnapshot[]>({
     queryKey: ['inventory', currentCampId],
     queryFn: async () => {
       try {
-        const [invRes, resRes] = await Promise.all([
+        const [invRes, resourceTypes] = await Promise.all([
           apiClient.get(`/inventory/${currentCampId}`),
-          apiClient.get('/resources'),
+          fetchAllPaginated<Resource>('/resources'),
         ]);
         const items = (invRes.data?.data ?? invRes.data ?? []) as Array<{
           resource_type_id: number;
           quantity?: number;
         }>;
-        const resourceTypes = (resRes.data?.data ?? resRes.data ?? []) as Resource[];
         return items.map((item) => {
           const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
           const qty = Math.floor(Number(item.quantity ?? 0));
@@ -169,11 +174,14 @@ export default function InventoryList() {
           {canAdjust && (
             <button
               onClick={() => {
-                if (inventory && inventory.length > 0) {
+                if (resources && resources.length > 0) {
+                  setSelectedResourceId(resources[0].id);
+                } else if (inventory && inventory.length > 0) {
                   setSelectedResourceId(inventory[0].resource_id);
                 }
                 setIsAdjustOpen(true);
               }}
+              disabled={resourcesLoading}
               className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
               aria-label="Open manual stock adjustment form"
             >
@@ -375,7 +383,7 @@ export default function InventoryList() {
               initial={{ scale: 0.95, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 12 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -411,11 +419,21 @@ export default function InventoryList() {
                     onChange={(e) => setSelectedResourceId(Number(e.target.value))}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-secondary cursor-pointer"
                   >
-                    {inventory?.map((item) => (
-                      <option key={item.resource_id} value={item.resource_id}>
-                        {item.resource_name} (Current: {item.quantity} {item.unit})
+                    {(resources ?? []).map((resource) => {
+                      const inventoryItem = inventory?.find(
+                        (item) => item.resource_id === resource.id,
+                      );
+                      return (
+                        <option key={resource.id} value={resource.id}>
+                          {resource.name} (Current: {inventoryItem?.quantity ?? 0} {resource.unit})
+                        </option>
+                      );
+                    })}
+                    {(resources ?? []).length === 0 && (
+                      <option value={0} disabled>
+                        No resources available
                       </option>
-                    ))}
+                    )}
                   </select>
                 </div>
 

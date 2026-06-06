@@ -25,6 +25,7 @@ const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 type AdmissionStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED';
 type AdmissionStatusFilter = 'ALL' | AdmissionStatus;
 type FeedbackType = 'success' | 'error' | 'warning';
+type AdmissionDecisionSource = 'AI' | 'MANUAL' | 'PENDING';
 
 interface AdmissionFormDraft {
   name: string;
@@ -61,6 +62,46 @@ const getAdmissionDecisionStatus = (admission?: Partial<Admission> | null): Admi
   if (rawStatus === 'APPROVED') return 'ACCEPTED';
   if (rawStatus === 'ACCEPTED' || rawStatus === 'REJECTED') return rawStatus;
   return 'PENDING';
+};
+
+const getAdmissionDecisionSource = (
+  admission?: Partial<Admission> | null,
+): AdmissionDecisionSource => {
+  if (admission?.admitted_by?.toString().toUpperCase() === 'AI') return 'AI';
+  if (admission?.reviewed_by != null || admission?.reviewed_at) return 'MANUAL';
+  return 'PENDING';
+};
+
+const getAdmissionDecisionSourceMeta = (admission?: Partial<Admission> | null) => {
+  const source = getAdmissionDecisionSource(admission);
+
+  if (source === 'AI') {
+    return {
+      label: 'AI AUTO',
+      detailLabel: 'AI auto-admission',
+      description: 'The applicant was accepted automatically by the AI evaluation flow.',
+      icon: BrainCircuit,
+      className: 'bg-brand-primary/10 text-brand-primary border-brand-primary/30',
+    };
+  }
+
+  if (source === 'MANUAL') {
+    return {
+      label: 'MANUAL',
+      detailLabel: 'Manual review',
+      description: 'The final decision was registered by an authorized reviewer.',
+      icon: CheckCircle2,
+      className: 'bg-zinc-950/50 text-zinc-300 border-zinc-700/70',
+    };
+  }
+
+  return {
+    label: 'PENDING REVIEW',
+    detailLabel: 'Pending review',
+    description: 'The intake is waiting for a final authorized decision.',
+    icon: AlertTriangle,
+    className: 'bg-amber-950/20 text-amber-500 border-amber-500/30',
+  };
 };
 
 const isArchivedCorrectedIntake = (admission: Partial<Admission>) =>
@@ -297,12 +338,15 @@ export default function AdmissionList() {
         ...(formValues.id_card ? { id_card: formValues.id_card } : {}),
       });
       const res = await apiClient.post(`/admission/camps/${currentCampId}`, body);
-      return res.data;
+      return res.data as Admission;
     },
-    onSuccess: () => {
+    onSuccess: (admission) => {
       queryClient.invalidateQueries({
         queryKey: ['admissions', currentCampId],
       });
+      if (getAdmissionDecisionSource(admission) === 'AI') {
+        queryClient.invalidateQueries({ queryKey: ['people'] });
+      }
       setIsCreateModalOpen(false);
       setCreateFormError(null);
       setNewName('');
@@ -314,8 +358,14 @@ export default function AdmissionList() {
       setNewIdCard(null);
       setFeedback({
         type: 'success',
-        title: 'INTAKE REGISTERED',
-        message: 'The applicant was submitted to the automated evaluation queue.',
+        title:
+          getAdmissionDecisionSource(admission) === 'AI'
+            ? 'AI ADMISSION ACCEPTED'
+            : 'INTAKE REGISTERED',
+        message:
+          getAdmissionDecisionSource(admission) === 'AI'
+            ? `${admission.applicant_name || 'The applicant'} was accepted automatically by AI and added to the camp roster.`
+            : 'The applicant was submitted to the automated evaluation queue.',
       });
     },
     onError: (error) => {
@@ -521,6 +571,8 @@ export default function AdmissionList() {
             ) : (
               paginatedAdmissions.map((admission) => {
                 const decisionStatus = getAdmissionDecisionStatus(admission);
+                const sourceMeta = getAdmissionDecisionSourceMeta(admission);
+                const SourceIcon = sourceMeta.icon;
 
                 return (
                   <button
@@ -546,7 +598,7 @@ export default function AdmissionList() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                       <div
                         className={cn(
                           'text-[9px] font-black uppercase px-2 py-0.5 rounded border',
@@ -559,6 +611,15 @@ export default function AdmissionList() {
                       >
                         {decisionStatus}
                       </div>
+                      <span
+                        className={cn(
+                          'inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded border',
+                          sourceMeta.className,
+                        )}
+                      >
+                        <SourceIcon size={10} />
+                        {sourceMeta.label}
+                      </span>
                       {admission.ai_confidence != null && (
                         <span className="text-[10px] font-mono text-zinc-600">
                           {(admission.ai_confidence * 100).toFixed(0)}% confidence
@@ -653,6 +714,22 @@ export default function AdmissionList() {
                               </span>
                             );
                           })()}
+                          {(() => {
+                            const sourceMeta = getAdmissionDecisionSourceMeta(details);
+                            const SourceIcon = sourceMeta.icon;
+
+                            return (
+                              <span
+                                className={cn(
+                                  'shrink-0 inline-flex items-center gap-1 text-[9px] font-black uppercase px-2 py-0.5 rounded border',
+                                  sourceMeta.className,
+                                )}
+                              >
+                                <SourceIcon size={10} />
+                                {sourceMeta.label}
+                              </span>
+                            );
+                          })()}
                         </div>
                         <p className="text-zinc-600 font-mono text-xs">
                           ID: ADM-{String(details.id).padStart(4, '0')} ·{' '}
@@ -725,6 +802,36 @@ export default function AdmissionList() {
                             </p>
                           </div>
                         )}
+                      </section>
+
+                      <section className="space-y-3">
+                        <h4 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-brand-secondary" />
+                          Decision Source
+                        </h4>
+                        {(() => {
+                          const sourceMeta = getAdmissionDecisionSourceMeta(details);
+                          const SourceIcon = sourceMeta.icon;
+
+                          return (
+                            <div
+                              className={cn(
+                                'p-3 bg-zinc-900/40 border rounded-lg flex items-start gap-3',
+                                sourceMeta.className,
+                              )}
+                            >
+                              <SourceIcon size={16} className="mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-[10px] font-black uppercase">
+                                  {sourceMeta.detailLabel}
+                                </p>
+                                <p className="text-xs font-mono leading-relaxed opacity-80">
+                                  {sourceMeta.description}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </section>
 
                       {(details.photo_url || details.id_card_url) && (

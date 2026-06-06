@@ -152,6 +152,7 @@ export interface Admission {
   ai_profession_id?: number | null;
   corrected_profession_id?: number | null;
   correction_reason?: string | null;
+  admitted_by?: 'AI' | string | null;
   person_id?: number | null;
   reviewed_by?: number | null;
   reviewed_at?: string | null;
