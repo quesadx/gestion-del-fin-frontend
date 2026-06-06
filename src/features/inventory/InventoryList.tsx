@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, fetchAllPaginated } from '../../lib/api';
+import { apiClient, fetchAllPaginated, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { hasPermission, canAccessCamp } from '../../lib/permissions';
 import { useDeniedPermissionsStore } from '../../store/deniedPermissions';
-import { InventorySnapshot, Resource } from '../../types';
+import {
+  InventoryAdjustmentRequest,
+  InventoryAdjustmentRequestStatus,
+  InventorySnapshot,
+  Resource,
+  UserRole,
+} from '../../types';
 import {
   Package,
   AlertTriangle,
@@ -15,13 +21,80 @@ import {
   X,
   PlusCircle,
   MinusCircle,
+  ClipboardList,
+  CheckCircle2,
+  XCircle,
+  Send,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../../lib/utils';
+import { cn, formatDate } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 const PAGE_SIZE = 12;
+const REQUESTS_PAGE_SIZE = 6;
+const MAX_ADJUSTMENT_QUANTITY = 9999999999.99;
+const ADJUSTMENT_REASON_MAX_LENGTH = 255;
+
+type AdjustmentStatusFilter = 'ALL' | InventoryAdjustmentRequestStatus;
+type AdjustmentSubmissionMode = 'direct' | 'request';
+
+type InventoryFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
+type ReviewAction = {
+  id: number;
+  action: 'approve' | 'reject';
+  resourceName: string;
+  quantity: string;
+};
+
+const getRequestStatusClasses = (status: InventoryAdjustmentRequestStatus) => {
+  switch (status) {
+    case 'PENDING':
+      return 'bg-amber-950/20 text-amber-500 border-amber-500/30';
+    case 'APPROVED':
+      return 'bg-emerald-950/20 text-emerald-400 border-emerald-400/30';
+    case 'REJECTED':
+      return 'bg-red-950/20 text-red-500 border-red-500/30';
+    default:
+      return 'bg-zinc-950/40 text-zinc-400 border-zinc-700/50';
+  }
+};
+
+const formatQuantity = (value: number | string | null | undefined) => {
+  const quantity = Number(value ?? 0);
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(
+    Number.isFinite(quantity) ? quantity : 0,
+  );
+};
+
+const getBackendValidationDetails = (error: unknown) => {
+  const details = (error as { response?: { data?: { error?: { details?: unknown } } } }).response
+    ?.data?.error?.details;
+  if (!Array.isArray(details)) return '';
+
+  return details
+    .map((detail) => {
+      if (detail && typeof detail === 'object' && 'message' in detail) {
+        const message = (detail as { message?: unknown }).message;
+        return typeof message === 'string' ? message : '';
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join(' ');
+};
+
+const getInventoryErrorMessage = (error: unknown, fallback: string) =>
+  getBackendValidationDetails(error) || getApiErrorMessage(error, fallback);
 
 export default function InventoryList() {
   const { currentCampId } = useCampStore();
@@ -33,22 +106,57 @@ export default function InventoryList() {
   // Modals
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [requestsPage, setRequestsPage] = useState(1);
+  const [requestStatusFilter, setRequestStatusFilter] = useState<AdjustmentStatusFilter>('ALL');
   const [adjustError, setAdjustError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<InventoryFeedback | null>(null);
+  const [reviewAction, setReviewAction] = useState<ReviewAction | null>(null);
 
   // Form states for manual adjustment
-  const [selectedResourceId, setSelectedResourceId] = useState<number>(1);
+  const [selectedResourceId, setSelectedResourceId] = useState<number>(0);
   const [adjustType, setAdjustType] = useState<'MANUAL_IN' | 'MANUAL_OUT'>('MANUAL_IN');
   const [adjustQuantity, setAdjustQuantity] = useState<string>('');
   const [adjustDescription, setAdjustDescription] = useState<string>('');
 
-  const canAdjust = hasPermission(user?.permissions, 'inventory.adjust');
+  const canCreateAdjustmentRequest = hasPermission(
+    user?.permissions,
+    'inventory_adjustment_requests.create',
+  );
+  const canReadOwnAdjustmentRequests = hasPermission(
+    user?.permissions,
+    'inventory_adjustment_requests.read_own',
+  );
+  const canReadAdjustmentRequests = hasPermission(
+    user?.permissions,
+    'inventory_adjustment_requests.read',
+  );
+  const canReviewAdjustmentRequests = hasPermission(
+    user?.permissions,
+    'inventory_adjustment_requests.review',
+  );
+  const canDirectAdjust =
+    hasPermission(user?.permissions, 'inventory.adjust') && user?.role !== UserRole.WORKER;
   const canAuditRead = hasPermission(user?.permissions, 'inventory.audit.read');
+  const requestWorkflowMatchesActiveCamp =
+    !!currentCampId && user?.camp_id != null && Number(user.camp_id) === Number(currentCampId);
+  const canOpenAdjustment =
+    canDirectAdjust || (canCreateAdjustmentRequest && requestWorkflowMatchesActiveCamp);
+  const adjustmentSubmissionMode: AdjustmentSubmissionMode =
+    canCreateAdjustmentRequest && !canDirectAdjust ? 'request' : 'direct';
 
   const { data: resources, isLoading: resourcesLoading } = useQuery<Resource[]>({
     queryKey: ['resources'],
     queryFn: () => fetchAllPaginated<Resource>('/resources'),
     enabled: hasPermission(user?.permissions, 'resources.read'),
   });
+
+  const resourceMap = useMemo(() => {
+    const map = new Map<number, Resource>();
+    for (const resource of resources ?? []) {
+      map.set(resource.id, resource);
+    }
+    return map;
+  }, [resources]);
 
   const { data: inventory, isLoading } = useQuery<InventorySnapshot[]>({
     queryKey: ['inventory', currentCampId],
@@ -96,58 +204,256 @@ export default function InventoryList() {
   });
 
   const totalPages = Math.max(1, Math.ceil((inventory?.length ?? 0) / PAGE_SIZE));
-  const paginatedInventory = (inventory ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentInventoryPage = Math.min(page, totalPages);
+  const paginatedInventory = (inventory ?? []).slice(
+    (currentInventoryPage - 1) * PAGE_SIZE,
+    currentInventoryPage * PAGE_SIZE,
+  );
+
+  const requestsEndpoint = canReadAdjustmentRequests
+    ? '/inventory-adjustment-requests'
+    : canReadOwnAdjustmentRequests
+      ? '/inventory-adjustment-requests/my'
+      : null;
+
+  const {
+    data: adjustmentRequests,
+    isLoading: requestsLoading,
+    error: requestsError,
+  } = useQuery<InventoryAdjustmentRequest[]>({
+    queryKey: ['inventory-adjustment-requests', requestsEndpoint, currentCampId],
+    queryFn: async () => {
+      const res = await apiClient.get(requestsEndpoint ?? '/inventory-adjustment-requests/my');
+      return unwrapList<InventoryAdjustmentRequest>(res.data);
+    },
+    enabled:
+      Boolean(requestsEndpoint) &&
+      requestWorkflowMatchesActiveCamp &&
+      canAccessCamp(Number(currentCampId)),
+    retry: false,
+  });
+
+  const requestCounts = useMemo(
+    () =>
+      (adjustmentRequests ?? []).reduce(
+        (counts, request) => {
+          counts.ALL += 1;
+          counts[request.status] += 1;
+          return counts;
+        },
+        { ALL: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 } as Record<AdjustmentStatusFilter, number>,
+      ),
+    [adjustmentRequests],
+  );
+
+  const filteredRequests = useMemo(() => {
+    const requests = adjustmentRequests ?? [];
+    if (requestStatusFilter === 'ALL') return requests;
+    return requests.filter((request) => request.status === requestStatusFilter);
+  }, [adjustmentRequests, requestStatusFilter]);
+
+  const requestsTotalPages = Math.max(1, Math.ceil(filteredRequests.length / REQUESTS_PAGE_SIZE));
+  const currentRequestsPage = Math.min(requestsPage, requestsTotalPages);
+  const paginatedRequests = filteredRequests.slice(
+    (currentRequestsPage - 1) * REQUESTS_PAGE_SIZE,
+    currentRequestsPage * REQUESTS_PAGE_SIZE,
+  );
+
+  const invalidateInventoryFlow = () => {
+    queryClient.invalidateQueries({ queryKey: ['inventory', currentCampId] });
+    queryClient.invalidateQueries({ queryKey: ['inventory'] });
+    queryClient.invalidateQueries({ queryKey: ['inventory-audit', currentCampId] });
+    queryClient.invalidateQueries({ queryKey: ['inventory-alerts', currentCampId] });
+    queryClient.invalidateQueries({ queryKey: ['inventory-adjustment-requests'] });
+    queryClient.invalidateQueries({
+      queryKey: ['dashboard-metrics', currentCampId],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['resource-metrics', currentCampId],
+    });
+  };
 
   const adjustMutation = useMutation({
     mutationFn: async (payload: {
+      mode: AdjustmentSubmissionMode;
       camp_id: number;
       resource_type_id: number;
-      type: 'MANUAL_IN' | 'MANUAL_OUT';
+      adjustment_type: 'MANUAL_IN' | 'MANUAL_OUT';
       quantity: number;
-      description: string;
+      reason?: string;
     }) => {
-      const res = await apiClient.post('/inventory/adjustment', payload);
+      const res =
+        payload.mode === 'request'
+          ? await apiClient.post('/inventory-adjustment-requests', {
+              camp_id: payload.camp_id,
+              resource_type_id: payload.resource_type_id,
+              adjustment_type: payload.adjustment_type,
+              quantity: payload.quantity,
+              ...(payload.reason ? { reason: payload.reason } : {}),
+            })
+          : await apiClient.post('/inventory/adjustment', {
+              camp_id: payload.camp_id,
+              resource_type_id: payload.resource_type_id,
+              type: payload.adjustment_type,
+              quantity: payload.quantity,
+              description:
+                payload.reason ||
+                `Manual ${payload.adjustment_type === 'MANUAL_IN' ? 'Ingress' : 'Egress'} of resources`,
+            });
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['inventory', currentCampId] });
-      queryClient.invalidateQueries({
-        queryKey: ['dashboard-metrics', currentCampId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['resource-metrics', currentCampId],
-      });
+    onSuccess: (_data, variables) => {
+      invalidateInventoryFlow();
       setIsAdjustOpen(false);
+      setSelectedResourceId(0);
       setAdjustQuantity('');
       setAdjustDescription('');
       setAdjustError(null);
+      setFeedback(
+        variables.mode === 'request'
+          ? {
+              type: 'success',
+              title: 'REQUEST SUBMITTED',
+              message:
+                'The inventory adjustment request is pending resource manager review. Inventory was not changed yet.',
+            }
+          : {
+              type: 'success',
+              title: 'INVENTORY UPDATED',
+              message:
+                'The manual adjustment was recorded and the camp inventory was updated successfully.',
+            },
+      );
     },
     onError: (err) => {
-      const msg =
-        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          ?.message ||
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-        (err as Error)?.message ||
-        'Adjustment failed';
+      const msg = getInventoryErrorMessage(err, 'Adjustment failed.');
       setAdjustError(msg);
+      setFeedback({
+        type: 'error',
+        title: 'ADJUSTMENT FAILED',
+        message: msg,
+      });
+    },
+  });
+
+  const approveRequestMutation = useMutation({
+    mutationFn: async (requestId: number) => {
+      const res = await apiClient.patch(`/inventory-adjustment-requests/${requestId}/approve`);
+      return res.data;
+    },
+    onSuccess: () => {
+      invalidateInventoryFlow();
+      setReviewAction(null);
+      setFeedback({
+        type: 'success',
+        title: 'REQUEST APPROVED',
+        message: 'The request was approved and the inventory movement was applied.',
+      });
+    },
+    onError: (error) => {
+      setReviewAction(null);
+      setFeedback({
+        type: 'error',
+        title: 'APPROVAL FAILED',
+        message: getInventoryErrorMessage(error, 'The request could not be approved.'),
+      });
+    },
+  });
+
+  const rejectRequestMutation = useMutation({
+    mutationFn: async (requestId: number) => {
+      const res = await apiClient.patch(`/inventory-adjustment-requests/${requestId}/reject`);
+      return res.data;
+    },
+    onSuccess: () => {
+      invalidateInventoryFlow();
+      setReviewAction(null);
+      setFeedback({
+        type: 'success',
+        title: 'REQUEST REJECTED',
+        message: 'The request was rejected. Inventory was not modified.',
+      });
+    },
+    onError: (error) => {
+      setReviewAction(null);
+      setFeedback({
+        type: 'error',
+        title: 'REJECTION FAILED',
+        message: getInventoryErrorMessage(error, 'The request could not be rejected.'),
+      });
     },
   });
 
   const handleAdjustSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const qty = Math.floor(Number(adjustQuantity));
-    if (!currentCampId || !selectedResourceId || isNaN(qty) || qty <= 0) return;
+    const qty = Number(adjustQuantity);
+    const reason = adjustDescription.trim();
+    if (!currentCampId) {
+      setAdjustError('Select a camp before submitting an inventory adjustment.');
+      return;
+    }
+    if (!selectedResourceId || selectedResourceId <= 0) {
+      setAdjustError('Select a valid resource type.');
+      return;
+    }
+    if (!Number.isFinite(qty) || qty <= 0) {
+      setAdjustError('Quantity must be a number greater than zero.');
+      return;
+    }
+    if (qty > MAX_ADJUSTMENT_QUANTITY) {
+      setAdjustError(`Quantity cannot exceed ${MAX_ADJUSTMENT_QUANTITY}.`);
+      return;
+    }
+    if (reason.length > ADJUSTMENT_REASON_MAX_LENGTH) {
+      setAdjustError(`Justification must be ${ADJUSTMENT_REASON_MAX_LENGTH} characters or less.`);
+      return;
+    }
+    if (adjustmentSubmissionMode === 'request' && !requestWorkflowMatchesActiveCamp) {
+      setAdjustError('Adjustment requests can only be created for your assigned camp.');
+      return;
+    }
 
     adjustMutation.mutate({
+      mode: adjustmentSubmissionMode,
       camp_id: currentCampId,
       resource_type_id: selectedResourceId,
-      type: adjustType,
+      adjustment_type: adjustType,
       quantity: qty,
-      description:
-        adjustDescription ||
-        `Manual ${adjustType === 'MANUAL_IN' ? 'Ingress' : 'Egress'} of resources`,
+      ...(reason ? { reason } : {}),
     });
   };
+
+  const openAdjustmentModal = () => {
+    if (resources && resources.length > 0) {
+      setSelectedResourceId(resources[0].id);
+    } else if (inventory && inventory.length > 0) {
+      setSelectedResourceId(inventory[0].resource_id);
+    }
+    setAdjustQuantity('');
+    setAdjustDescription('');
+    setAdjustError(null);
+    setIsAdjustOpen(true);
+  };
+
+  const getRequestResourceName = (request: InventoryAdjustmentRequest) =>
+    request.resource_type?.name ??
+    resourceMap.get(request.resource_type_id)?.name ??
+    `Resource #${request.resource_type_id}`;
+
+  const getRequestResourceUnit = (request: InventoryAdjustmentRequest) =>
+    request.resource_type?.unit ?? resourceMap.get(request.resource_type_id)?.unit ?? '';
+
+  const handleReviewConfirm = () => {
+    if (!reviewAction) return;
+    if (reviewAction.action === 'approve') {
+      approveRequestMutation.mutate(reviewAction.id);
+      return;
+    }
+    rejectRequestMutation.mutate(reviewAction.id);
+  };
+
+  const showAdjustmentRequestsPanel =
+    (canReadAdjustmentRequests || canReadOwnAdjustmentRequests) && requestWorkflowMatchesActiveCamp;
 
   return (
     <div className="space-y-8">
@@ -171,22 +477,23 @@ export default function InventoryList() {
               VIEW AUDIT TRAIL
             </button>
           )}
-          {canAdjust && (
+          {canOpenAdjustment && (
             <button
-              onClick={() => {
-                if (resources && resources.length > 0) {
-                  setSelectedResourceId(resources[0].id);
-                } else if (inventory && inventory.length > 0) {
-                  setSelectedResourceId(inventory[0].resource_id);
-                }
-                setIsAdjustOpen(true);
-              }}
+              onClick={openAdjustmentModal}
               disabled={resourcesLoading}
               className="bg-brand-secondary hover:bg-amber-600 text-black font-bold px-4 py-2 rounded-md flex items-center gap-2 text-sm transition-all"
-              aria-label="Open manual stock adjustment form"
+              aria-label={
+                adjustmentSubmissionMode === 'request'
+                  ? 'Open inventory adjustment request form'
+                  : 'Open manual stock adjustment form'
+              }
             >
-              <ArrowDownUp size={18} />
-              MANUAL ADJUST
+              {adjustmentSubmissionMode === 'request' ? (
+                <Send size={18} />
+              ) : (
+                <ArrowDownUp size={18} />
+              )}
+              {adjustmentSubmissionMode === 'request' ? 'REQUEST ADJUST' : 'MANUAL ADJUST'}
             </button>
           )}
         </div>
@@ -207,7 +514,7 @@ export default function InventoryList() {
           <div>
             <p className="text-[10px] font-bold text-zinc-500 uppercase">Resources in Storage</p>
             <p className="text-xs font-mono text-zinc-300">
-              {inventory?.length ?? '—'} resource types tracked
+              {inventory?.length ?? '-'} resource types tracked
             </p>
           </div>
           <div>
@@ -370,13 +677,243 @@ export default function InventoryList() {
               </motion.div>
             ))}
 
-        <div className="pt-6 flex justify-center">
-          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <div className="pt-6 flex justify-center sm:col-span-2 xl:col-span-3">
+          <Pagination page={currentInventoryPage} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
 
+      {showAdjustmentRequestsPanel && (
+        <section className="space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 text-brand-secondary">
+                <ClipboardList size={18} />
+                <p className="text-[10px] font-mono uppercase tracking-widest">
+                  Inventory Authorization Queue
+                </p>
+              </div>
+              <h2 className="text-2xl font-black uppercase italic tracking-tighter">
+                Adjustment Requests
+              </h2>
+              <p className="text-xs font-mono text-zinc-500">
+                {canReadAdjustmentRequests
+                  ? 'Requests submitted for your assigned camp. Approvals apply inventory changes.'
+                  : 'Your submitted requests. Inventory changes only after resource manager approval.'}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5" aria-label="Request status filter">
+              {(['ALL', 'PENDING', 'APPROVED', 'REJECTED'] as AdjustmentStatusFilter[]).map(
+                (status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => {
+                      setRequestStatusFilter(status);
+                      setRequestsPage(1);
+                    }}
+                    className={cn(
+                      'px-3 py-2 rounded border text-[10px] font-black uppercase tracking-wider transition-colors touch-target',
+                      requestStatusFilter === status
+                        ? 'border-brand-secondary text-brand-secondary bg-brand-secondary/10'
+                        : 'border-zinc-800 text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300',
+                    )}
+                  >
+                    {status} - {requestCounts[status]}
+                  </button>
+                ),
+              )}
+            </div>
+          </div>
+
+          {requestsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-16 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : requestsError ? (
+            <div className="p-4 bg-red-950/20 border border-red-500/30 rounded-lg">
+              <p className="text-xs font-mono text-red-400 leading-relaxed">
+                {getInventoryErrorMessage(requestsError, 'Failed to load adjustment requests.')}
+              </p>
+            </div>
+          ) : filteredRequests.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-12 text-center border border-zinc-800 rounded-xl bg-surface-raised/30">
+              <ClipboardList className="h-10 w-10 text-zinc-700" />
+              <div>
+                <p className="text-sm font-bold text-zinc-400 uppercase tracking-wider">
+                  No adjustment requests found
+                </p>
+                <p className="text-xs text-zinc-600 font-mono mt-1">
+                  {requestStatusFilter === 'ALL'
+                    ? 'There are no inventory adjustment requests for this view.'
+                    : `No ${requestStatusFilter.toLowerCase()} requests are currently listed.`}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto border border-zinc-800 rounded-xl bg-surface-raised/40">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-zinc-800 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
+                      <th scope="col" className="py-3 px-4 font-semibold">
+                        Requested
+                      </th>
+                      <th scope="col" className="py-3 px-4 font-semibold">
+                        Resource
+                      </th>
+                      <th scope="col" className="py-3 px-4 font-semibold">
+                        Type
+                      </th>
+                      <th scope="col" className="py-3 px-4 font-semibold">
+                        Quantity
+                      </th>
+                      <th scope="col" className="py-3 px-4 font-semibold">
+                        Status
+                      </th>
+                      <th scope="col" className="py-3 px-4 font-semibold">
+                        Reason
+                      </th>
+                      {canReadAdjustmentRequests && (
+                        <th scope="col" className="py-3 px-4 font-semibold">
+                          Worker
+                        </th>
+                      )}
+                      <th scope="col" className="py-3 px-4 font-semibold">
+                        Reviewed
+                      </th>
+                      {canReviewAdjustmentRequests && (
+                        <th scope="col" className="py-3 px-4 font-semibold text-right">
+                          Actions
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/50">
+                    {paginatedRequests.map((request) => {
+                      const resourceName = getRequestResourceName(request);
+                      const unit = getRequestResourceUnit(request);
+                      const quantity = `${formatQuantity(request.quantity)}${unit ? ` ${unit}` : ''}`;
+                      const isPending = request.status === 'PENDING';
+
+                      return (
+                        <tr key={request.id} className="hover:bg-zinc-900/40 transition-colors">
+                          <td className="py-3 px-4 font-mono text-zinc-400 whitespace-nowrap">
+                            {formatDate(request.created_at)}
+                          </td>
+                          <td className="py-3 px-4 font-medium text-zinc-100">{resourceName}</td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider border',
+                                request.adjustment_type === 'MANUAL_IN'
+                                  ? 'bg-emerald-950/40 text-emerald-400 border-emerald-500/20'
+                                  : 'bg-red-950/40 text-red-400 border-red-500/20',
+                              )}
+                            >
+                              {request.adjustment_type === 'MANUAL_IN' ? (
+                                <PlusCircle size={10} />
+                              ) : (
+                                <MinusCircle size={10} />
+                              )}
+                              {request.adjustment_type.replace('_', ' ')}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 font-mono font-bold text-zinc-200 whitespace-nowrap">
+                            {quantity}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={cn(
+                                'inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider border',
+                                getRequestStatusClasses(request.status),
+                              )}
+                            >
+                              {request.status === 'APPROVED' ? (
+                                <CheckCircle2 size={10} />
+                              ) : request.status === 'REJECTED' ? (
+                                <XCircle size={10} />
+                              ) : (
+                                <AlertTriangle size={10} />
+                              )}
+                              {request.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-zinc-400 max-w-xs truncate">
+                            {request.reason || '-'}
+                          </td>
+                          {canReadAdjustmentRequests && (
+                            <td className="py-3 px-4 text-zinc-400 font-mono">
+                              {request.created_by_user?.username ?? request.created_by}
+                            </td>
+                          )}
+                          <td className="py-3 px-4 text-zinc-500 font-mono whitespace-nowrap">
+                            {request.reviewed_at
+                              ? `${formatDate(request.reviewed_at)}${
+                                  request.reviewed_by_user?.username
+                                    ? ` - ${request.reviewed_by_user.username}`
+                                    : ''
+                                }`
+                              : '-'}
+                          </td>
+                          {canReviewAdjustmentRequests && (
+                            <td className="py-3 px-4">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  disabled={!isPending}
+                                  onClick={() =>
+                                    setReviewAction({
+                                      id: request.id,
+                                      action: 'approve',
+                                      resourceName,
+                                      quantity,
+                                    })
+                                  }
+                                  className="px-3 py-1.5 rounded border border-emerald-500/30 text-emerald-400 hover:bg-emerald-950/30 disabled:opacity-30 disabled:hover:bg-transparent text-[10px] font-black uppercase transition-colors touch-target"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={!isPending}
+                                  onClick={() =>
+                                    setReviewAction({
+                                      id: request.id,
+                                      action: 'reject',
+                                      resourceName,
+                                      quantity,
+                                    })
+                                  }
+                                  className="px-3 py-1.5 rounded border border-red-500/30 text-red-400 hover:bg-red-950/30 disabled:opacity-30 disabled:hover:bg-transparent text-[10px] font-black uppercase transition-colors touch-target"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <Pagination
+                page={currentRequestsPage}
+                totalPages={requestsTotalPages}
+                onPageChange={setRequestsPage}
+                showEdgeButtons
+              />
+            </>
+          )}
+        </section>
+      )}
+
       <AnimatePresence>
-        {/* Manual Adjust Modal */}
+        {/* Inventory adjustment modal */}
         {isAdjustOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
             <motion.div
@@ -391,10 +928,14 @@ export default function InventoryList() {
                     DISPENSARY INTERFACE CR-08
                   </p>
                   <h3 className="text-2xl font-black uppercase italic tracking-tighter">
-                    Manual Stock Adjustment
+                    {adjustmentSubmissionMode === 'request'
+                      ? 'Inventory Adjustment Request'
+                      : 'Manual Stock Adjustment'}
                   </h3>
                   <p className="text-xs text-zinc-500 font-mono">
-                    Override stockpile logs due to field discoveries or unplanned rationing.
+                    {adjustmentSubmissionMode === 'request'
+                      ? 'Submit a pending inventory change for resource manager authorization.'
+                      : 'Override stockpile logs due to field discoveries or unplanned rationing.'}
                   </p>
                 </div>
                 <button
@@ -410,13 +951,27 @@ export default function InventoryList() {
               </div>
 
               <form onSubmit={handleAdjustSubmit} className="space-y-4">
+                <div className="rounded border border-zinc-800 bg-zinc-950/40 p-3 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Format requirements
+                  </p>
+                  <p className="text-[10px] font-mono leading-relaxed text-zinc-500">
+                    Resource and quantity are required. Quantity must be greater than zero and no
+                    more than {MAX_ADJUSTMENT_QUANTITY}. Justification is optional and max{' '}
+                    {ADJUSTMENT_REASON_MAX_LENGTH} characters.
+                  </p>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
                     Target Resource
                   </label>
                   <select
                     value={selectedResourceId}
-                    onChange={(e) => setSelectedResourceId(Number(e.target.value))}
+                    onChange={(e) => {
+                      setSelectedResourceId(Number(e.target.value));
+                      setAdjustError(null);
+                    }}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-secondary cursor-pointer"
                   >
                     {(resources ?? []).map((resource) => {
@@ -480,15 +1035,17 @@ export default function InventoryList() {
                     </label>
                     <input
                       required
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
+                      type="number"
+                      inputMode="decimal"
+                      min="0.01"
+                      max={MAX_ADJUSTMENT_QUANTITY}
+                      step="0.01"
                       value={adjustQuantity}
                       onChange={(e) => {
-                        const cleaned = e.target.value.replace(/[^0-9]/g, '');
-                        setAdjustQuantity(cleaned);
+                        setAdjustQuantity(e.target.value);
+                        setAdjustError(null);
                       }}
-                      placeholder="e.g. 50000"
+                      placeholder="e.g. 50"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-secondary"
                     />
                   </div>
@@ -500,11 +1057,19 @@ export default function InventoryList() {
                   </label>
                   <textarea
                     value={adjustDescription}
-                    onChange={(e) => setAdjustDescription(e.target.value)}
+                    maxLength={ADJUSTMENT_REASON_MAX_LENGTH}
+                    onChange={(e) => {
+                      setAdjustDescription(e.target.value);
+                      setAdjustError(null);
+                    }}
                     placeholder="e.g. Discovered 5 crates of canned beans in warehouse basement near Highway 10."
                     rows={3}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-secondary resize-none"
                   />
+                  <p className="text-[10px] font-mono text-zinc-600">
+                    Optional. {adjustDescription.trim().length}/{ADJUSTMENT_REASON_MAX_LENGTH}{' '}
+                    characters.
+                  </p>
                 </div>
 
                 {adjustError && (
@@ -529,9 +1094,17 @@ export default function InventoryList() {
                     type="submit"
                     disabled={adjustMutation.isPending || !adjustQuantity}
                     className="flex-1 py-2.5 bg-brand-secondary text-black text-xs font-black uppercase rounded hover:bg-amber-500 transition-colors disabled:opacity-30"
-                    aria-label="Authorize manual stock entry"
+                    aria-label={
+                      adjustmentSubmissionMode === 'request'
+                        ? 'Submit inventory adjustment request'
+                        : 'Authorize manual stock entry'
+                    }
                   >
-                    {adjustMutation.isPending ? 'TRANSMITTING ACTION...' : 'AUTHORIZE STOCK ENTRY'}
+                    {adjustMutation.isPending
+                      ? 'TRANSMITTING ACTION...'
+                      : adjustmentSubmissionMode === 'request'
+                        ? 'SUBMIT REQUEST'
+                        : 'AUTHORIZE STOCK ENTRY'}
                   </button>
                 </div>
               </form>
@@ -539,6 +1112,39 @@ export default function InventoryList() {
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        isOpen={Boolean(reviewAction)}
+        title={reviewAction?.action === 'approve' ? 'Approve Adjustment Request' : 'Reject Request'}
+        description={
+          reviewAction?.action === 'approve'
+            ? `Approve ${reviewAction.quantity} for ${reviewAction.resourceName}. The backend will apply this movement to inventory immediately.`
+            : `Reject the request for ${reviewAction?.quantity ?? ''} of ${
+                reviewAction?.resourceName ?? 'this resource'
+              }. Inventory will not be modified.`
+        }
+        confirmLabel={reviewAction?.action === 'approve' ? 'APPROVE' : 'REJECT'}
+        cancelLabel="CANCEL"
+        variant={reviewAction?.action === 'approve' ? 'warning' : 'danger'}
+        isPending={approveRequestMutation.isPending || rejectRequestMutation.isPending}
+        onConfirm={handleReviewConfirm}
+        onCancel={() => {
+          if (!approveRequestMutation.isPending && !rejectRequestMutation.isPending) {
+            setReviewAction(null);
+          }
+        }}
+      />
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={Boolean(feedback)}
+          type={feedback.type}
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
+      )}
     </div>
   );
 }

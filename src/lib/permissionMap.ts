@@ -15,6 +15,10 @@ export const Perm = {
   INVENTORY_READ: 'inventory.read',
   INVENTORY_ADJUST: 'inventory.adjust',
   INVENTORY_AUDIT_READ: 'inventory.audit.read',
+  INVENTORY_ADJUSTMENT_REQUESTS_CREATE: 'inventory_adjustment_requests.create',
+  INVENTORY_ADJUSTMENT_REQUESTS_READ_OWN: 'inventory_adjustment_requests.read_own',
+  INVENTORY_ADJUSTMENT_REQUESTS_READ: 'inventory_adjustment_requests.read',
+  INVENTORY_ADJUSTMENT_REQUESTS_REVIEW: 'inventory_adjustment_requests.review',
 
   // Admission
   ADMISSION_READ: 'admission.read',

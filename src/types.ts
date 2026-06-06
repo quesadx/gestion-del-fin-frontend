@@ -87,6 +87,37 @@ export interface InventoryAuditEntry {
   is_consistent?: boolean;
 }
 
+export type InventoryAdjustmentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type InventoryAdjustmentType = 'MANUAL_IN' | 'MANUAL_OUT';
+
+export interface InventoryAdjustmentRequest {
+  id: number;
+  camp_id: number;
+  created_by: number;
+  status: InventoryAdjustmentRequestStatus;
+  adjustment_type: InventoryAdjustmentType;
+  resource_type_id: number;
+  quantity: number | string;
+  reason?: string | null;
+  reviewed_by?: number | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at?: string;
+  created_by_user?: {
+    id: number;
+    username: string;
+  } | null;
+  reviewed_by_user?: {
+    id: number;
+    username: string;
+  } | null;
+  resource_type?: {
+    id: number;
+    name: string;
+    unit: string;
+  } | null;
+}
+
 export interface ResourceLookup {
   id: number;
   name: string;
