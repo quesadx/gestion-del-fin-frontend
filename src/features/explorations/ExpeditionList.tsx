@@ -1483,10 +1483,6 @@ export default function ExpeditionList() {
                               onChange={(e) => {
                                 const updated = [...returnedAllocatedResources];
                                 const nextResourceId = Number(e.target.value);
-                                const allocation = returningAllocatedResourceRows.find(
-                                  (resource) =>
-                                    Number(resource.resource_type_id) === nextResourceId,
-                                );
                                 updated[idx] = {
                                   resource_type_id: nextResourceId,
                                   amount: 0,
