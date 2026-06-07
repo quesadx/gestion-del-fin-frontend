@@ -283,11 +283,8 @@ export default function DashboardLayout() {
       const homeCamp = camps.find((c) => c.id === user.camp_id);
       if (homeCamp) {
         setCurrentCamp(homeCamp.id);
-        return;
       }
     }
-
-    setCampPopupOpen(true);
   }, [currentCampId, camps, isAdmin, user?.camp_id, setCurrentCamp]);
 
   const activeFloatingLinesTheme = useMemo(() => {
