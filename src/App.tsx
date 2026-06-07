@@ -57,6 +57,7 @@ const AchievementsStatsPage = lazy(() => import('./features/gamification/Achieve
 const UsersPage = lazy(() => import('./features/users/UsersPage'));
 const RolesPage = lazy(() => import('./features/roles/RolesPage'));
 const PermissionsPage = lazy(() => import('./features/permissions/PermissionsPage'));
+const UnauthorizedPage = lazy(() => import('./components/UnauthorizedPage'));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen bg-zinc-950">
@@ -114,19 +115,9 @@ const getFallbackRoute = (permissions: string[] | undefined, currentPath: string
   return fallback?.to;
 };
 
-const PermissionFallback = () => (
-  <div className="min-h-[60vh] flex items-center justify-center px-4">
-    <div className="max-w-md w-full bg-surface-raised brutalist-border rounded-xl p-6 text-center space-y-3">
-      <p className="text-[10px] font-mono uppercase tracking-widest text-brand-primary">
-        Access Control
-      </p>
-      <h2 className="text-2xl font-black uppercase italic tracking-tighter">Permission Required</h2>
-      <p className="text-xs font-mono leading-relaxed text-zinc-400">
-        Your current role is not authorized to access this section.
-      </p>
-    </div>
-  </div>
-);
+function PermissionFallback() {
+  return <UnauthorizedPage />;
+}
 
 const ProtectedRoute = ({
   children,
@@ -138,15 +129,12 @@ const ProtectedRoute = ({
   permission?: string;
 }) => {
   const { user } = useAuthStore();
-  const location = useLocation();
   if (!user) return <Navigate to="/login" replace />;
   if (permission && !hasPermission(user?.permissions, permission)) {
-    const fallback = getFallbackRoute(user.permissions, location.pathname);
-    return fallback ? <Navigate to={fallback} replace /> : <PermissionFallback />;
+    return <PermissionFallback />;
   }
   if (roles && !roles.includes(user.role)) {
-    const fallback = getFallbackRoute(user.permissions, location.pathname);
-    return fallback ? <Navigate to={fallback} replace /> : <PermissionFallback />;
+    return <PermissionFallback />;
   }
   return <>{children}</>;
 };

@@ -179,6 +179,7 @@ export default function PersonDetail() {
   );
 
   const campName = camps?.find((c) => c.id === person?.camp_id)?.name;
+  const isDeceased = normalizePersonStatus(person?.status) === 'DEAD';
   const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
 
   const showErrorFeedback = (title: string, error: unknown, fallback: string) => {
@@ -908,8 +909,21 @@ export default function PersonDetail() {
       )}
 
       {/* Action buttons */}
+      {isDeceased && (
+        <div className="flex items-center gap-3 p-4 bg-zinc-900/50 border border-zinc-700/40 rounded-lg">
+          <Skull size={18} className="text-zinc-500 shrink-0" />
+          <div>
+            <p className="text-xs font-black text-zinc-400 uppercase tracking-wider">
+              Deceased Record
+            </p>
+            <p className="text-[10px] font-mono text-zinc-500">
+              This personnel record is locked. No modifications are permitted.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row gap-4">
-        {canUpdate && (
+        {canUpdate && !isDeceased && (
           <button
             onClick={openEditModal}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-emerald-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-emerald-500 transition-all"
@@ -927,7 +941,7 @@ export default function PersonDetail() {
             TRANSFER PERSONNEL
           </button>
         )}
-        {canDelete && (
+        {canDelete && !isDeceased && (
           <button
             onClick={() => setConfirmDelete(true)}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-red-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-red-500 transition-all"
@@ -944,7 +958,7 @@ export default function PersonDetail() {
           Personnel Actions
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          {canStatusLog && (
+          {canStatusLog && !isDeceased && (
             <button
               onClick={() => {
                 setStatusNewStatus(normalizePersonStatus(person?.status));
@@ -956,7 +970,7 @@ export default function PersonDetail() {
               LOG STATUS CHANGE
             </button>
           )}
-          {canReassignProfession && (
+          {canReassignProfession && !isDeceased && (
             <button
               onClick={() => setShowReassignModal(true)}
               className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-brand-secondary/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-brand-secondary transition-all"
@@ -965,7 +979,7 @@ export default function PersonDetail() {
               REASSIGN PROFESSION
             </button>
           )}
-          {canOverrideContribution && (
+          {canOverrideContribution && !isDeceased && (
             <button
               onClick={() => setShowOverrideModal(true)}
               className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-blue-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-blue-500 transition-all"

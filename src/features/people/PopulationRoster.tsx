@@ -676,7 +676,7 @@ export default function PopulationRoster() {
                           <ArrowLeftRight size={16} />
                         </button>
                       )}
-                      {canUpdate && (
+                      {canUpdate && normalizePersonStatus(person.status) !== 'DEAD' && (
                         <button
                           onClick={() => handleEditClick(person)}
                           aria-label={`Edit ${person.full_name}`}
@@ -686,7 +686,7 @@ export default function PopulationRoster() {
                           <Edit2 size={16} />
                         </button>
                       )}
-                      {canDelete && (
+                      {canDelete && normalizePersonStatus(person.status) !== 'DEAD' && (
                         <button
                           onClick={() => setConfirmDeletePerson(person)}
                           aria-label={`Delete ${person.full_name}`}
