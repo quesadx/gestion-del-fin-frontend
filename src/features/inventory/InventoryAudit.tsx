@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { History, ArrowLeft } from 'lucide-react';
@@ -21,10 +21,7 @@ export default function InventoryAudit() {
 
   const { data: resources } = useQuery<Resource[]>({
     queryKey: ['resources'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return res.data?.data ?? res.data ?? [];
-    },
+    queryFn: () => fetchAllPaginated<Resource>('/resources'),
     staleTime: 60_000,
     enabled: hasPermission(user?.permissions, 'resources.read'),
   });

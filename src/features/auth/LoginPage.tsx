@@ -80,16 +80,23 @@ export default function LoginPage() {
           <AnimatePresence mode="wait">
             {sessionExpired && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-4 bg-amber-950/20 border border-amber-500/50 rounded-lg flex items-start gap-3"
+                initial={{ opacity: 0, y: -12, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                className="p-4 bg-amber-950/20 border border-amber-500/40 rounded-xl flex items-start gap-4 shadow-[0_0_24px_rgba(245,158,11,0.08)]"
               >
-                <ShieldAlert className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                <div className="text-sm font-medium text-amber-500">
-                  <p className="font-bold uppercase leading-none mb-1">Session Closed</p>
-                  <p className="text-xs text-amber-500/70">
-                    Terminal locked down automatically after 20 minutes of system inactivity to
-                    prevent unauthorized breach.
+                <div className="w-10 h-10 shrink-0 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center justify-center">
+                  <ShieldAlert className="text-amber-500" size={20} />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xs font-black uppercase tracking-wider text-amber-500">
+                    Session Terminated
+                  </p>
+                  <p className="text-[11px] font-mono leading-relaxed text-amber-400/70">
+                    Your session was closed automatically after 20 minutes of inactivity. This
+                    security measure protects camp data from unauthorized access. Please
+                    authenticate again to continue.
                   </p>
                 </div>
               </motion.div>

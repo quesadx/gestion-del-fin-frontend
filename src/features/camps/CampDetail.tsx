@@ -9,6 +9,39 @@ import { MapPin, Users, Box, Map, ArrowLeft, AlertCircle, Activity, Calendar } f
 import { motion } from 'motion/react';
 import { Skeleton, SkeletonCard } from '../../components/Skeleton';
 
+const API_LIST_PAGE_SIZE = 100;
+
+const getTotalPagesFromResponse = (responseData: unknown) =>
+  Math.max(
+    1,
+    Number((responseData as { pagination?: { totalPages?: number } })?.pagination?.totalPages) || 1,
+  );
+
+async function fetchAllPaginated<T>(
+  url: string,
+  params: Record<string, string | number | boolean | undefined> = {},
+) {
+  const firstPage = await apiClient.get(url, {
+    params: { ...params, page: 1, pageSize: API_LIST_PAGE_SIZE },
+  });
+  const firstPageItems = unwrapList<T>(firstPage.data);
+  const totalPages = getTotalPagesFromResponse(firstPage.data);
+
+  if (totalPages === 1) return firstPageItems;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, async (_, index) => {
+      const pageNumber = index + 2;
+      const res = await apiClient.get(url, {
+        params: { ...params, page: pageNumber, pageSize: API_LIST_PAGE_SIZE },
+      });
+      return unwrapList<T>(res.data);
+    }),
+  );
+
+  return firstPageItems.concat(...remainingPages);
+}
+
 export default function CampDetail() {
   const { id } = useParams();
   const campId = Number(id);
@@ -17,6 +50,8 @@ export default function CampDetail() {
   const hasReadAccess = hasPermission(user?.permissions, 'camps.read');
   const hasInventoryRead = hasPermission(user?.permissions, 'inventory.read');
   const hasPeopleRead = hasPermission(user?.permissions, 'people.read');
+  const hasExpeditionsRead = hasPermission(user?.permissions, 'expeditions.read');
+  const canViewRequestedCamp = isNaN(campId) || canAccessCamp(campId);
 
   // Camp detail query
   const {
@@ -29,40 +64,37 @@ export default function CampDetail() {
       const res = await apiClient.get(`/camps/${campId}`);
       return res.data?.data ?? res.data;
     },
-    enabled: hasReadAccess && !isNaN(campId),
+    enabled: hasReadAccess && canViewRequestedCamp && !isNaN(campId),
   });
 
   // People count
   const { data: people, isLoading: peopleLoading } = useQuery<Person[]>({
     queryKey: ['camp-people', campId],
     queryFn: async () => {
-      const res = await apiClient.get(`/camps/${campId}/people`);
-      return unwrapList<Person>(res.data);
+      return fetchAllPaginated<Person>(`/camps/${campId}/people`);
     },
-    enabled: hasReadAccess && hasPeopleRead && !isNaN(campId),
+    enabled: hasReadAccess && hasPeopleRead && canViewRequestedCamp && !isNaN(campId),
   });
 
   // Inventory count
   const { data: inventory, isLoading: inventoryLoading } = useQuery<InventoryItem[]>({
     queryKey: ['camp-inventory', campId],
     queryFn: async () => {
-      const res = await apiClient.get(`/inventory/${campId}`);
-      return unwrapList<InventoryItem>(res.data);
+      return fetchAllPaginated<InventoryItem>(`/inventory/${campId}`);
     },
-    enabled: hasReadAccess && hasInventoryRead && canAccessCamp(campId) && !isNaN(campId),
+    enabled: hasReadAccess && hasInventoryRead && canViewRequestedCamp && !isNaN(campId),
   });
 
   // Expeditions
   const { data: expeditions, isLoading: expeditionsLoading } = useQuery<Expedition[]>({
     queryKey: ['camp-expeditions', campId],
     queryFn: async () => {
-      const res = await apiClient.get('/expeditions');
-      return unwrapList<Expedition>(res.data);
+      return fetchAllPaginated<Expedition>('/expeditions', { camp_id: campId });
     },
-    enabled: hasReadAccess && !isNaN(campId),
+    enabled: hasReadAccess && hasExpeditionsRead && canViewRequestedCamp && !isNaN(campId),
   });
 
-  if (!hasReadAccess) {
+  if (!hasReadAccess || !canViewRequestedCamp) {
     return <Navigate to="/" replace />;
   }
 
@@ -118,7 +150,9 @@ export default function CampDetail() {
   );
 
   const statsLoading =
-    peopleLoading || (hasInventoryRead && inventoryLoading) || expeditionsLoading;
+    (hasPeopleRead && peopleLoading) ||
+    (hasInventoryRead && inventoryLoading) ||
+    (hasExpeditionsRead && expeditionsLoading);
 
   // ── Render ──────────────────────────────────────────────────────────────
 
@@ -127,9 +161,9 @@ export default function CampDetail() {
       {/* Back navigation */}
       <button
         onClick={() => navigate('/camps')}
-        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-wider"
+        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-600 rounded-lg px-3 py-2 transition-all hover:-translate-x-0.5 hover:shadow-[0_0_12px_rgba(255,255,255,0.04)] group"
       >
-        <ArrowLeft size={14} />
+        <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
         BACK TO REFUGES
       </button>
 
@@ -209,22 +243,24 @@ export default function CampDetail() {
           ) : (
             <>
               {/* Survivors */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
-              >
-                <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
-                  <Users size={20} />
-                </div>
-                <div>
-                  <p className="text-2xl font-black font-mono">{people?.length ?? 0}</p>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    Survivors
-                  </p>
-                </div>
-              </motion.div>
+              {hasPeopleRead && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500">
+                    <Users size={20} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black font-mono">{people?.length ?? 0}</p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Survivors
+                    </p>
+                  </div>
+                </motion.div>
+              )}
 
               {/* Inventory items */}
               {hasInventoryRead && (
@@ -247,22 +283,26 @@ export default function CampDetail() {
               )}
 
               {/* Active expeditions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
-              >
-                <div className="w-10 h-10 bg-brand-primary/10 rounded-lg flex items-center justify-center text-brand-primary">
-                  <Map size={20} />
-                </div>
-                <div>
-                  <p className="text-2xl font-black font-mono">{activeExpeditions?.length ?? 0}</p>
-                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    Active Expeditions
-                  </p>
-                </div>
-              </motion.div>
+              {hasExpeditionsRead && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors"
+                >
+                  <div className="w-10 h-10 bg-brand-primary/10 rounded-lg flex items-center justify-center text-brand-primary">
+                    <Map size={20} />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black font-mono">
+                      {activeExpeditions?.length ?? 0}
+                    </p>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                      Active Expeditions
+                    </p>
+                  </div>
+                </motion.div>
+              )}
             </>
           )}
         </div>
@@ -270,13 +310,15 @@ export default function CampDetail() {
 
       {/* Quick links */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <Link
-          to="/population"
-          className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-zinc-700 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-white transition-all"
-        >
-          <Users size={16} />
-          VIEW POPULATION
-        </Link>
+        {hasPeopleRead && (
+          <Link
+            to="/population"
+            className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-zinc-700 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-white transition-all"
+          >
+            <Users size={16} />
+            VIEW POPULATION
+          </Link>
+        )}
         {hasInventoryRead && (
           <Link
             to="/inventory"

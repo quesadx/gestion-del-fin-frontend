@@ -87,6 +87,40 @@ export const unwrapList = <T>(responseData: unknown): T[] => {
   return [];
 };
 
+const DEFAULT_API_PAGE_SIZE = 100;
+
+const getTotalPagesFromResponse = (responseData: unknown) =>
+  Math.max(
+    1,
+    Number((responseData as { pagination?: { totalPages?: number } })?.pagination?.totalPages) || 1,
+  );
+
+export async function fetchAllPaginated<T>(
+  url: string,
+  params: Record<string, unknown> = {},
+  pageSize = DEFAULT_API_PAGE_SIZE,
+) {
+  const firstPage = await apiClient.get(url, {
+    params: { ...params, page: 1, pageSize },
+  });
+  const firstPageItems = unwrapList<T>(firstPage.data);
+  const totalPages = getTotalPagesFromResponse(firstPage.data);
+
+  if (totalPages === 1) return firstPageItems;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, async (_, index) => {
+      const pageNumber = index + 2;
+      const res = await apiClient.get(url, {
+        params: { ...params, page: pageNumber, pageSize },
+      });
+      return unwrapList<T>(res.data);
+    }),
+  );
+
+  return firstPageItems.concat(...remainingPages);
+}
+
 /**
  * Convert a plain-object payload into `FormData` for multipart endpoints
  * (e.g. person update, admission create). Skips null/undefined/empty-string values.

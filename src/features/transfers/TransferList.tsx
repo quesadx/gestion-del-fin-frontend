@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
-import { hasPermission } from '../../lib/permissions';
+import { canAccessCamp, hasPermission } from '../../lib/permissions';
 import { cn, formatDate } from '../../lib/utils';
 import { Skeleton, SkeletonList } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Pagination } from '../../components/Pagination';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 import { motion, AnimatePresence } from 'motion/react';
 import { Person } from '../../types';
 import {
@@ -30,12 +32,17 @@ import {
 // ── Local types ───────────────────────────────────────────────────────────────
 
 type TransferStatus = 'PENDING' | 'APPROVED_SOURCE' | 'APPROVED_TARGET' | 'COMPLETED' | 'REJECTED';
+type TransferType = 'RESOURCE' | 'PERSON' | 'MIXED';
+type PersonStatus = Person['status'];
 
 interface TransferItem {
+  id?: number;
   item_type: 'RESOURCE' | 'PERSON';
   resource_type_id?: number | null;
   person_id?: number | null;
   quantity?: number | null;
+  person?: Pick<Person, 'id' | 'full_name' | 'status'> | null;
+  resource_type?: ResourceType | null;
 }
 
 interface Transfer {
@@ -45,7 +52,7 @@ interface Transfer {
   requesting_camp_ref?: { id: number; name: string } | null;
   target_camp_ref?: { id: number; name: string } | null;
   status: TransferStatus;
-  type: string;
+  type: TransferType;
   notes?: string | null;
   requested_by?: number | null;
   items: TransferItem[];
@@ -64,6 +71,29 @@ interface CampRef {
   name: string;
 }
 
+interface TransferApiRecord extends Omit<Transfer, 'items'> {
+  items?: TransferItem[] | null;
+  camp_transfer_items?: TransferItem[] | null;
+}
+
+interface TransferPage {
+  data: Transfer[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+  };
+}
+
+type TransferFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const STATUS_STEPS: TransferStatus[] = [
@@ -74,6 +104,11 @@ const STATUS_STEPS: TransferStatus[] = [
 ];
 
 const STATUS_STEP_LABELS = ['PENDING', 'SOURCE\nAPPROVED', 'TARGET\nAPPROVED', 'COMPLETED'];
+const PEOPLE_TRANSFER_STATUSES: PersonStatus[] = ['HEALTHY', 'SICK', 'INJURED', 'AWAY', 'DEAD'];
+const RATION_RESOURCE_TYPE_NAME = 'FOOD_RATION';
+const RATION_PER_PERSON_PER_DAY = 2;
+const RATION_TRAVEL_DAYS = 3;
+const RATIONS_PER_PERSON_FOR_TRAVEL = RATION_PER_PERSON_PER_DAY * RATION_TRAVEL_DAYS;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -96,6 +131,56 @@ function datetimeLocalToUTCISO(value: string): string {
   const [y, m, d] = datePart.split('-').map(Number);
   const [hh, mm] = (timePart || '00:00').split(':').map(Number);
   return new Date(y, m - 1, d, hh, mm).toISOString();
+}
+
+function normalizeTransfer(raw: TransferApiRecord): Transfer {
+  return {
+    ...raw,
+    type: raw.type as TransferType,
+    items: Array.isArray(raw.items)
+      ? raw.items
+      : Array.isArray(raw.camp_transfer_items)
+        ? raw.camp_transfer_items
+        : [],
+  };
+}
+
+function unwrapTransfer(responseData: unknown): Transfer {
+  const maybeWrapped =
+    responseData &&
+    typeof responseData === 'object' &&
+    !Array.isArray(responseData) &&
+    !('id' in responseData) &&
+    'data' in responseData
+      ? (responseData as { data?: TransferApiRecord }).data
+      : responseData;
+
+  return normalizeTransfer(maybeWrapped as TransferApiRecord);
+}
+
+function unwrapTransferPage(responseData: unknown, fallbackPage: number, fallbackPageSize: number) {
+  const data = unwrapList<TransferApiRecord>(responseData).map(normalizeTransfer);
+  const pagination = (responseData as { pagination?: Partial<TransferPage['pagination']> })
+    ?.pagination;
+
+  return {
+    data,
+    pagination: {
+      page: Number(pagination?.page) || fallbackPage,
+      pageSize: Number(pagination?.pageSize) || fallbackPageSize,
+      total: Number(pagination?.total) || data.length,
+      totalPages: Math.max(1, Number(pagination?.totalPages) || 1),
+      hasNextPage: Boolean(pagination?.hasNextPage),
+    },
+  };
+}
+
+function isHealthy(person: Person) {
+  return String(person.status).toUpperCase() === 'HEALTHY';
+}
+
+function isPositiveQuantity(value: number) {
+  return Number.isFinite(value) && value > 0;
 }
 
 function getStatusBadgeClasses(status: TransferStatus): string {
@@ -202,16 +287,26 @@ export default function TransferList() {
   const queryClient = useQueryClient();
 
   // ── UI state ────────────────────────────────────────────────────────────
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
+  const [selectedState, setSelectedState] = useState<{ campId: number | null; id: number | null }>({
+    campId: null,
+    id: null,
+  });
+  const [pageState, setPageState] = useState<{ campId: number | null; page: number }>({
+    campId: null,
+    page: 1,
+  });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [confirmCompleteId, setConfirmCompleteId] = useState<number | null>(null);
   const [confirmRejectId, setConfirmRejectId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [rejectError, setRejectError] = useState<string | null>(null);
+  const [completionPersonStatus, setCompletionPersonStatus] = useState<PersonStatus>('HEALTHY');
+  const [feedback, setFeedback] = useState<TransferFeedback | null>(null);
 
   // Schedule delivery inline state
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
 
   // Approve-source inline date picker
   const [isApprovingSource, setIsApprovingSource] = useState(false);
@@ -219,7 +314,7 @@ export default function TransferList() {
   const [approveSourceError, setApproveSourceError] = useState<string | null>(null);
 
   // Create form state
-  const [transferType, setTransferType] = useState<'RESOURCE' | 'PERSON'>('RESOURCE');
+  const [transferType, setTransferType] = useState<TransferType>('RESOURCE');
   const [targetCamp, setTargetCamp] = useState<number | null>(null);
   const [resourceItems, setResourceItems] = useState<
     { resource_type_id: number; amount: number }[]
@@ -227,33 +322,51 @@ export default function TransferList() {
   const [personItems, setPersonItems] = useState<number[]>([]);
   const [notes, setNotes] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
+  const canReadTransfers = hasPermission(user?.permissions, 'transfers.read');
+  const canCreate = hasPermission(user?.permissions, 'transfers.create');
+  const canApproveSource = hasPermission(user?.permissions, 'transfers.approve_source');
+  const canApproveTarget = hasPermission(user?.permissions, 'transfers.approve_target');
+  const canComplete = hasPermission(user?.permissions, 'transfers.complete');
+  const canReject = hasPermission(user?.permissions, 'transfers.reject');
+  const canSchedule = hasPermission(user?.permissions, 'transfers.schedule');
+  const actorCampId = user?.camp_id ?? null;
+  const canViewCurrentCamp = currentCampId != null && canAccessCamp(currentCampId);
+  const selectedId = selectedState.campId === currentCampId ? selectedState.id : null;
+  const selectTransfer = (id: number | null) => setSelectedState({ campId: currentCampId, id });
+  const page = pageState.campId === currentCampId ? pageState.page : 1;
+  const setTransferPage = (nextPage: number) =>
+    setPageState({ campId: currentCampId, page: nextPage });
 
   // ── Queries ──────────────────────────────────────────────────────────────
-  const { data: transfers, isLoading } = useQuery<Transfer[]>({
-    queryKey: ['transfers', currentCampId],
+  const { data: transferPage, isLoading } = useQuery<TransferPage>({
+    queryKey: ['transfers', currentCampId, page, PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get(`/transfers?camp_id=${currentCampId}`);
-      return unwrapList<Transfer>(res.data);
+      const res = await apiClient.get('/transfers', {
+        params: { camp_id: currentCampId, page, pageSize: PAGE_SIZE },
+      });
+      return unwrapTransferPage(res.data, page, PAGE_SIZE);
     },
-    enabled: !!currentCampId && hasPermission(user?.permissions, 'transfers.read'),
+    enabled: Boolean(currentCampId) && canReadTransfers && canViewCurrentCamp,
   });
 
-  const totalPages = Math.max(1, Math.ceil((transfers?.length ?? 0) / PAGE_SIZE));
-  const paginatedTransfers = (transfers ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const transfers = transferPage?.data ?? [];
+  const totalPages = transferPage?.pagination.totalPages ?? 1;
+  const totalRecords = transferPage?.pagination.total ?? transfers.length;
+  const paginatedTransfers = transfers;
 
   const { data: detail, isLoading: detailLoading } = useQuery<Transfer>({
     queryKey: ['transfer', selectedId],
     queryFn: async () => {
       const res = await apiClient.get(`/transfers/${selectedId}`);
-      return res.data;
+      return unwrapTransfer(res.data);
     },
-    enabled: !!selectedId && hasPermission(user?.permissions, 'transfers.read'),
+    enabled: !!selectedId && canReadTransfers,
   });
 
   const { data: camps } = useQuery<CampRef[]>({
-    queryKey: ['camps-list'],
+    queryKey: ['camps-catalog'],
     queryFn: async () => {
-      const res = await apiClient.get('/camps');
+      const res = await apiClient.get('/camps/catalog');
       return unwrapList<CampRef>(res.data);
     },
     enabled: hasPermission(user?.permissions, 'camps.read'),
@@ -261,10 +374,7 @@ export default function TransferList() {
 
   const { data: resources } = useQuery<ResourceType[]>({
     queryKey: ['resources-list'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return unwrapList<ResourceType>(res.data);
-    },
+    queryFn: () => fetchAllPaginated<ResourceType>('/resources'),
     enabled: hasPermission(user?.permissions, 'resources.read'),
   });
 
@@ -276,6 +386,20 @@ export default function TransferList() {
     },
     enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
   });
+
+  const healthyPeople = useMemo(() => (people ?? []).filter(isHealthy), [people]);
+
+  const rationResource = useMemo(
+    () =>
+      resources?.find(
+        (resource) => resource.name.trim().toUpperCase() === RATION_RESOURCE_TYPE_NAME,
+      ),
+    [resources],
+  );
+
+  const minimumTravelRations = personItems.length * RATIONS_PER_PERSON_FOR_TRAVEL;
+  const isPeopleTransfer = transferType === 'PERSON' || transferType === 'MIXED';
+  const activeDetailHasPeople = Boolean(detail?.items.some((item) => item.item_type === 'PERSON'));
 
   // ── Lookup helpers ───────────────────────────────────────────────────────
   const getResourceName = (id?: number | null): string => {
@@ -293,9 +417,132 @@ export default function TransferList() {
     return camps?.find((c) => c.id === id)?.name ?? `Camp #${id}`;
   };
 
-  const getPersonName = (id?: number | null): string => {
+  const getPersonName = (id?: number | null, item?: TransferItem): string => {
+    if (item?.person?.full_name) return item.person.full_name;
     if (!id) return 'Unknown';
     return people?.find((p) => p.id === id)?.full_name ?? `Person #${id}`;
+  };
+
+  const getErrorMessage = (error: unknown, fallback: string) =>
+    error instanceof Error && !(error as { response?: unknown }).response
+      ? error.message
+      : getApiErrorMessage(error, fallback);
+
+  const buildTransferPayload = () => {
+    if (!currentCampId) {
+      return { ok: false as const, message: 'Select an origin camp before creating a transfer.' };
+    }
+
+    if (!canViewCurrentCamp) {
+      return { ok: false as const, message: 'This role cannot create transfers for this camp.' };
+    }
+
+    if (!targetCamp) {
+      return { ok: false as const, message: 'Destination camp is required.' };
+    }
+
+    if (targetCamp === currentCampId) {
+      return {
+        ok: false as const,
+        message: 'Destination camp must be different from origin camp.',
+      };
+    }
+
+    if (!userId) {
+      return { ok: false as const, message: 'Current user could not be resolved.' };
+    }
+
+    const resourcePayload = resourceItems
+      .filter((item) => item.resource_type_id > 0 || item.amount > 0)
+      .map((item) => ({
+        item_type: 'RESOURCE' as const,
+        resource_type_id: item.resource_type_id,
+        quantity: item.amount,
+      }));
+
+    if (transferType === 'RESOURCE' && resourcePayload.length === 0) {
+      return { ok: false as const, message: 'At least one resource item is required.' };
+    }
+
+    for (const item of resourcePayload) {
+      if (!item.resource_type_id) {
+        return { ok: false as const, message: 'Every resource row must include a resource type.' };
+      }
+      if (!isPositiveQuantity(item.quantity)) {
+        return { ok: false as const, message: 'Resource quantities must be greater than zero.' };
+      }
+    }
+
+    const duplicateResourceIds = new Set<number>();
+    for (const item of resourcePayload) {
+      if (duplicateResourceIds.has(item.resource_type_id)) {
+        return { ok: false as const, message: 'Duplicate resource types are not allowed.' };
+      }
+      duplicateResourceIds.add(item.resource_type_id);
+    }
+
+    const personPayload = personItems.map((personId) => ({
+      item_type: 'PERSON' as const,
+      person_id: personId,
+    }));
+
+    if (isPeopleTransfer && personPayload.length === 0) {
+      return { ok: false as const, message: 'Select at least one healthy person to transfer.' };
+    }
+
+    const healthyPersonIds = new Set(healthyPeople.map((person) => person.id));
+    if (isPeopleTransfer && personPayload.some((item) => !healthyPersonIds.has(item.person_id))) {
+      return {
+        ok: false as const,
+        message: 'Only people with HEALTHY status can be included in a transfer.',
+      };
+    }
+
+    if (transferType === 'PERSON' && resourcePayload.length === 0) {
+      return {
+        ok: false as const,
+        message: 'PERSON transfers require RESOURCE items for travel rations.',
+      };
+    }
+
+    if (transferType === 'MIXED' && (resourcePayload.length === 0 || personPayload.length === 0)) {
+      return {
+        ok: false as const,
+        message: 'MIXED transfers must include both resources and people.',
+      };
+    }
+
+    if (isPeopleTransfer && rationResource) {
+      const rationItem = resourcePayload.find(
+        (item) => item.resource_type_id === rationResource.id,
+      );
+
+      if (!rationItem) {
+        return {
+          ok: false as const,
+          message: `Person transfers must include ${RATION_RESOURCE_TYPE_NAME} travel rations.`,
+        };
+      }
+
+      if (rationItem.quantity < minimumTravelRations) {
+        return {
+          ok: false as const,
+          message: `Minimum travel rations required: ${minimumTravelRations} (${personItems.length} people x ${RATION_PER_PERSON_PER_DAY} rations/day x ${RATION_TRAVEL_DAYS} days).`,
+        };
+      }
+    }
+
+    return {
+      ok: true as const,
+      payload: {
+        requesting_camp: currentCampId,
+        target_camp: targetCamp,
+        type: transferType,
+        requested_by: userId,
+        items: [...personPayload, ...resourcePayload],
+        ...(notes.trim() ? { notes: notes.trim() } : {}),
+      },
+    };
   };
 
   // ── Shared invalidation ──────────────────────────────────────────────────
@@ -306,54 +553,39 @@ export default function TransferList() {
     }
   };
 
+  const invalidateTransferRelatedData = (transfer?: Transfer | null) => {
+    invalidateTransfers();
+
+    const campIds = new Set(
+      [currentCampId, transfer?.requesting_camp, transfer?.target_camp].filter(
+        (campId): campId is number => typeof campId === 'number',
+      ),
+    );
+
+    campIds.forEach((campId) => {
+      queryClient.invalidateQueries({ queryKey: ['inventory', campId] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-audit', campId] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-alerts', campId] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics', campId] });
+      queryClient.invalidateQueries({ queryKey: ['resource-metrics', campId] });
+      queryClient.invalidateQueries({ queryKey: ['people', campId] });
+      queryClient.invalidateQueries({ queryKey: ['transfer-people', campId] });
+    });
+  };
+
   // ── Mutations ────────────────────────────────────────────────────────────
   const createMutation = useMutation({
     mutationFn: async () => {
-      const items: Array<{
-        item_type: 'RESOURCE' | 'PERSON';
-        resource_type_id?: number;
-        quantity?: number;
-        person_id?: number;
-      }> = [];
-
-      if (transferType === 'RESOURCE') {
-        for (const i of resourceItems) {
-          if (i.resource_type_id > 0 && i.amount > 0) {
-            items.push({
-              item_type: 'RESOURCE',
-              resource_type_id: i.resource_type_id,
-              quantity: i.amount,
-            });
-          }
-        }
-      } else {
-        for (const pid of personItems) {
-          items.push({ item_type: 'PERSON', person_id: pid });
-        }
-        for (const i of resourceItems) {
-          if (i.resource_type_id > 0 && i.amount > 0) {
-            items.push({
-              item_type: 'RESOURCE',
-              resource_type_id: i.resource_type_id,
-              quantity: i.amount,
-            });
-          }
-        }
+      const validation = buildTransferPayload();
+      if (!validation.ok) {
+        throw new Error(validation.message);
       }
 
-      const body = {
-        requesting_camp: currentCampId,
-        target_camp: targetCamp,
-        type: transferType,
-        requested_by: userId,
-        items,
-        ...(notes.trim() ? { notes: notes.trim() } : {}),
-      };
-      const res = await apiClient.post('/transfers', body);
-      return res.data;
+      const res = await apiClient.post('/transfers', validation.payload);
+      return unwrapTransfer(res.data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transfers'] });
+    onSuccess: (createdTransfer) => {
+      invalidateTransferRelatedData(createdTransfer);
       setIsCreateOpen(false);
       setTransferType('RESOURCE');
       setTargetCamp(null);
@@ -361,14 +593,21 @@ export default function TransferList() {
       setPersonItems([]);
       setNotes('');
       setCreateError(null);
+      selectTransfer(createdTransfer.id);
+      setFeedback({
+        type: 'success',
+        title: 'TRANSFER REQUESTED',
+        message: `Transfer #TRF-${String(createdTransfer.id).padStart(4, '0')} was created successfully.`,
+      });
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          ?.message ??
-        (error as { message?: string })?.message ??
-        'Unknown error';
+      const msg = getErrorMessage(error, 'The transfer request could not be created.');
       setCreateError(msg);
+      setFeedback({
+        type: 'error',
+        title: 'TRANSFER FAILED',
+        message: msg,
+      });
     },
   });
 
@@ -379,71 +618,171 @@ export default function TransferList() {
     }: {
       id: number;
       scheduled_delivery_date: string;
-    }) =>
-      apiClient.patch(`/transfers/${id}/approve-source`, {
+    }) => {
+      const res = await apiClient.patch(`/transfers/${id}/approve-source`, {
         scheduled_delivery_date,
-      }),
-    onSuccess: () => {
-      invalidateTransfers();
+      });
+      return unwrapTransfer(res.data);
+    },
+    onSuccess: (updatedTransfer) => {
+      invalidateTransferRelatedData(updatedTransfer);
       setIsApprovingSource(false);
       setApproveSourceDate('');
       setApproveSourceError(null);
+      setFeedback({
+        type: 'success',
+        title: 'SOURCE APPROVED',
+        message: `Transfer #TRF-${String(updatedTransfer.id).padStart(4, '0')} was approved by the source camp.`,
+      });
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          ?.message ??
-        (error as { message?: string })?.message ??
-        'Approval failed';
+      const msg = getErrorMessage(error, 'Source approval failed.');
       setApproveSourceError(msg);
+      setFeedback({
+        type: 'error',
+        title: 'APPROVAL FAILED',
+        message: msg,
+      });
     },
   });
 
   const approveTgtMutation = useMutation({
-    mutationFn: async (id: number) => apiClient.patch(`/transfers/${id}/approve-target`, {}),
-    onSuccess: invalidateTransfers,
+    mutationFn: async (id: number) => {
+      const res = await apiClient.patch(`/transfers/${id}/approve-target`, {});
+      return unwrapTransfer(res.data);
+    },
+    onSuccess: (updatedTransfer) => {
+      invalidateTransferRelatedData(updatedTransfer);
+      setFeedback({
+        type: 'success',
+        title: 'TARGET APPROVED',
+        message: `Transfer #TRF-${String(updatedTransfer.id).padStart(4, '0')} was approved by the destination camp.`,
+      });
+    },
+    onError: (error: unknown) => {
+      setFeedback({
+        type: 'error',
+        title: 'APPROVAL FAILED',
+        message: getErrorMessage(error, 'Target approval failed.'),
+      });
+    },
   });
 
   const completeMutation = useMutation({
-    mutationFn: async (id: number) => apiClient.patch(`/transfers/${id}/complete`, {}),
-    onSuccess: () => {
-      invalidateTransfers();
+    mutationFn: async ({ id, person_status }: { id: number; person_status?: PersonStatus }) => {
+      const res = await apiClient.patch(`/transfers/${id}/complete`, {
+        ...(person_status ? { person_status } : {}),
+      });
+      return unwrapTransfer(res.data);
+    },
+    onSuccess: (updatedTransfer) => {
+      invalidateTransferRelatedData(updatedTransfer);
       setConfirmCompleteId(null);
+      setCompletionPersonStatus('HEALTHY');
+      setFeedback({
+        type: 'success',
+        title: 'TRANSFER COMPLETED',
+        message: `Transfer #TRF-${String(updatedTransfer.id).padStart(4, '0')} was completed. Inventory and personnel records were updated by the backend.`,
+      });
+    },
+    onError: (error: unknown) => {
+      setFeedback({
+        type: 'error',
+        title: 'COMPLETION FAILED',
+        message: getErrorMessage(error, 'The transfer could not be completed.'),
+      });
     },
   });
 
   const rejectMutation = useMutation({
     mutationFn: async ({ id, reason }: { id: number; reason: string }) =>
-      apiClient.patch(`/transfers/${id}/reject`, { reason }),
-    onSuccess: () => {
-      invalidateTransfers();
+      apiClient
+        .patch(`/transfers/${id}/reject`, { reason })
+        .then((res) => unwrapTransfer(res.data)),
+    onSuccess: (updatedTransfer) => {
+      invalidateTransferRelatedData(updatedTransfer);
       setConfirmRejectId(null);
       setRejectReason('');
+      setRejectError(null);
+      setFeedback({
+        type: 'success',
+        title: 'TRANSFER REJECTED',
+        message: `Transfer #TRF-${String(updatedTransfer.id).padStart(4, '0')} was rejected and will not modify inventory.`,
+      });
+    },
+    onError: (error: unknown) => {
+      const msg = getErrorMessage(error, 'The transfer could not be rejected.');
+      setRejectError(msg);
+      setFeedback({
+        type: 'error',
+        title: 'REJECTION FAILED',
+        message: msg,
+      });
     },
   });
 
   const scheduleMutation = useMutation({
     mutationFn: async ({ id, date }: { id: number; date: string }) =>
-      apiClient.patch(`/transfers/${id}/schedule`, {
-        scheduled_delivery_date: date,
-      }),
-    onSuccess: () => {
-      invalidateTransfers();
+      apiClient
+        .patch(`/transfers/${id}/schedule`, {
+          scheduled_delivery_date: date,
+        })
+        .then((res) => unwrapTransfer(res.data)),
+    onSuccess: (updatedTransfer) => {
+      invalidateTransferRelatedData(updatedTransfer);
       setIsScheduling(false);
       setScheduleDate('');
+      setScheduleError(null);
+      setFeedback({
+        type: 'success',
+        title: 'DELIVERY UPDATED',
+        message: `Transfer #TRF-${String(updatedTransfer.id).padStart(4, '0')} delivery date was updated.`,
+      });
+    },
+    onError: (error: unknown) => {
+      const msg = getErrorMessage(error, 'The delivery date could not be updated.');
+      setScheduleError(msg);
+      setFeedback({
+        type: 'error',
+        title: 'SCHEDULE FAILED',
+        message: msg,
+      });
     },
   });
 
   // ── RBAC ─────────────────────────────────────────────────────────────────
-  const canCreate = hasPermission(user?.permissions, 'transfers.create');
-  const canApproveSource = hasPermission(user?.permissions, 'transfers.approve_source');
-  const canApproveTarget = hasPermission(user?.permissions, 'transfers.approve_target');
-  const canComplete = hasPermission(user?.permissions, 'transfers.complete');
-  const canReject = hasPermission(user?.permissions, 'transfers.reject');
-  const canSchedule = hasPermission(user?.permissions, 'transfers.schedule');
-  const canManage = canApproveSource || canApproveTarget || canComplete || canReject || canSchedule;
+  const detailActorAtSource =
+    detail && actorCampId != null ? Number(detail.requesting_camp) === Number(actorCampId) : false;
+  const detailActorAtTarget =
+    detail && actorCampId != null ? Number(detail.target_camp) === Number(actorCampId) : false;
+  const detailActorInRoute = detailActorAtSource || detailActorAtTarget;
+  const canApproveSourceForDetail = Boolean(detail && canApproveSource && detailActorAtSource);
+  const canApproveTargetForDetail = Boolean(detail && canApproveTarget && detailActorAtTarget);
+  const canScheduleForDetail = Boolean(detail && canSchedule && detailActorAtSource);
+  const canCompleteForDetail = Boolean(detail && canComplete && detailActorInRoute);
+  const canRejectForDetail = Boolean(detail && canReject && detailActorInRoute);
+  const detailCanActNow = Boolean(
+    detail &&
+    detail.status !== 'COMPLETED' &&
+    detail.status !== 'REJECTED' &&
+    ((detail.status === 'PENDING' && (canApproveSourceForDetail || canRejectForDetail)) ||
+      (detail.status === 'APPROVED_SOURCE' &&
+        (canScheduleForDetail || canApproveTargetForDetail || canRejectForDetail)) ||
+      (detail.status === 'APPROVED_TARGET' && (canCompleteForDetail || canRejectForDetail))),
+  );
 
   // ── Render ────────────────────────────────────────────────────────────────
+  const openRejectDialog = (transferId: number) => {
+    setRejectReason('');
+    setRejectError(null);
+    setConfirmRejectId(transferId);
+  };
+
+  const openCompleteDialog = (transferId: number) => {
+    setCompletionPersonStatus('HEALTHY');
+    setConfirmCompleteId(transferId);
+  };
+
   return (
     <div className="space-y-8 h-full">
       {/* Page header */}
@@ -456,7 +795,7 @@ export default function TransferList() {
             Inter-camp resource &amp; personnel logistics
           </p>
         </div>
-        {canCreate && (
+        {canCreate && currentCampId && canViewCurrentCamp && (
           <button
             onClick={() => setIsCreateOpen(true)}
             aria-label="Create a new inter-camp transfer request"
@@ -480,7 +819,7 @@ export default function TransferList() {
               Transfer Log
             </h3>
             <span className="text-[10px] font-mono bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
-              {transfers?.length ?? 0} RECORDS · PAGE {page}/{totalPages}
+              {totalRecords} RECORDS · PAGE {page}/{totalPages}
             </span>
           </div>
 
@@ -489,13 +828,20 @@ export default function TransferList() {
               <div className="p-3 sm:p-4">
                 <SkeletonList count={5} />
               </div>
+            ) : !canViewCurrentCamp ? (
+              <div className="p-12 text-center space-y-4">
+                <Ban size={48} className="mx-auto text-zinc-800" />
+                <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
+                  Camp access unavailable.
+                </p>
+              </div>
             ) : !transfers || transfers.length === 0 ? (
               <div className="p-12 text-center space-y-4">
                 <Truck size={48} className="mx-auto text-zinc-800" />
                 <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
                   No transfers on record.
                 </p>
-                {canCreate && (
+                {canCreate && currentCampId && canViewCurrentCamp && (
                   <button
                     onClick={() => setIsCreateOpen(true)}
                     aria-label="Create the first transfer request"
@@ -515,7 +861,7 @@ export default function TransferList() {
                 return (
                   <button
                     key={transfer.id}
-                    onClick={() => setSelectedId(transfer.id)}
+                    onClick={() => selectTransfer(transfer.id)}
                     aria-label={`View transfer #${transfer.id} from ${reqName} to ${tgtName}`}
                     className={cn(
                       'w-full p-5 text-left transition-all hover:bg-white/5 border-l-4 group relative',
@@ -568,7 +914,12 @@ export default function TransferList() {
           </div>
 
           <div className="p-3 border-t border-zinc-900 flex justify-center">
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setTransferPage}
+              showEdgeButtons
+            />
           </div>
         </div>
 
@@ -740,7 +1091,7 @@ export default function TransferList() {
                                   ) : (
                                     <>
                                       <UserPlus size={12} className="text-zinc-600 shrink-0" />
-                                      {getPersonName(item.person_id)}
+                                      {getPersonName(item.person_id, item)}
                                     </>
                                   )}
                                 </td>
@@ -803,120 +1154,126 @@ export default function TransferList() {
                     </div>
                   )}
 
-                  {/* Read-only notice for restricted roles */}
-                  {!canManage && (
-                    <div className="flex items-center gap-2 p-3 bg-zinc-900/50 border border-zinc-700/40 rounded-lg">
-                      <Eye size={13} className="text-zinc-600 shrink-0" />
-                      <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-wide">
-                        Read-only — insufficient role to execute transfer actions
-                      </p>
-                    </div>
-                  )}
+                  {/* Read-only notice for restricted roles or non-actionable camp stages */}
+                  {detail.status !== 'COMPLETED' &&
+                    detail.status !== 'REJECTED' &&
+                    !detailCanActNow && (
+                      <div className="flex items-center gap-2 p-3 bg-zinc-900/50 border border-zinc-700/40 rounded-lg">
+                        <Eye size={13} className="text-zinc-600 shrink-0" />
+                        <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-wide">
+                          Read-only at this stage for your current camp role
+                        </p>
+                      </div>
+                    )}
                 </div>
 
                 {/* Action footer — only for actionable statuses + authorized roles */}
-                {canManage && detail.status !== 'COMPLETED' && detail.status !== 'REJECTED' && (
+                {detailCanActNow && (
                   <div className="p-5 border-t border-zinc-900 bg-surface-raised shrink-0 space-y-3">
                     {/* ── PENDING: approve source ─────────────────────────────── */}
                     {detail.status === 'PENDING' && (
                       <div className="space-y-3">
-                        {isApprovingSource ? (
-                          <div className="space-y-3 p-4 bg-blue-950/10 border border-blue-500/20 rounded-lg">
-                            <div className="space-y-1">
-                              <p className="text-xs font-black text-blue-400 uppercase tracking-wider">
-                                Scheduled Delivery
-                              </p>
-                              <p className="text-[10px] text-zinc-500 font-mono leading-relaxed">
-                                Set the estimated date and time the shipment will arrive at{' '}
-                                <span className="text-blue-400">
-                                  {detail.target_camp_ref?.name ?? getCampName(detail.target_camp)}
-                                </span>
-                                .
-                              </p>
-                            </div>
-
-                            <div className="flex items-stretch gap-2">
-                              <input
-                                type="date"
-                                value={approveSourceDate}
-                                min={getLocalMinDate()}
-                                onChange={(e) => {
-                                  setApproveSourceDate(e.target.value);
-                                  setApproveSourceError(null);
-                                }}
-                                aria-label="Select scheduled delivery date"
-                                className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-mono"
-                              />
-                              <button
-                                onClick={() => {
-                                  if (approveSourceDate) {
-                                    approveSrcMutation.mutate({
-                                      id: detail.id,
-                                      scheduled_delivery_date: datetimeLocalToUTCISO(
-                                        `${approveSourceDate}T12:00`,
-                                      ),
-                                    });
-                                  }
-                                }}
-                                disabled={!approveSourceDate || approveSrcMutation.isPending}
-                                aria-label="Confirm source approval with scheduled delivery date"
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
-                              >
-                                {approveSrcMutation.isPending ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  'CONFIRM'
-                                )}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setIsApprovingSource(false);
-                                  setApproveSourceDate('');
-                                  setApproveSourceError(null);
-                                }}
-                                aria-label="Cancel source approval"
-                                className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
-                              >
-                                <X size={13} />
-                              </button>
-                            </div>
-
-                            {approveSourceError && (
-                              <div className="flex items-center gap-2 text-red-400">
-                                <AlertTriangle size={12} className="shrink-0" />
-                                <p className="text-[10px] font-mono">{approveSourceError}</p>
+                        {canApproveSourceForDetail &&
+                          (isApprovingSource ? (
+                            <div className="space-y-3 p-4 bg-blue-950/10 border border-blue-500/20 rounded-lg">
+                              <div className="space-y-1">
+                                <p className="text-xs font-black text-blue-400 uppercase tracking-wider">
+                                  Scheduled Delivery
+                                </p>
+                                <p className="text-[10px] text-zinc-500 font-mono leading-relaxed">
+                                  Set the estimated date and time the shipment will arrive at{' '}
+                                  <span className="text-blue-400">
+                                    {detail.target_camp_ref?.name ??
+                                      getCampName(detail.target_camp)}
+                                  </span>
+                                  .
+                                </p>
                               </div>
-                            )}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => setIsApprovingSource(true)}
-                            disabled={approveSrcMutation.isPending}
-                            aria-label="Approve this transfer at the source camp — requires delivery date"
-                            className="w-full py-3 text-xs font-black uppercase bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
-                          >
-                            <CheckCircle2 size={15} />
-                            APPROVE (SOURCE)
-                          </button>
-                        )}
 
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() => setConfirmRejectId(detail.id)}
-                            aria-label="Reject this pending transfer request"
-                            className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
-                          >
-                            <XCircle size={15} />
-                            REJECT
-                          </button>
-                        </div>
+                              <div className="flex items-stretch gap-2">
+                                <input
+                                  type="date"
+                                  value={approveSourceDate}
+                                  min={getLocalMinDate()}
+                                  onChange={(e) => {
+                                    setApproveSourceDate(e.target.value);
+                                    setApproveSourceError(null);
+                                  }}
+                                  aria-label="Select scheduled delivery date"
+                                  className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-blue-500 font-mono"
+                                />
+                                <button
+                                  onClick={() => {
+                                    if (approveSourceDate) {
+                                      approveSrcMutation.mutate({
+                                        id: detail.id,
+                                        scheduled_delivery_date: datetimeLocalToUTCISO(
+                                          `${approveSourceDate}T12:00`,
+                                        ),
+                                      });
+                                    }
+                                  }}
+                                  disabled={!approveSourceDate || approveSrcMutation.isPending}
+                                  aria-label="Confirm source approval with scheduled delivery date"
+                                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase rounded transition-colors disabled:opacity-40 flex items-center gap-1.5 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
+                                >
+                                  {approveSrcMutation.isPending ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    'CONFIRM'
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsApprovingSource(false);
+                                    setApproveSourceDate('');
+                                    setApproveSourceError(null);
+                                  }}
+                                  aria-label="Cancel source approval"
+                                  className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
+                                >
+                                  <X size={13} />
+                                </button>
+                              </div>
+
+                              {approveSourceError && (
+                                <div className="flex items-center gap-2 text-red-400">
+                                  <AlertTriangle size={12} className="shrink-0" />
+                                  <p className="text-[10px] font-mono">{approveSourceError}</p>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setIsApprovingSource(true)}
+                              disabled={approveSrcMutation.isPending}
+                              aria-label="Approve this transfer at the source camp — requires delivery date"
+                              className="w-full py-3 text-xs font-black uppercase bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-40 shadow-[0_0_16px_rgba(59,130,246,0.25)]"
+                            >
+                              <CheckCircle2 size={15} />
+                              APPROVE (SOURCE)
+                            </button>
+                          ))}
+
+                        {canRejectForDetail && (
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => openRejectDialog(detail.id)}
+                              aria-label="Reject this pending transfer request"
+                              className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
+                            >
+                              <XCircle size={15} />
+                              REJECT
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {/* ── APPROVED_SOURCE: edit delivery date ────────────────── */}
                     {detail.status === 'APPROVED_SOURCE' && (
                       <div className="space-y-3">
-                        {canSchedule && (
+                        {canScheduleForDetail && (
                           <>
                             {isScheduling ? (
                               <div className="space-y-3 p-4 bg-zinc-900/60 border border-zinc-700/50 rounded-lg">
@@ -934,7 +1291,10 @@ export default function TransferList() {
                                     type="date"
                                     value={scheduleDate}
                                     min={getLocalMinDate()}
-                                    onChange={(e) => setScheduleDate(e.target.value)}
+                                    onChange={(e) => {
+                                      setScheduleDate(e.target.value);
+                                      setScheduleError(null);
+                                    }}
                                     aria-label="Select updated delivery date"
                                     className="flex-1 bg-zinc-950 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
                                   />
@@ -961,6 +1321,7 @@ export default function TransferList() {
                                     onClick={() => {
                                       setIsScheduling(false);
                                       setScheduleDate('');
+                                      setScheduleError(null);
                                     }}
                                     aria-label="Cancel scheduling and close date picker"
                                     className="px-3 py-2 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors text-zinc-500 touch-target"
@@ -968,6 +1329,12 @@ export default function TransferList() {
                                     <X size={13} />
                                   </button>
                                 </div>
+                                {scheduleError && (
+                                  <div className="flex items-center gap-2 text-red-400">
+                                    <AlertTriangle size={12} className="shrink-0" />
+                                    <p className="text-[10px] font-mono">{scheduleError}</p>
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <button
@@ -985,9 +1352,9 @@ export default function TransferList() {
                         )}
 
                         <div className="flex gap-3">
-                          {canReject && (
+                          {canRejectForDetail && (
                             <button
-                              onClick={() => setConfirmRejectId(detail.id)}
+                              onClick={() => openRejectDialog(detail.id)}
                               aria-label="Reject this source-approved transfer"
                               className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
                             >
@@ -995,7 +1362,7 @@ export default function TransferList() {
                               REJECT
                             </button>
                           )}
-                          {canApproveTarget && detail.target_camp === currentCampId && (
+                          {canApproveTargetForDetail && (
                             <button
                               onClick={() => approveTgtMutation.mutate(detail.id)}
                               disabled={approveTgtMutation.isPending}
@@ -1015,27 +1382,55 @@ export default function TransferList() {
                     )}
 
                     {detail.status === 'APPROVED_TARGET' && (
-                      <div className="flex gap-3">
-                        {canReject && (
-                          <button
-                            onClick={() => setConfirmRejectId(detail.id)}
-                            aria-label="Reject this fully approved transfer"
-                            className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
-                          >
-                            <XCircle size={15} />
-                            REJECT
-                          </button>
+                      <div className="space-y-3">
+                        {activeDetailHasPeople && canCompleteForDetail && (
+                          <div className="space-y-1.5 p-3 bg-zinc-900/60 border border-zinc-800 rounded-lg">
+                            <label className="text-[10px] font-bold text-zinc-500 uppercase">
+                              Personnel arrival status
+                            </label>
+                            <select
+                              value={completionPersonStatus}
+                              onChange={(e) =>
+                                setCompletionPersonStatus(e.target.value as PersonStatus)
+                              }
+                              aria-label="Select status for transferred personnel after completion"
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-green-500"
+                            >
+                              {PEOPLE_TRANSFER_STATUSES.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-[9px] text-zinc-600 font-mono">
+                              Applied by the backend when the people are registered at the
+                              destination.
+                            </p>
+                          </div>
                         )}
-                        {canComplete && (
-                          <button
-                            onClick={() => setConfirmCompleteId(detail.id)}
-                            aria-label="Mark this transfer as completed"
-                            className="flex-2 py-3 text-xs font-black uppercase bg-green-700 hover:bg-green-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(34,197,94,0.2)]"
-                          >
-                            <CheckCheck size={15} />
-                            COMPLETE TRANSFER
-                          </button>
-                        )}
+
+                        <div className="flex gap-3">
+                          {canRejectForDetail && (
+                            <button
+                              onClick={() => openRejectDialog(detail.id)}
+                              aria-label="Reject this fully approved transfer"
+                              className="flex-1 py-3 text-xs font-black uppercase border border-red-500/40 text-red-500 bg-red-950/10 hover:bg-red-950/30 rounded-lg transition-all flex items-center justify-center gap-2"
+                            >
+                              <XCircle size={15} />
+                              REJECT
+                            </button>
+                          )}
+                          {canCompleteForDetail && (
+                            <button
+                              onClick={() => openCompleteDialog(detail.id)}
+                              aria-label="Mark this transfer as completed"
+                              className="flex-2 py-3 text-xs font-black uppercase bg-green-700 hover:bg-green-600 text-white rounded-lg transition-all flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(34,197,94,0.2)]"
+                            >
+                              <CheckCheck size={15} />
+                              COMPLETE TRANSFER
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1058,7 +1453,7 @@ export default function TransferList() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 10 }}
               transition={{ duration: 0.2 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6 my-auto"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6 my-auto"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal header */}
@@ -1096,7 +1491,10 @@ export default function TransferList() {
                   <select
                     required
                     value={targetCamp ?? ''}
-                    onChange={(e) => setTargetCamp(e.target.value ? Number(e.target.value) : null)}
+                    onChange={(e) => {
+                      setTargetCamp(e.target.value ? Number(e.target.value) : null);
+                      setCreateError(null);
+                    }}
                     aria-label="Select destination camp for transfer"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary"
                   >
@@ -1116,12 +1514,13 @@ export default function TransferList() {
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
                     Transfer Type
                   </label>
-                  <div className="flex gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       type="button"
                       onClick={() => {
                         setTransferType('RESOURCE');
                         setPersonItems([]);
+                        setCreateError(null);
                       }}
                       aria-label="Switch transfer type to resource items"
                       className={cn(
@@ -1136,7 +1535,10 @@ export default function TransferList() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setTransferType('PERSON')}
+                      onClick={() => {
+                        setTransferType('PERSON');
+                        setCreateError(null);
+                      }}
                       aria-label="Switch transfer type to personnel"
                       className={cn(
                         'flex-1 py-2 text-xs font-bold uppercase rounded border transition-all',
@@ -1148,11 +1550,28 @@ export default function TransferList() {
                       <UserPlus size={14} className="inline mr-1.5" />
                       PERSON
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTransferType('MIXED');
+                        setCreateError(null);
+                      }}
+                      aria-label="Switch transfer type to mixed resources and personnel"
+                      className={cn(
+                        'flex-1 py-2 text-xs font-bold uppercase rounded border transition-all',
+                        transferType === 'MIXED'
+                          ? 'bg-blue-950/20 border-blue-500/30 text-blue-400'
+                          : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
+                      )}
+                    >
+                      <Truck size={14} className="inline mr-1.5" />
+                      MIXED
+                    </button>
                   </div>
                 </div>
 
-                {/* Person selector (PERSON type only) */}
-                {transferType === 'PERSON' && (
+                {/* Person selector (PERSON and MIXED transfers) */}
+                {isPeopleTransfer && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-[10px] font-bold text-zinc-500 uppercase">
@@ -1168,36 +1587,40 @@ export default function TransferList() {
                           No personnel available.
                         </p>
                       )}
-                      {(people ?? [])
-                        .filter((p) => (p.status || '').toUpperCase() !== 'DEAD')
-                        .map((person) => (
-                          <button
-                            key={person.id}
-                            type="button"
-                            onClick={() =>
-                              setPersonItems((prev) =>
-                                prev.includes(person.id)
-                                  ? prev.filter((id) => id !== person.id)
-                                  : [...prev, person.id],
-                              )
-                            }
-                            aria-label={`Select ${person.full_name} (${person.profession_name || 'UNASSIGNED'}) for transfer`}
-                            className={cn(
-                              'p-2 text-left border rounded text-xs transition-all touch-target',
-                              personItems.includes(person.id)
-                                ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
-                                : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
-                            )}
-                          >
-                            <span className="font-bold block truncate">{person.full_name}</span>
-                            <span className="text-[10px] font-mono opacity-60">
-                              {person.profession_name || 'UNASSIGNED'}
-                            </span>
-                          </button>
-                        ))}
+                      {(people ?? []).length > 0 && healthyPeople.length === 0 && (
+                        <p className="col-span-2 text-[11px] text-zinc-600 font-mono text-center py-2">
+                          No healthy personnel available.
+                        </p>
+                      )}
+                      {healthyPeople.map((person) => (
+                        <button
+                          key={person.id}
+                          type="button"
+                          onClick={() => {
+                            setCreateError(null);
+                            setPersonItems((prev) =>
+                              prev.includes(person.id)
+                                ? prev.filter((id) => id !== person.id)
+                                : [...prev, person.id],
+                            );
+                          }}
+                          aria-label={`Select ${person.full_name} (${person.profession_name || 'UNASSIGNED'}) for transfer`}
+                          className={cn(
+                            'p-2 text-left border rounded text-xs transition-all touch-target',
+                            personItems.includes(person.id)
+                              ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-400'
+                              : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:border-zinc-700',
+                          )}
+                        >
+                          <span className="font-bold block truncate">{person.full_name}</span>
+                          <span className="text-[10px] font-mono opacity-60">
+                            {person.profession_name || 'UNASSIGNED'} · {person.status}
+                          </span>
+                        </button>
+                      ))}
                     </div>
                     <p className="text-[9px] text-zinc-600 font-mono">
-                      PERSON transfers require at least one resource item for travel rations.
+                      PERSON and MIXED transfers require travel rations as resource items.
                     </p>
                   </div>
                 )}
@@ -1206,7 +1629,11 @@ export default function TransferList() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      {transferType === 'PERSON' ? 'Travel Rations' : 'Resources to Transfer'}{' '}
+                      {transferType === 'PERSON'
+                        ? 'Travel Rations'
+                        : transferType === 'MIXED'
+                          ? 'Resources and Travel Rations'
+                          : 'Resources to Transfer'}{' '}
                       <span className="text-red-500">*</span>
                     </label>
                     <button
@@ -1214,15 +1641,15 @@ export default function TransferList() {
                       onClick={() =>
                         setResourceItems((prev) => [...prev, { resource_type_id: 0, amount: 0 }])
                       }
-                      aria-label={`Add another ${transferType === 'PERSON' ? 'ration' : 'resource'} item to the list`}
+                      aria-label={`Add another ${isPeopleTransfer ? 'ration/resource' : 'resource'} item to the list`}
                       className="text-[10px] font-bold uppercase text-brand-primary hover:text-brand-primary/80 transition-colors flex items-center gap-1 touch-target"
                     >
                       <Plus size={11} />
-                      ADD {transferType === 'PERSON' ? 'RATION' : 'RESOURCE'}
+                      ADD {isPeopleTransfer ? 'ITEM' : 'RESOURCE'}
                     </button>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                     {resourceItems.map((item, idx) => {
                       const selectedIds = new Set(
                         resourceItems
@@ -1242,6 +1669,7 @@ export default function TransferList() {
                                 resource_type_id: Number(e.target.value),
                               };
                               setResourceItems(updated);
+                              setCreateError(null);
                             }}
                             aria-label={`Select resource type for item ${idx + 1}`}
                             className="flex-1 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary min-w-0"
@@ -1256,7 +1684,8 @@ export default function TransferList() {
                           <input
                             required
                             type="number"
-                            min={1}
+                            min={0.01}
+                            step={0.01}
                             value={item.amount || ''}
                             onChange={(e) => {
                               const updated = [...resourceItems];
@@ -1265,6 +1694,7 @@ export default function TransferList() {
                                 amount: Number(e.target.value),
                               };
                               setResourceItems(updated);
+                              setCreateError(null);
                             }}
                             placeholder="Qty"
                             className="w-20 shrink-0 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none focus:border-brand-primary"
@@ -1284,6 +1714,12 @@ export default function TransferList() {
                       );
                     })}
                   </div>
+                  {isPeopleTransfer && (
+                    <p className="text-[9px] text-zinc-600 font-mono">
+                      Minimum travel ration rule: {RATIONS_PER_PERSON_FOR_TRAVEL} per person when{' '}
+                      {RATION_RESOURCE_TYPE_NAME} is available in resources.
+                    </p>
+                  )}
                 </div>
 
                 {/* Notes */}
@@ -1293,7 +1729,10 @@ export default function TransferList() {
                   </label>
                   <textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={(e) => {
+                      setNotes(e.target.value);
+                      setCreateError(null);
+                    }}
                     placeholder="Additional instructions or context for this transfer..."
                     rows={2}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none font-mono"
@@ -1315,7 +1754,7 @@ export default function TransferList() {
                     disabled={
                       createMutation.isPending ||
                       !targetCamp ||
-                      (transferType === 'PERSON' && personItems.length === 0) ||
+                      (isPeopleTransfer && personItems.length === 0) ||
                       resourceItems.every((i) => !i.resource_type_id || !i.amount)
                     }
                     aria-label="Submit the transfer request for processing"
@@ -1343,6 +1782,7 @@ export default function TransferList() {
             onClick={() => {
               setConfirmRejectId(null);
               setRejectReason('');
+              setRejectError(null);
             }}
           >
             <motion.div
@@ -1375,12 +1815,28 @@ export default function TransferList() {
                 </label>
                 <textarea
                   value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
+                  onChange={(e) => {
+                    setRejectReason(e.target.value);
+                    setRejectError(null);
+                  }}
                   placeholder="e.g. Insufficient supplies at source camp, critical shortage ongoing..."
                   rows={3}
+                  maxLength={500}
                   autoFocus
                   className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-red-500 resize-none font-mono"
                 />
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[9px] text-zinc-600 font-mono">
+                    Required. Max 500 characters.
+                  </p>
+                  <p className="text-[9px] text-zinc-600 font-mono">{rejectReason.length}/500</p>
+                </div>
+                {rejectError && (
+                  <div className="flex items-center gap-2 text-red-400">
+                    <AlertTriangle size={12} className="shrink-0" />
+                    <p className="text-[10px] font-mono">{rejectError}</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
@@ -1388,6 +1844,7 @@ export default function TransferList() {
                   onClick={() => {
                     setConfirmRejectId(null);
                     setRejectReason('');
+                    setRejectError(null);
                   }}
                   disabled={rejectMutation.isPending}
                   aria-label="Cancel and close the rejection dialog"
@@ -1397,14 +1854,26 @@ export default function TransferList() {
                 </button>
                 <button
                   onClick={() => {
-                    if (confirmRejectId && rejectReason.trim()) {
+                    if (
+                      confirmRejectId &&
+                      rejectReason.trim() &&
+                      rejectReason.trim().length <= 500
+                    ) {
                       rejectMutation.mutate({
                         id: confirmRejectId,
                         reason: rejectReason.trim(),
                       });
+                    } else {
+                      setRejectError(
+                        'Rejection reason is required and must be 500 characters or less.',
+                      );
                     }
                   }}
-                  disabled={rejectMutation.isPending || !rejectReason.trim()}
+                  disabled={
+                    rejectMutation.isPending ||
+                    !rejectReason.trim() ||
+                    rejectReason.trim().length > 500
+                  }
                   aria-label="Confirm the transfer rejection with provided reason"
                   className="flex-1 py-2 text-xs font-black uppercase rounded transition-colors flex items-center justify-center gap-2 disabled:opacity-40 bg-red-600 hover:bg-red-500 text-white"
                 >
@@ -1424,18 +1893,32 @@ export default function TransferList() {
       <ConfirmDialog
         isOpen={confirmCompleteId !== null}
         title="Complete Transfer"
-        description={`Mark transfer #TRF-${String(confirmCompleteId ?? 0).padStart(4, '0')} as completed? All listed items will be recorded as received at the destination camp. This action cannot be undone.`}
+        description={`Mark transfer #TRF-${String(confirmCompleteId ?? 0).padStart(4, '0')} as completed? All listed items will be recorded as received at the destination camp.${activeDetailHasPeople ? ` Transferred people will be registered as ${completionPersonStatus}.` : ''} This action cannot be undone.`}
         confirmLabel="COMPLETE TRANSFER"
         cancelLabel="CANCEL"
         variant="warning"
         isPending={completeMutation.isPending}
         onConfirm={() => {
           if (confirmCompleteId !== null) {
-            completeMutation.mutate(confirmCompleteId);
+            completeMutation.mutate({
+              id: confirmCompleteId,
+              person_status: activeDetailHasPeople ? completionPersonStatus : undefined,
+            });
           }
         }}
         onCancel={() => setConfirmCompleteId(null)}
       />
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={Boolean(feedback)}
+          type={feedback.type}
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { useAuthStore, useCampStore } from '../../store';
+import { useAuthStore } from '../../store/auth';
+import { useCampStore } from '../../store/camp';
 import { hasPermission } from '../../lib/permissions';
 import { User, Role } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';

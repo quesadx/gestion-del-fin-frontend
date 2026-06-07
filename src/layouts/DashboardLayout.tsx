@@ -155,7 +155,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAdmin } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status } = useConnectionStore();
   useDeniedPermissionsStore();
@@ -170,6 +170,7 @@ export default function DashboardLayout() {
   const [showEyePhase, setShowEyePhase] = useState(false);
   const [achvPopupOpen, setAchvPopupOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [externalModalOpen, setExternalModalOpen] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -274,6 +275,18 @@ export default function DashboardLayout() {
     return [currentCamp, ...rest];
   }, [camps, currentCampId]);
 
+  useEffect(() => {
+    if (currentCampId) return;
+    if (!camps || camps.length === 0) return;
+
+    if (!isAdmin && user?.camp_id) {
+      const homeCamp = camps.find((c) => c.id === user.camp_id);
+      if (homeCamp) {
+        setCurrentCamp(homeCamp.id);
+      }
+    }
+  }, [currentCampId, camps, isAdmin, user?.camp_id, setCurrentCamp]);
+
   const activeFloatingLinesTheme = useMemo(() => {
     return (
       CAMP_FLOATING_LINES_THEMES[focusedCampIndex % CAMP_FLOATING_LINES_THEMES.length] ??
@@ -370,6 +383,34 @@ export default function DashboardLayout() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [achvPopupOpen]);
+
+  useEffect(() => {
+    const isModalOverlay = (element: Element) => {
+      const className = element.getAttribute('class') ?? '';
+      return (
+        className.includes('fixed') &&
+        className.includes('inset-0') &&
+        (className.includes('z-50') ||
+          className.includes('z-60') ||
+          className.includes('z-[60]') ||
+          className.includes('z-[999]'))
+      );
+    };
+
+    const detectModal = () => {
+      const hasDialogRole = document.querySelector('[role="dialog"], [role="alertdialog"]');
+      const hasOverlay = Array.from(document.querySelectorAll('.fixed')).some(isModalOverlay);
+      setExternalModalOpen(Boolean(hasDialogRole || hasOverlay));
+    };
+
+    detectModal();
+
+    const observer = new MutationObserver(detectModal);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  const dockHidden = campPopupOpen || showEasterEgg || externalModalOpen;
 
   const handleLogout = () => {
     setLogoutConfirmOpen(true);
@@ -986,11 +1027,20 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-30 -translate-x-1/2">
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <Dock items={dockItems} />
-        </motion.div>
-      </div>
+      <AnimatePresence>
+        {!dockHidden && (
+          <motion.div
+            key="bottom-dock"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="fixed bottom-2 sm:bottom-4 left-1/2 z-40 -translate-x-1/2"
+          >
+            <Dock items={dockItems} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

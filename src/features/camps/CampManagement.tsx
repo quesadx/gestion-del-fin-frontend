@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib/api';
+import { apiClient, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Camp } from '../../types';
@@ -10,8 +10,40 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
 import { Pagination } from '../../components/Pagination';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 const PAGE_SIZE = 6;
+const API_LIST_PAGE_SIZE = 100;
+const CAMP_NAME_MAX_LENGTH = 100;
+const CAMP_LOCATION_MAX_LENGTH = 100;
+
+type CampStatus = 'ACTIVE' | 'ABANDONED';
+
+type CampPayload = {
+  name: string;
+  location?: string;
+  status: CampStatus;
+  ai_context_prompt?: string;
+};
+
+type FieldErrors = {
+  name?: string;
+  location?: string;
+};
+
+type CampFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
+const getTotalPagesFromResponse = (responseData: unknown) =>
+  Math.max(
+    1,
+    Number((responseData as { pagination?: { totalPages?: number } })?.pagination?.totalPages) || 1,
+  );
 
 export default function CampManagement() {
   const { user } = useAuthStore();
@@ -22,43 +54,88 @@ export default function CampManagement() {
   const [deletingCamp, setDeletingCamp] = useState<Camp | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [feedback, setFeedback] = useState<CampFeedback | null>(null);
 
   // Form states
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
-  const [status, setStatus] = useState<'ACTIVE' | 'ABANDONED'>('ACTIVE');
+  const [status, setStatus] = useState<CampStatus>('ACTIVE');
   const [aiPrompt, setAiPrompt] = useState('');
 
   const { data: camps, isLoading } = useQuery<Camp[]>({
-    queryKey: ['camps'],
+    queryKey: ['camps', API_LIST_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/camps');
-      return res.data?.data ?? res.data;
+      const firstPage = await apiClient.get('/camps', {
+        params: { page: 1, pageSize: API_LIST_PAGE_SIZE },
+      });
+      const firstPageItems = unwrapList<Camp>(firstPage.data);
+      const totalPages = getTotalPagesFromResponse(firstPage.data);
+
+      if (totalPages === 1) return firstPageItems;
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: totalPages - 1 }, async (_, index) => {
+          const pageNumber = index + 2;
+          const res = await apiClient.get('/camps', {
+            params: { page: pageNumber, pageSize: API_LIST_PAGE_SIZE },
+          });
+          return unwrapList<Camp>(res.data);
+        }),
+      );
+
+      return firstPageItems.concat(...remainingPages);
     },
     enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
   const createMutation = useMutation({
-    mutationFn: async (payload: Partial<Camp>) => {
+    mutationFn: async (payload: CampPayload) => {
       const res = await apiClient.post('/camps', payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (createdCamp: Camp) => {
       queryClient.invalidateQueries({ queryKey: ['camps'] });
-      setIsModalOpen(false);
-      resetForm();
+      closeModal();
+      setPage(1);
+      setFeedback({
+        type: 'success',
+        title: 'REFUGE REGISTERED',
+        message: `${createdCamp.name} was created successfully.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'CREATE FAILED',
+        message: getApiErrorMessage(error, 'The refuge could not be created.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, payload }: { id: number; payload: Partial<Camp> }) => {
+    mutationFn: async ({ id, payload }: { id: number; payload: CampPayload }) => {
       const res = await apiClient.put(`/camps/${id}`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedCamp: Camp) => {
       queryClient.invalidateQueries({ queryKey: ['camps'] });
-      setIsModalOpen(false);
-      resetForm();
+      queryClient.invalidateQueries({ queryKey: ['camp', updatedCamp.id] });
+      closeModal();
+      setFeedback({
+        type: 'success',
+        title: 'REFUGE UPDATED',
+        message: `${updatedCamp.name} was updated successfully.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'UPDATE FAILED',
+        message: getApiErrorMessage(error, 'The refuge could not be updated.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -66,12 +143,28 @@ export default function CampManagement() {
   const canUpdate = hasPermission(user?.permissions, 'camps.update');
   const canDelete = hasPermission(user?.permissions, 'camps.delete');
 
+  const requestCampDeletion = (camp: Camp) => {
+    if (camp.id === currentCampId) {
+      setFeedback({
+        type: 'warning',
+        title: 'ACTIVE REFUGE',
+        message: 'Select another refuge before deleting the one currently active in your session.',
+        actionLabel: 'UNDERSTOOD',
+      });
+      return;
+    }
+
+    setDeleteError(null);
+    setDeletingCamp(camp);
+  };
+
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
       const res = await apiClient.delete(`/camps/${id}`);
       return res.data;
     },
     onSuccess: (_data, deletedId) => {
+      const deletedName = deletingCamp?.name ?? `Refuge #${deletedId}`;
       queryClient.invalidateQueries({ queryKey: ['camps'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       if (currentCampId === deletedId) {
@@ -79,14 +172,21 @@ export default function CampManagement() {
       }
       setDeletingCamp(null);
       setDeleteError(null);
+      setFeedback({
+        type: 'success',
+        title: 'REFUGE DELETED',
+        message: `${deletedName} was deleted successfully.`,
+      });
     },
     onError: (error: unknown) => {
-      const msg =
-        (error as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          ?.message ??
-        (error as { message?: string })?.message ??
-        'Unknown error';
+      const msg = getApiErrorMessage(error, 'The refuge could not be deleted.');
       setDeleteError(msg);
+      setFeedback({
+        type: 'error',
+        title: 'DELETE FAILED',
+        message: msg,
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -96,6 +196,12 @@ export default function CampManagement() {
     setStatus('ACTIVE');
     setAiPrompt('');
     setEditingCamp(null);
+    setFieldErrors({});
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    resetForm();
   };
 
   const openCreateModal = () => {
@@ -109,18 +215,52 @@ export default function CampManagement() {
     setLocation(camp.location || '');
     setStatus(camp.status);
     setAiPrompt(camp.ai_context_prompt || '');
+    setFieldErrors({});
     setIsModalOpen(true);
+  };
+
+  const validateForm = () => {
+    const errors: FieldErrors = {};
+    const trimmedName = name.trim();
+    const trimmedLocation = location.trim();
+
+    if (!trimmedName) {
+      errors.name = 'Refuge title is required.';
+    } else if (trimmedName.length > CAMP_NAME_MAX_LENGTH) {
+      errors.name = `Refuge title cannot exceed ${CAMP_NAME_MAX_LENGTH} characters.`;
+    }
+
+    if (trimmedLocation.length > CAMP_LOCATION_MAX_LENGTH) {
+      errors.location = `Location cannot exceed ${CAMP_LOCATION_MAX_LENGTH} characters.`;
+    }
+
+    return errors;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
+    const errors = validateForm();
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      setFeedback({
+        type: 'warning',
+        title: 'CHECK REFUGE FORMAT',
+        message: 'Correct the highlighted fields before submitting the refuge.',
+        actionLabel: 'REVIEW',
+      });
+      return;
+    }
+
+    const trimmedName = name.trim();
+    const trimmedLocation = location.trim();
+    const trimmedAiPrompt = aiPrompt.trim();
 
     const payload = {
-      name,
-      location,
+      name: trimmedName,
+      location: editingCamp ? trimmedLocation : trimmedLocation || undefined,
       status,
-      ai_context_prompt: aiPrompt,
+      ai_context_prompt: editingCamp ? trimmedAiPrompt : trimmedAiPrompt || undefined,
     };
 
     if (editingCamp) {
@@ -131,7 +271,11 @@ export default function CampManagement() {
   };
 
   const totalPages = Math.max(1, Math.ceil((camps?.length ?? 0) / PAGE_SIZE));
-  const paginatedCamps = (camps ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const currentPage = Math.min(page, totalPages);
+  const paginatedCamps = (camps ?? []).slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   return (
     <div className="space-y-6">
@@ -173,98 +317,117 @@ export default function CampManagement() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {paginatedCamps.map((camp) => (
-            <motion.div
-              key={camp.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-surface-raised brutalist-border p-6 rounded-xl flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-colors"
-            >
-              <div className="space-y-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-xl font-black uppercase tracking-tight text-white group-hover:text-brand-primary">
-                      {camp.name}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono mt-0.5">
-                      <MapPin size={12} />
-                      {camp.location || 'Undisclosed Sector'}
+          {(camps?.length ?? 0) === 0 && (
+            <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
+              <MapPin size={48} className="mb-4 opacity-30" />
+              <p className="text-sm font-mono uppercase tracking-wider">No refuges registered</p>
+              <p className="text-xs font-mono mt-1 text-zinc-700">
+                Register the first refuge to begin camp management
+              </p>
+            </div>
+          )}
+          {paginatedCamps.map((camp) => {
+            const isActiveCamp = camp.id === currentCampId;
+
+            return (
+              <motion.div
+                key={camp.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-surface-raised brutalist-border p-6 rounded-xl flex flex-col justify-between space-y-4 hover:border-zinc-700 transition-colors"
+              >
+                <div className="space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-xl font-black uppercase tracking-tight text-white group-hover:text-brand-primary">
+                        {camp.name}
+                      </h3>
+                      <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-mono mt-0.5">
+                        <MapPin size={12} />
+                        {camp.location || 'Undisclosed Sector'}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          'px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border',
+                          camp.status === 'ACTIVE'
+                            ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
+                            : 'bg-zinc-950/20 text-zinc-500 border-zinc-500/30',
+                        )}
+                      >
+                        {camp.status}
+                      </span>
+                      {canUpdate && (
+                        <button
+                          onClick={() => openEditModal(camp)}
+                          aria-label={`Edit ${camp.name}`}
+                          title={`Edit ${camp.name}`}
+                          className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
+                        >
+                          <Edit2 size={12} />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => requestCampDeletion(camp)}
+                          aria-label={`Delete ${camp.name}`}
+                          title={
+                            isActiveCamp
+                              ? 'Select another refuge before deleting this one'
+                              : `Delete ${camp.name}`
+                          }
+                          className={cn(
+                            'p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 rounded transition-colors touch-target',
+                            isActiveCamp
+                              ? 'text-amber-500/80 border-amber-500/30 hover:border-amber-500/50'
+                              : 'text-zinc-400 hover:border-red-500/50 hover:text-red-500',
+                          )}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        'px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider border',
-                        camp.status === 'ACTIVE'
-                          ? 'bg-emerald-950/20 text-emerald-500 border-emerald-500/30'
-                          : 'bg-zinc-950/20 text-zinc-500 border-zinc-500/30',
-                      )}
-                    >
-                      {camp.status}
-                    </span>
-                    {canUpdate && (
-                      <button
-                        onClick={() => openEditModal(camp)}
-                        aria-label={`Edit ${camp.name}`}
-                        title={`Edit ${camp.name}`}
-                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-zinc-700 hover:text-brand-secondary rounded transition-colors text-zinc-400 touch-target"
-                      >
-                        <Edit2 size={12} />
-                      </button>
-                    )}
-                    {canDelete && (
-                      <button
-                        onClick={() => {
-                          setDeleteError(null);
-                          setDeletingCamp(camp);
-                        }}
-                        aria-label={`Delete ${camp.name}`}
-                        title={`Delete ${camp.name}`}
-                        className="p-1.5 sm:p-2 bg-zinc-950 border border-zinc-800 hover:border-red-500/50 hover:text-red-500 rounded transition-colors text-zinc-400 touch-target"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
+
+                  <div className="p-3 bg-zinc-950/60 rounded border border-zinc-900 font-mono text-[11px] leading-relaxed text-zinc-400">
+                    <p className="text-[9px] font-black uppercase text-zinc-600 tracking-wider mb-1">
+                      Stability AI Overwatch Focus Context
+                    </p>
+                    <p className="italic">
+                      "
+                      {camp.ai_context_prompt ||
+                        'No override prompt defined. Standard quarantine measures active.'}
+                      "
+                    </p>
                   </div>
                 </div>
 
-                <div className="p-3 bg-zinc-950/60 rounded border border-zinc-900 font-mono text-[11px] leading-relaxed text-zinc-400">
-                  <p className="text-[9px] font-black uppercase text-zinc-600 tracking-wider mb-1">
-                    Stability AI Overwatch Focus Context
-                  </p>
-                  <p className="italic">
-                    "
-                    {camp.ai_context_prompt ||
-                      'No override prompt defined. Standard quarantine measures active.'}
-                    "
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 border-t border-zinc-900/50 pt-3">
-                <span>
-                  REFUGE SIGNATURE ID // GF-
-                  {camp.id.toString().padStart(3, '0')}
-                </span>
-                <div className="flex items-center gap-3">
-                  <Link
-                    to={`/camps/${camp.id}`}
-                    className="text-brand-primary hover:text-brand-primary/80 font-bold uppercase tracking-wider transition-colors"
-                  >
-                    VIEW DETAILS
-                  </Link>
-                  <span className="flex items-center gap-1">
-                    <Activity size={10} className="text-emerald-500 animate-pulse" />
-                    ONLINE
+                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 border-t border-zinc-900/50 pt-3">
+                  <span>
+                    REFUGE SIGNATURE ID // GF-
+                    {camp.id.toString().padStart(3, '0')}
                   </span>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      to={`/camps/${camp.id}`}
+                      className="text-brand-primary hover:text-brand-primary/80 font-bold uppercase tracking-wider transition-colors"
+                    >
+                      VIEW DETAILS
+                    </Link>
+                    <span className="flex items-center gap-1">
+                      <Activity size={10} className="text-emerald-500 animate-pulse" />
+                      ONLINE
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       )}
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (
@@ -288,7 +451,7 @@ export default function CampManagement() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setIsModalOpen(false)}
+                  onClick={closeModal}
                   aria-label="Close modal"
                   title="Close modal"
                   className="p-1 sm:p-2 text-zinc-500 hover:text-white border border-transparent hover:border-zinc-800 rounded transition-colors touch-target"
@@ -297,35 +460,85 @@ export default function CampManagement() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <div className="rounded border border-zinc-800 bg-zinc-950/40 p-3 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Format requirements
+                  </p>
+                  <p className="text-[10px] font-mono leading-relaxed text-zinc-500">
+                    Refuge title is required and max {CAMP_NAME_MAX_LENGTH} characters. Location is
+                    optional and max {CAMP_LOCATION_MAX_LENGTH} characters. Status must be ACTIVE or
+                    ABANDONED. AI context is optional.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Refuge Title
+                      Refuge Title <span className="text-red-500">*</span>
                     </label>
                     <input
                       required
                       type="text"
                       aria-label="Refuge title"
+                      aria-invalid={Boolean(fieldErrors.name)}
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        if (fieldErrors.name) {
+                          setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                        }
+                      }}
                       placeholder="e.g. Sector-9 Outpost"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                      className={cn(
+                        'w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none',
+                        fieldErrors.name
+                          ? 'border-red-500/60 focus:border-red-400'
+                          : 'border-zinc-800 focus:border-brand-primary',
+                      )}
                     />
+                    <p
+                      className={cn(
+                        'text-[10px] font-mono',
+                        fieldErrors.name ? 'text-red-400' : 'text-zinc-600',
+                      )}
+                    >
+                      {fieldErrors.name ??
+                        `Required. ${name.trim().length}/${CAMP_NAME_MAX_LENGTH} characters.`}
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                      Geographical Location
+                      Geographical Location (Optional)
                     </label>
                     <input
-                      required
                       type="text"
                       aria-label="Geographical location"
+                      aria-invalid={Boolean(fieldErrors.location)}
                       value={location}
-                      onChange={(e) => setLocation(e.target.value)}
+                      onChange={(e) => {
+                        setLocation(e.target.value);
+                        if (fieldErrors.location) {
+                          setFieldErrors((prev) => ({ ...prev, location: undefined }));
+                        }
+                      }}
                       placeholder="e.g. Colorado High Sierra"
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                      className={cn(
+                        'w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none',
+                        fieldErrors.location
+                          ? 'border-red-500/60 focus:border-red-400'
+                          : 'border-zinc-800 focus:border-brand-primary',
+                      )}
                     />
+                    <p
+                      className={cn(
+                        'text-[10px] font-mono',
+                        fieldErrors.location ? 'text-red-400' : 'text-zinc-600',
+                      )}
+                    >
+                      {fieldErrors.location ??
+                        `Optional. ${location.trim().length}/${CAMP_LOCATION_MAX_LENGTH} characters.`}
+                    </p>
                   </div>
                 </div>
 
@@ -365,7 +578,7 @@ export default function CampManagement() {
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={closeModal}
                     className="flex-1 py-2.5 text-xs font-bold border border-zinc-800 hover:bg-zinc-900 rounded transition-colors uppercase"
                   >
                     CANCEL
@@ -434,6 +647,18 @@ export default function CampManagement() {
             </div>
           </motion.div>
         </div>
+      )}
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Refuge Command"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
       )}
     </div>
   );

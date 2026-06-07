@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, toFormData, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, toFormData, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { Person, Camp } from '../../types';
 import {
@@ -20,7 +20,6 @@ import {
   AlertCircle,
   MapPinOff,
 } from 'lucide-react';
-import { useState } from 'react'; // useMemo is imported above with React
 import { useNavigate } from 'react-router-dom';
 import { cn, normalizePersonStatus } from '../../lib/utils';
 import { hasPermission } from '../../lib/permissions';
@@ -28,8 +27,80 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { Pagination } from '../../components/Pagination';
+import { showToast } from '../../lib/toast';
+import { getApiErrorMessage } from '../../lib/apiErrors';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
 
 const PAGE_SIZE = 20;
+const SEARCH_PAGE_SIZE = 100;
+const RATION_RESOURCE_TYPE_NAME = 'FOOD_RATION';
+const RATIONS_PER_PERSON_FOR_TRAVEL = 6;
+
+type RawPerson = Person & { professions?: { name?: string } | null };
+
+interface PeopleResponse {
+  data: Person[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasNextPage: boolean;
+    totalPages: number;
+  };
+}
+
+type PeopleFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
+const getPeopleActionErrorMessage = (error: unknown, fallback: string) => {
+  const status = (error as { response?: { status?: number } }).response?.status;
+  if (status === 403) return 'Your current role is not authorized to perform this action.';
+  return getApiErrorMessage(error, fallback);
+};
+
+const flattenPerson = (person: RawPerson): Person => ({
+  ...person,
+  profession_name: person.profession_name ?? person.professions?.name ?? null,
+});
+
+const normalizePeopleResponse = (responseData: unknown, page: number): PeopleResponse => {
+  if (Array.isArray(responseData)) {
+    const data = responseData.map((person) => flattenPerson(person as RawPerson));
+
+    return {
+      data,
+      pagination: {
+        page,
+        pageSize: PAGE_SIZE,
+        total: data.length,
+        hasNextPage: false,
+        totalPages: Math.max(1, Math.ceil(data.length / PAGE_SIZE)),
+      },
+    };
+  }
+
+  const payload = responseData as Partial<PeopleResponse> | undefined;
+  const data = Array.isArray(payload?.data)
+    ? payload.data.map((person) => flattenPerson(person as RawPerson))
+    : [];
+  const totalPages =
+    payload?.pagination?.totalPages ?? Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+
+  return {
+    data,
+    pagination: {
+      page: payload?.pagination?.page ?? page,
+      pageSize: payload?.pagination?.pageSize ?? PAGE_SIZE,
+      total: payload?.pagination?.total ?? data.length,
+      hasNextPage: payload?.pagination?.hasNextPage ?? false,
+      totalPages: Math.max(1, totalPages),
+    },
+  };
+};
 
 export default function PopulationRoster() {
   const { currentCampId } = useCampStore();
@@ -46,6 +117,9 @@ export default function PopulationRoster() {
   const [reassignModal, setReassignModal] = useState(false);
   const [reassignVacantProfId, setReassignVacantProfId] = useState<number | null>(null);
   const [reassignPersonId, setReassignPersonId] = useState<number | null>(null);
+  const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
+  const canRead = hasPermission(user?.permissions, 'people.read');
+  const canTransfer = hasPermission(user?.permissions, 'transfers.create');
 
   // Edit states
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
@@ -55,6 +129,14 @@ export default function PopulationRoster() {
     'HEALTHY',
   );
   const [editProfessionId, setEditProfessionId] = useState<number | null>(null);
+
+  const showErrorFeedback = (title: string, error: unknown, fallback: string) => {
+    setFeedback({
+      type: 'error',
+      title,
+      message: getPeopleActionErrorMessage(error, fallback),
+    });
+  };
 
   const updatePersonMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Person> }) => {
@@ -74,7 +156,14 @@ export default function PopulationRoster() {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setEditingPerson(null);
+      setFeedback({
+        type: 'success',
+        title: 'PROFILE UPDATED',
+        message: 'The personnel record was updated successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('UPDATE FAILED', error, 'Could not update personnel profile.'),
   });
 
   const deletePersonMutation = useMutation({
@@ -86,7 +175,14 @@ export default function PopulationRoster() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
+      setFeedback({
+        type: 'success',
+        title: 'RECORD REMOVED',
+        message: 'The survivor was removed from the camp roster.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('DELETE FAILED', error, 'Could not delete personnel record.'),
   });
 
   const handleEditClick = (person: Person) => {
@@ -100,31 +196,50 @@ export default function PopulationRoster() {
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPerson) return;
+    const parsedAge = Number(editAge);
+    if (!editName.trim()) {
+      showToast.warning('Full name is required.');
+      return;
+    }
+    if (!Number.isInteger(parsedAge) || parsedAge < 0 || parsedAge > 255) {
+      showToast.warning('Age must be a whole number from 0 to 255.');
+      return;
+    }
     updatePersonMutation.mutate({
       id: editingPerson.id,
       data: {
-        full_name: editName,
-        age: Number(editAge) || 25,
+        full_name: editName.trim(),
+        age: parsedAge,
         status: editStatus,
         ...(editProfessionId != null ? { profession_id: editProfessionId } : {}),
       },
     });
   };
 
-  const { data: survivors, isLoading } = useQuery<Person[]>({
-    queryKey: ['people', currentCampId],
+  const { data: peopleResponse, isLoading } = useQuery<PeopleResponse>({
+    queryKey: ['people', currentCampId, page, PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get(`/camps/${currentCampId}/people`);
-      // The real API nests profession under person.professions.name —
-      // flatten it to profession_name so the rest of the component works.
-      type RawPerson = Person & { professions?: { name?: string } };
-      return unwrapList<RawPerson>(res.data).map((p) => ({
-        ...p,
-        profession_name: p.profession_name ?? p.professions?.name ?? null,
-      }));
+      const res = await apiClient.get(`/camps/${currentCampId}/people`, {
+        params: { page, pageSize: PAGE_SIZE },
+      });
+      return normalizePeopleResponse(res.data, page);
     },
-    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
+    enabled: !!currentCampId && canRead,
   });
+
+  const { data: searchableSurvivors } = useQuery<Person[]>({
+    queryKey: ['people', currentCampId, 'searchable-list', SEARCH_PAGE_SIZE],
+    queryFn: async () => {
+      const res = await apiClient.get(`/camps/${currentCampId}/people`, {
+        params: { page: 1, pageSize: SEARCH_PAGE_SIZE },
+      });
+      return normalizePeopleResponse(res.data, 1).data;
+    },
+    enabled: !!currentCampId && canRead,
+  });
+
+  const survivors = peopleResponse?.data ?? [];
+  const allSurvivors = searchableSurvivors ?? survivors;
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
     queryKey: ['professions'],
@@ -136,41 +251,75 @@ export default function PopulationRoster() {
   });
 
   const professionCoverage = useMemo(() => {
-    if (!survivors || !professions) return [];
+    if (!professions) return [];
     // group survivors by profession_id, count active ones
     return professions
       .map((prof) => {
-        const assigned = survivors.filter((s) => s.profession_id === prof.id);
+        const assigned = allSurvivors.filter((s) => s.profession_id === prof.id);
         const active = assigned.filter((s) => normalizePersonStatus(s.status) === 'HEALTHY');
         return { ...prof, total: assigned.length, active: active.length };
       })
       .filter((p) => p.total > 0 && p.active === 0);
-  }, [survivors, professions]);
+  }, [allSurvivors, professions]);
 
   const { data: camps } = useQuery<Camp[]>({
-    queryKey: ['camps'],
+    queryKey: ['camps-catalog'],
     queryFn: async () => {
-      const res = await apiClient.get('/camps');
+      const res = await apiClient.get('/camps/catalog');
       return unwrapList<Camp>(res.data);
     },
     enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
+  const { data: resources } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ['resources-list'],
+    queryFn: () => fetchAllPaginated<{ id: number; name: string }>('/resources'),
+    enabled: canTransfer && hasPermission(user?.permissions, 'resources.read'),
+  });
+
+  const rationResource = useMemo(
+    () =>
+      resources?.find(
+        (resource) => resource.name.trim().toUpperCase() === RATION_RESOURCE_TYPE_NAME,
+      ),
+    [resources],
+  );
+
   const transferMutation = useMutation({
     mutationFn: async ({ personId, campId }: { personId: number; campId: number }) => {
+      if (!rationResource) {
+        throw new Error(
+          `${RATION_RESOURCE_TYPE_NAME} resource is required for personnel transfers.`,
+        );
+      }
+
       await apiClient.post('/transfers', {
         requesting_camp: currentCampId,
         target_camp: campId,
         type: 'PERSON',
         requested_by: userId ?? 1,
-        items: [{ item_type: 'PERSON', person_id: personId }],
+        items: [
+          { item_type: 'PERSON', person_id: personId },
+          {
+            item_type: 'RESOURCE',
+            resource_type_id: rationResource.id,
+            quantity: RATIONS_PER_PERSON_FOR_TRAVEL,
+          },
+        ],
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       setTransferringPerson(null);
       setTargetCampId(null);
+      setFeedback({
+        type: 'success',
+        title: 'TRANSFER REQUESTED',
+        message: 'The personnel transfer request was created successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('TRANSFER FAILED', error, 'Could not create personnel transfer.'),
   });
 
   const reassignMutation = useMutation({
@@ -195,19 +344,28 @@ export default function PopulationRoster() {
       setReassignModal(false);
       setReassignVacantProfId(null);
       setReassignPersonId(null);
+      setFeedback({
+        type: 'success',
+        title: 'REASSIGNMENT SAVED',
+        message: 'The temporary profession reassignment was saved successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('REASSIGNMENT FAILED', error, 'Could not save temporary reassignment.'),
   });
 
   const canReassign = hasPermission(user?.permissions, 'people.profession_reassign.create');
   const canCreate = hasPermission(user?.permissions, 'people.create');
   const canUpdate = hasPermission(user?.permissions, 'people.update');
   const canDelete = hasPermission(user?.permissions, 'people.delete');
-  const canTransfer = hasPermission(user?.permissions, 'transfers.create');
   const canCreateAdmission = hasPermission(user?.permissions, 'admission.create');
 
-  const filteredSurvivors = (survivors ?? []).filter((s: Person) => {
-    const nameMatch = s.full_name.toLowerCase().includes(search.toLowerCase());
-    const profMatch = s.profession_name?.toLowerCase().includes(search.toLowerCase());
+  const normalizedSearch = search.trim().toLowerCase();
+  const isFiltering = normalizedSearch.length > 0 || statusFilter !== 'ALL';
+  const visibleSource = isFiltering ? allSurvivors : survivors;
+  const filteredSurvivors = visibleSource.filter((s: Person) => {
+    const nameMatch = s.full_name.toLowerCase().includes(normalizedSearch);
+    const profMatch = s.profession_name?.toLowerCase().includes(normalizedSearch);
     const matchesSearch = nameMatch || profMatch;
 
     if (!matchesSearch) return false;
@@ -219,8 +377,17 @@ export default function PopulationRoster() {
     return personStatus === filterVal;
   });
 
-  const totalPages = Math.max(1, Math.ceil(filteredSurvivors.length / PAGE_SIZE));
-  const paginatedSurvivors = filteredSurvivors.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = isFiltering
+    ? Math.max(1, Math.ceil(filteredSurvivors.length / PAGE_SIZE))
+    : (peopleResponse?.pagination.totalPages ?? 1);
+  const currentPage = Math.min(page, totalPages);
+  const paginatedSurvivors = isFiltering
+    ? filteredSurvivors.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+    : survivors;
+  const personnelCount = isFiltering
+    ? filteredSurvivors.length
+    : (peopleResponse?.pagination.total ?? survivors.length);
+  const personnelCountLabel = isFiltering ? 'Matching personnel' : 'Total personnel';
 
   return (
     <div className="space-y-6 relative">
@@ -499,7 +666,7 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end items-center gap-1">
-                      {canTransfer && (
+                      {canTransfer && normalizePersonStatus(person.status) === 'HEALTHY' && (
                         <button
                           onClick={() => setTransferringPerson(person)}
                           aria-label={`Transfer ${person.full_name}`}
@@ -509,7 +676,7 @@ export default function PopulationRoster() {
                           <ArrowLeftRight size={16} />
                         </button>
                       )}
-                      {canUpdate && (
+                      {canUpdate && normalizePersonStatus(person.status) !== 'DEAD' && (
                         <button
                           onClick={() => handleEditClick(person)}
                           aria-label={`Edit ${person.full_name}`}
@@ -519,7 +686,7 @@ export default function PopulationRoster() {
                           <Edit2 size={16} />
                         </button>
                       )}
-                      {canDelete && (
+                      {canDelete && normalizePersonStatus(person.status) !== 'DEAD' && (
                         <button
                           onClick={() => setConfirmDeletePerson(person)}
                           aria-label={`Delete ${person.full_name}`}
@@ -553,6 +720,10 @@ export default function PopulationRoster() {
                 </h3>
                 <p className="text-sm text-zinc-500 font-mono">
                   Transferring: {transferringPerson.full_name}
+                </p>
+                <p className="text-[10px] text-zinc-600 font-mono">
+                  Includes {RATIONS_PER_PERSON_FOR_TRAVEL} {RATION_RESOURCE_TYPE_NAME} travel
+                  rations, required by transfer protocol.
                 </p>
               </div>
 
@@ -592,7 +763,7 @@ export default function PopulationRoster() {
                   CANCEL
                 </button>
                 <button
-                  disabled={!targetCampId || transferMutation.isPending}
+                  disabled={!targetCampId || !rationResource || transferMutation.isPending}
                   onClick={() =>
                     targetCampId &&
                     transferMutation.mutate({
@@ -602,7 +773,11 @@ export default function PopulationRoster() {
                   }
                   className="flex-2 py-3 bg-brand-secondary text-black font-black uppercase rounded hover:bg-amber-600 transition-colors disabled:opacity-30"
                 >
-                  {transferMutation.isPending ? 'AUTHORIZING...' : 'CONFIRM TRANSFER'}
+                  {!rationResource
+                    ? 'RATION RESOURCE MISSING'
+                    : transferMutation.isPending
+                      ? 'AUTHORIZING...'
+                      : 'CONFIRM TRANSFER'}
                 </button>
               </div>
             </motion.div>
@@ -640,6 +815,7 @@ export default function PopulationRoster() {
                   <input
                     required
                     type="text"
+                    maxLength={150}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase"
@@ -654,6 +830,9 @@ export default function PopulationRoster() {
                     <input
                       required
                       type="number"
+                      min={0}
+                      max={255}
+                      step={1}
                       value={editAge}
                       onChange={(e) => setEditAge(e.target.value)}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
@@ -794,8 +973,8 @@ export default function PopulationRoster() {
                       Select Healthy Survivor (source)
                     </p>
                     <div className="grid gap-2 max-h-48 overflow-auto pr-1">
-                      {survivors
-                        ?.filter(
+                      {allSurvivors
+                        .filter(
                           (p) =>
                             normalizePersonStatus(p.status) === 'HEALTHY' &&
                             p.profession_id != null &&
@@ -820,7 +999,7 @@ export default function PopulationRoster() {
                             </div>
                           </button>
                         ))}
-                      {survivors?.filter(
+                      {allSurvivors.filter(
                         (p) =>
                           normalizePersonStatus(p.status) === 'HEALTHY' &&
                           p.profession_id != null &&
@@ -852,7 +1031,7 @@ export default function PopulationRoster() {
                   }
                   onClick={() => {
                     if (!reassignVacantProfId || !reassignPersonId) return;
-                    const person = survivors?.find((p) => p.id === reassignPersonId);
+                    const person = allSurvivors.find((p) => p.id === reassignPersonId);
                     const fromProfId = person?.profession_id;
                     if (!fromProfId) return;
                     reassignMutation.mutate({
@@ -873,11 +1052,23 @@ export default function PopulationRoster() {
 
       <div className="pt-4 flex items-center justify-between">
         <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
-          Total active personnel: {filteredSurvivors.length} · Showing {paginatedSurvivors.length}{' '}
-          on page {page} of {totalPages}
+          {personnelCountLabel}: {personnelCount} · Showing {paginatedSurvivors.length} on page{' '}
+          {currentPage} of {totalPages}
         </p>
-        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
       </div>
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Population Roster"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
+      )}
     </div>
   );
 }

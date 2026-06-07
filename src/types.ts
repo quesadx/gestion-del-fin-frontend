@@ -87,12 +87,76 @@ export interface InventoryAuditEntry {
   is_consistent?: boolean;
 }
 
+export type InventoryAdjustmentRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type InventoryAdjustmentType = 'MANUAL_IN' | 'MANUAL_OUT';
+
+export interface InventoryAdjustmentRequest {
+  id: number;
+  camp_id: number;
+  created_by: number;
+  status: InventoryAdjustmentRequestStatus;
+  adjustment_type: InventoryAdjustmentType;
+  resource_type_id: number;
+  quantity: number | string;
+  reason?: string | null;
+  reviewed_by?: number | null;
+  reviewed_at?: string | null;
+  created_at: string;
+  updated_at?: string;
+  created_by_user?: {
+    id: number;
+    username: string;
+  } | null;
+  reviewed_by_user?: {
+    id: number;
+    username: string;
+  } | null;
+  resource_type?: {
+    id: number;
+    name: string;
+    unit: string;
+  } | null;
+}
+
 export interface ResourceLookup {
   id: number;
   name: string;
   unit: string;
   minimum_stock?: number;
   daily_ration?: number;
+}
+
+export interface ContributionOverride {
+  id: number;
+  person_id: number;
+  resource_type_id: number;
+  reason: string;
+  amount: number | string;
+  start_date?: string | null;
+  end_date?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
+  resource_type?: {
+    id: number;
+    name: string;
+    unit?: string | null;
+  } | null;
+  users?: {
+    id: number;
+    username: string;
+  } | null;
+}
+
+export interface PersonStatusLog {
+  id: number;
+  person_id: number;
+  old_status: string;
+  new_status: string;
+  reason?: string | null;
+  changed_by?: number | null;
+  changed_at: string;
+  users?: { id: number; username: string } | null;
 }
 
 export interface Person {
@@ -108,6 +172,8 @@ export interface Person {
   identification_code?: string | null;
   blood_type?: string | null;
   admitted_at?: string | null;
+  contribution_overrides?: ContributionOverride[];
+  person_status_logs?: PersonStatusLog[];
 }
 
 export interface Admission {
@@ -129,6 +195,7 @@ export interface Admission {
   ai_profession_id?: number | null;
   corrected_profession_id?: number | null;
   correction_reason?: string | null;
+  admitted_by?: 'AI' | string | null;
   person_id?: number | null;
   reviewed_by?: number | null;
   reviewed_at?: string | null;
@@ -222,5 +289,10 @@ export interface Expedition {
   created_at?: string;
   members?: ExplorationMember[];
   allocated_resources?: ResourceAllocation[];
+  returned_resources?: ResourceAllocation[];
   found_resources?: ResourceAllocation[];
+  expedition_members?: ExplorationMember[];
+  expedition_allocated_resources?: ResourceAllocation[];
+  expedition_returned_resources?: ResourceAllocation[];
+  expedition_found_resources?: ResourceAllocation[];
 }
