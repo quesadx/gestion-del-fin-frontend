@@ -277,5 +277,10 @@ export interface Expedition {
   created_at?: string;
   members?: ExplorationMember[];
   allocated_resources?: ResourceAllocation[];
+  returned_resources?: ResourceAllocation[];
   found_resources?: ResourceAllocation[];
+  expedition_members?: ExplorationMember[];
+  expedition_allocated_resources?: ResourceAllocation[];
+  expedition_returned_resources?: ResourceAllocation[];
+  expedition_found_resources?: ResourceAllocation[];
 }
