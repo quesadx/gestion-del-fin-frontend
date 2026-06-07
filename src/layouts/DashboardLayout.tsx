@@ -140,7 +140,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/dashboard': 'metrics.dashboard',
   '/population': 'people.read',
   '/inventory': 'inventory.read',
-  '/rations': 'inventory.read',
+  '/rations': 'inventory.audit.read',
   '/admission': 'admission.read',
   '/expeditions': 'expeditions.read',
   '/transfers': 'transfers.read',
