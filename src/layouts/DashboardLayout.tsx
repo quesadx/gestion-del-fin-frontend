@@ -17,11 +17,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, fetchAllPaginated, unwrapList } from '../lib/api';
+import { apiClient, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource, UserAchievement } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
@@ -43,7 +44,6 @@ const PANEL_SHELL =
   'mx-4 mt-2 overflow-hidden rounded-2xl border border-red-500/25 bg-[rgba(78,32,36,0.8)] backdrop-blur-md shadow-[0_20px_60px_rgba(0,0,0,0.28),0_0_0_1px_rgba(239,68,68,0.12),0_0_24px_rgba(239,68,68,0.12)]';
 
 const ALERT_ROW = 'relative flex items-center justify-between gap-4 px-5 py-2.5 sm:px-6';
-const MAIN_DOCK_CLEARANCE = 'calc(10rem + env(safe-area-inset-bottom))';
 
 const CAMP_COLOR_THEMES = [
   {
@@ -169,7 +169,7 @@ export default function DashboardLayout() {
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [showEyePhase, setShowEyePhase] = useState(false);
   const [achvPopupOpen, setAchvPopupOpen] = useState(false);
-  const [externalModalOpen, setExternalModalOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -191,10 +191,10 @@ export default function DashboardLayout() {
       try {
         const [invRes, resRes] = await Promise.all([
           apiClient.get(`/inventory/${currentCampId}`),
-          fetchAllPaginated<Resource>('/resources'),
+          apiClient.get('/resources'),
         ]);
         const items: InventoryItem[] = unwrapList<InventoryItem>(invRes.data);
-        const resourceTypes: Resource[] = resRes;
+        const resourceTypes: Resource[] = unwrapList<Resource>(resRes.data);
 
         const criticalNames: string[] = [];
         let lowCount = 0;
@@ -371,39 +371,11 @@ export default function DashboardLayout() {
     return () => window.removeEventListener('keydown', handler);
   }, [achvPopupOpen]);
 
-  useEffect(() => {
-    const isModalOverlay = (element: Element) => {
-      const className = element.getAttribute('class') ?? '';
-      return (
-        className.includes('fixed') &&
-        className.includes('inset-0') &&
-        (className.includes('z-50') ||
-          className.includes('z-60') ||
-          className.includes('z-[60]') ||
-          className.includes('z-[999]'))
-      );
-    };
-
-    const detectModal = () => {
-      const hasDialogRole = document.querySelector('[role="dialog"], [role="alertdialog"]');
-      const hasOverlay = Array.from(document.querySelectorAll('.fixed')).some(isModalOverlay);
-      setExternalModalOpen(Boolean(hasDialogRole || hasOverlay));
-    };
-
-    detectModal();
-
-    const observer = new MutationObserver(detectModal);
-    observer.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class', 'role'],
-      childList: true,
-      subtree: true,
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
   const handleLogout = () => {
+    setLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = () => {
     logout();
     navigate('/login');
   };
@@ -433,7 +405,6 @@ export default function DashboardLayout() {
         : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/70',
     };
   });
-  const dockHidden = campPopupOpen || showEasterEgg || externalModalOpen;
 
   return (
     <div className="relative z-10 flex flex-col h-screen bg-transparent text-zinc-100 overflow-hidden">
@@ -526,6 +497,54 @@ export default function DashboardLayout() {
           </div>
         </div>
       </header>
+
+      <AnimatePresence>
+        {logoutConfirmOpen && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0, y: 12 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 12 }}
+              transition={{ duration: 0.16 }}
+              className="w-full max-w-sm rounded-xl border border-red-500/25 bg-[rgba(48,25,29,0.96)] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.45),0_0_22px_rgba(239,68,68,0.12)]"
+            >
+              <div className="flex items-start gap-3 border-b border-red-500/10 pb-4">
+                <div className="w-10 h-10 rounded-lg border border-red-500/25 bg-red-950/35 flex items-center justify-center text-brand-primary shrink-0">
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono text-brand-primary uppercase tracking-widest">
+                    Session Control
+                  </p>
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter text-zinc-100">
+                    Close Session?
+                  </h3>
+                  <p className="mt-1 text-xs font-mono leading-relaxed text-zinc-500">
+                    Are you sure you want to terminate the current session?
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLogoutConfirmOpen(false)}
+                  className="py-2.5 text-xs font-bold uppercase rounded border border-zinc-800 text-zinc-300 hover:bg-zinc-900 transition-colors"
+                >
+                  NO, STAY
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmLogout}
+                  className="py-2.5 text-xs font-black uppercase rounded bg-brand-primary text-black hover:bg-brand-primary/90 transition-colors"
+                >
+                  YES, SIGN OUT
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ── Disconnected banner ──────────────────────────────────────── */}
       <AnimatePresence>
@@ -950,10 +969,7 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
-      <main
-        className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8"
-        style={{ paddingBottom: MAIN_DOCK_CLEARANCE }}
-      >
+      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-32 sm:pb-36 lg:pb-40">
         <div className="max-w-7xl mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div
@@ -970,20 +986,11 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <AnimatePresence>
-        {!dockHidden && (
-          <motion.div
-            key="bottom-dock"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 20, opacity: 0 }}
-            transition={{ duration: 0.16 }}
-            className="fixed bottom-2 sm:bottom-4 left-1/2 z-40 -translate-x-1/2"
-          >
-            <Dock items={dockItems} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-30 -translate-x-1/2">
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <Dock items={dockItems} />
+        </motion.div>
+      </div>
     </div>
   );
 }
