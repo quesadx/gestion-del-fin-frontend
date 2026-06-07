@@ -1103,6 +1103,7 @@ export default function AdmissionList() {
                         setCreateFormError(null);
                       }}
                       placeholder="e.g. Marlene Carter"
+                      aria-label="Applicant name"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
                     />
                   </div>
@@ -1121,6 +1122,7 @@ export default function AdmissionList() {
                         setCreateFormError(null);
                       }}
                       placeholder="e.g. 28"
+                      aria-label="Applicant age"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
                     />
                   </div>
@@ -1138,6 +1140,7 @@ export default function AdmissionList() {
                       setCreateFormError(null);
                     }}
                     placeholder="e.g. combat training, basic surgical operations, scouting, agriculture"
+                    aria-label="Applicant skills"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
                   />
                 </div>
@@ -1154,6 +1157,7 @@ export default function AdmissionList() {
                     }}
                     placeholder="e.g. Minor exhaustions, no active bites or infectious symptoms detected."
                     rows={2}
+                    aria-label="Health notes"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none"
                   />
                 </div>
@@ -1170,6 +1174,7 @@ export default function AdmissionList() {
                     }}
                     placeholder="e.g. Former cargo vehicle driver from the state border. Cooperative and compliant."
                     rows={2}
+                    aria-label="Background notes"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none"
                   />
                 </div>
@@ -1186,6 +1191,7 @@ export default function AdmissionList() {
                         setNewPhoto(e.target.files?.[0] ?? null);
                         setCreateFormError(null);
                       }}
+                      aria-label="Applicant photo"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
@@ -1200,6 +1206,7 @@ export default function AdmissionList() {
                         setNewIdCard(e.target.files?.[0] ?? null);
                         setCreateFormError(null);
                       }}
+                      aria-label="Identification card"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-brand-primary file:text-black file:text-xs file:font-bold focus:outline-none focus:border-brand-primary"
                     />
                   </div>
@@ -1289,6 +1296,7 @@ export default function AdmissionList() {
                         setCorrectName(e.target.value);
                         setCorrectFormError(null);
                       }}
+                      aria-label="Applicant name"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -1306,6 +1314,7 @@ export default function AdmissionList() {
                         setCorrectAge(e.target.value);
                         setCorrectFormError(null);
                       }}
+                      aria-label="Applicant age"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -1322,6 +1331,7 @@ export default function AdmissionList() {
                       setCorrectSkills(e.target.value);
                       setCorrectFormError(null);
                     }}
+                    aria-label="Applicant skills"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500"
                   />
                 </div>
@@ -1337,6 +1347,7 @@ export default function AdmissionList() {
                       setCorrectFormError(null);
                     }}
                     rows={2}
+                    aria-label="Corrected health notes"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
                   />
                 </div>
@@ -1352,6 +1363,7 @@ export default function AdmissionList() {
                       setCorrectFormError(null);
                     }}
                     rows={2}
+                    aria-label="Corrected background notes"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-amber-500 resize-none"
                   />
                 </div>
@@ -1368,6 +1380,7 @@ export default function AdmissionList() {
                         setCorrectPhoto(e.target.files?.[0] ?? null);
                         setCorrectFormError(null);
                       }}
+                      aria-label="Applicant photo"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -1382,6 +1395,7 @@ export default function AdmissionList() {
                         setCorrectIdCard(e.target.files?.[0] ?? null);
                         setCorrectFormError(null);
                       }}
+                      aria-label="Identification card"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-black file:text-xs file:font-bold focus:outline-none focus:border-amber-500"
                     />
                   </div>

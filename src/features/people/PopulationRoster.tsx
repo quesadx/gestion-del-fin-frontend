@@ -431,6 +431,7 @@ export default function PopulationRoster() {
               setPage(1);
             }}
             placeholder="FILTER BY NAME OR PROFESSION..."
+            aria-label="Search survivors"
             className="w-full bg-surface-raised border border-zinc-800 rounded-lg pl-10 pr-4 py-2.5 text-sm font-mono focus:outline-none focus:border-brand-primary"
           />
         </div>
@@ -450,7 +451,10 @@ export default function PopulationRoster() {
             <option value="AWAY">AWAY</option>
             <option value="DEAD">DEAD</option>
           </select>
-          <button className="p-2.5 brutalist-border rounded-lg text-zinc-400 hover:text-white transition-colors">
+          <button
+            className="p-2.5 brutalist-border rounded-lg text-zinc-400 hover:text-white transition-colors"
+            aria-label="Toggle filters"
+          >
             <Filter size={20} />
           </button>
         </div>
@@ -818,6 +822,7 @@ export default function PopulationRoster() {
                     maxLength={150}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
+                    aria-label="Full name"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase"
                   />
                 </div>
@@ -835,6 +840,7 @@ export default function PopulationRoster() {
                       step={1}
                       value={editAge}
                       onChange={(e) => setEditAge(e.target.value)}
+                      aria-label="Age"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
                     />
                   </div>
@@ -849,6 +855,7 @@ export default function PopulationRoster() {
                           e.target.value as 'HEALTHY' | 'INJURED' | 'SICK' | 'AWAY' | 'DEAD',
                         )
                       }
+                      aria-label="Status rating"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary cursor-pointer uppercase font-mono"
                     >
                       <option value="HEALTHY">HEALTHY</option>
@@ -869,6 +876,7 @@ export default function PopulationRoster() {
                     onChange={(e) =>
                       setEditProfessionId(e.target.value ? Number(e.target.value) : null)
                     }
+                    aria-label="Profession"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase cursor-pointer"
                   >
                     <option value="">— No change —</option>

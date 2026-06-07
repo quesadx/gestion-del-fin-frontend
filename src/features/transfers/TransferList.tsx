@@ -1735,6 +1735,7 @@ export default function TransferList() {
                     }}
                     placeholder="Additional instructions or context for this transfer..."
                     rows={2}
+                    aria-label="Transfer notes"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none font-mono"
                   />
                 </div>
@@ -1823,6 +1824,7 @@ export default function TransferList() {
                   rows={3}
                   maxLength={500}
                   autoFocus
+                  aria-label="Rejection reason"
                   className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-red-500 resize-none font-mono"
                 />
                 <div className="flex items-center justify-between gap-2">

@@ -249,6 +249,7 @@ export default function NewPersonPage() {
               </label>
               <select
                 {...register('status')}
+                aria-label="Status rating"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary cursor-pointer uppercase font-mono"
               >
                 <option value="HEALTHY">HEALTHY</option>
@@ -266,6 +267,7 @@ export default function NewPersonPage() {
             </label>
             <select
               {...register('profession_id')}
+              aria-label="Profession"
               className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase cursor-pointer"
             >
               <option value="">-- Select profession --</option>
@@ -290,6 +292,7 @@ export default function NewPersonPage() {
               {...register('skills_summary')}
               rows={3}
               placeholder="e.g. combat training, medical triage, scouting, agriculture"
+              aria-label="Skills summary"
               className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2.5 text-xs text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono resize-none"
             />
           </div>
@@ -308,6 +311,7 @@ export default function NewPersonPage() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
+                  aria-label="Personnel photo"
                   className="sr-only"
                 />
               </label>

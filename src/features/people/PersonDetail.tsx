@@ -1094,6 +1094,7 @@ export default function PersonDetail() {
                     maxLength={150}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
+                    aria-label="Full name"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase"
                   />
                 </div>
@@ -1111,6 +1112,7 @@ export default function PersonDetail() {
                       step={1}
                       value={editAge}
                       onChange={(e) => setEditAge(e.target.value)}
+                      aria-label="Age"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
                     />
                   </div>
@@ -1121,6 +1123,7 @@ export default function PersonDetail() {
                     <select
                       value={editStatus}
                       onChange={(e) => setEditStatus(e.target.value)}
+                      aria-label="Status rating"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary cursor-pointer uppercase font-mono"
                     >
                       <option value="HEALTHY">HEALTHY</option>
@@ -1141,6 +1144,7 @@ export default function PersonDetail() {
                     onChange={(e) =>
                       setEditProfessionId(e.target.value ? Number(e.target.value) : null)
                     }
+                    aria-label="Profession"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase cursor-pointer"
                   >
                     <option value="">— No change —</option>
@@ -1161,6 +1165,7 @@ export default function PersonDetail() {
                     onChange={(e) => setEditSkillsSummary(e.target.value)}
                     rows={2}
                     placeholder="e.g. combat training, medical triage, scouting"
+                    aria-label="Skills summary"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono resize-none"
                   />
                 </div>
@@ -1182,6 +1187,7 @@ export default function PersonDetail() {
                       type="file"
                       accept="image/*"
                       onChange={(e) => handleEditPhotoChange(e.target.files?.[0] ?? null)}
+                      aria-label="Personnel photo"
                       className="sr-only"
                     />
                   </label>
@@ -1326,6 +1332,7 @@ export default function PersonDetail() {
                     required
                     value={statusNewStatus}
                     onChange={(e) => setStatusNewStatus(e.target.value)}
+                    aria-label="New status"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-mono uppercase cursor-pointer"
                   >
                     <option value="HEALTHY">HEALTHY</option>
@@ -1345,6 +1352,7 @@ export default function PersonDetail() {
                     onChange={(e) => setStatusReason(e.target.value)}
                     rows={3}
                     placeholder="e.g. sustained injury during patrol, showing symptoms of illness..."
+                    aria-label="Status change reason"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-mono resize-none"
                   />
                 </div>
@@ -1434,6 +1442,7 @@ export default function PersonDetail() {
                     onChange={(e) =>
                       setReassignProfessionId(e.target.value ? Number(e.target.value) : null)
                     }
+                    aria-label="Target profession"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono uppercase cursor-pointer"
                   >
                     <option value="">— Select profession —</option>
@@ -1454,6 +1463,7 @@ export default function PersonDetail() {
                     onChange={(e) => setReassignReason(e.target.value)}
                     rows={2}
                     placeholder="e.g. reassigned to medical unit due to background"
+                    aria-label="Reassignment reason"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono resize-none"
                   />
                 </div>
@@ -1467,6 +1477,7 @@ export default function PersonDetail() {
                       type="date"
                       value={reassignStartDate}
                       onChange={(e) => setReassignStartDate(e.target.value)}
+                      aria-label="Start date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono"
                     />
                   </div>
@@ -1478,6 +1489,7 @@ export default function PersonDetail() {
                       type="date"
                       value={reassignEndDate}
                       onChange={(e) => setReassignEndDate(e.target.value)}
+                      aria-label="End date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono"
                     />
                   </div>
@@ -1563,6 +1575,7 @@ export default function PersonDetail() {
                     onChange={(e) =>
                       setOverrideResourceTypeId(e.target.value ? Number(e.target.value) : null)
                     }
+                    aria-label="Resource type"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono uppercase cursor-pointer"
                   >
                     <option value="">— Select resource —</option>
@@ -1586,6 +1599,7 @@ export default function PersonDetail() {
                     value={overrideAmount}
                     onChange={(e) => setOverrideAmount(e.target.value)}
                     placeholder="0.00"
+                    aria-label="Override amount"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
                   />
                   <p className="text-[10px] text-zinc-600 font-mono">
@@ -1609,6 +1623,7 @@ export default function PersonDetail() {
                     onChange={(e) => setOverrideReason(e.target.value)}
                     rows={2}
                     placeholder="e.g. adjusted contribution due to special circumstances"
+                    aria-label="Override reason"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono resize-none"
                   />
                   <div className="flex justify-between gap-3 text-[10px] font-mono">
@@ -1628,6 +1643,7 @@ export default function PersonDetail() {
                       type="date"
                       value={overrideStartDate}
                       onChange={(e) => setOverrideStartDate(e.target.value)}
+                      aria-label="Start date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
                     />
                   </div>
@@ -1639,6 +1655,7 @@ export default function PersonDetail() {
                       type="date"
                       value={overrideEndDate}
                       onChange={(e) => setOverrideEndDate(e.target.value)}
+                      aria-label="End date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
                     />
                   </div>

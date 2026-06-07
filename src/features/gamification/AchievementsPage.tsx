@@ -272,6 +272,7 @@ export default function AchievementsPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. First Aid, Supply Runner"
+                    aria-label="Achievement name"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
                   />
                 </div>
@@ -286,6 +287,7 @@ export default function AchievementsPage() {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Criteria for earning this achievement"
                     rows={3}
+                    aria-label="Achievement description"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none"
                   />
                 </div>
@@ -316,6 +318,7 @@ export default function AchievementsPage() {
                       min={1}
                       value={xpReward}
                       onChange={(e) => setXpReward(Number(e.target.value))}
+                      aria-label="XP reward amount"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary"
                     />
                   </div>
@@ -330,6 +333,7 @@ export default function AchievementsPage() {
                     onChange={(e) => setCriteria(e.target.value)}
                     placeholder='{"min_level": 5, "action": "complete_expedition"}'
                     rows={2}
+                    aria-label="Achievement criteria"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none font-mono"
                   />
                 </div>
