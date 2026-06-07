@@ -1046,6 +1046,7 @@ export default function InventoryList() {
                         setAdjustError(null);
                       }}
                       placeholder="e.g. 50"
+                      aria-label="Adjustment quantity"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-secondary"
                     />
                   </div>
@@ -1064,6 +1065,7 @@ export default function InventoryList() {
                     }}
                     placeholder="e.g. Discovered 5 crates of canned beans in warehouse basement near Highway 10."
                     rows={3}
+                    aria-label="Adjustment reason"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-secondary resize-none"
                   />
                   <p className="text-[10px] font-mono text-zinc-600">
