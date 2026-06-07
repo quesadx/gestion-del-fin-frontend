@@ -314,7 +314,7 @@ export default function App() {
                     <Route
                       path="rations"
                       element={
-                        <ProtectedRoute permission="inventory.read">
+                        <ProtectedRoute permission="inventory.audit.read">
                           <RationsPage />
                         </ProtectedRoute>
                       }
