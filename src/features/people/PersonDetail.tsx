@@ -150,9 +150,9 @@ export default function PersonDetail() {
   // ── Supporting queries ─────────────────────────────────────────────────
 
   const { data: camps } = useQuery<Camp[]>({
-    queryKey: ['camps'],
+    queryKey: ['camps-catalog'],
     queryFn: async () => {
-      const res = await apiClient.get('/camps');
+      const res = await apiClient.get('/camps/catalog');
       return unwrapList<Camp>(res.data);
     },
     enabled: hasReadPermission && canReadCamps,

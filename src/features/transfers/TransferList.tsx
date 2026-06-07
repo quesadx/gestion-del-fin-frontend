@@ -364,9 +364,9 @@ export default function TransferList() {
   });
 
   const { data: camps } = useQuery<CampRef[]>({
-    queryKey: ['camps-list'],
+    queryKey: ['camps-catalog'],
     queryFn: async () => {
-      const res = await apiClient.get('/camps');
+      const res = await apiClient.get('/camps/catalog');
       return unwrapList<CampRef>(res.data);
     },
     enabled: hasPermission(user?.permissions, 'camps.read'),
