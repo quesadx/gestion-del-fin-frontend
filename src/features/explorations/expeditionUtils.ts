@@ -76,6 +76,15 @@ export function buildDefaultReturnedAllocatedRows(expedition: Expedition | null 
     .filter((resource) => resource.resource_type_id > 0 && resource.amount > 0);
 }
 
+export function buildEmptyReturnedAllocatedRows(expedition: Expedition | null | undefined) {
+  return getExpeditionAllocatedResources(expedition)
+    .map((resource) => ({
+      resource_type_id: Number(resource.resource_type_id),
+      amount: 0,
+    }))
+    .filter((resource) => resource.resource_type_id > 0);
+}
+
 export function buildDefaultMemberOutcomes(
   expedition: Expedition | null | undefined,
   status: Person['status'],
