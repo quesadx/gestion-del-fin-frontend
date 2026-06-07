@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, fetchAllPaginated, toFormData, unwrapList } from '../../lib/api';
@@ -863,7 +863,10 @@ export default function PersonDetail() {
                       className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors"
                     >
                       <div className="shrink-0">
-                        <Clock size={14} className={isDeathRecord ? 'text-red-500' : 'text-zinc-600'} />
+                        <Clock
+                          size={14}
+                          className={isDeathRecord ? 'text-red-500' : 'text-zinc-600'}
+                        />
                       </div>
                       <div className="min-w-0 flex-1 space-y-0.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -886,9 +889,7 @@ export default function PersonDetail() {
                         )}
                         <p className="text-[9px] font-mono text-zinc-600">
                           {formatDate(log.changed_at)}
-                          {log.users?.username && (
-                            <span> &middot; {log.users.username}</span>
-                          )}
+                          {log.users?.username && <span> &middot; {log.users.username}</span>}
                         </p>
                       </div>
                     </div>
