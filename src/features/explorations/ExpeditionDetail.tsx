@@ -27,6 +27,7 @@ import {
   MemberOutcome,
   ResourceRow,
   buildDefaultMemberOutcomes,
+  buildEmptyReturnedAllocatedRows,
   buildDefaultReturnedAllocatedRows,
   getConsumedAllocatedResources,
   getExpeditionAllocatedResources,
@@ -541,7 +542,7 @@ export default function ExpeditionDetail() {
               <>
                 <button
                   onClick={() => {
-                    setReturnedAllocatedResources(buildDefaultReturnedAllocatedRows(expedition));
+                    setReturnedAllocatedResources(buildEmptyReturnedAllocatedRows(expedition));
                     setFoundResources([]);
                     setReturnMemberStatus('HEALTHY');
                     setMemberOutcomes(buildDefaultMemberOutcomes(expedition, 'HEALTHY'));
@@ -948,7 +949,7 @@ export default function ExpeditionDetail() {
                               );
                               updated[idx] = {
                                 resource_type_id: nextResourceId,
-                                amount: Number(allocation?.amount ?? 0),
+                                amount: 0,
                               };
                               setReturnedAllocatedResources(updated);
                               setReturnErrors((prev) => ({
@@ -998,6 +999,9 @@ export default function ExpeditionDetail() {
                             placeholder="Qty"
                             className="w-20 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary font-mono"
                           />
+                          <span className="text-[10px] font-mono text-zinc-600 shrink-0">
+                            / {selectedAllocation?.amount ?? '?'}
+                          </span>
                           <button
                             type="button"
                             onClick={() => {
@@ -1045,7 +1049,7 @@ export default function ExpeditionDetail() {
                         ...returnedAllocatedResources,
                         {
                           resource_type_id: Number(nextAllocation.resource_type_id),
-                          amount: Number(nextAllocation.amount),
+                          amount: 0,
                         },
                       ]);
                       setReturnErrors((prev) => ({
