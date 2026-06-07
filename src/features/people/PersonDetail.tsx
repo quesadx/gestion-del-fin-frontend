@@ -39,6 +39,8 @@ import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/Actio
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_OVERRIDE_AMOUNT = 9999999999.99;
+const RATION_RESOURCE_TYPE_NAME = 'FOOD_RATION';
+const RATIONS_PER_PERSON_FOR_TRAVEL = 6;
 
 type PersonUpdatePayload = {
   full_name?: string;
@@ -168,8 +170,13 @@ export default function PersonDetail() {
   const { data: resources } = useQuery<{ id: number; name: string }[]>({
     queryKey: ['resources'],
     queryFn: () => fetchAllPaginated<{ id: number; name: string }>('/resources'),
-    enabled: hasReadPermission && canReadResources && canOverrideContribution,
+    enabled:
+      hasReadPermission && canReadResources && (canOverrideContribution || canTransferPerson),
   });
+
+  const rationResource = resources?.find(
+    (resource) => resource.name.trim().toUpperCase() === RATION_RESOURCE_TYPE_NAME,
+  );
 
   const campName = camps?.find((c) => c.id === person?.camp_id)?.name;
   const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
@@ -247,12 +254,25 @@ export default function PersonDetail() {
 
   const transferMutation = useMutation({
     mutationFn: async ({ campId }: { campId: number }) => {
+      if (!rationResource) {
+        throw new Error(
+          `${RATION_RESOURCE_TYPE_NAME} resource is required for personnel transfers.`,
+        );
+      }
+
       await apiClient.post('/transfers', {
         requesting_camp: currentCampId,
         target_camp: campId,
         type: 'PERSON',
         requested_by: user?.id ?? 1,
-        items: [{ item_type: 'PERSON', person_id: personId }],
+        items: [
+          { item_type: 'PERSON', person_id: personId },
+          {
+            item_type: 'RESOURCE',
+            resource_type_id: rationResource.id,
+            quantity: RATIONS_PER_PERSON_FOR_TRAVEL,
+          },
+        ],
       });
     },
     onSuccess: () => {
@@ -898,7 +918,7 @@ export default function PersonDetail() {
             EDIT PROFILE
           </button>
         )}
-        {canTransferPerson && (
+        {canTransferPerson && normalizePersonStatus(person.status) === 'HEALTHY' && (
           <button
             onClick={() => setTransferringPerson(true)}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-amber-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-amber-500 transition-all"
@@ -1124,6 +1144,10 @@ export default function PersonDetail() {
                   Personnel Transfer
                 </h3>
                 <p className="text-sm text-zinc-500 font-mono">Transferring: {person.full_name}</p>
+                <p className="text-[10px] text-zinc-600 font-mono">
+                  Includes {RATIONS_PER_PERSON_FOR_TRAVEL} {RATION_RESOURCE_TYPE_NAME} travel
+                  rations, required by transfer protocol.
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -1162,11 +1186,15 @@ export default function PersonDetail() {
                   CANCEL
                 </button>
                 <button
-                  disabled={!targetCampId || transferMutation.isPending}
+                  disabled={!targetCampId || !rationResource || transferMutation.isPending}
                   onClick={() => targetCampId && transferMutation.mutate({ campId: targetCampId })}
                   className="flex-2 py-3 bg-brand-secondary text-black font-black uppercase rounded hover:bg-amber-600 transition-colors disabled:opacity-30"
                 >
-                  {transferMutation.isPending ? 'AUTHORIZING...' : 'CONFIRM TRANSFER'}
+                  {!rationResource
+                    ? 'RATION RESOURCE MISSING'
+                    : transferMutation.isPending
+                      ? 'AUTHORIZING...'
+                      : 'CONFIRM TRANSFER'}
                 </button>
               </div>
             </motion.div>

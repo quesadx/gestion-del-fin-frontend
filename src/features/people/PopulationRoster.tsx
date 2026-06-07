@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, toFormData, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, toFormData, unwrapList } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { Person, Camp } from '../../types';
 import {
@@ -33,6 +33,8 @@ import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/Actio
 
 const PAGE_SIZE = 20;
 const SEARCH_PAGE_SIZE = 100;
+const RATION_RESOURCE_TYPE_NAME = 'FOOD_RATION';
+const RATIONS_PER_PERSON_FOR_TRAVEL = 6;
 
 type RawPerson = Person & { professions?: { name?: string } | null };
 
@@ -117,6 +119,7 @@ export default function PopulationRoster() {
   const [reassignPersonId, setReassignPersonId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
   const canRead = hasPermission(user?.permissions, 'people.read');
+  const canTransfer = hasPermission(user?.permissions, 'transfers.create');
 
   // Edit states
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
@@ -268,14 +271,41 @@ export default function PopulationRoster() {
     enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
+  const { data: resources } = useQuery<{ id: number; name: string }[]>({
+    queryKey: ['resources-list'],
+    queryFn: () => fetchAllPaginated<{ id: number; name: string }>('/resources'),
+    enabled: canTransfer && hasPermission(user?.permissions, 'resources.read'),
+  });
+
+  const rationResource = useMemo(
+    () =>
+      resources?.find(
+        (resource) => resource.name.trim().toUpperCase() === RATION_RESOURCE_TYPE_NAME,
+      ),
+    [resources],
+  );
+
   const transferMutation = useMutation({
     mutationFn: async ({ personId, campId }: { personId: number; campId: number }) => {
+      if (!rationResource) {
+        throw new Error(
+          `${RATION_RESOURCE_TYPE_NAME} resource is required for personnel transfers.`,
+        );
+      }
+
       await apiClient.post('/transfers', {
         requesting_camp: currentCampId,
         target_camp: campId,
         type: 'PERSON',
         requested_by: userId ?? 1,
-        items: [{ item_type: 'PERSON', person_id: personId }],
+        items: [
+          { item_type: 'PERSON', person_id: personId },
+          {
+            item_type: 'RESOURCE',
+            resource_type_id: rationResource.id,
+            quantity: RATIONS_PER_PERSON_FOR_TRAVEL,
+          },
+        ],
       });
     },
     onSuccess: () => {
@@ -328,7 +358,6 @@ export default function PopulationRoster() {
   const canCreate = hasPermission(user?.permissions, 'people.create');
   const canUpdate = hasPermission(user?.permissions, 'people.update');
   const canDelete = hasPermission(user?.permissions, 'people.delete');
-  const canTransfer = hasPermission(user?.permissions, 'transfers.create');
   const canCreateAdmission = hasPermission(user?.permissions, 'admission.create');
 
   const normalizedSearch = search.trim().toLowerCase();
@@ -637,7 +666,7 @@ export default function PopulationRoster() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end items-center gap-1">
-                      {canTransfer && (
+                      {canTransfer && normalizePersonStatus(person.status) === 'HEALTHY' && (
                         <button
                           onClick={() => setTransferringPerson(person)}
                           aria-label={`Transfer ${person.full_name}`}
@@ -692,6 +721,10 @@ export default function PopulationRoster() {
                 <p className="text-sm text-zinc-500 font-mono">
                   Transferring: {transferringPerson.full_name}
                 </p>
+                <p className="text-[10px] text-zinc-600 font-mono">
+                  Includes {RATIONS_PER_PERSON_FOR_TRAVEL} {RATION_RESOURCE_TYPE_NAME} travel
+                  rations, required by transfer protocol.
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -730,7 +763,7 @@ export default function PopulationRoster() {
                   CANCEL
                 </button>
                 <button
-                  disabled={!targetCampId || transferMutation.isPending}
+                  disabled={!targetCampId || !rationResource || transferMutation.isPending}
                   onClick={() =>
                     targetCampId &&
                     transferMutation.mutate({
@@ -740,7 +773,11 @@ export default function PopulationRoster() {
                   }
                   className="flex-2 py-3 bg-brand-secondary text-black font-black uppercase rounded hover:bg-amber-600 transition-colors disabled:opacity-30"
                 >
-                  {transferMutation.isPending ? 'AUTHORIZING...' : 'CONFIRM TRANSFER'}
+                  {!rationResource
+                    ? 'RATION RESOURCE MISSING'
+                    : transferMutation.isPending
+                      ? 'AUTHORIZING...'
+                      : 'CONFIRM TRANSFER'}
                 </button>
               </div>
             </motion.div>
