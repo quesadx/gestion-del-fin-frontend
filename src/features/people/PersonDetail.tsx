@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient, fetchAllPaginated, toFormData, unwrapList } from '../../lib/api';
@@ -641,9 +641,9 @@ export default function PersonDetail() {
       {/* Back navigation */}
       <button
         onClick={() => navigate('/population')}
-        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-wider"
+        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-600 rounded-lg px-3 py-2 transition-all hover:-translate-x-0.5 hover:shadow-[0_0_12px_rgba(255,255,255,0.04)] group"
       >
-        <ArrowLeft size={14} />
+        <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
         BACK TO POPULATION
       </button>
 
@@ -832,6 +832,72 @@ export default function PersonDetail() {
             </motion.div>
           )}
         </div>
+      </div>
+
+      {/* Status History */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-4">
+          Status History
+        </h2>
+        {(() => {
+          const logs = (person.person_status_logs ?? [])
+            .slice()
+            .sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
+
+          if (logs.length === 0) {
+            return (
+              <div className="bg-surface-raised brutalist-border rounded-lg px-6 py-8 text-center text-[11px] font-mono uppercase tracking-widest text-zinc-600">
+                No status changes recorded.
+              </div>
+            );
+          }
+
+          return (
+            <div className="bg-surface-raised brutalist-border rounded-lg overflow-hidden">
+              <div className="max-h-72 overflow-y-auto divide-y divide-zinc-900">
+                {logs.map((log) => {
+                  const isDeathRecord = log.new_status === 'DEAD';
+                  return (
+                    <div
+                      key={log.id}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="shrink-0">
+                        <Clock size={14} className={isDeathRecord ? 'text-red-500' : 'text-zinc-600'} />
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                            {log.old_status}
+                          </span>
+                          <span className="text-zinc-700 text-[10px]">&rarr;</span>
+                          <span
+                            className={`text-[10px] font-black uppercase tracking-wider ${
+                              isDeathRecord ? 'text-red-500' : 'text-zinc-200'
+                            }`}
+                          >
+                            {log.new_status}
+                          </span>
+                        </div>
+                        {log.reason && (
+                          <p className="text-[10px] font-mono leading-relaxed text-zinc-500 line-clamp-2">
+                            {log.reason}
+                          </p>
+                        )}
+                        <p className="text-[9px] font-mono text-zinc-600">
+                          {formatDate(log.changed_at)}
+                          {log.users?.username && (
+                            <span> &middot; {log.users.username}</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {canOverrideContribution && (

@@ -171,9 +171,9 @@ export default function NewPersonPage() {
     <div className="max-w-2xl mx-auto space-y-6">
       <button
         onClick={() => navigate('/population')}
-        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-wider"
+        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-600 rounded-lg px-3 py-2 transition-all hover:-translate-x-0.5 hover:shadow-[0_0_12px_rgba(255,255,255,0.04)] group"
       >
-        <ArrowLeft size={14} />
+        <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
         BACK TO POPULATION
       </button>
 

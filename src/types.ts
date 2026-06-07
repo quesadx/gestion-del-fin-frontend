@@ -148,6 +148,17 @@ export interface ContributionOverride {
   } | null;
 }
 
+export interface PersonStatusLog {
+  id: number;
+  person_id: number;
+  old_status: string;
+  new_status: string;
+  reason?: string | null;
+  changed_by?: number | null;
+  changed_at: string;
+  users?: { id: number; username: string } | null;
+}
+
 export interface Person {
   id: number;
   full_name: string;
@@ -162,6 +173,7 @@ export interface Person {
   blood_type?: string | null;
   admitted_at?: string | null;
   contribution_overrides?: ContributionOverride[];
+  person_status_logs?: PersonStatusLog[];
 }
 
 export interface Admission {
