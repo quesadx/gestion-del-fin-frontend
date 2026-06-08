@@ -17,7 +17,7 @@ export class LoginPage {
   async loginExpectFailure(username: string, password: string) {
     await this.page.getByLabel('Username').fill(username);
     await this.page.getByLabel('Password').fill(password);
-    await this.page.getByRole('button', { name: 'AUTHORIZING...' }).click();
+    await this.page.getByRole('button', { name: 'REQUEST AUTHORIZATION' }).click();
   }
 
   async getErrorMessage(): Promise<string | null> {

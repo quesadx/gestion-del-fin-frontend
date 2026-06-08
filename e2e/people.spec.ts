@@ -39,8 +39,7 @@ test.describe('People CRUD', () => {
       const detailName = await personDetailPage.getPersonName();
       expect(detailName).toBeTruthy();
     } else {
-      // If no people exist in test data, skip gracefully
-      expect(true).toBe(true);
+      test.skip(true, 'No people in test data');
     }
   });
 

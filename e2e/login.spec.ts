@@ -22,9 +22,12 @@ test.describe('Authentication', () => {
     await page.reload();
     await expect(page.getByText('Session Terminated')).toBeVisible();
   });
+});
+
+test.describe('Unauthenticated', () => {
+  test.use({ storageState: undefined });
 
   test('unauthenticated user redirected to login', async ({ page }) => {
-    test.use({ storageState: undefined });
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/\/login/);
   });
