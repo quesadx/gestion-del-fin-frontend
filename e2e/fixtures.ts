@@ -10,7 +10,7 @@ const TEST_CREDENTIALS = {
   password: process.env.TEST_PASSWORD!,
 };
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:5173';
+const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
 
 export {
   test,
