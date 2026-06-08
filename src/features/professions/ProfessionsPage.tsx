@@ -7,6 +7,104 @@ import { Profession } from '../../types';
 import { Wrench, Plus, Edit2, Trash2, X, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+import { getApiErrorMessage } from '../../lib/apiErrors';
+
+const PAGE_SIZE = 9;
+const API_LIST_PAGE_SIZE = 100;
+const PROFESSION_NAME_MAX_LENGTH = 80;
+
+interface ProfessionsResponse {
+  data: Profession[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    hasNextPage: boolean;
+    totalPages: number;
+  };
+}
+
+type FieldErrors = {
+  name?: string;
+};
+
+type ProfessionFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+};
+
+type ApiLikeError = {
+  response?: {
+    status?: number;
+    data?: {
+      error?: {
+        message?: unknown;
+        details?: unknown;
+      };
+      message?: unknown;
+    };
+  };
+};
+
+const normalizeProfessionsResponse = (responseData: unknown, page: number): ProfessionsResponse => {
+  if (Array.isArray(responseData)) {
+    return {
+      data: responseData as Profession[],
+      pagination: {
+        page,
+        pageSize: API_LIST_PAGE_SIZE,
+        total: responseData.length,
+        hasNextPage: false,
+        totalPages: Math.max(1, Math.ceil(responseData.length / PAGE_SIZE)),
+      },
+    };
+  }
+
+  const payload = responseData as Partial<ProfessionsResponse> | undefined;
+  const data = Array.isArray(payload?.data) ? payload.data : [];
+
+  return {
+    data,
+    pagination: {
+      page: payload?.pagination?.page ?? page,
+      pageSize: payload?.pagination?.pageSize ?? API_LIST_PAGE_SIZE,
+      total: payload?.pagination?.total ?? data.length,
+      hasNextPage: payload?.pagination?.hasNextPage ?? false,
+      totalPages:
+        payload?.pagination?.totalPages ?? Math.max(1, Math.ceil(data.length / PAGE_SIZE)),
+    },
+  };
+};
+
+function extractValidationDetails(error: unknown) {
+  const details = (error as ApiLikeError).response?.data?.error?.details;
+  if (!Array.isArray(details)) return '';
+
+  return details
+    .map((detail) => {
+      if (detail && typeof detail === 'object' && 'message' in detail) {
+        const message = (detail as { message?: unknown }).message;
+        return typeof message === 'string' ? message : '';
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+function getProfessionActionErrorMessage(error: unknown, fallback: string) {
+  const status = (error as ApiLikeError).response?.status;
+  if (status === 403) return 'Your current role is not authorized to perform this action.';
+
+  const validationDetails = extractValidationDetails(error);
+  if (validationDetails) return validationDetails;
+
+  return getApiErrorMessage(error, fallback);
+}
 
 export default function ProfessionsPage() {
   const queryClient = useQueryClient();
@@ -14,6 +112,9 @@ export default function ProfessionsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfession, setEditingProfession] = useState<Profession | null>(null);
   const [deletingProfession, setDeletingProfession] = useState<Profession | null>(null);
+  const [page, setPage] = useState(1);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [feedback, setFeedback] = useState<ProfessionFeedback | null>(null);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -22,11 +123,13 @@ export default function ProfessionsPage() {
   const canUpdate = hasPermission(user?.permissions, 'professions.update');
   const canDelete = hasPermission(user?.permissions, 'professions.delete');
 
-  const { data: professions, isLoading } = useQuery<Profession[]>({
-    queryKey: ['professions'],
+  const { data: professionsResponse, isLoading } = useQuery<ProfessionsResponse>({
+    queryKey: ['professions', 'list', API_LIST_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/professions');
-      return res.data?.data ?? res.data;
+      const res = await apiClient.get('/professions', {
+        params: { page: 1, pageSize: API_LIST_PAGE_SIZE },
+      });
+      return normalizeProfessionsResponse(res.data, 1);
     },
     enabled: hasPermission(user?.permissions, 'professions.read'),
   });
@@ -36,9 +139,23 @@ export default function ProfessionsPage() {
       const res = await apiClient.post('/professions', payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (createdProfession: Profession) => {
       queryClient.invalidateQueries({ queryKey: ['professions'] });
       closeModal();
+      setPage(1);
+      setFeedback({
+        type: 'success',
+        title: 'PROFESSION CREATED',
+        message: `${createdProfession.name} was registered successfully.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'CREATE FAILED',
+        message: getProfessionActionErrorMessage(error, 'The profession could not be registered.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -53,9 +170,22 @@ export default function ProfessionsPage() {
       const res = await apiClient.put(`/professions/${id}`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedProfession: Profession) => {
       queryClient.invalidateQueries({ queryKey: ['professions'] });
       closeModal();
+      setFeedback({
+        type: 'success',
+        title: 'PROFESSION UPDATED',
+        message: `${updatedProfession.name} was updated successfully.`,
+      });
+    },
+    onError: (error) => {
+      setFeedback({
+        type: 'error',
+        title: 'UPDATE FAILED',
+        message: getProfessionActionErrorMessage(error, 'The profession could not be updated.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -64,9 +194,26 @@ export default function ProfessionsPage() {
       const res = await apiClient.delete(`/professions/${id}`);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, deletedProfessionId) => {
+      const deletedName =
+        deletingProfession?.name ??
+        professionsResponse?.data.find((profession) => profession.id === deletedProfessionId)?.name;
       queryClient.invalidateQueries({ queryKey: ['professions'] });
       setDeletingProfession(null);
+      setFeedback({
+        type: 'success',
+        title: 'PROFESSION DELETED',
+        message: `${deletedName ?? 'The profession'} was deleted successfully.`,
+      });
+    },
+    onError: (error) => {
+      setDeletingProfession(null);
+      setFeedback({
+        type: 'error',
+        title: 'DELETE FAILED',
+        message: getProfessionActionErrorMessage(error, 'The profession could not be deleted.'),
+        actionLabel: 'REVIEW',
+      });
     },
   });
 
@@ -75,12 +222,14 @@ export default function ProfessionsPage() {
     setEditingProfession(null);
     setName('');
     setDescription('');
+    setFieldErrors({});
   };
 
   const openCreateModal = () => {
     setEditingProfession(null);
     setName('');
     setDescription('');
+    setFieldErrors({});
     setIsModalOpen(true);
   };
 
@@ -88,14 +237,43 @@ export default function ProfessionsPage() {
     setEditingProfession(profession);
     setName(profession.name);
     setDescription(profession.description || '');
+    setFieldErrors({});
     setIsModalOpen(true);
+  };
+
+  const validateForm = () => {
+    const errors: FieldErrors = {};
+    const trimmedName = name.trim();
+
+    if (!trimmedName) {
+      errors.name = 'Profession name is required.';
+    } else if (trimmedName.length > PROFESSION_NAME_MAX_LENGTH) {
+      errors.name = `Profession name cannot exceed ${PROFESSION_NAME_MAX_LENGTH} characters.`;
+    }
+
+    return errors;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
+    const errors = validateForm();
+    setFieldErrors(errors);
 
-    const payload = { name, description: description || undefined };
+    if (Object.keys(errors).length > 0) {
+      setFeedback({
+        type: 'warning',
+        title: 'CHECK PROFESSION FORMAT',
+        message: 'Correct the highlighted fields before submitting the profession.',
+        actionLabel: 'REVIEW',
+      });
+      return;
+    }
+
+    const trimmedDescription = description.trim();
+    const payload = {
+      name: name.trim(),
+      description: editingProfession ? trimmedDescription : trimmedDescription || undefined,
+    };
 
     if (editingProfession) {
       updateMutation.mutate({ id: editingProfession.id, payload });
@@ -103,6 +281,14 @@ export default function ProfessionsPage() {
       createMutation.mutate(payload);
     }
   };
+
+  const professions = professionsResponse?.data ?? [];
+  const totalPages = Math.max(1, Math.ceil(professions.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProfessions = professions.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
 
   return (
     <div className="space-y-6">
@@ -138,7 +324,7 @@ export default function ProfessionsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {professions?.length === 0 && (
+          {professions.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
               <Wrench size={48} className="mb-4 opacity-30" />
               <p className="text-sm font-mono uppercase tracking-wider">No professions defined</p>
@@ -147,7 +333,7 @@ export default function ProfessionsPage() {
               </p>
             </div>
           )}
-          {professions?.map((profession) => (
+          {paginatedProfessions.map((profession) => (
             <motion.div
               key={profession.id}
               initial={{ opacity: 0, y: 15 }}
@@ -199,6 +385,8 @@ export default function ProfessionsPage() {
         </div>
       )}
 
+      <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
+
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
@@ -230,20 +418,48 @@ export default function ProfessionsPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <div className="rounded border border-zinc-800 bg-zinc-950/40 p-3 space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Format requirements
+                  </p>
+                  <p className="text-[10px] font-mono leading-relaxed text-zinc-500">
+                    Profession name is required and max {PROFESSION_NAME_MAX_LENGTH} characters.
+                    Description is optional.
+                  </p>
+                </div>
+
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
-                    Profession Name
+                    Profession Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     required
                     type="text"
                     aria-label="Profession name"
+                    aria-invalid={Boolean(fieldErrors.name)}
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      if (fieldErrors.name) {
+                        setFieldErrors((prev) => ({ ...prev, name: undefined }));
+                      }
+                    }}
                     placeholder="e.g. Medic, Engineer, Scout"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary"
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none ${
+                      fieldErrors.name
+                        ? 'border-red-500/60 focus:border-red-400'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   />
+                  <p
+                    className={`text-[10px] font-mono ${
+                      fieldErrors.name ? 'text-red-400' : 'text-zinc-600'
+                    }`}
+                  >
+                    {fieldErrors.name ??
+                      `Required. ${name.trim().length}/${PROFESSION_NAME_MAX_LENGTH} characters.`}
+                  </p>
                 </div>
 
                 <div className="space-y-1">
@@ -258,6 +474,9 @@ export default function ProfessionsPage() {
                     rows={3}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none"
                   />
+                  <p className="text-[10px] font-mono text-zinc-600">
+                    Optional. The backend stores this text trimmed.
+                  </p>
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
@@ -339,6 +558,18 @@ export default function ProfessionsPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Personnel Directive"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={() => setFeedback(null)}
+        />
+      )}
     </div>
   );
 }

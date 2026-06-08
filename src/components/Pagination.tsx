@@ -5,14 +5,21 @@ interface PaginationProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   className?: string;
+  showEdgeButtons?: boolean;
 }
 
-export function Pagination({ page, totalPages, onPageChange, className }: PaginationProps) {
+export function Pagination({
+  page,
+  totalPages,
+  onPageChange,
+  className,
+  showEdgeButtons,
+}: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const isFirst = page <= 1;
   const isLast = page >= totalPages;
-  const showEdges = totalPages > 3;
+  const showEdges = showEdgeButtons ?? totalPages > 3;
 
   const btn = (label: string, targetPage: number, disabled: boolean, title?: string) => (
     <button

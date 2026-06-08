@@ -17,12 +17,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
+  AlertCircle,
 } from 'lucide-react';
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../lib/api';
-import { Camp, InventoryItem, Resource } from '../types';
+import { apiClient, fetchAllPaginated, unwrapList } from '../lib/api';
+import { Camp, InventoryItem, Resource, UserAchievement } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
@@ -30,7 +31,7 @@ import { hasPermission, canAccessCamp } from '../lib/permissions';
 import { useDeniedPermissionsStore } from '../store/deniedPermissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
-import { ShieldAlert, Eye } from 'lucide-react';
+import { ShieldAlert, Eye, Trophy } from 'lucide-react';
 
 import DarkVeil from '../components/backgrounds/DarkVeil';
 import FloatingLines from '../components/backgrounds/FloatingLines';
@@ -139,7 +140,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/dashboard': 'metrics.dashboard',
   '/population': 'people.read',
   '/inventory': 'inventory.read',
-  '/rations': 'inventory.read',
+  '/rations': 'inventory.audit.read',
   '/admission': 'admission.read',
   '/expeditions': 'expeditions.read',
   '/transfers': 'transfers.read',
@@ -154,7 +155,7 @@ const NAV_PERMISSIONS: Record<string, string> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAdmin } = useAuthStore();
   const { currentCampId, setCurrentCamp } = useCampStore();
   const { status } = useConnectionStore();
   useDeniedPermissionsStore();
@@ -167,6 +168,9 @@ export default function DashboardLayout() {
   const [focusedCampIndex, setFocusedCampIndex] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [showEyePhase, setShowEyePhase] = useState(false);
+  const [achvPopupOpen, setAchvPopupOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [externalModalOpen, setExternalModalOpen] = useState(false);
   const cardHoveredRef = useRef(false);
 
   // Start the ping loop and get the manual retry trigger.
@@ -174,10 +178,7 @@ export default function DashboardLayout() {
 
   const { data: camps } = useQuery<Camp[]>({
     queryKey: ['camps'],
-    queryFn: async () => {
-      const res = await apiClient.get('/camps');
-      return unwrapList<Camp>(res.data);
-    },
+    queryFn: async () => fetchAllPaginated<Camp>('/camps'),
     enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
@@ -230,6 +231,35 @@ export default function DashboardLayout() {
   // Session-only dismiss for the alert banner.
   const [alertDismissed, setAlertDismissed] = useState(false);
 
+  // ── Achievements popup ──────────────────────────────────────────────
+  const { data: myAchvList } = useQuery<UserAchievement[]>({
+    queryKey: ['my-achievements'],
+    queryFn: async () => {
+      const res = await apiClient.get('/achievements/my-achievements');
+      return unwrapList<UserAchievement>(res.data);
+    },
+    enabled: achvPopupOpen,
+    staleTime: 60_000,
+  });
+
+  const { data: achvStats } = useQuery<{
+    total_achievements: number;
+    total_unlocked: number;
+    total_xp?: number;
+  }>({
+    queryKey: ['achievements-stats'],
+    queryFn: async () => {
+      const res = await apiClient.get('/achievements/stats');
+      return (res.data?.data ?? res.data) as {
+        total_achievements: number;
+        total_unlocked: number;
+        total_xp?: number;
+      };
+    },
+    enabled: achvPopupOpen && hasPermission(user?.permissions, 'metrics.dashboard'),
+    staleTime: 60_000,
+  });
+
   const campCards = useMemo(() => {
     if (!camps || camps.length === 0) return [];
     if (!currentCampId) return camps;
@@ -241,6 +271,18 @@ export default function DashboardLayout() {
     const rest = camps.filter((camp) => camp.id !== currentCampId);
     return [currentCamp, ...rest];
   }, [camps, currentCampId]);
+
+  useEffect(() => {
+    if (currentCampId) return;
+    if (!camps || camps.length === 0) return;
+
+    if (!isAdmin && user?.camp_id) {
+      const homeCamp = camps.find((c) => c.id === user.camp_id);
+      if (homeCamp) {
+        setCurrentCamp(homeCamp.id);
+      }
+    }
+  }, [currentCampId, camps, isAdmin, user?.camp_id, setCurrentCamp]);
 
   const activeFloatingLinesTheme = useMemo(() => {
     return (
@@ -330,7 +372,48 @@ export default function DashboardLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [campPopupOpen, campCards, focusedCampIndex, confirmCampFromIndex, shiftCampCards]);
 
+  useEffect(() => {
+    if (!achvPopupOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAchvPopupOpen(false);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [achvPopupOpen]);
+
+  useEffect(() => {
+    const isModalOverlay = (element: Element) => {
+      const className = element.getAttribute('class') ?? '';
+      return (
+        className.includes('fixed') &&
+        className.includes('inset-0') &&
+        (className.includes('z-50') ||
+          className.includes('z-60') ||
+          className.includes('z-[60]') ||
+          className.includes('z-[999]'))
+      );
+    };
+
+    const detectModal = () => {
+      const hasDialogRole = document.querySelector('[role="dialog"], [role="alertdialog"]');
+      const hasOverlay = Array.from(document.querySelectorAll('.fixed')).some(isModalOverlay);
+      setExternalModalOpen(Boolean(hasDialogRole || hasOverlay));
+    };
+
+    detectModal();
+
+    const observer = new MutationObserver(detectModal);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  const dockHidden = campPopupOpen || showEasterEgg || externalModalOpen;
+
   const handleLogout = () => {
+    setLogoutConfirmOpen(true);
+  };
+
+  const confirmLogout = () => {
     logout();
     navigate('/login');
   };
@@ -418,6 +501,16 @@ export default function DashboardLayout() {
                 </span>
               )}
 
+              {/* Achievements button */}
+              <button
+                onClick={() => setAchvPopupOpen((p) => !p)}
+                aria-label="Achievements"
+                title="Achievements"
+                className="p-1.5 text-zinc-500 hover:text-amber-400 border border-transparent hover:border-amber-500/30 rounded transition-colors touch-target relative"
+              >
+                <Trophy size={16} />
+              </button>
+
               <div className="w-px h-5 sm:h-6 bg-red-500/20" />
 
               {/* User info */}
@@ -442,6 +535,54 @@ export default function DashboardLayout() {
           </div>
         </div>
       </header>
+
+      <AnimatePresence>
+        {logoutConfirmOpen && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0, y: 12 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 12 }}
+              transition={{ duration: 0.16 }}
+              className="w-full max-w-sm rounded-xl border border-red-500/25 bg-[rgba(48,25,29,0.96)] p-5 shadow-[0_20px_70px_rgba(0,0,0,0.45),0_0_22px_rgba(239,68,68,0.12)]"
+            >
+              <div className="flex items-start gap-3 border-b border-red-500/10 pb-4">
+                <div className="w-10 h-10 rounded-lg border border-red-500/25 bg-red-950/35 flex items-center justify-center text-brand-primary shrink-0">
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] font-mono text-brand-primary uppercase tracking-widest">
+                    Session Control
+                  </p>
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter text-zinc-100">
+                    Close Session?
+                  </h3>
+                  <p className="mt-1 text-xs font-mono leading-relaxed text-zinc-500">
+                    Are you sure you want to terminate the current session?
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setLogoutConfirmOpen(false)}
+                  className="py-2.5 text-xs font-bold uppercase rounded border border-zinc-800 text-zinc-300 hover:bg-zinc-900 transition-colors"
+                >
+                  NO, STAY
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmLogout}
+                  className="py-2.5 text-xs font-black uppercase rounded bg-brand-primary text-black hover:bg-brand-primary/90 transition-colors"
+                >
+                  YES, SIGN OUT
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ── Disconnected banner ──────────────────────────────────────── */}
       <AnimatePresence>
@@ -565,7 +706,7 @@ export default function DashboardLayout() {
                       cardDistance={120}
                       verticalDistance={62}
                       delay={5600}
-                      autoPlay={true}
+                      autoPlay={false}
                       pauseOnHover={false}
                       manualSwapTick={campSwapTick}
                       manualSwapDirection={campSwapDirection}
@@ -675,6 +816,99 @@ export default function DashboardLayout() {
         )}
       </AnimatePresence>
 
+      {/* ── Achievements popup ──────────────────────────────────────────── */}
+      {achvPopupOpen && (
+        <div className="fixed inset-0 z-40" onClick={() => setAchvPopupOpen(false)} />
+      )}
+      <AnimatePresence>
+        {achvPopupOpen && (
+          <motion.div
+            key="achv-popup"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="mx-2 sm:mx-4 mt-1 relative z-50"
+          >
+            <div className="overflow-hidden rounded-2xl border border-amber-500/15 bg-[rgba(26,20,16,0.96)] backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+              {/* Mini stats */}
+              <div className="flex items-center gap-2 sm:gap-4 px-4 py-3 border-b border-amber-500/10">
+                <div className="flex items-center gap-2 text-amber-500">
+                  <Trophy size={14} />
+                  <span className="text-xs font-black font-mono">{myAchvList?.length ?? 0}</span>
+                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
+                    Unlocked
+                  </span>
+                </div>
+                {achvStats && (
+                  <>
+                    <div className="w-px h-4 bg-amber-500/15" />
+                    <span className="text-xs font-black font-mono text-zinc-300">
+                      {achvStats.total_achievements}
+                    </span>
+                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
+                      Total
+                    </span>
+                    {achvStats.total_xp != null && (
+                      <>
+                        <div className="w-px h-4 bg-amber-500/15" />
+                        <span className="text-xs font-black font-mono text-amber-400">
+                          {achvStats.total_xp} XP
+                        </span>
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Achievements list */}
+              <div className="max-h-64 overflow-y-auto p-3 space-y-2">
+                {(!myAchvList || myAchvList.length === 0) && (
+                  <p className="text-xs font-mono text-zinc-600 text-center py-6 uppercase tracking-wider">
+                    No achievements unlocked yet
+                  </p>
+                )}
+                {myAchvList?.map((ua) => {
+                  const ach = ua.achievement;
+                  if (!ach) return null;
+                  return (
+                    <div
+                      key={ua.id}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg bg-amber-950/10 border border-amber-500/10 hover:bg-amber-950/20 transition-colors"
+                    >
+                      <div className="w-8 h-8 rounded bg-amber-950/30 flex items-center justify-center text-amber-500 shrink-0">
+                        <Trophy size={14} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-amber-300 uppercase tracking-tight truncate">
+                          {ach.name}
+                        </p>
+                        <p className="text-[9px] font-mono text-zinc-500 truncate">
+                          +{ach.xp_reward} XP
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer link to all achievements */}
+              <div className="border-t border-amber-500/10 px-4 py-2.5">
+                <button
+                  onClick={() => {
+                    setAchvPopupOpen(false);
+                    navigate('/achievements');
+                  }}
+                  className="text-[10px] font-black uppercase tracking-wider text-amber-500 hover:text-amber-400 transition-colors w-full text-center"
+                >
+                  View All Achievements →
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Easter egg overlay ─────────────────────────────────────────── */}
       <AnimatePresence>
         {showEasterEgg && (
@@ -773,7 +1007,7 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ── Page content ────────────────────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 pb-32">
+      <main className="flex-1 overflow-y-auto bg-transparent px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8 pb-32 sm:pb-36 lg:pb-40">
         <div className="max-w-7xl mx-auto w-full">
           <AnimatePresence mode="wait">
             <motion.div
@@ -790,11 +1024,20 @@ export default function DashboardLayout() {
       </main>
 
       {/* ── Bottom navigation dock ───────────────────────────────────────── */}
-      <div className="fixed bottom-2 sm:bottom-4 left-1/2 z-50 -translate-x-1/2">
-        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-          <Dock items={dockItems} />
-        </motion.div>
-      </div>
+      <AnimatePresence>
+        {!dockHidden && (
+          <motion.div
+            key="bottom-dock"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 20, opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            className="fixed bottom-2 sm:bottom-4 left-1/2 z-40 -translate-x-1/2"
+          >
+            <Dock items={dockItems} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

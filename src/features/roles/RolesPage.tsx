@@ -1,23 +1,132 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { useAuthStore } from '../../store';
+import { useAuthStore } from '../../store/auth';
 import { hasPermission } from '../../lib/permissions';
 import { Role, Permission } from '../../types';
-import { Shield, Plus, Edit2, Trash2, X, AlertCircle, Key } from 'lucide-react';
+import {
+  Shield,
+  Plus,
+  Edit2,
+  Trash2,
+  X,
+  AlertCircle,
+  Key,
+  Search,
+  Info,
+  CircleCheck,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 10;
+const PERMISSIONS_PAGE_SIZE = 100;
+const ROLE_NAME_MAX_LENGTH = 60;
+const ROLE_DESCRIPTION_MAX_LENGTH = 255;
+const ROLE_NAME_PATTERN = /^[a-z_]+$/;
+
+const getPermissionGroup = (permissionName: string) => permissionName.split('.')[0] || 'other';
+
+const getApiErrorMessage = (error: unknown) => {
+  const apiError = error as {
+    response?: {
+      status?: number;
+      data?: {
+        error?: { message?: string; details?: unknown };
+        message?: string;
+      };
+    };
+    message?: string;
+  };
+  const status = apiError.response?.status;
+  const errorPayload = apiError.response?.data?.error;
+  const details = errorPayload?.details;
+
+  if (Array.isArray(details)) {
+    const detailMessages = details
+      .map((detail) =>
+        detail && typeof detail === 'object' && 'message' in detail
+          ? String((detail as { message?: unknown }).message)
+          : '',
+      )
+      .filter(Boolean);
+
+    if (detailMessages.length > 0) return detailMessages.join(' ');
+  }
+
+  if (status === 400)
+    return errorPayload?.message ?? 'The role data does not meet the required format.';
+  if (status === 403) return 'Your current role is not allowed to perform this action.';
+  if (status === 404) return 'One or more selected permissions no longer exist.';
+  if (status === 409) return 'A role with this name already exists.';
+
+  return (
+    errorPayload?.message ??
+    apiError.response?.data?.message ??
+    apiError.message ??
+    'Role operation failed.'
+  );
+};
+
+const validateRoleForm = (roleName: string, roleDescription: string) => {
+  const trimmedName = roleName.trim();
+  const trimmedDescription = roleDescription.trim();
+
+  if (!trimmedName) return 'Role name is required.';
+  if (trimmedName.length > ROLE_NAME_MAX_LENGTH) {
+    return `Role name cannot exceed ${ROLE_NAME_MAX_LENGTH} characters.`;
+  }
+  if (!ROLE_NAME_PATTERN.test(trimmedName)) {
+    return 'Role name must use only lowercase letters and underscores. Example: security_admin.';
+  }
+  if (trimmedDescription.length > ROLE_DESCRIPTION_MAX_LENGTH) {
+    return `Justification cannot exceed ${ROLE_DESCRIPTION_MAX_LENGTH} characters.`;
+  }
+
+  return null;
+};
+
+type RoleSuccessAction = 'created' | 'updated' | 'deleted';
+
+const roleSuccessCopy: Record<
+  RoleSuccessAction,
+  { eyebrow: string; title: string; description: (roleName: string) => string }
+> = {
+  created: {
+    eyebrow: 'ACCESS CONTROL UPDATED',
+    title: 'Role Created',
+    description: (roleName) => `${roleName} is now available in the role registry.`,
+  },
+  updated: {
+    eyebrow: 'ACCESS CONTROL SYNCED',
+    title: 'Role Updated',
+    description: (roleName) => `${roleName} was updated successfully.`,
+  },
+  deleted: {
+    eyebrow: 'ACCESS CONTROL CLEANUP',
+    title: 'Role Deleted',
+    description: (roleName) => `${roleName} was removed from the role registry.`,
+  },
+};
 
 export default function RolesPage() {
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const { user, syncRolePermissions } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [deletingRole, setDeletingRole] = useState<Role | null>(null);
+  const [page, setPage] = useState(1);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<number[]>([]);
+  const [permissionSearch, setPermissionSearch] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [roleSuccess, setRoleSuccess] = useState<{
+    action: RoleSuccessAction;
+    roleName: string;
+  } | null>(null);
 
   const canCreate = hasPermission(user?.permissions, 'roles.create');
   const canUpdate = hasPermission(user?.permissions, 'roles.update');
@@ -32,10 +141,12 @@ export default function RolesPage() {
     enabled: hasPermission(user?.permissions, 'roles.read'),
   });
 
-  const { data: permissions } = useQuery<Permission[]>({
-    queryKey: ['permissions'],
+  const { data: permissions, isLoading: isLoadingPermissions } = useQuery<Permission[]>({
+    queryKey: ['permissions', 'role-selector', PERMISSIONS_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/permissions?per_page=1000');
+      const res = await apiClient.get('/permissions', {
+        params: { page: 1, pageSize: PERMISSIONS_PAGE_SIZE },
+      });
       const body = res.data;
       return body?.data ?? (Array.isArray(body) ? body : []);
     },
@@ -51,9 +162,13 @@ export default function RolesPage() {
       const res = await apiClient.post('/roles', payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (createdRole: Role) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       closeModal();
+      setRoleSuccess({ action: 'created', roleName: createdRole.name });
+    },
+    onError: (error) => {
+      setFormError(getApiErrorMessage(error));
     },
   });
 
@@ -68,9 +183,19 @@ export default function RolesPage() {
       const res = await apiClient.put(`/roles/${id}`, payload);
       return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (updatedRole: Role) => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      if (updatedRole.name === user?.role || editingRole?.name === user?.role) {
+        syncRolePermissions(
+          updatedRole.name,
+          updatedRole.permissions?.map((permission) => permission.name) ?? [],
+        );
+      }
       closeModal();
+      setRoleSuccess({ action: 'updated', roleName: updatedRole.name });
+    },
+    onError: (error) => {
+      setFormError(getApiErrorMessage(error));
     },
   });
 
@@ -80,8 +205,12 @@ export default function RolesPage() {
       return res.data;
     },
     onSuccess: () => {
+      const deletedRoleName = deletingRole?.name;
       queryClient.invalidateQueries({ queryKey: ['roles'] });
       setDeletingRole(null);
+      if (deletedRoleName) {
+        setRoleSuccess({ action: 'deleted', roleName: deletedRoleName });
+      }
     },
   });
 
@@ -91,12 +220,23 @@ export default function RolesPage() {
     );
   };
 
+  const toggleVisiblePermissions = (checked: boolean) => {
+    const visibleIds = filteredPermissions.map((permission) => permission.id);
+    setSelectedPermissionIds((prev) => {
+      if (checked) return Array.from(new Set([...prev, ...visibleIds]));
+      const visibleIdSet = new Set(visibleIds);
+      return prev.filter((id) => !visibleIdSet.has(id));
+    });
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingRole(null);
     setName('');
     setDescription('');
     setSelectedPermissionIds([]);
+    setPermissionSearch('');
+    setFormError(null);
   };
 
   const openCreateModal = () => {
@@ -104,6 +244,8 @@ export default function RolesPage() {
     setName('');
     setDescription('');
     setSelectedPermissionIds([]);
+    setPermissionSearch('');
+    setFormError(null);
     setIsModalOpen(true);
   };
 
@@ -112,28 +254,74 @@ export default function RolesPage() {
     setName(role.name);
     setDescription(role.description || '');
     setSelectedPermissionIds(role.permissions?.map((p) => p.id) ?? []);
+    setPermissionSearch('');
+    setFormError(null);
     setIsModalOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name) return;
+    const trimmedName = name.trim();
+    const trimmedDescription = description.trim();
+    const validationError = validateRoleForm(trimmedName, trimmedDescription);
 
-    const permIds = selectedPermissionIds.length > 0 ? selectedPermissionIds : undefined;
+    if (validationError) {
+      setFormError(validationError);
+      return;
+    }
+
+    setFormError(null);
 
     if (editingRole) {
       updateMutation.mutate({
         id: editingRole.id,
-        payload: { name, description: description || undefined, permission_ids: permIds },
+        payload: {
+          name: trimmedName,
+          description: trimmedDescription || undefined,
+          permission_ids: selectedPermissionIds,
+        },
       });
     } else {
       createMutation.mutate({
-        name,
-        description: description || undefined,
-        permission_ids: permIds,
+        name: trimmedName,
+        description: trimmedDescription || undefined,
+        permission_ids: selectedPermissionIds,
       });
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil((roles?.length ?? 0) / PAGE_SIZE));
+  const paginatedRoles = (roles ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const allPermissions = permissions ?? [];
+  const trimmedName = name.trim();
+  const roleNameInlineError =
+    trimmedName && !ROLE_NAME_PATTERN.test(trimmedName)
+      ? 'Only lowercase letters and underscores are allowed.'
+      : null;
+  const descriptionLength = description.trim().length;
+  const descriptionLimitExceeded = descriptionLength > ROLE_DESCRIPTION_MAX_LENGTH;
+  const permissionSearchTerm = permissionSearch.trim().toLowerCase();
+  const filteredPermissions = permissionSearchTerm
+    ? allPermissions.filter((permission) => {
+        const searchableText = `${permission.name} ${permission.description ?? ''}`.toLowerCase();
+        return searchableText.includes(permissionSearchTerm);
+      })
+    : allPermissions;
+  const permissionGroups = new Map<string, Permission[]>();
+
+  filteredPermissions.forEach((permission) => {
+    const group = getPermissionGroup(permission.name);
+    const permissionsInGroup = permissionGroups.get(group) ?? [];
+    permissionsInGroup.push(permission);
+    permissionGroups.set(group, permissionsInGroup);
+  });
+
+  const groupedPermissions = Array.from(permissionGroups.entries()).map(
+    ([group, groupPermissions]) => ({
+      group,
+      permissions: groupPermissions,
+    }),
+  );
 
   return (
     <div className="space-y-6">
@@ -177,7 +365,7 @@ export default function RolesPage() {
               </p>
             </div>
           )}
-          {roles?.map((role) => (
+          {paginatedRoles.map((role) => (
             <motion.div
               key={role.id}
               initial={{ opacity: 0, y: 10 }}
@@ -235,6 +423,8 @@ export default function RolesPage() {
         </div>
       )}
 
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
@@ -242,7 +432,7 @@ export default function RolesPage() {
               initial={{ scale: 0.95, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
-              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-lg w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-2xl w-full space-y-6"
             >
               <div className="flex justify-between items-start border-b border-zinc-900 pb-4">
                 <div>
@@ -268,20 +458,70 @@ export default function RolesPage() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} noValidate className="space-y-4">
+                <div className="flex items-start gap-3 rounded border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+                  <Info size={15} className="mt-0.5 shrink-0 text-brand-secondary" />
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                      Role creation rules
+                    </p>
+                    <p className="text-[10px] font-mono leading-relaxed text-zinc-500">
+                      Name: lowercase letters and underscores only, up to {ROLE_NAME_MAX_LENGTH}{' '}
+                      characters. Justification: optional, up to {ROLE_DESCRIPTION_MAX_LENGTH}{' '}
+                      characters.
+                    </p>
+                  </div>
+                </div>
+
+                {formError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-start gap-2 rounded border border-red-500/30 bg-red-950/20 px-3 py-2 text-red-300"
+                  >
+                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                    <p className="text-[10px] font-mono leading-relaxed">{formError}</p>
+                  </motion.div>
+                )}
+
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase">
                     Role Name <span className="text-red-500">*</span>
                   </label>
                   <input
-                    required
                     type="text"
                     aria-label="Role name"
+                    aria-describedby="role-name-rules"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. camp_operator"
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono"
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setFormError(null);
+                    }}
+                    placeholder="e.g. security_admin"
+                    maxLength={ROLE_NAME_MAX_LENGTH}
+                    pattern="[a-z_]+"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none font-mono ${
+                      roleNameInlineError
+                        ? 'border-red-500/50 focus:border-red-500'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   />
+                  <div className="flex items-start justify-between gap-3">
+                    <p
+                      id="role-name-rules"
+                      className={`text-[9px] font-mono ${
+                        roleNameInlineError ? 'text-red-400' : 'text-zinc-600'
+                      }`}
+                    >
+                      {roleNameInlineError ??
+                        'Use lowercase letters and underscores only. Example: security_admin.'}
+                    </p>
+                    <span className="text-[9px] font-mono text-zinc-700 shrink-0">
+                      {trimmedName.length}/{ROLE_NAME_MAX_LENGTH}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-1">
@@ -291,11 +531,31 @@ export default function RolesPage() {
                   <textarea
                     aria-label="Role justification / description"
                     value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => {
+                      setDescription(e.target.value);
+                      setFormError(null);
+                    }}
                     placeholder="Explain why this role is needed and what it enables..."
                     rows={3}
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary resize-none font-mono"
+                    maxLength={ROLE_DESCRIPTION_MAX_LENGTH}
+                    className={`w-full bg-zinc-950 border rounded px-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none resize-none font-mono ${
+                      descriptionLimitExceeded
+                        ? 'border-red-500/50 focus:border-red-500'
+                        : 'border-zinc-800 focus:border-brand-primary'
+                    }`}
                   />
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-[9px] font-mono text-zinc-600">
+                      Keep the justification concise and specific.
+                    </p>
+                    <span
+                      className={`text-[9px] font-mono shrink-0 ${
+                        descriptionLimitExceeded ? 'text-red-400' : 'text-zinc-700'
+                      }`}
+                    >
+                      {descriptionLength}/{ROLE_DESCRIPTION_MAX_LENGTH}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -303,39 +563,103 @@ export default function RolesPage() {
                     <Key size={12} />
                     Permissions
                   </label>
-                  <div className="max-h-48 overflow-y-auto bg-zinc-950/60 border border-zinc-900 rounded p-3 space-y-1">
-                    {permissions?.length === 0 && (
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                      <Search
+                        size={13}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+                      />
+                      <input
+                        type="search"
+                        aria-label="Search permissions"
+                        value={permissionSearch}
+                        onChange={(e) => setPermissionSearch(e.target.value)}
+                        placeholder="Filter by permission or description"
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded pl-8 pr-3 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:flex">
+                      <button
+                        type="button"
+                        onClick={() => toggleVisiblePermissions(true)}
+                        disabled={filteredPermissions.length === 0}
+                        className="px-3 py-2 text-[10px] font-bold uppercase border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Select visible
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleVisiblePermissions(false)}
+                        disabled={filteredPermissions.length === 0}
+                        className="px-3 py-2 text-[10px] font-bold uppercase border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Clear visible
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto bg-zinc-950/60 border border-zinc-900 rounded p-3 space-y-3">
+                    {isLoadingPermissions && (
+                      <p className="text-xs font-mono text-zinc-600 p-2">Loading permissions...</p>
+                    )}
+                    {!isLoadingPermissions && allPermissions.length === 0 && (
                       <p className="text-xs font-mono text-zinc-600 p-2">
                         No permissions registered yet. Create permissions first.
                       </p>
                     )}
-                    {permissions?.map((perm) => (
-                      <label
-                        key={perm.id}
-                        className="flex items-center gap-2 p-1.5 hover:bg-zinc-900/50 rounded cursor-pointer transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedPermissionIds.includes(perm.id)}
-                          onChange={() => togglePermission(perm.id)}
-                          className="accent-brand-primary shrink-0"
-                        />
-                        <div className="min-w-0">
-                          <span className="text-xs font-mono font-bold text-zinc-300">
-                            {perm.name}
-                          </span>
-                          {perm.description && (
-                            <span className="text-[10px] font-mono text-zinc-600 ml-2">
-                              — {perm.description}
+                    {!isLoadingPermissions &&
+                      allPermissions.length > 0 &&
+                      filteredPermissions.length === 0 && (
+                        <p className="text-xs font-mono text-zinc-600 p-2">
+                          No permissions match this filter.
+                        </p>
+                      )}
+                    {groupedPermissions.map(({ group, permissions: groupPermissions }) => {
+                      const selectedInGroup = groupPermissions.filter((permission) =>
+                        selectedPermissionIds.includes(permission.id),
+                      ).length;
+
+                      return (
+                        <div key={group} className="space-y-1">
+                          <div className="flex items-center justify-between px-1 py-1 border-b border-zinc-900">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-brand-primary">
+                              {group}
                             </span>
-                          )}
+                            <span className="text-[9px] font-mono text-zinc-600">
+                              {selectedInGroup}/{groupPermissions.length} selected
+                            </span>
+                          </div>
+
+                          {groupPermissions.map((perm) => (
+                            <label
+                              key={perm.id}
+                              className="flex items-start gap-2 p-1.5 hover:bg-zinc-900/50 rounded cursor-pointer transition-colors"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedPermissionIds.includes(perm.id)}
+                                onChange={() => togglePermission(perm.id)}
+                                className="accent-brand-primary shrink-0 mt-0.5"
+                              />
+                              <div className="min-w-0">
+                                <span className="text-xs font-mono font-bold text-zinc-300">
+                                  {perm.name}
+                                </span>
+                                {perm.description && (
+                                  <span className="block text-[10px] font-mono text-zinc-600">
+                                    {perm.description}
+                                  </span>
+                                )}
+                              </div>
+                            </label>
+                          ))}
                         </div>
-                      </label>
-                    ))}
+                      );
+                    })}
                   </div>
                   <p className="text-[9px] font-mono text-zinc-600">
-                    {selectedPermissionIds.length} permission
-                    {selectedPermissionIds.length !== 1 ? 's' : ''} selected
+                    {selectedPermissionIds.length} of {allPermissions.length} permission
+                    {allPermissions.length !== 1 ? 's' : ''} selected
                   </p>
                 </div>
 
@@ -360,6 +684,48 @@ export default function RolesPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+
+        {roleSuccess && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 15 }}
+              className="bg-surface-raised brutalist-border p-4 sm:p-6 md:p-8 rounded-xl max-w-md w-full space-y-6 text-center"
+            >
+              <motion.div
+                initial={{ scale: 0.75 }}
+                animate={{ scale: [0.75, 1.08, 1] }}
+                transition={{ duration: 0.35 }}
+                className="mx-auto w-14 h-14 rounded-xl border border-emerald-500/30 bg-emerald-950/30 flex items-center justify-center text-emerald-400"
+              >
+                <CircleCheck size={28} />
+              </motion.div>
+
+              <div className="space-y-2">
+                <p className="text-[10px] font-mono text-brand-primary uppercase tracking-widest">
+                  {roleSuccessCopy[roleSuccess.action].eyebrow}
+                </p>
+                <h3 className="text-2xl font-black uppercase italic tracking-tighter">
+                  {roleSuccessCopy[roleSuccess.action].title}
+                </h3>
+                <p className="text-xs text-zinc-500 font-mono leading-relaxed">
+                  {roleSuccessCopy[roleSuccess.action].description(
+                    roleSuccess.roleName.replace(/_/g, ' '),
+                  )}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setRoleSuccess(null)}
+                className="w-full py-2.5 bg-brand-primary text-black text-xs font-bold uppercase rounded hover:bg-brand-primary/90 transition-colors"
+              >
+                CONTINUE
+              </button>
             </motion.div>
           </div>
         )}

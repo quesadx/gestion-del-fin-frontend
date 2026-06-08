@@ -1,8 +1,10 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore, useCampStore } from './store';
 import { hasPermission } from './lib/permissions';
 import { ReactNode, Suspense, lazy, useEffect } from 'react';
+import { apiClient } from './lib/api';
+import { Role } from './types';
 
 const PAGE_TITLES: Record<string, string> = {
   '/login': 'Login',
@@ -18,6 +20,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/resources': 'Resources',
   '/rations': 'Rations',
   '/professions': 'Professions',
+  '/achievements': 'Achievements',
+  '/achievements/my': 'My Achievements',
+  '/achievements/stats': 'Achievement Stats',
   '/users': 'Users',
   '/roles': 'Roles',
   '/permissions': 'Permissions',
@@ -26,6 +31,7 @@ import { Skeleton } from './components/Skeleton';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Toaster } from './components/Toaster';
 import AppBackground from './components/backgrounds/AppBackground';
+import { AccessDenied } from './components/AccessDenied';
 
 // Layouts (lazy)
 const DashboardLayout = lazy(() => import('./layouts/DashboardLayout'));
@@ -48,6 +54,9 @@ const TransferList = lazy(() => import('./features/transfers/TransferList'));
 const ResourcesPage = lazy(() => import('./features/resources/ResourcesPage'));
 const RationsPage = lazy(() => import('./features/rations/RationsPage'));
 const ProfessionsPage = lazy(() => import('./features/professions/ProfessionsPage'));
+const AchievementsPage = lazy(() => import('./features/gamification/AchievementsPage'));
+const MyAchievementsPage = lazy(() => import('./features/gamification/MyAchievementsPage'));
+const AchievementsStatsPage = lazy(() => import('./features/gamification/AchievementsStatsPage'));
 const UsersPage = lazy(() => import('./features/users/UsersPage'));
 const RolesPage = lazy(() => import('./features/roles/RolesPage'));
 const PermissionsPage = lazy(() => import('./features/permissions/PermissionsPage'));
@@ -93,9 +102,10 @@ const ProtectedRoute = ({
 }) => {
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
-  if (permission && !hasPermission(user?.permissions, permission))
-    return <Navigate to="/" replace />;
-  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  if (permission && !hasPermission(user?.permissions, permission)) {
+    return <AccessDenied role={user.role} />;
+  }
+  if (roles && !roles.includes(user.role)) return <AccessDenied role={user.role} />;
   return <>{children}</>;
 };
 
@@ -114,6 +124,38 @@ function TitleManager() {
     const page = match ? match[1] : '';
     document.title = page ? `${page} · GESTION DEL FIN` : 'GESTION DEL FIN';
   }, [location]);
+  return null;
+}
+
+function PermissionRefresher() {
+  const { user, syncRolePermissions } = useAuthStore();
+  const canReadRoles = hasPermission(user?.permissions, 'roles.read');
+
+  const { data: roles } = useQuery<Role[]>({
+    queryKey: ['current-role-permissions', user?.role],
+    queryFn: async () => {
+      const res = await apiClient.get('/roles', {
+        params: { page: 1, pageSize: 100 },
+      });
+      const body = res.data;
+      return body?.data ?? (Array.isArray(body) ? body : []);
+    },
+    enabled: !!user && canReadRoles,
+    refetchInterval: 30_000,
+  });
+
+  useEffect(() => {
+    if (!user || !roles) return;
+
+    const currentRole = roles.find((role) => role.name === user.role);
+    if (!currentRole) return;
+
+    syncRolePermissions(
+      currentRole.name,
+      currentRole.permissions?.map((permission) => permission.name) ?? [],
+    );
+  }, [roles, syncRolePermissions, user]);
+
   return null;
 }
 
@@ -148,6 +190,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <TitleManager />
+        <PermissionRefresher />
         <a href="#main-content" className="skip-to-content">
           Skip to content
         </a>
@@ -271,7 +314,7 @@ export default function App() {
                     <Route
                       path="rations"
                       element={
-                        <ProtectedRoute permission="inventory.read">
+                        <ProtectedRoute permission="inventory.audit.read">
                           <RationsPage />
                         </ProtectedRoute>
                       }
@@ -281,6 +324,30 @@ export default function App() {
                       element={
                         <ProtectedRoute permission="professions.read">
                           <ProfessionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="achievements"
+                      element={
+                        <ProtectedRoute permission="admin.bypass_camp_scoping">
+                          <AchievementsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="achievements/my"
+                      element={
+                        <ProtectedRoute>
+                          <MyAchievementsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="achievements/stats"
+                      element={
+                        <ProtectedRoute permission="metrics.dashboard">
+                          <AchievementsStatsPage />
                         </ProtectedRoute>
                       }
                     />

@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api';
-import { useAuthStore, useCampStore } from '../../store';
+import { useAuthStore } from '../../store/auth';
+import { useCampStore } from '../../store/camp';
 import { hasPermission } from '../../lib/permissions';
 import { User, Role } from '../../types';
 import { Shield, Plus, Edit2, Trash2, X, AlertCircle, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
+import { Pagination } from '../../components/Pagination';
+
+const PAGE_SIZE = 10;
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -15,6 +19,7 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
+  const [page, setPage] = useState(1);
 
   // Form states
   const [username, setUsername] = useState('');
@@ -100,6 +105,27 @@ export default function UsersPage() {
   const formatRole = (role?: string) =>
     typeof role === 'string' && role.length > 0 ? role.replace(/_/g, ' ') : 'unknown';
 
+  const resolveUserRoleId = (userRecord: User): number | '' => {
+    if (typeof userRecord.role_id === 'number') return userRecord.role_id;
+    return roles?.find((role) => role.name === userRecord.role)?.id ?? '';
+  };
+
+  const getUserRoleName = (userRecord: User) => {
+    if (typeof userRecord.role_id === 'number') {
+      const roleById = roles?.find((role) => role.id === userRecord.role_id);
+      if (roleById) return roleById.name;
+    }
+
+    return userRecord.role;
+  };
+
+  const getUserRoleLabel = (userRecord: User) => {
+    const roleName = getUserRoleName(userRecord);
+    if (roleName) return formatRole(roleName);
+    if (typeof userRecord.role_id === 'number') return `role #${userRecord.role_id}`;
+    return 'unknown';
+  };
+
   const openCreateModal = () => {
     setEditingUser(null);
     setUsername('');
@@ -113,7 +139,7 @@ export default function UsersPage() {
     setEditingUser(user);
     setUsername(user.username);
     setPassword('');
-    setRoleId(roles?.find((r) => r.name === user.role)?.id ?? '');
+    setRoleId(resolveUserRoleId(user));
     setCampId(
       user.camp_id != null ? String(user.camp_id) : currentCampId ? String(currentCampId) : '',
     );
@@ -143,6 +169,9 @@ export default function UsersPage() {
       });
     }
   };
+
+  const totalPages = Math.max(1, Math.ceil((users?.length ?? 0) / PAGE_SIZE));
+  const paginatedUsers = (users ?? []).slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="space-y-6">
@@ -186,7 +215,7 @@ export default function UsersPage() {
               </p>
             </div>
           )}
-          {users?.map((user) => (
+          {paginatedUsers.map((user) => (
             <motion.div
               key={user.id}
               initial={{ opacity: 0, y: 10 }}
@@ -203,7 +232,7 @@ export default function UsersPage() {
                   </h3>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border bg-zinc-950/40 text-zinc-400 border-zinc-800">
-                      {formatRole(user.role)}
+                      {getUserRoleLabel(user)}
                     </span>
                     <span
                       className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
@@ -248,6 +277,8 @@ export default function UsersPage() {
           ))}
         </div>
       )}
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <AnimatePresence>
         {isModalOpen && (
@@ -322,6 +353,9 @@ export default function UsersPage() {
                     onChange={(e) => setRoleId(Number(e.target.value))}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-brand-primary"
                   >
+                    <option value="" disabled className="bg-zinc-950">
+                      Select role
+                    </option>
                     {!roles ? (
                       <option value="" disabled className="bg-zinc-950">
                         Loading roles...
@@ -407,7 +441,7 @@ export default function UsersPage() {
               <div className="p-4 bg-zinc-950/60 rounded border border-zinc-900">
                 <p className="text-sm font-bold text-zinc-200">{deletingUser.username}</p>
                 <p className="text-xs text-zinc-500 font-mono mt-1">
-                  Role: {formatRole(deletingUser.role)} &middot; Camp:{' '}
+                  Role: {getUserRoleLabel(deletingUser)} &middot; Camp:{' '}
                   {deletingUser.camp_id ?? 'None'}
                 </p>
               </div>

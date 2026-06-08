@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, toFormData, unwrapList } from '../../lib/api';
+import { apiClient, fetchAllPaginated, toFormData, unwrapList } from '../../lib/api';
 import { Person, Camp } from '../../types';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { cn, formatDate, normalizePersonStatus } from '../../lib/utils';
+import { showToast } from '../../lib/toast';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 import {
   ArrowLeft,
   AlertCircle,
@@ -33,6 +35,73 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton } from '../../components/Skeleton';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
+
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_OVERRIDE_AMOUNT = 9999999999.99;
+const RATION_RESOURCE_TYPE_NAME = 'FOOD_RATION';
+const RATIONS_PER_PERSON_FOR_TRAVEL = 6;
+
+type PersonUpdatePayload = {
+  full_name?: string;
+  age?: number;
+  status?: Person['status'];
+  profession_id?: number;
+  skills_summary?: string;
+  photo?: File | null;
+  photo_url?: string | null;
+};
+
+type PeopleFeedback = {
+  type: ActionFeedbackType;
+  title: string;
+  message: string;
+  actionLabel?: string;
+  nextPath?: string;
+};
+
+const getPeopleActionErrorMessage = (error: unknown, fallback: string) => {
+  const status = (error as { response?: { status?: number } }).response?.status;
+  if (status === 403) return 'Your current role is not authorized to perform this action.';
+  return getApiErrorMessage(error, fallback);
+};
+
+const validateImageFile = (file: File | null | undefined) => {
+  if (!file) return null;
+  if (!file.type.startsWith('image/')) return 'Photo must be an image file.';
+  if (file.size > MAX_IMAGE_SIZE_BYTES) return 'Photo must be 10MB or smaller.';
+  return null;
+};
+
+const getDateOnlyTime = (value?: string | null) => {
+  if (!value) return null;
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+};
+
+const formatShortDate = (value?: string | null) => {
+  if (!value) return 'Open-ended';
+  const [year, month, day] = value.slice(0, 10).split('-').map(Number);
+  if (!year || !month || !day) return 'Invalid date';
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return 'Invalid date';
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+  }).format(date);
+};
+
+const formatOverrideAmount = (amount: number | string, unit?: string | null) => {
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return `${amount}${unit ? ` ${unit}` : ''}`;
+  const signedAmount = `${numericAmount > 0 ? '+' : ''}${numericAmount.toFixed(2)}`;
+  return `${signedAmount}${unit ? ` ${unit}` : ''}`;
+};
 
 export default function PersonDetail() {
   const { id } = useParams();
@@ -54,6 +123,9 @@ export default function PersonDetail() {
     'people.contribution_override.create',
   );
   const canTransferPerson = hasPermission(user?.permissions, 'transfers.create');
+  const canReadCamps = hasPermission(user?.permissions, 'camps.read');
+  const canReadProfessions = hasPermission(user?.permissions, 'professions.read');
+  const canReadResources = hasPermission(user?.permissions, 'resources.read');
 
   // ── Person query ───────────────────────────────────────────────────────
 
@@ -78,12 +150,12 @@ export default function PersonDetail() {
   // ── Supporting queries ─────────────────────────────────────────────────
 
   const { data: camps } = useQuery<Camp[]>({
-    queryKey: ['camps'],
+    queryKey: ['camps-catalog'],
     queryFn: async () => {
-      const res = await apiClient.get('/camps');
+      const res = await apiClient.get('/camps/catalog');
       return unwrapList<Camp>(res.data);
     },
-    enabled: hasReadPermission,
+    enabled: hasReadPermission && canReadCamps,
   });
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
@@ -92,30 +164,49 @@ export default function PersonDetail() {
       const res = await apiClient.get('/professions');
       return unwrapList<{ id: number; name: string }>(res.data);
     },
-    enabled: hasReadPermission,
+    enabled: hasReadPermission && canReadProfessions,
   });
 
   const { data: resources } = useQuery<{ id: number; name: string }[]>({
     queryKey: ['resources'],
-    queryFn: async () => {
-      const res = await apiClient.get('/resources');
-      return unwrapList<{ id: number; name: string }>(res.data);
-    },
-    enabled: hasReadPermission,
+    queryFn: () => fetchAllPaginated<{ id: number; name: string }>('/resources'),
+    enabled:
+      hasReadPermission && canReadResources && (canOverrideContribution || canTransferPerson),
   });
 
+  const rationResource = resources?.find(
+    (resource) => resource.name.trim().toUpperCase() === RATION_RESOURCE_TYPE_NAME,
+  );
+
   const campName = camps?.find((c) => c.id === person?.camp_id)?.name;
+  const isDeceased = normalizePersonStatus(person?.status) === 'DEAD';
+  const [feedback, setFeedback] = useState<PeopleFeedback | null>(null);
+
+  const showErrorFeedback = (title: string, error: unknown, fallback: string) => {
+    setFeedback({
+      type: 'error',
+      title,
+      message: getPeopleActionErrorMessage(error, fallback),
+    });
+  };
+
+  const closeFeedback = () => {
+    const nextPath = feedback?.nextPath;
+    setFeedback(null);
+    if (nextPath) navigate(nextPath);
+  };
 
   // ── Update mutation ────────────────────────────────────────────────────
 
   const updatePersonMutation = useMutation({
-    mutationFn: async ({ data }: { data: Partial<Person> }) => {
+    mutationFn: async ({ data }: { data: PersonUpdatePayload }) => {
       const body = toFormData({
         full_name: data.full_name,
         age: data.age,
         status: data.status,
         profession_id: data.profession_id,
         skills_summary: data.skills_summary,
+        photo: data.photo,
         photo_url: data.photo_url,
       });
       const res = await apiClient.put(`/camps/${currentCampId}/people/${personId}`, body);
@@ -126,7 +217,16 @@ export default function PersonDetail() {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setEditingPerson(false);
+      setEditPhotoFile(null);
+      setEditPhotoError(null);
+      setFeedback({
+        type: 'success',
+        title: 'PROFILE UPDATED',
+        message: 'The personnel record was updated successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('UPDATE FAILED', error, 'Could not update personnel profile.'),
   });
 
   // ── Delete mutation ────────────────────────────────────────────────────
@@ -139,28 +239,57 @@ export default function PersonDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
-      navigate('/population');
+      setFeedback({
+        type: 'success',
+        title: 'RECORD REMOVED',
+        message: 'The survivor was removed from the camp roster.',
+        actionLabel: 'VIEW ROSTER',
+        nextPath: '/population',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('DELETE FAILED', error, 'Could not delete personnel record.'),
   });
 
   // ── Transfer mutation ──────────────────────────────────────────────────
 
   const transferMutation = useMutation({
     mutationFn: async ({ campId }: { campId: number }) => {
+      if (!rationResource) {
+        throw new Error(
+          `${RATION_RESOURCE_TYPE_NAME} resource is required for personnel transfers.`,
+        );
+      }
+
       await apiClient.post('/transfers', {
         requesting_camp: currentCampId,
         target_camp: campId,
         type: 'PERSON',
         requested_by: user?.id ?? 1,
-        items: [{ item_type: 'PERSON', person_id: personId }],
+        items: [
+          { item_type: 'PERSON', person_id: personId },
+          {
+            item_type: 'RESOURCE',
+            resource_type_id: rationResource.id,
+            quantity: RATIONS_PER_PERSON_FOR_TRAVEL,
+          },
+        ],
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['people'] });
       setTransferringPerson(false);
       setTargetCampId(null);
-      navigate('/population');
+      setFeedback({
+        type: 'success',
+        title: 'TRANSFER REQUESTED',
+        message: 'The personnel transfer request was created successfully.',
+        actionLabel: 'VIEW ROSTER',
+        nextPath: '/population',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('TRANSFER FAILED', error, 'Could not create personnel transfer.'),
   });
 
   // ── Status log mutation ────────────────────────────────────────────────
@@ -176,10 +305,18 @@ export default function PersonDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['person', currentCampId, personId] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setShowStatusLogModal(false);
       setStatusReason('');
       setStatusNewStatus('HEALTHY');
+      setFeedback({
+        type: 'success',
+        title: 'STATUS LOGGED',
+        message: 'The survivor status change was recorded successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('STATUS UPDATE FAILED', error, 'Could not log status change.'),
   });
 
   // ── Reassign mutation ──────────────────────────────────────────────────
@@ -208,12 +345,20 @@ export default function PersonDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['person', currentCampId, personId] });
       queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
       setShowReassignModal(false);
       setReassignProfessionId(null);
       setReassignReason('');
       setReassignStartDate('');
       setReassignEndDate('');
+      setFeedback({
+        type: 'success',
+        title: 'PROFESSION UPDATED',
+        message: 'The profession reassignment was saved successfully.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('REASSIGNMENT FAILED', error, 'Could not reassign profession.'),
   });
 
   // ── Override mutation ──────────────────────────────────────────────────
@@ -250,7 +395,15 @@ export default function PersonDetail() {
       setOverrideReason('');
       setOverrideStartDate('');
       setOverrideEndDate('');
+      setFeedback({
+        type: 'success',
+        title: 'OVERRIDE SAVED',
+        message:
+          'The contribution override was registered and will be applied by the daily production job while active.',
+      });
     },
+    onError: (error) =>
+      showErrorFeedback('OVERRIDE FAILED', error, 'Could not save contribution override.'),
   });
 
   // ── Edit modal state ───────────────────────────────────────────────────
@@ -262,6 +415,8 @@ export default function PersonDetail() {
   const [editProfessionId, setEditProfessionId] = useState<number | null>(null);
   const [editSkillsSummary, setEditSkillsSummary] = useState('');
   const [editPhotoUrl, setEditPhotoUrl] = useState('');
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
+  const [editPhotoError, setEditPhotoError] = useState<string | null>(null);
 
   const openEditModal = () => {
     if (!person) return;
@@ -272,20 +427,51 @@ export default function PersonDetail() {
     setEditProfessionId(person.profession_id ?? null);
     setEditSkillsSummary(person.skills_summary ?? '');
     setEditPhotoUrl(person.photo_url ?? '');
+    setEditPhotoFile(null);
+    setEditPhotoError(null);
     setEditingPerson(true);
+  };
+
+  const handleEditPhotoChange = (file?: File | null) => {
+    const validationError = validateImageFile(file);
+    setEditPhotoError(validationError);
+    setEditPhotoFile(validationError ? null : (file ?? null));
   };
 
   const handleEditSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!person) return;
+
+    const trimmedName = editName.trim();
+    if (!trimmedName) {
+      showToast.warning('Full name is required.');
+      return;
+    }
+
+    const parsedAge = editAge.trim() === '' ? undefined : Number(editAge);
+    if (
+      parsedAge !== undefined &&
+      (!Number.isInteger(parsedAge) || parsedAge < 0 || parsedAge > 255)
+    ) {
+      showToast.warning('Age must be a whole number from 0 to 255.');
+      return;
+    }
+
+    const imageError = validateImageFile(editPhotoFile);
+    if (imageError) {
+      setEditPhotoError(imageError);
+      return;
+    }
+
     updatePersonMutation.mutate({
       data: {
-        full_name: editName,
-        age: Number(editAge) || 25,
+        full_name: trimmedName,
+        ...(parsedAge !== undefined ? { age: parsedAge } : {}),
         status: editStatus as Person['status'],
         ...(editProfessionId != null ? { profession_id: editProfessionId } : {}),
-        ...(editSkillsSummary ? { skills_summary: editSkillsSummary } : {}),
-        ...(editPhotoUrl ? { photo_url: editPhotoUrl } : {}),
+        ...(editSkillsSummary.trim() ? { skills_summary: editSkillsSummary.trim() } : {}),
+        ...(editPhotoFile ? { photo: editPhotoFile } : {}),
+        ...(!editPhotoFile && editPhotoUrl ? { photo_url: editPhotoUrl } : {}),
       },
     });
   };
@@ -318,6 +504,45 @@ export default function PersonDetail() {
   const [overrideReason, setOverrideReason] = useState('');
   const [overrideStartDate, setOverrideStartDate] = useState('');
   const [overrideEndDate, setOverrideEndDate] = useState('');
+
+  const trimmedOverrideReason = overrideReason.trim();
+  const overrideAmountNumber = Number(overrideAmount);
+  const overrideAmountInvalid =
+    overrideAmount.trim() !== '' &&
+    (!Number.isFinite(overrideAmountNumber) ||
+      Math.abs(overrideAmountNumber) > MAX_OVERRIDE_AMOUNT);
+  const overrideReasonInvalid = trimmedOverrideReason.length > 255;
+  const overrideDateRangeInvalid =
+    !!overrideStartDate &&
+    !!overrideEndDate &&
+    getDateOnlyTime(overrideEndDate)! < getDateOnlyTime(overrideStartDate)!;
+  const canSubmitOverride =
+    overrideResourceTypeId != null &&
+    overrideAmount.trim() !== '' &&
+    trimmedOverrideReason.length > 0 &&
+    !overrideAmountInvalid &&
+    !overrideReasonInvalid &&
+    !overrideDateRangeInvalid &&
+    !overrideMutation.isPending;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayTime = today.getTime();
+  const contributionOverrides = [...(person?.contribution_overrides ?? [])].sort(
+    (a, b) =>
+      (getDateOnlyTime(b.created_at) ?? getDateOnlyTime(b.start_date) ?? 0) -
+      (getDateOnlyTime(a.created_at) ?? getDateOnlyTime(a.start_date) ?? 0),
+  );
+  const getOverrideStatus = (startDate?: string | null, endDate?: string | null) => {
+    const startTime = getDateOnlyTime(startDate);
+    const endTime = getDateOnlyTime(endDate);
+
+    if (startTime != null && startTime > todayTime) return 'SCHEDULED';
+    if (endTime != null && endTime < todayTime) return 'ENDED';
+    return 'ACTIVE';
+  };
+  const activeOverrideCount = contributionOverrides.filter(
+    (override) => getOverrideStatus(override.start_date, override.end_date) === 'ACTIVE',
+  ).length;
 
   if (!hasReadPermission) {
     return <Navigate to="/" replace />;
@@ -416,9 +641,9 @@ export default function PersonDetail() {
       {/* Back navigation */}
       <button
         onClick={() => navigate('/population')}
-        className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors uppercase tracking-wider"
+        className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-600 rounded-lg px-3 py-2 transition-all hover:-translate-x-0.5 hover:shadow-[0_0_12px_rgba(255,255,255,0.04)] group"
       >
-        <ArrowLeft size={14} />
+        <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-0.5" />
         BACK TO POPULATION
       </button>
 
@@ -609,9 +834,163 @@ export default function PersonDetail() {
         </div>
       </div>
 
+      {/* Status History */}
+      <div>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-4">
+          Status History
+        </h2>
+        {(() => {
+          const logs = (person.person_status_logs ?? [])
+            .slice()
+            .sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime());
+
+          if (logs.length === 0) {
+            return (
+              <div className="bg-surface-raised brutalist-border rounded-lg px-6 py-8 text-center text-[11px] font-mono uppercase tracking-widest text-zinc-600">
+                No status changes recorded.
+              </div>
+            );
+          }
+
+          return (
+            <div className="bg-surface-raised brutalist-border rounded-lg overflow-hidden">
+              <div className="max-h-72 overflow-y-auto divide-y divide-zinc-900">
+                {logs.map((log) => {
+                  const isDeathRecord = log.new_status === 'DEAD';
+                  return (
+                    <div
+                      key={log.id}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.02] transition-colors"
+                    >
+                      <div className="shrink-0">
+                        <Clock
+                          size={14}
+                          className={isDeathRecord ? 'text-red-500' : 'text-zinc-600'}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-zinc-400">
+                            {log.old_status}
+                          </span>
+                          <span className="text-zinc-700 text-[10px]">&rarr;</span>
+                          <span
+                            className={`text-[10px] font-black uppercase tracking-wider ${
+                              isDeathRecord ? 'text-red-500' : 'text-zinc-200'
+                            }`}
+                          >
+                            {log.new_status}
+                          </span>
+                        </div>
+                        {log.reason && (
+                          <p className="text-[10px] font-mono leading-relaxed text-zinc-500 line-clamp-2">
+                            {log.reason}
+                          </p>
+                        )}
+                        <p className="text-[9px] font-mono text-zinc-600">
+                          {formatDate(log.changed_at)}
+                          {log.users?.username && <span> &middot; {log.users.username}</span>}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+
+      {canOverrideContribution && (
+        <div>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400">
+              Contribution Overrides
+            </h2>
+            <span className="rounded border border-blue-500/20 bg-blue-950/20 px-2 py-1 text-[10px] font-black uppercase tracking-wider text-blue-400">
+              {activeOverrideCount} active
+            </span>
+          </div>
+
+          <div className="bg-surface-raised brutalist-border rounded-lg overflow-hidden">
+            {contributionOverrides.length === 0 ? (
+              <div className="px-6 py-8 text-center text-[11px] font-mono uppercase tracking-widest text-zinc-600">
+                No contribution overrides recorded.
+              </div>
+            ) : (
+              <div className="divide-y divide-zinc-900">
+                {contributionOverrides.map((override) => {
+                  const amountNumber = Number(override.amount);
+                  const isPositive = Number.isFinite(amountNumber) && amountNumber >= 0;
+                  const status = getOverrideStatus(override.start_date, override.end_date);
+                  const resourceName =
+                    override.resource_type?.name ?? `Resource #${override.resource_type_id}`;
+
+                  return (
+                    <div
+                      key={override.id}
+                      className="grid gap-4 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                    >
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-black uppercase tracking-wider text-zinc-200">
+                            {resourceName}
+                          </span>
+                          <span
+                            className={cn(
+                              'rounded border px-2 py-0.5 text-[9px] font-black uppercase tracking-wider',
+                              status === 'ACTIVE'
+                                ? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-400'
+                                : status === 'SCHEDULED'
+                                  ? 'border-blue-500/30 bg-blue-950/20 text-blue-400'
+                                  : 'border-zinc-700 bg-zinc-950/30 text-zinc-500',
+                            )}
+                          >
+                            {status}
+                          </span>
+                        </div>
+                        <p className="text-xs font-mono leading-relaxed text-zinc-500">
+                          {override.reason}
+                        </p>
+                        <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+                          {formatShortDate(override.start_date)} to{' '}
+                          {formatShortDate(override.end_date)}
+                          {override.users?.username ? ` by ${override.users.username}` : ''}
+                        </p>
+                      </div>
+                      <div
+                        className={cn(
+                          'text-right text-sm font-black tabular-nums',
+                          isPositive ? 'text-emerald-400' : 'text-red-400',
+                        )}
+                      >
+                        {formatOverrideAmount(override.amount, override.resource_type?.unit)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Action buttons */}
+      {isDeceased && (
+        <div className="flex items-center gap-3 p-4 bg-zinc-900/50 border border-zinc-700/40 rounded-lg">
+          <Skull size={18} className="text-zinc-500 shrink-0" />
+          <div>
+            <p className="text-xs font-black text-zinc-400 uppercase tracking-wider">
+              Deceased Record
+            </p>
+            <p className="text-[10px] font-mono text-zinc-500">
+              This personnel record is locked. No modifications are permitted.
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row gap-4">
-        {canUpdate && (
+        {canUpdate && !isDeceased && (
           <button
             onClick={openEditModal}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-emerald-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-emerald-500 transition-all"
@@ -620,7 +999,7 @@ export default function PersonDetail() {
             EDIT PROFILE
           </button>
         )}
-        {canTransferPerson && (
+        {canTransferPerson && normalizePersonStatus(person.status) === 'HEALTHY' && (
           <button
             onClick={() => setTransferringPerson(true)}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-amber-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-amber-500 transition-all"
@@ -629,7 +1008,7 @@ export default function PersonDetail() {
             TRANSFER PERSONNEL
           </button>
         )}
-        {canDelete && (
+        {canDelete && !isDeceased && (
           <button
             onClick={() => setConfirmDelete(true)}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-red-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-red-500 transition-all"
@@ -646,7 +1025,7 @@ export default function PersonDetail() {
           Personnel Actions
         </h2>
         <div className="flex flex-col sm:flex-row gap-4">
-          {canStatusLog && (
+          {canStatusLog && !isDeceased && (
             <button
               onClick={() => {
                 setStatusNewStatus(normalizePersonStatus(person?.status));
@@ -658,7 +1037,7 @@ export default function PersonDetail() {
               LOG STATUS CHANGE
             </button>
           )}
-          {canReassignProfession && (
+          {canReassignProfession && !isDeceased && (
             <button
               onClick={() => setShowReassignModal(true)}
               className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-brand-secondary/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-brand-secondary transition-all"
@@ -667,7 +1046,7 @@ export default function PersonDetail() {
               REASSIGN PROFESSION
             </button>
           )}
-          {canOverrideContribution && (
+          {canOverrideContribution && !isDeceased && (
             <button
               onClick={() => setShowOverrideModal(true)}
               className="flex-1 flex items-center justify-center gap-2 bg-surface-raised brutalist-border hover:border-blue-500/50 rounded-lg px-6 py-4 text-sm font-bold uppercase tracking-wider text-zinc-300 hover:text-blue-500 transition-all"
@@ -687,7 +1066,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -712,8 +1091,10 @@ export default function PersonDetail() {
                   <input
                     required
                     type="text"
+                    maxLength={150}
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
+                    aria-label="Full name"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase"
                   />
                 </div>
@@ -726,8 +1107,12 @@ export default function PersonDetail() {
                     <input
                       required
                       type="number"
+                      min={0}
+                      max={255}
+                      step={1}
                       value={editAge}
                       onChange={(e) => setEditAge(e.target.value)}
+                      aria-label="Age"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
                     />
                   </div>
@@ -738,6 +1123,7 @@ export default function PersonDetail() {
                     <select
                       value={editStatus}
                       onChange={(e) => setEditStatus(e.target.value)}
+                      aria-label="Status rating"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary cursor-pointer uppercase font-mono"
                     >
                       <option value="HEALTHY">HEALTHY</option>
@@ -758,6 +1144,7 @@ export default function PersonDetail() {
                     onChange={(e) =>
                       setEditProfessionId(e.target.value ? Number(e.target.value) : null)
                     }
+                    aria-label="Profession"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono uppercase cursor-pointer"
                   >
                     <option value="">— No change —</option>
@@ -778,21 +1165,35 @@ export default function PersonDetail() {
                     onChange={(e) => setEditSkillsSummary(e.target.value)}
                     rows={2}
                     placeholder="e.g. combat training, medical triage, scouting"
+                    aria-label="Skills summary"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono resize-none"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-                    Photo URL (Optional)
+                    Personnel Photo (Optional, max 10MB)
                   </label>
-                  <input
-                    type="url"
-                    value={editPhotoUrl}
-                    onChange={(e) => setEditPhotoUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-primary font-mono"
-                  />
+                  <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded border border-zinc-800 bg-zinc-950 px-3 py-2.5 text-xs font-mono text-zinc-400 transition-colors hover:border-brand-primary/60">
+                    <Camera size={16} className="shrink-0 text-brand-primary" />
+                    <span className="min-w-0 flex-1 truncate">
+                      {editPhotoFile
+                        ? editPhotoFile.name
+                        : person.photo_url
+                          ? 'Current photo will be kept'
+                          : 'Select image file'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleEditPhotoChange(e.target.files?.[0] ?? null)}
+                      aria-label="Personnel photo"
+                      className="sr-only"
+                    />
+                  </label>
+                  {editPhotoError && (
+                    <p className="mt-1 text-[10px] font-mono text-red-500">{editPhotoError}</p>
+                  )}
                 </div>
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
@@ -823,13 +1224,17 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="space-y-1">
                 <h3 className="text-2xl font-black uppercase italic tracking-tighter">
                   Personnel Transfer
                 </h3>
                 <p className="text-sm text-zinc-500 font-mono">Transferring: {person.full_name}</p>
+                <p className="text-[10px] text-zinc-600 font-mono">
+                  Includes {RATIONS_PER_PERSON_FOR_TRAVEL} {RATION_RESOURCE_TYPE_NAME} travel
+                  rations, required by transfer protocol.
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -868,11 +1273,15 @@ export default function PersonDetail() {
                   CANCEL
                 </button>
                 <button
-                  disabled={!targetCampId || transferMutation.isPending}
+                  disabled={!targetCampId || !rationResource || transferMutation.isPending}
                   onClick={() => targetCampId && transferMutation.mutate({ campId: targetCampId })}
                   className="flex-2 py-3 bg-brand-secondary text-black font-black uppercase rounded hover:bg-amber-600 transition-colors disabled:opacity-30"
                 >
-                  {transferMutation.isPending ? 'AUTHORIZING...' : 'CONFIRM TRANSFER'}
+                  {!rationResource
+                    ? 'RATION RESOURCE MISSING'
+                    : transferMutation.isPending
+                      ? 'AUTHORIZING...'
+                      : 'CONFIRM TRANSFER'}
                 </button>
               </div>
             </motion.div>
@@ -886,7 +1295,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -923,6 +1332,7 @@ export default function PersonDetail() {
                     required
                     value={statusNewStatus}
                     onChange={(e) => setStatusNewStatus(e.target.value)}
+                    aria-label="New status"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-mono uppercase cursor-pointer"
                   >
                     <option value="HEALTHY">HEALTHY</option>
@@ -942,6 +1352,7 @@ export default function PersonDetail() {
                     onChange={(e) => setStatusReason(e.target.value)}
                     rows={3}
                     placeholder="e.g. sustained injury during patrol, showing symptoms of illness..."
+                    aria-label="Status change reason"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-purple-500 font-mono resize-none"
                   />
                 </div>
@@ -980,7 +1391,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -1031,6 +1442,7 @@ export default function PersonDetail() {
                     onChange={(e) =>
                       setReassignProfessionId(e.target.value ? Number(e.target.value) : null)
                     }
+                    aria-label="Target profession"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono uppercase cursor-pointer"
                   >
                     <option value="">— Select profession —</option>
@@ -1051,6 +1463,7 @@ export default function PersonDetail() {
                     onChange={(e) => setReassignReason(e.target.value)}
                     rows={2}
                     placeholder="e.g. reassigned to medical unit due to background"
+                    aria-label="Reassignment reason"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono resize-none"
                   />
                 </div>
@@ -1064,6 +1477,7 @@ export default function PersonDetail() {
                       type="date"
                       value={reassignStartDate}
                       onChange={(e) => setReassignStartDate(e.target.value)}
+                      aria-label="Start date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono"
                     />
                   </div>
@@ -1075,6 +1489,7 @@ export default function PersonDetail() {
                       type="date"
                       value={reassignEndDate}
                       onChange={(e) => setReassignEndDate(e.target.value)}
+                      aria-label="End date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-brand-secondary font-mono"
                     />
                   </div>
@@ -1114,7 +1529,7 @@ export default function PersonDetail() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full space-y-6"
+              className="bg-surface-raised brutalist-border p-8 rounded-xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6"
             >
               <div className="flex justify-between items-start">
                 <div className="space-y-1">
@@ -1136,11 +1551,14 @@ export default function PersonDetail() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (overrideResourceTypeId == null || !overrideAmount || !overrideReason) return;
+                  if (!canSubmitOverride) {
+                    showToast.warning('Check contribution override format before saving.');
+                    return;
+                  }
                   overrideMutation.mutate({
                     resourceTypeId: overrideResourceTypeId,
-                    amount: Number(overrideAmount),
-                    reason: overrideReason,
+                    amount: overrideAmountNumber,
+                    reason: trimmedOverrideReason,
                     startDate: overrideStartDate,
                     endDate: overrideEndDate,
                   });
@@ -1157,6 +1575,7 @@ export default function PersonDetail() {
                     onChange={(e) =>
                       setOverrideResourceTypeId(e.target.value ? Number(e.target.value) : null)
                     }
+                    aria-label="Resource type"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono uppercase cursor-pointer"
                   >
                     <option value="">— Select resource —</option>
@@ -1175,13 +1594,22 @@ export default function PersonDetail() {
                   <input
                     required
                     type="number"
-                    min="0"
                     step="0.01"
+                    inputMode="decimal"
                     value={overrideAmount}
                     onChange={(e) => setOverrideAmount(e.target.value)}
                     placeholder="0.00"
+                    aria-label="Override amount"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
                   />
+                  <p className="text-[10px] text-zinc-600 font-mono">
+                    Format: decimal amount, positive or negative, up to 2 decimals.
+                  </p>
+                  {overrideAmountInvalid && (
+                    <p className="text-[10px] text-red-500 font-mono">
+                      Amount must be a valid number within backend range.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -1190,12 +1618,20 @@ export default function PersonDetail() {
                   </label>
                   <textarea
                     required
+                    maxLength={255}
                     value={overrideReason}
                     onChange={(e) => setOverrideReason(e.target.value)}
                     rows={2}
                     placeholder="e.g. adjusted contribution due to special circumstances"
+                    aria-label="Override reason"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono resize-none"
                   />
+                  <div className="flex justify-between gap-3 text-[10px] font-mono">
+                    <span className="text-zinc-600">Required, max 255 characters.</span>
+                    <span className={overrideReasonInvalid ? 'text-red-500' : 'text-zinc-600'}>
+                      {trimmedOverrideReason.length}/255
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1207,6 +1643,7 @@ export default function PersonDetail() {
                       type="date"
                       value={overrideStartDate}
                       onChange={(e) => setOverrideStartDate(e.target.value)}
+                      aria-label="Start date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
                     />
                   </div>
@@ -1218,10 +1655,16 @@ export default function PersonDetail() {
                       type="date"
                       value={overrideEndDate}
                       onChange={(e) => setOverrideEndDate(e.target.value)}
+                      aria-label="End date"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-blue-500 font-mono"
                     />
                   </div>
                 </div>
+                {overrideDateRangeInvalid && (
+                  <p className="text-[10px] text-red-500 font-mono">
+                    End date cannot be earlier than start date.
+                  </p>
+                )}
 
                 <div className="flex gap-4 pt-4 border-t border-zinc-900">
                   <button
@@ -1233,12 +1676,7 @@ export default function PersonDetail() {
                   </button>
                   <button
                     type="submit"
-                    disabled={
-                      overrideResourceTypeId == null ||
-                      !overrideAmount ||
-                      !overrideReason ||
-                      overrideMutation.isPending
-                    }
+                    disabled={!canSubmitOverride}
                     className="flex-2 py-2.5 bg-blue-600 text-white text-xs font-bold uppercase rounded hover:bg-blue-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {overrideMutation.isPending ? (
@@ -1271,6 +1709,18 @@ export default function PersonDetail() {
         }}
         onCancel={() => setConfirmDelete(false)}
       />
+
+      {feedback && (
+        <ActionFeedbackDialog
+          isOpen={true}
+          type={feedback.type}
+          eyebrow="Population Roster"
+          title={feedback.title}
+          message={feedback.message}
+          actionLabel={feedback.actionLabel}
+          onClose={closeFeedback}
+        />
+      )}
     </div>
   );
 }
