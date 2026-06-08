@@ -72,6 +72,7 @@ jobs:
         env:
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
           TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           CI: 'true'
 
       - uses: actions/upload-artifact@v4
