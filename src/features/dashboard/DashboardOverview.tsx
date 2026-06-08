@@ -64,7 +64,6 @@ type StatCard = {
   icon: typeof Users;
   color: string;
   bg: string;
-  kind?: 'stock';
 };
 
 const getTotalPagesFromResponse = (responseData: unknown) =>
@@ -413,7 +412,6 @@ export default function DashboardOverview() {
       icon: AlertTriangle,
       color: 'text-red-500',
       bg: 'bg-red-500/10',
-      kind: 'stock',
     });
   }
 
@@ -436,7 +434,7 @@ export default function DashboardOverview() {
     (canReadTransfers && transfersLoading);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">
@@ -446,8 +444,8 @@ export default function DashboardOverview() {
             {profile.subtitle}
           </p>
         </div>
-        <div className="flex items-center gap-4 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-lg self-start">
-          <ProfileIcon size={18} className={profile.className} />
+        <div className="flex items-center gap-3 bg-zinc-900/80 border border-zinc-800/60 px-3 py-1.5 rounded-lg self-start backdrop-blur-sm">
+          <ProfileIcon size={16} className={profile.className} />
           <div className="text-[10px] font-mono leading-none">
             <p className="text-zinc-300 font-bold uppercase">{profile.label}</p>
             <p className={profile.className}>{profile.status}</p>
@@ -455,7 +453,7 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {isLoading
           ? Array.from({ length: cardCount }).map((_, i) => <SkeletonCard key={i} />)
           : statCards.length === 0
@@ -473,6 +471,10 @@ export default function DashboardOverview() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
+                  className={cn(
+                    i < 2 && 'lg:col-span-2',
+                    i === 0 && 'md:col-span-2',
+                  )}
                 >
                   <BorderGlow
                     backgroundColor="#1b0b0c"
@@ -485,91 +487,31 @@ export default function DashboardOverview() {
                     animated={false}
                     className="h-full"
                   >
-                    <div className="p-6 bg-surface-raised brutalist-border rounded-lg space-y-4 hover:border-zinc-700 transition-colors h-full">
+                    <div className="p-5 bg-surface-raised brutalist-border rounded-lg hover:border-zinc-700/80 transition-all duration-200 h-full flex flex-col justify-between">
                       <div
-                        className={`w-10 h-10 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
+                        className={`w-9 h-9 ${stat.bg} rounded-lg flex items-center justify-center ${stat.color}`}
                       >
-                        <stat.icon size={20} />
+                        <stat.icon size={18} />
                       </div>
-                      {stat.kind === 'stock' ? (
-                        <div className="space-y-3">
-                          {stockAlertCount === 0 ? (
-                            <div className="flex items-center gap-2 text-emerald-500">
-                              <CheckCircle size={16} />
-                              <span className="text-sm font-bold font-mono">
-                                All stocks optimal
-                              </span>
-                            </div>
-                          ) : canReadInventory ? (
-                            <div className="space-y-1.5">
-                              {criticalCount > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                                  <span className="text-xl font-black font-mono text-red-500">
-                                    {criticalCount}
-                                  </span>
-                                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                    CRITICAL
-                                  </span>
-                                </div>
-                              )}
-                              {lowCount > 0 && (
-                                <div className="flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                                  <span className="text-xl font-black font-mono text-amber-500">
-                                    {lowCount}
-                                  </span>
-                                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                    LOW
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                              <span className="text-xl font-black font-mono text-red-500">
-                                {stockAlertCount}
-                              </span>
-                              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                                ALERTS
-                              </span>
-                            </div>
-                          )}
-                          {canReadInventory && (
-                            <button
-                              onClick={() => navigate('/inventory')}
-                              className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors"
-                            >
-                              View Details →
-                            </button>
-                          )}
-                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                            {stat.label}
-                          </p>
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="text-2xl font-black font-mono">{stat.value ?? 0}</p>
-                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                            {stat.label}
-                          </p>
-                        </div>
-                      )}
+                      <div>
+                        <p className="text-2xl font-black font-mono tracking-tight">{stat.value ?? 0}</p>
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
+                          {stat.label}
+                        </p>
+                      </div>
                     </div>
                   </BorderGlow>
                 </motion.div>
               ))}
       </div>
 
-      <div className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-900">
-            <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-              <Box size={16} className="text-brand-secondary" />
-              Resource Deployment Analysis
+      <div className="pt-2 space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+            <h3 className="text-xs font-black uppercase tracking-[0.16em] flex items-center gap-2 text-zinc-400">
+              <Box size={14} className="text-brand-secondary" />
+              Resource Deployment
             </h3>
-            <span className="text-[10px] font-mono text-zinc-600">Real-time Telemetry Active</span>
+            <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Live Telemetry</span>
           </div>
 
           {!canReadInventory ? (
@@ -577,16 +519,22 @@ export default function DashboardOverview() {
               Inventory telemetry unavailable for this role.
             </div>
           ) : resourcesLoading ? (
-            <div className="space-y-6 animate-pulse">
-              <div className="h-64 bg-surface-raised/30 brutalist-border rounded-xl p-6 flex flex-col justify-between">
-                <Skeleton className="h-4 w-1/4" />
-                <div className="space-y-2">
-                  <Skeleton className="h-3 w-full" />
-                  <Skeleton className="h-3 w-5/6" />
-                  <Skeleton className="h-3 w-4/5" />
+            <div className="space-y-4 animate-pulse">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <div className="lg:col-span-4 bg-surface-raised/30 brutalist-border rounded-xl p-6 min-h-[240px] flex flex-col justify-between">
+                  <Skeleton className="h-4 w-1/4" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-5/6" />
+                    <Skeleton className="h-3 w-4/5" />
+                  </div>
+                </div>
+                <div className="lg:col-span-1 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-h-[240px]">
+                  <Skeleton className="h-3 w-2/3 mb-3" />
+                  <Skeleton className="h-6 w-1/2" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div
                     key={i}
@@ -611,64 +559,123 @@ export default function DashboardOverview() {
             </div>
           ) : (
             <>
-              <div className="h-64 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-w-0">
-                <div ref={chartContainerRef} className="w-full h-full min-w-25 min-h-25">
-                  {chartSize.width > 0 && chartSize.height > 0 && (
-                    <BarChart
-                      width={chartSize.width}
-                      height={chartSize.height}
-                      layout="vertical"
-                      data={resourceSummaries}
-                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+                <div className="lg:col-span-4 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-w-0 min-h-[240px]">
+                  <div ref={chartContainerRef} className="w-full h-full min-w-25 min-h-25">
+                    {chartSize.width > 0 && chartSize.height > 0 && (
+                      <BarChart
+                        width={chartSize.width}
+                        height={chartSize.height}
+                        layout="vertical"
+                        data={resourceSummaries}
+                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#1b0b0c" horizontal={false} />
+                        <XAxis type="number" hide />
+                        <YAxis
+                          dataKey="resource_name"
+                          type="category"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{
+                            fill: '#71717a',
+                            fontSize: 10,
+                            fontWeight: 'bold',
+                          }}
+                        />
+                        <Tooltip
+                          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                          contentStyle={{
+                            backgroundColor: '#0c0708',
+                            border: '1px solid #2a0f10',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Bar dataKey="quantity" radius={[0, 4, 4, 0]} barSize={20}>
+                          {resourceSummaries?.map((entry: InventorySnapshot, index: number) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                [
+                                  '#ef4444',
+                                  '#f59e0b',
+                                  '#10b981',
+                                  '#3b82f6',
+                                  '#8b5cf6',
+                                  '#ec4899',
+                                  '#06b6d4',
+                                  '#f97316',
+                                  '#14b8a6',
+                                  '#e11d48',
+                                ][index % 10]
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    )}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-1 bg-surface-raised/30 brutalist-border rounded-xl p-4 flex flex-col justify-between min-h-[240px]">
+                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">
+                    Stock Status
+                  </p>
+                  <div className="flex-1 flex flex-col justify-center">
+                    {stockAlertCount === 0 ? (
+                      <div className="flex items-center gap-2 text-emerald-500">
+                        <CheckCircle size={16} />
+                        <span className="text-sm font-bold font-mono">All stocks optimal</span>
+                      </div>
+                    ) : canReadInventory ? (
+                      <div className="space-y-3">
+                        {criticalCount > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                            <span className="text-xl font-black font-mono text-red-500">
+                              {criticalCount}
+                            </span>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                              CRITICAL
+                            </span>
+                          </div>
+                        )}
+                        {lowCount > 0 && (
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                            <span className="text-xl font-black font-mono text-amber-500">
+                              {lowCount}
+                            </span>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                              LOW
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                        <span className="text-xl font-black font-mono text-red-500">
+                          {stockAlertCount}
+                        </span>
+                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                          ALERTS
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {canReadInventory && (
+                    <button
+                      onClick={() => navigate('/inventory')}
+                      className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors mt-3"
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1b0b0c" horizontal={false} />
-                      <XAxis type="number" hide />
-                      <YAxis
-                        dataKey="resource_name"
-                        type="category"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fill: '#71717a',
-                          fontSize: 10,
-                          fontWeight: 'bold',
-                        }}
-                      />
-                      <Tooltip
-                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                        contentStyle={{
-                          backgroundColor: '#0c0708',
-                          border: '1px solid #2a0f10',
-                          borderRadius: '8px',
-                        }}
-                      />
-                      <Bar dataKey="quantity" radius={[0, 4, 4, 0]} barSize={20}>
-                        {resourceSummaries?.map((entry: InventorySnapshot, index: number) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={
-                              [
-                                '#ef4444',
-                                '#f59e0b',
-                                '#10b981',
-                                '#3b82f6',
-                                '#8b5cf6',
-                                '#ec4899',
-                                '#06b6d4',
-                                '#f97316',
-                                '#14b8a6',
-                                '#e11d48',
-                              ][index % 10]
-                            }
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
+                      View Details →
+                    </button>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-4">
                 {resourceSummaries?.map((res: InventorySnapshot) => (
                   <BorderGlow
                     key={res.resource_id}
@@ -682,18 +689,18 @@ export default function DashboardOverview() {
                     animated={false}
                     className="h-full"
                   >
-                    <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group h-full">
+                    <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group h-full hover:border-zinc-700/80 transition-all duration-200">
                       <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] font-black text-zinc-500 uppercase">
+                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-wide">
                           {res.resource_name}
                         </p>
-                        <div
+                        <span
                           className={cn(
-                            'w-2 h-2 rounded-full animate-pulse',
+                            'w-2 h-2 rounded-full shrink-0',
                             res.status === 'CRITICAL'
-                              ? 'bg-red-500'
+                              ? 'bg-red-500 animate-pulse'
                               : res.status === 'LOW'
-                                ? 'bg-amber-500'
+                                ? 'bg-amber-500 animate-pulse'
                                 : 'bg-emerald-500',
                           )}
                         />
@@ -706,21 +713,22 @@ export default function DashboardOverview() {
                           {res.unit}
                         </span>
                       </div>
-                      <div className="mt-3 space-y-1">
-                        <p className="text-[9px] font-bold text-zinc-500 uppercase flex justify-between">
-                          Est. Durability
+                      <div className="mt-3 space-y-1.5">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase">Est. Durability</span>
                           <span
                             className={cn(
+                              'text-[10px] font-mono font-bold tabular-nums',
                               (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
                             )}
                           >
-                            {res.projection_days != null ? `${res.projection_days} DAYS` : 'N/A'}
+                            {res.projection_days != null ? `${res.projection_days}D` : '—'}
                           </span>
-                        </p>
+                        </div>
                         <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
                           <div
                             className={cn(
-                              'h-full',
+                              'h-full rounded-full transition-all duration-300',
                               (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
                             )}
                             style={{
@@ -736,7 +744,6 @@ export default function DashboardOverview() {
             </>
           )}
         </div>
-      </div>
     </div>
   );
 }
