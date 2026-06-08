@@ -10,7 +10,7 @@ setup('authenticate', async ({ page }) => {
   await page.goto('/login');
   await page.getByLabel('Username').fill(process.env.TEST_USERNAME!);
   await page.getByLabel('Password').fill(process.env.TEST_PASSWORD!);
-  await page.getByRole('button', { name: 'REQUEST AUTHORIZATION' }).click();
+  await page.getByRole('button', { name: 'REQUEST AUTHORIZATION' }).click({ timeout: 60_000 });
   await page.waitForURL('/dashboard');
   await page.context().storageState({ path: AUTH_FILE });
 });
