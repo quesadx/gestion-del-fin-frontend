@@ -24,7 +24,14 @@ files_modified:
   - .gitignore
   - .github/workflows/ci.yml
 autonomous: true
-requirements: []
+requirements:
+  - REQ-01: Login flow E2E (success, failure, session expired, redirect)
+  - REQ-02: Auth JWT session reuse via storageState
+  - REQ-03: Dashboard E2E (stat cards, navigation, empty states)
+  - REQ-04: People CRUD E2E (list, search, detail, pagination)
+  - REQ-05: Resources CRUD E2E (list, create modal, content verification)
+  - REQ-06: Inventory Audit E2E (list, stock alerts, audit trail)
+  - REQ-07: CI integration (GitHub Actions e2e job with browser install)
 must_haves:
   truths:
     - "Playwright dependency installed and configured with webServer + storageState"
