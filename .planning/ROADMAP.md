@@ -22,6 +22,15 @@
 
 </details>
 
+### Phase 11: Pruebas automáticas
+
+**Goal:** Implementar pruebas automáticas E2E con Playwright, cubriendo flujos críticos con integración continua
+**Depends on:** None
+**Plans:** 1 plan
+
+Plans:
+- [ ] 11-PLAN.md — Infraestructura completa de pruebas E2E con Playwright: instalación, configuración, auth setup, page objects, 5 specs (auth, dashboard, people, resources, inventory) e integración CI
+
 ## Dev Rules
 
 - `pnpm check` before each commit (lint + spell + build)
