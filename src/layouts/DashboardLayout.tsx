@@ -22,7 +22,7 @@ import {
 import { useAuthStore, useCampStore, useConnectionStore } from '../store';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, unwrapList } from '../lib/api';
+import { apiClient, fetchAllPaginated, unwrapList } from '../lib/api';
 import { Camp, InventoryItem, Resource, UserAchievement } from '../types';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
@@ -178,10 +178,7 @@ export default function DashboardLayout() {
 
   const { data: camps } = useQuery<Camp[]>({
     queryKey: ['camps'],
-    queryFn: async () => {
-      const res = await apiClient.get('/camps');
-      return unwrapList<Camp>(res.data);
-    },
+    queryFn: async () => fetchAllPaginated<Camp>('/camps'),
     enabled: hasPermission(user?.permissions, 'camps.read'),
   });
 
