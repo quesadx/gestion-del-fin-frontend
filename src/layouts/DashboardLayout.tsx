@@ -709,7 +709,7 @@ export default function DashboardLayout() {
                       cardDistance={120}
                       verticalDistance={62}
                       delay={5600}
-                      autoPlay={true}
+                      autoPlay={false}
                       pauseOnHover={false}
                       manualSwapTick={campSwapTick}
                       manualSwapDirection={campSwapDirection}
