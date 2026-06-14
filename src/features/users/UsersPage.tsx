@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib/api';
+import { apiClient, fetchAllPaginated } from '../../lib/api';
 import { useAuthStore } from '../../store/auth';
 import { useCampStore } from '../../store/camp';
 import { hasPermission } from '../../lib/permissions';
@@ -33,19 +33,13 @@ export default function UsersPage() {
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['users'],
-    queryFn: async () => {
-      const res = await apiClient.get('/users');
-      return res.data?.data ?? res.data;
-    },
+    queryFn: () => fetchAllPaginated<User>('/users'),
     enabled: hasPermission(user?.permissions, 'users.read'),
   });
 
   const { data: roles } = useQuery<Role[]>({
     queryKey: ['roles'],
-    queryFn: async () => {
-      const res = await apiClient.get('/roles');
-      return res.data?.data ?? res.data;
-    },
+    queryFn: () => fetchAllPaginated<Role>('/roles'),
     enabled: hasPermission(user?.permissions, 'roles.read'),
   });
 

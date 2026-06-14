@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, fetchAllPaginated, unwrapList } from '../../lib/api';
+import { fetchAllPaginated } from '../../lib/api';
 import { useCampStore, useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { History, ArrowLeft } from 'lucide-react';
@@ -42,10 +42,7 @@ export default function InventoryAudit() {
     error: auditError,
   } = useQuery<InventoryAuditEntry[]>({
     queryKey: ['inventory-audit', currentCampId],
-    queryFn: async () => {
-      const res = await apiClient.get(`/inventory/audit/${currentCampId}`);
-      return unwrapList<InventoryAuditEntry>(res.data);
-    },
+    queryFn: () => fetchAllPaginated<InventoryAuditEntry>(`/inventory/audit/${currentCampId}`),
     enabled: !!currentCampId && hasPermission(user?.permissions, 'inventory.audit.read'),
     retry: false,
   });

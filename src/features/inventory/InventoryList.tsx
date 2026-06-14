@@ -162,15 +162,15 @@ export default function InventoryList() {
     queryKey: ['inventory', currentCampId],
     queryFn: async () => {
       try {
-        const [invRes, resourceTypes] = await Promise.all([
-          apiClient.get(`/inventory/${currentCampId}`),
+        const [inventoryItems, resourceTypes] = await Promise.all([
+          fetchAllPaginated<{
+            resource_type_id: number;
+            quantity?: number;
+          }>(`/inventory/${currentCampId}`),
           fetchAllPaginated<Resource>('/resources'),
         ]);
-        const items = (invRes.data?.data ?? invRes.data ?? []) as Array<{
-          resource_type_id: number;
-          quantity?: number;
-        }>;
-        return items.map((item) => {
+
+        return inventoryItems.map((item) => {
           const rt = resourceTypes.find((r) => r.id === item.resource_type_id);
           const qty = Math.floor(Number(item.quantity ?? 0));
           const minStock = Math.floor(Number(rt?.minimum_stock ?? 0));

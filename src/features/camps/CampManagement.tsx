@@ -5,7 +5,7 @@ import { apiClient, unwrapList } from '../../lib/api';
 import { useAuthStore, useCampStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Camp } from '../../types';
-import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, MapPin, Activity, X, Trash2, AlertTriangle, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../../components/Skeleton';
@@ -19,6 +19,8 @@ const CAMP_NAME_MAX_LENGTH = 100;
 const CAMP_LOCATION_MAX_LENGTH = 100;
 
 type CampStatus = 'ACTIVE' | 'ABANDONED';
+
+const CAMP_STATUS_FILTERS: (CampStatus | 'ALL')[] = ['ALL', 'ACTIVE', 'ABANDONED'];
 
 type CampPayload = {
   name: string;
@@ -56,6 +58,8 @@ export default function CampManagement() {
   const [page, setPage] = useState(1);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [feedback, setFeedback] = useState<CampFeedback | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<CampStatus | 'ALL'>('ALL');
 
   // Form states
   const [name, setName] = useState('');
@@ -270,9 +274,19 @@ export default function CampManagement() {
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil((camps?.length ?? 0) / PAGE_SIZE));
+  const normalizedCampSearch = searchTerm.trim().toLowerCase();
+  const isCampFiltering = normalizedCampSearch.length > 0 || statusFilter !== 'ALL';
+  const filteredCamps = (camps ?? []).filter((camp) => {
+    if (statusFilter !== 'ALL' && camp.status !== statusFilter) return false;
+    if (!normalizedCampSearch) return true;
+
+    return [camp.name, camp.location ?? '', camp.ai_context_prompt ?? '', `gf-${camp.id}`].some(
+      (field) => field.toLowerCase().includes(normalizedCampSearch),
+    );
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredCamps.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const paginatedCamps = (camps ?? []).slice(
+  const paginatedCamps = filteredCamps.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
@@ -299,6 +313,48 @@ export default function CampManagement() {
         )}
       </div>
 
+      {hasPermission(user?.permissions, 'camps.read') && (
+        <div className="bg-surface-raised brutalist-border rounded-xl p-3 sm:p-4 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3">
+            <div className="relative">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+              />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setPage(1);
+                }}
+                placeholder="Filter by refuge name, location, or AI context"
+                aria-label="Filter refuges by name, location, or AI context"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-9 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono uppercase"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value as CampStatus | 'ALL');
+                setPage(1);
+              }}
+              aria-label="Filter refuges by status"
+              className="bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 focus:outline-none focus:border-brand-primary font-mono uppercase"
+            >
+              {CAMP_STATUS_FILTERS.map((statusOption) => (
+                <option key={statusOption} value={statusOption}>
+                  {statusOption === 'ALL' ? 'ALL STATUS' : statusOption}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-[10px] font-mono text-zinc-600 uppercase">
+            {filteredCamps.length} refuges found - page {currentPage}/{totalPages}
+          </p>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -317,12 +373,16 @@ export default function CampManagement() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {(camps?.length ?? 0) === 0 && (
+          {paginatedCamps.length === 0 && (
             <div className="col-span-full flex flex-col items-center justify-center py-20 text-zinc-600">
               <MapPin size={48} className="mb-4 opacity-30" />
-              <p className="text-sm font-mono uppercase tracking-wider">No refuges registered</p>
+              <p className="text-sm font-mono uppercase tracking-wider">
+                {isCampFiltering ? 'No refuges match the current filters' : 'No refuges registered'}
+              </p>
               <p className="text-xs font-mono mt-1 text-zinc-700">
-                Register the first refuge to begin camp management
+                {isCampFiltering
+                  ? 'Adjust the filter criteria to review registered refuges'
+                  : 'Register the first refuge to begin camp management'}
               </p>
             </div>
           )}

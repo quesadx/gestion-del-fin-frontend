@@ -367,7 +367,7 @@ export default function DashboardOverview() {
 
   if (canReadPeople || tokenMetrics) {
     statCards.push({
-      label: 'Survivors',
+      label: 'Active Survivors',
       value: survivorCount,
       icon: Users,
       color: 'text-blue-500',
@@ -471,10 +471,7 @@ export default function DashboardOverview() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  className={cn(
-                    i < 2 && 'lg:col-span-2',
-                    i === 0 && 'md:col-span-2',
-                  )}
+                  className={cn(i < 2 && 'lg:col-span-2', i === 0 && 'md:col-span-2')}
                 >
                   <BorderGlow
                     backgroundColor="#1b0b0c"
@@ -494,7 +491,9 @@ export default function DashboardOverview() {
                         <stat.icon size={18} />
                       </div>
                       <div>
-                        <p className="text-2xl font-black font-mono tracking-tight">{stat.value ?? 0}</p>
+                        <p className="text-2xl font-black font-mono tracking-tight">
+                          {stat.value ?? 0}
+                        </p>
                         <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">
                           {stat.label}
                         </p>
@@ -506,244 +505,248 @@ export default function DashboardOverview() {
       </div>
 
       <div className="pt-2 space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
-            <h3 className="text-xs font-black uppercase tracking-[0.16em] flex items-center gap-2 text-zinc-400">
-              <Box size={14} className="text-brand-secondary" />
-              Resource Deployment
-            </h3>
-            <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">Live Telemetry</span>
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/60">
+          <h3 className="text-xs font-black uppercase tracking-[0.16em] flex items-center gap-2 text-zinc-400">
+            <Box size={14} className="text-brand-secondary" />
+            Resource Deployment
+          </h3>
+          <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-wider">
+            Live Telemetry
+          </span>
+        </div>
+
+        {!canReadInventory ? (
+          <div className="h-40 flex items-center justify-center text-zinc-600 font-mono text-xs uppercase tracking-widest border border-zinc-900 rounded-xl">
+            Inventory telemetry unavailable for this role.
           </div>
-
-          {!canReadInventory ? (
-            <div className="h-40 flex items-center justify-center text-zinc-600 font-mono text-xs uppercase tracking-widest border border-zinc-900 rounded-xl">
-              Inventory telemetry unavailable for this role.
-            </div>
-          ) : resourcesLoading ? (
-            <div className="space-y-4 animate-pulse">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <div className="lg:col-span-4 bg-surface-raised/30 brutalist-border rounded-xl p-6 min-h-[240px] flex flex-col justify-between">
-                  <Skeleton className="h-4 w-1/4" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-3 w-full" />
-                    <Skeleton className="h-3 w-5/6" />
-                    <Skeleton className="h-3 w-4/5" />
-                  </div>
-                </div>
-                <div className="lg:col-span-1 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-h-[240px]">
-                  <Skeleton className="h-3 w-2/3 mb-3" />
-                  <Skeleton className="h-6 w-1/2" />
+        ) : resourcesLoading ? (
+          <div className="space-y-4 animate-pulse">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+              <div className="lg:col-span-4 bg-surface-raised/30 brutalist-border rounded-xl p-6 min-h-[240px] flex flex-col justify-between">
+                <Skeleton className="h-4 w-1/4" />
+                <div className="space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-5/6" />
+                  <Skeleton className="h-3 w-4/5" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg space-y-3"
-                  >
-                    <div className="flex justify-between">
-                      <Skeleton className="h-3 w-16" />
-                      <Skeleton className="h-2 w-2 rounded-full" />
-                    </div>
-                    <Skeleton className="h-6 w-12" />
-                    <div className="space-y-1">
-                      <Skeleton className="h-2 w-full" />
-                      <Skeleton className="h-1 w-full" />
-                    </div>
-                  </div>
-                ))}
+              <div className="lg:col-span-1 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-h-[240px]">
+                <Skeleton className="h-3 w-2/3 mb-3" />
+                <Skeleton className="h-6 w-1/2" />
               </div>
             </div>
-          ) : !resourceSummaries || resourceSummaries.length === 0 ? (
-            <div className="h-40 flex items-center justify-center text-zinc-600 font-mono text-xs uppercase tracking-widest border border-zinc-900 rounded-xl">
-              No inventory data available for this refuge.
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-                <div className="lg:col-span-4 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-w-0 min-h-[240px]">
-                  <div ref={chartContainerRef} className="w-full h-full min-w-25 min-h-25">
-                    {chartSize.width > 0 && chartSize.height > 0 && (
-                      <BarChart
-                        width={chartSize.width}
-                        height={chartSize.height}
-                        layout="vertical"
-                        data={resourceSummaries}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#1b0b0c" horizontal={false} />
-                        <XAxis type="number" hide />
-                        <YAxis
-                          dataKey="resource_name"
-                          type="category"
-                          axisLine={false}
-                          tickLine={false}
-                          tick={{
-                            fill: '#71717a',
-                            fontSize: 10,
-                            fontWeight: 'bold',
-                          }}
-                        />
-                        <Tooltip
-                          cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                          contentStyle={{
-                            backgroundColor: '#0c0708',
-                            border: '1px solid #2a0f10',
-                            borderRadius: '8px',
-                          }}
-                        />
-                        <Bar dataKey="quantity" radius={[0, 4, 4, 0]} barSize={20}>
-                          {resourceSummaries?.map((entry: InventorySnapshot, index: number) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={
-                                [
-                                  '#ef4444',
-                                  '#f59e0b',
-                                  '#10b981',
-                                  '#3b82f6',
-                                  '#8b5cf6',
-                                  '#ec4899',
-                                  '#06b6d4',
-                                  '#f97316',
-                                  '#14b8a6',
-                                  '#e11d48',
-                                ][index % 10]
-                              }
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg space-y-3"
+                >
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-2 w-2 rounded-full" />
+                  </div>
+                  <Skeleton className="h-6 w-12" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-2 w-full" />
+                    <Skeleton className="h-1 w-full" />
                   </div>
                 </div>
-
-                <div className="lg:col-span-1 bg-surface-raised/30 brutalist-border rounded-xl p-4 flex flex-col justify-between min-h-[240px]">
-                  <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">
-                    Stock Status
-                  </p>
-                  <div className="flex-1 flex flex-col justify-center">
-                    {stockAlertCount === 0 ? (
-                      <div className="flex items-center gap-2 text-emerald-500">
-                        <CheckCircle size={16} />
-                        <span className="text-sm font-bold font-mono">All stocks optimal</span>
-                      </div>
-                    ) : canReadInventory ? (
-                      <div className="space-y-3">
-                        {criticalCount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                            <span className="text-xl font-black font-mono text-red-500">
-                              {criticalCount}
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                              CRITICAL
-                            </span>
-                          </div>
-                        )}
-                        {lowCount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                            <span className="text-xl font-black font-mono text-amber-500">
-                              {lowCount}
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                              LOW
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                        <span className="text-xl font-black font-mono text-red-500">
-                          {stockAlertCount}
-                        </span>
-                        <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                          ALERTS
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {canReadInventory && (
-                    <button
-                      onClick={() => navigate('/inventory')}
-                      className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors mt-3"
+              ))}
+            </div>
+          </div>
+        ) : !resourceSummaries || resourceSummaries.length === 0 ? (
+          <div className="h-40 flex items-center justify-center text-zinc-600 font-mono text-xs uppercase tracking-widest border border-zinc-900 rounded-xl">
+            No inventory data available for this refuge.
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+              <div className="lg:col-span-4 bg-surface-raised/30 brutalist-border rounded-xl p-4 min-w-0 min-h-[240px]">
+                <div ref={chartContainerRef} className="w-full h-full min-w-25 min-h-25">
+                  {chartSize.width > 0 && chartSize.height > 0 && (
+                    <BarChart
+                      width={chartSize.width}
+                      height={chartSize.height}
+                      layout="vertical"
+                      data={resourceSummaries}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
-                      View Details →
-                    </button>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1b0b0c" horizontal={false} />
+                      <XAxis type="number" hide />
+                      <YAxis
+                        dataKey="resource_name"
+                        type="category"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{
+                          fill: '#71717a',
+                          fontSize: 10,
+                          fontWeight: 'bold',
+                        }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                        contentStyle={{
+                          backgroundColor: '#0c0708',
+                          border: '1px solid #2a0f10',
+                          borderRadius: '8px',
+                        }}
+                      />
+                      <Bar dataKey="quantity" radius={[0, 4, 4, 0]} barSize={20}>
+                        {resourceSummaries?.map((entry: InventorySnapshot, index: number) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              [
+                                '#ef4444',
+                                '#f59e0b',
+                                '#10b981',
+                                '#3b82f6',
+                                '#8b5cf6',
+                                '#ec4899',
+                                '#06b6d4',
+                                '#f97316',
+                                '#14b8a6',
+                                '#e11d48',
+                              ][index % 10]
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-4">
-                {resourceSummaries?.map((res: InventorySnapshot) => (
-                  <BorderGlow
-                    key={res.resource_id}
-                    backgroundColor="#1b0b0c"
-                    borderRadius={14}
-                    glowColor={res.status === 'CRITICAL' ? '356 82 60' : '36 88 58'}
-                    glowIntensity={0.55}
-                    glowRadius={20}
-                    edgeSensitivity={18}
-                    coneSpread={18}
-                    animated={false}
-                    className="h-full"
-                  >
-                    <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group h-full hover:border-zinc-700/80 transition-all duration-200">
-                      <div className="flex justify-between items-start mb-2">
-                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-wide">
-                          {res.resource_name}
-                        </p>
-                        <span
-                          className={cn(
-                            'w-2 h-2 rounded-full shrink-0',
-                            res.status === 'CRITICAL'
-                              ? 'bg-red-500 animate-pulse'
-                              : res.status === 'LOW'
-                                ? 'bg-amber-500 animate-pulse'
-                                : 'bg-emerald-500',
-                          )}
-                        />
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-2xl font-black font-mono tracking-tight">
-                          {res.quantity}
-                        </span>
-                        <span className="text-[10px] font-mono text-zinc-600 uppercase">
-                          {res.unit}
-                        </span>
-                      </div>
-                      <div className="mt-3 space-y-1.5">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-[9px] font-bold text-zinc-500 uppercase">Est. Durability</span>
-                          <span
-                            className={cn(
-                              'text-[10px] font-mono font-bold tabular-nums',
-                              (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
-                            )}
-                          >
-                            {res.projection_days != null ? `${res.projection_days}D` : '—'}
+              <div className="lg:col-span-1 bg-surface-raised/30 brutalist-border rounded-xl p-4 flex flex-col justify-between min-h-[240px]">
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">
+                  Stock Status
+                </p>
+                <div className="flex-1 flex flex-col justify-center">
+                  {stockAlertCount === 0 ? (
+                    <div className="flex items-center gap-2 text-emerald-500">
+                      <CheckCircle size={16} />
+                      <span className="text-sm font-bold font-mono">All stocks optimal</span>
+                    </div>
+                  ) : canReadInventory ? (
+                    <div className="space-y-3">
+                      {criticalCount > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                          <span className="text-xl font-black font-mono text-red-500">
+                            {criticalCount}
+                          </span>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            CRITICAL
                           </span>
                         </div>
-                        <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
-                          <div
-                            className={cn(
-                              'h-full rounded-full transition-all duration-300',
-                              (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
-                            )}
-                            style={{
-                              width: `${Math.min((res.projection_days || 0) * 10, 100)}%`,
-                            }}
-                          />
+                      )}
+                      {lowCount > 0 && (
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+                          <span className="text-xl font-black font-mono text-amber-500">
+                            {lowCount}
+                          </span>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                            LOW
+                          </span>
                         </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                      <span className="text-xl font-black font-mono text-red-500">
+                        {stockAlertCount}
+                      </span>
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                        ALERTS
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {canReadInventory && (
+                  <button
+                    onClick={() => navigate('/inventory')}
+                    className="text-[10px] font-black uppercase tracking-wider text-brand-secondary hover:text-amber-400 transition-colors mt-3"
+                  >
+                    View Details →
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-4">
+              {resourceSummaries?.map((res: InventorySnapshot) => (
+                <BorderGlow
+                  key={res.resource_id}
+                  backgroundColor="#1b0b0c"
+                  borderRadius={14}
+                  glowColor={res.status === 'CRITICAL' ? '356 82 60' : '36 88 58'}
+                  glowIntensity={0.55}
+                  glowRadius={20}
+                  edgeSensitivity={18}
+                  coneSpread={18}
+                  animated={false}
+                  className="h-full"
+                >
+                  <div className="p-4 bg-surface-raised/50 border border-zinc-800 rounded-lg flex flex-col justify-between group h-full hover:border-zinc-700/80 transition-all duration-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <p className="text-[10px] font-black text-zinc-400 uppercase tracking-wide">
+                        {res.resource_name}
+                      </p>
+                      <span
+                        className={cn(
+                          'w-2 h-2 rounded-full shrink-0',
+                          res.status === 'CRITICAL'
+                            ? 'bg-red-500 animate-pulse'
+                            : res.status === 'LOW'
+                              ? 'bg-amber-500 animate-pulse'
+                              : 'bg-emerald-500',
+                        )}
+                      />
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-black font-mono tracking-tight">
+                        {res.quantity}
+                      </span>
+                      <span className="text-[10px] font-mono text-zinc-600 uppercase">
+                        {res.unit}
+                      </span>
+                    </div>
+                    <div className="mt-3 space-y-1.5">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-[9px] font-bold text-zinc-500 uppercase">
+                          Est. Durability
+                        </span>
+                        <span
+                          className={cn(
+                            'text-[10px] font-mono font-bold tabular-nums',
+                            (res.projection_days || 0) < 5 ? 'text-red-500' : 'text-zinc-400',
+                          )}
+                        >
+                          {res.projection_days != null ? `${res.projection_days}D` : '—'}
+                        </span>
+                      </div>
+                      <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            'h-full rounded-full transition-all duration-300',
+                            (res.projection_days || 0) < 5 ? 'bg-red-500' : 'bg-zinc-600',
+                          )}
+                          style={{
+                            width: `${Math.min((res.projection_days || 0) * 10, 100)}%`,
+                          }}
+                        />
                       </div>
                     </div>
-                  </BorderGlow>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+                  </div>
+                </BorderGlow>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
