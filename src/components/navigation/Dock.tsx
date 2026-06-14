@@ -7,12 +7,14 @@ export interface DockItemData {
   label: string;
   onClick: () => void;
   className?: string;
+  hasActions?: boolean;
 }
 
 interface DockItemProps {
   icon: ReactNode;
   label: string;
   className?: string;
+  hasActions?: boolean;
   onClick: () => void;
   mouseX: ReturnType<typeof useMotionValue<number>>;
   spring: SpringOptions;
@@ -33,6 +35,7 @@ function DockItem({
   icon,
   label,
   className = '',
+  hasActions = false,
   onClick,
   mouseX,
   spring,
@@ -78,12 +81,14 @@ function DockItem({
       onBlur={() => isHovered.set(0)}
       onClick={onClick}
       onFocusCapture={onFocusRequest}
-      className={`dock-item ${className}`}
-      aria-label={label}
+      className={`dock-item ${hasActions ? 'dock-item-actionable' : ''} ${className}`}
+      aria-label={hasActions ? `${label}. Actions available.` : label}
     >
+      {hasActions && <span className="dock-action-aura" aria-hidden="true" />}
       <span className="dock-icon" aria-hidden="true">
         {icon}
       </span>
+      {hasActions && <span className="dock-action-marker" aria-hidden="true" />}
       <DockLabel isHovered={isHovered}>{label}</DockLabel>
     </motion.button>
   );
@@ -263,6 +268,7 @@ export default function Dock({
             key={`${item.label}-${index}`}
             icon={item.icon}
             label={item.label}
+            hasActions={item.hasActions}
             onClick={item.onClick}
             className={item.className}
             mouseX={mouseX}

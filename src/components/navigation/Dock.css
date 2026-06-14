@@ -51,6 +51,63 @@
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.18);
 }
 
+.dock-item-actionable {
+  border-color: rgba(245, 158, 11, 0.36);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.13), transparent 58%),
+    rgba(37, 23, 26, 0.96);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(245, 158, 11, 0.08),
+    0 0 18px rgba(239, 68, 68, 0.11);
+}
+
+.dock-item-actionable:hover,
+.dock-item-actionable:focus-visible {
+  border-color: rgba(245, 158, 11, 0.62);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    0 0 0 1px rgba(245, 158, 11, 0.16),
+    0 0 22px rgba(245, 158, 11, 0.2),
+    0 0 28px rgba(239, 68, 68, 0.12);
+}
+
+.dock-action-aura {
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  border: 1px solid rgba(245, 158, 11, 0.14);
+  opacity: 0.78;
+  pointer-events: none;
+  animation: dock-action-breathe 2.8s ease-in-out infinite;
+}
+
+.dock-action-marker {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: #f59e0b;
+  box-shadow:
+    0 0 6px rgba(245, 158, 11, 0.72),
+    0 0 10px rgba(239, 68, 68, 0.32);
+  pointer-events: none;
+}
+
+@keyframes dock-action-breathe {
+  0%,
+  100% {
+    opacity: 0.42;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.04);
+  }
+}
+
 @media (pointer: coarse) {
   .dock-item {
     min-width: 44px;
