@@ -27,6 +27,7 @@ import {
   CheckCheck,
   Package,
   UserPlus,
+  Search,
 } from 'lucide-react';
 
 // ── Local types ───────────────────────────────────────────────────────────────
@@ -104,6 +105,15 @@ const STATUS_STEPS: TransferStatus[] = [
 ];
 
 const STATUS_STEP_LABELS = ['PENDING', 'SOURCE\nAPPROVED', 'TARGET\nAPPROVED', 'COMPLETED'];
+const TRANSFER_STATUS_FILTERS: (TransferStatus | 'ALL')[] = [
+  'ALL',
+  'PENDING',
+  'APPROVED_SOURCE',
+  'APPROVED_TARGET',
+  'COMPLETED',
+  'REJECTED',
+];
+const TRANSFER_TYPE_FILTERS: (TransferType | 'ALL')[] = ['ALL', 'RESOURCE', 'PERSON', 'MIXED'];
 const PEOPLE_TRANSFER_STATUSES: PersonStatus[] = ['HEALTHY', 'SICK', 'INJURED', 'AWAY', 'DEAD'];
 const RATION_RESOURCE_TYPE_NAME = 'FOOD_RATION';
 const RATION_PER_PERSON_PER_DAY = 2;
@@ -302,6 +312,9 @@ export default function TransferList() {
   const [rejectError, setRejectError] = useState<string | null>(null);
   const [completionPersonStatus, setCompletionPersonStatus] = useState<PersonStatus>('HEALTHY');
   const [feedback, setFeedback] = useState<TransferFeedback | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TransferStatus | 'ALL'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<TransferType | 'ALL'>('ALL');
 
   // Schedule delivery inline state
   const [isScheduling, setIsScheduling] = useState(false);
@@ -350,9 +363,17 @@ export default function TransferList() {
   });
 
   const transfers = transferPage?.data ?? [];
-  const totalPages = transferPage?.pagination.totalPages ?? 1;
-  const totalRecords = transferPage?.pagination.total ?? transfers.length;
-  const paginatedTransfers = transfers;
+
+  const { data: completeTransfers, isLoading: completeTransfersLoading } = useQuery<Transfer[]>({
+    queryKey: ['transfers', currentCampId, 'complete-list'],
+    queryFn: async () => {
+      const records = await fetchAllPaginated<TransferApiRecord>('/transfers', {
+        camp_id: currentCampId,
+      });
+      return records.map(normalizeTransfer);
+    },
+    enabled: Boolean(currentCampId) && canReadTransfers && canViewCurrentCamp,
+  });
 
   const { data: detail, isLoading: detailLoading } = useQuery<Transfer>({
     queryKey: ['transfer', selectedId],
@@ -380,11 +401,9 @@ export default function TransferList() {
 
   const { data: people } = useQuery<Person[]>({
     queryKey: ['transfer-people', currentCampId],
-    queryFn: async () => {
-      const res = await apiClient.get(`/camps/${currentCampId}/people`);
-      return unwrapList<Person>(res.data);
-    },
-    enabled: !!currentCampId && hasPermission(user?.permissions, 'people.read'),
+    queryFn: () => fetchAllPaginated<Person>(`/camps/${currentCampId}/people`),
+    enabled:
+      !!currentCampId && hasPermission(user?.permissions, 'people.read') && canViewCurrentCamp,
   });
 
   const healthyPeople = useMemo(() => (people ?? []).filter(isHealthy), [people]);
@@ -422,6 +441,46 @@ export default function TransferList() {
     if (!id) return 'Unknown';
     return people?.find((p) => p.id === id)?.full_name ?? `Person #${id}`;
   };
+
+  const normalizedTransferSearch = searchTerm.trim().toLowerCase();
+  const isTransferFiltering =
+    normalizedTransferSearch.length > 0 || statusFilter !== 'ALL' || typeFilter !== 'ALL';
+
+  const transferFilterSource = isTransferFiltering ? (completeTransfers ?? []) : transfers;
+  const filteredTransfers = transferFilterSource.filter((transfer) => {
+    if (statusFilter !== 'ALL' && transfer.status !== statusFilter) return false;
+    if (typeFilter !== 'ALL' && transfer.type !== typeFilter) return false;
+
+    if (!normalizedTransferSearch) return true;
+
+    const searchFields = [
+      `trf-${String(transfer.id).padStart(4, '0')}`,
+      String(transfer.id),
+      transfer.status,
+      transfer.type,
+      transfer.notes ?? '',
+      transfer.requesting_camp_ref?.name ?? getCampName(transfer.requesting_camp),
+      transfer.target_camp_ref?.name ?? getCampName(transfer.target_camp),
+      ...transfer.items.map((item) =>
+        item.item_type === 'RESOURCE'
+          ? getResourceName(item.resource_type_id)
+          : getPersonName(item.person_id, item),
+      ),
+    ];
+
+    return searchFields.some((field) => field.toLowerCase().includes(normalizedTransferSearch));
+  });
+
+  const totalRecords = isTransferFiltering
+    ? filteredTransfers.length
+    : (transferPage?.pagination.total ?? transfers.length);
+  const totalPages = isTransferFiltering
+    ? Math.max(1, Math.ceil(filteredTransfers.length / PAGE_SIZE))
+    : (transferPage?.pagination.totalPages ?? 1);
+  const paginatedTransfers = isTransferFiltering
+    ? filteredTransfers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : transfers;
+  const isTransferListLoading = isLoading || (isTransferFiltering && completeTransfersLoading);
 
   const getErrorMessage = (error: unknown, fallback: string) =>
     error instanceof Error && !(error as { response?: unknown }).response
@@ -823,8 +882,60 @@ export default function TransferList() {
             </span>
           </div>
 
+          <div className="p-3 sm:p-4 border-b border-zinc-900 bg-zinc-950/30 space-y-3 shrink-0">
+            <div className="relative">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+              />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setTransferPage(1);
+                }}
+                placeholder="Filter by camp, manifest, notes, or transfer ID"
+                aria-label="Filter transfers by camp, manifest, notes, or transfer ID"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-9 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono uppercase"
+              />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <select
+                value={statusFilter}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value as TransferStatus | 'ALL');
+                  setTransferPage(1);
+                }}
+                aria-label="Filter transfers by status"
+                className="bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 focus:outline-none focus:border-brand-primary font-mono uppercase"
+              >
+                {TRANSFER_STATUS_FILTERS.map((status) => (
+                  <option key={status} value={status}>
+                    {status === 'ALL' ? 'ALL STATUS' : status.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={typeFilter}
+                onChange={(event) => {
+                  setTypeFilter(event.target.value as TransferType | 'ALL');
+                  setTransferPage(1);
+                }}
+                aria-label="Filter transfers by type"
+                className="bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 focus:outline-none focus:border-brand-primary font-mono uppercase"
+              >
+                {TRANSFER_TYPE_FILTERS.map((type) => (
+                  <option key={type} value={type}>
+                    {type === 'ALL' ? 'ALL TYPES' : type}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
           <div className="flex-1 overflow-auto divide-y divide-zinc-900">
-            {isLoading ? (
+            {isTransferListLoading ? (
               <div className="p-3 sm:p-4">
                 <SkeletonList count={5} />
               </div>
@@ -835,11 +946,13 @@ export default function TransferList() {
                   Camp access unavailable.
                 </p>
               </div>
-            ) : !transfers || transfers.length === 0 ? (
+            ) : paginatedTransfers.length === 0 ? (
               <div className="p-12 text-center space-y-4">
                 <Truck size={48} className="mx-auto text-zinc-800" />
                 <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-                  No transfers on record.
+                  {isTransferFiltering
+                    ? 'No transfers match the current filters.'
+                    : 'No transfers on record.'}
                 </p>
                 {canCreate && currentCampId && canViewCurrentCamp && (
                   <button

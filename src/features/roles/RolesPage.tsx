@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib/api';
+import { apiClient, fetchAllPaginated } from '../../lib/api';
 import { useAuthStore } from '../../store/auth';
 import { hasPermission } from '../../lib/permissions';
 import { Role, Permission } from '../../types';
@@ -134,22 +134,13 @@ export default function RolesPage() {
 
   const { data: roles, isLoading } = useQuery<Role[]>({
     queryKey: ['roles'],
-    queryFn: async () => {
-      const res = await apiClient.get('/roles');
-      return res.data?.data ?? res.data;
-    },
+    queryFn: () => fetchAllPaginated<Role>('/roles'),
     enabled: hasPermission(user?.permissions, 'roles.read'),
   });
 
   const { data: permissions, isLoading: isLoadingPermissions } = useQuery<Permission[]>({
     queryKey: ['permissions', 'role-selector', PERMISSIONS_PAGE_SIZE],
-    queryFn: async () => {
-      const res = await apiClient.get('/permissions', {
-        params: { page: 1, pageSize: PERMISSIONS_PAGE_SIZE },
-      });
-      const body = res.data;
-      return body?.data ?? (Array.isArray(body) ? body : []);
-    },
+    queryFn: () => fetchAllPaginated<Permission>('/permissions', {}, PERMISSIONS_PAGE_SIZE),
     enabled: hasPermission(user?.permissions, 'permissions.read'),
   });
 
