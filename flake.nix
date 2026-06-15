@@ -20,17 +20,49 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
+            # Node
             nodejs
+            pnpm
+
+            # TypeScript
             typescript
             typescript-language-server
+
+            # Calidad de código
             eslint
             prettier
             cspell
-            pnpm
-            chromium
-          ];
 
-          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
+            # Dependencias para Playwright / Chromium
+            glib
+            gtk3
+            cairo
+            pango
+            atk
+
+            dbus
+            alsa-lib
+
+            nss
+            nspr
+
+            fontconfig
+            freetype
+
+            libdrm
+            mesa
+
+            xorg.libX11
+            xorg.libXcomposite
+            xorg.libXcursor
+            xorg.libXdamage
+            xorg.libXext
+            xorg.libXfixes
+            xorg.libXi
+            xorg.libXrandr
+            xorg.libXrender
+            xorg.libxcb
+          ];
 
           shellHook = ''
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
