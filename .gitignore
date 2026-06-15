@@ -6,7 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
-!.env.test.example
 legacy/
 .idea/
 .vscode
@@ -18,10 +17,4 @@ yarn-error.log*
 node_modules/.cache
 .direnv
 .direnv/
-test-results/.last-run.json
-test-results/auth-Authentication-login--14be1-entials-shows-error-message-chromium/error-context.md
 
-# Playwright
-e2e/.auth/
-playwright-report/
-test-results/
