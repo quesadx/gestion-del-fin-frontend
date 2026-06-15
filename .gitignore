@@ -18,3 +18,8 @@ node_modules/.cache
 .direnv
 .direnv/
 
+# Playwright
+playwright-report/
+test-results/
+playwright/.cache/
+
