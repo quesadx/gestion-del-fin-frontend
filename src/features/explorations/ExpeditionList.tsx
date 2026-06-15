@@ -17,6 +17,7 @@ import {
   X,
   Edit2,
   Trash2,
+  Search,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn, formatDate } from '../../lib/utils';
@@ -43,6 +44,14 @@ const MAX_DESTINATION_LENGTH = 255;
 const MAX_RESOURCE_AMOUNT = 9999999999.99;
 
 type ExpeditionStatus = Expedition['status'];
+
+const EXPEDITION_STATUS_FILTERS: (ExpeditionStatus | 'ALL')[] = [
+  'ALL',
+  'PLANNED',
+  'ONGOING',
+  'RETURNED',
+  'CANCELLED',
+];
 
 type PaginationMeta = {
   page: number;
@@ -129,6 +138,8 @@ export default function ExpeditionList() {
   }>({ campId: null, page: 1 });
   const [feedback, setFeedback] = useState<ExpeditionFeedback | null>(null);
   const [fieldErrors, setFieldErrors] = useState<ExpeditionFieldErrors>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ExpeditionStatus | 'ALL'>('ALL');
 
   // --- Create form state ---
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -182,7 +193,49 @@ export default function ExpeditionList() {
   });
 
   const expeditions = expeditionsResponse?.data ?? [];
-  const totalPages = expeditionsResponse?.pagination.totalPages ?? 1;
+
+  const { data: completeExpeditions, isLoading: completeExpeditionsLoading } = useQuery<
+    Expedition[]
+  >({
+    queryKey: ['expeditions', currentCampId, 'complete-list'],
+    queryFn: () => fetchAllPaginated<Expedition>('/expeditions', { camp_id: currentCampId }),
+    enabled: !!currentCampId && canRead && canViewActiveCamp,
+    retry: false,
+  });
+
+  const normalizedExpeditionSearch = searchTerm.trim().toLowerCase();
+  const isExpeditionFiltering = normalizedExpeditionSearch.length > 0 || statusFilter !== 'ALL';
+  const expeditionFilterSource = isExpeditionFiltering ? (completeExpeditions ?? []) : expeditions;
+  const filteredExpeditions = expeditionFilterSource.filter((expedition) => {
+    if (statusFilter !== 'ALL' && expedition.status !== statusFilter) return false;
+    if (!normalizedExpeditionSearch) return true;
+
+    const searchFields = [
+      `ex-${String(expedition.id).padStart(3, '0')}`,
+      String(expedition.id),
+      expedition.status,
+      expedition.destination,
+      expedition.notes ?? '',
+      expedition.departure_date ?? '',
+      expedition.expected_return_date ?? '',
+      expedition.max_return_date ?? '',
+    ];
+
+    return searchFields.some((field) =>
+      String(field).toLowerCase().includes(normalizedExpeditionSearch),
+    );
+  });
+  const totalRecords = isExpeditionFiltering
+    ? filteredExpeditions.length
+    : (expeditionsResponse?.pagination.total ?? expeditions.length);
+  const totalPages = isExpeditionFiltering
+    ? Math.max(1, Math.ceil(filteredExpeditions.length / PAGE_SIZE))
+    : (expeditionsResponse?.pagination.totalPages ?? 1);
+  const visibleExpeditions = isExpeditionFiltering
+    ? filteredExpeditions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+    : expeditions;
+  const isExpeditionListLoading =
+    isLoading || (isExpeditionFiltering && completeExpeditionsLoading);
 
   const { data: resources } = useQuery<{ id: number; name: string; unit: string }[]>({
     queryKey: ['resources'],
@@ -674,6 +727,48 @@ export default function ExpeditionList() {
         )}
       </div>
 
+      {currentCampId && canRead && canViewActiveCamp && (
+        <div className="bg-surface-raised brutalist-border rounded-xl p-3 sm:p-4 space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_220px] gap-3">
+            <div className="relative">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600"
+              />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  handlePageChange(1);
+                }}
+                placeholder="Filter by destination, notes, or mission ID"
+                aria-label="Filter expeditions by destination, notes, or mission ID"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded px-9 py-2 text-xs text-zinc-300 placeholder-zinc-700 focus:outline-none focus:border-brand-primary font-mono uppercase"
+              />
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value as ExpeditionStatus | 'ALL');
+                handlePageChange(1);
+              }}
+              aria-label="Filter expeditions by status"
+              className="bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-[10px] text-zinc-300 focus:outline-none focus:border-brand-primary font-mono uppercase"
+            >
+              {EXPEDITION_STATUS_FILTERS.map((status) => (
+                <option key={status} value={status}>
+                  {status === 'ALL' ? 'ALL STATUS' : status}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-[10px] font-mono text-zinc-600 uppercase">
+            {totalRecords} missions found - page {page}/{totalPages}
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6">
         {!currentCampId ? (
           <div className="py-20 text-center bg-surface-raised brutalist-border rounded-xl">
@@ -696,7 +791,7 @@ export default function ExpeditionList() {
               {getExpeditionErrorMessage(expeditionsError, 'Expeditions could not be loaded.')}
             </p>
           </div>
-        ) : isLoading ? (
+        ) : isExpeditionListLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
@@ -715,15 +810,17 @@ export default function ExpeditionList() {
               </div>
             </div>
           ))
-        ) : expeditions.length === 0 ? (
+        ) : visibleExpeditions.length === 0 ? (
           <div className="py-20 text-center bg-surface-raised brutalist-border rounded-xl">
             <Map size={48} className="mx-auto text-zinc-800 mb-4" />
             <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">
-              No expeditions registered for this refuge.
+              {isExpeditionFiltering
+                ? 'No expeditions match the current filters.'
+                : 'No expeditions registered for this refuge.'}
             </p>
           </div>
         ) : (
-          expeditions.map((exp, i) => (
+          visibleExpeditions.map((exp, i) => (
             <motion.div
               key={exp.id}
               initial={{ opacity: 0, x: -20 }}

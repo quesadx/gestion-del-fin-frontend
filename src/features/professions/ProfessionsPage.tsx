@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib/api';
+import { apiClient, fetchAllPaginated } from '../../lib/api';
 import { useAuthStore } from '../../store';
 import { hasPermission } from '../../lib/permissions';
 import { Profession } from '../../types';
@@ -126,10 +126,12 @@ export default function ProfessionsPage() {
   const { data: professionsResponse, isLoading } = useQuery<ProfessionsResponse>({
     queryKey: ['professions', 'list', API_LIST_PAGE_SIZE],
     queryFn: async () => {
-      const res = await apiClient.get('/professions', {
-        params: { page: 1, pageSize: API_LIST_PAGE_SIZE },
-      });
-      return normalizeProfessionsResponse(res.data, 1);
+      const professions = await fetchAllPaginated<Profession>(
+        '/professions',
+        {},
+        API_LIST_PAGE_SIZE,
+      );
+      return normalizeProfessionsResponse(professions, 1);
     },
     enabled: hasPermission(user?.permissions, 'professions.read'),
   });

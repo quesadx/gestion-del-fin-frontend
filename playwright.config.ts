@@ -1,40 +1,27 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './e2e',
-  timeout: 30_000,
-  expect: { timeout: 10_000 },
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
+  testDir: './tests/e2e',
+  timeout: 30000,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['junit', { outputFile: 'test-results/e2e-junit-results.xml' }],
-  ],
   use: {
-    baseURL: process.env.TEST_BASE_URL || 'http://localhost:3000',
+    baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
   projects: [
     {
-      name: 'setup',
-      testMatch: /.*\.setup\.ts/,
-    },
-    {
       name: 'chromium',
       use: {
-        ...devices['Desktop Chrome'],
-        storageState: 'e2e/.auth/user.json',
+        browserName: 'chromium',
       },
-      dependencies: ['setup'],
     },
   ],
   webServer: {
-    command: 'pnpm run dev',
+    command: 'pnpm dev',
     url: 'http://localhost:3000',
+    timeout: 120000,
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
   },
 });

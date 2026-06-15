@@ -32,7 +32,6 @@ import { getApiErrorMessage } from '../../lib/apiErrors';
 import { ActionFeedbackDialog, ActionFeedbackType } from '../../components/ActionFeedbackDialog';
 
 const PAGE_SIZE = 20;
-const SEARCH_PAGE_SIZE = 100;
 const RATION_RESOURCE_TYPE_NAME = 'FOOD_RATION';
 const RATIONS_PER_PERSON_FOR_TRAVEL = 6;
 
@@ -227,19 +226,17 @@ export default function PopulationRoster() {
     enabled: !!currentCampId && canRead,
   });
 
-  const { data: searchableSurvivors } = useQuery<Person[]>({
-    queryKey: ['people', currentCampId, 'searchable-list', SEARCH_PAGE_SIZE],
+  const { data: completeSurvivors, isLoading: completeSurvivorsLoading } = useQuery<Person[]>({
+    queryKey: ['people', currentCampId, 'complete-list'],
     queryFn: async () => {
-      const res = await apiClient.get(`/camps/${currentCampId}/people`, {
-        params: { page: 1, pageSize: SEARCH_PAGE_SIZE },
-      });
-      return normalizePeopleResponse(res.data, 1).data;
+      const records = await fetchAllPaginated<RawPerson>(`/camps/${currentCampId}/people`);
+      return records.map(flattenPerson);
     },
     enabled: !!currentCampId && canRead,
   });
 
   const survivors = peopleResponse?.data ?? [];
-  const allSurvivors = searchableSurvivors ?? survivors;
+  const allSurvivors = completeSurvivors ?? survivors;
 
   const { data: professions } = useQuery<{ id: number; name: string }[]>({
     queryKey: ['professions'],
@@ -362,6 +359,7 @@ export default function PopulationRoster() {
 
   const normalizedSearch = search.trim().toLowerCase();
   const isFiltering = normalizedSearch.length > 0 || statusFilter !== 'ALL';
+  const isRosterLoading = isLoading || (isFiltering && completeSurvivorsLoading);
   const visibleSource = isFiltering ? allSurvivors : survivors;
   const filteredSurvivors = visibleSource.filter((s: Person) => {
     const nameMatch = s.full_name.toLowerCase().includes(normalizedSearch);
@@ -387,7 +385,12 @@ export default function PopulationRoster() {
   const personnelCount = isFiltering
     ? filteredSurvivors.length
     : (peopleResponse?.pagination.total ?? survivors.length);
-  const personnelCountLabel = isFiltering ? 'Matching personnel' : 'Total personnel';
+  const personnelCountLabel = isFiltering ? 'Matching records' : 'Total records';
+  const totalRosterCount = peopleResponse?.pagination.total ?? allSurvivors.length;
+  const activeSurvivorCount = allSurvivors.filter(
+    (person) => normalizePersonStatus(person.status) !== 'DEAD',
+  ).length;
+  const activeSurvivorLabel = completeSurvivors ? activeSurvivorCount : 'Syncing';
 
   return (
     <div className="space-y-6 relative">
@@ -530,7 +533,7 @@ export default function PopulationRoster() {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-900">
-            {isLoading ? (
+            {isRosterLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i} className="animate-pulse">
                   <td className="px-6 py-4">
@@ -1061,7 +1064,8 @@ export default function PopulationRoster() {
       <div className="pt-4 flex items-center justify-between">
         <p className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">
           {personnelCountLabel}: {personnelCount} · Showing {paginatedSurvivors.length} on page{' '}
-          {currentPage} of {totalPages}
+          {currentPage} of {totalPages} - Active survivors: {activeSurvivorLabel} - Total records:{' '}
+          {totalRosterCount}
         </p>
         <Pagination page={currentPage} totalPages={totalPages} onPageChange={setPage} />
       </div>

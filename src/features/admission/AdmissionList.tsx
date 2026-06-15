@@ -69,6 +69,13 @@ const getAdmissionDecisionSource = (
 ): AdmissionDecisionSource => {
   if (admission?.admitted_by?.toString().toUpperCase() === 'AI') return 'AI';
   if (admission?.reviewed_by != null || admission?.reviewed_at) return 'MANUAL';
+  if (
+    getAdmissionDecisionStatus(admission) === 'ACCEPTED' &&
+    admission?.person_id != null &&
+    admission?.ai_decision?.toString().toUpperCase() === 'ACCEPTED'
+  ) {
+    return 'AI';
+  }
   return 'PENDING';
 };
 
@@ -107,6 +114,9 @@ const getAdmissionDecisionSourceMeta = (admission?: Partial<Admission> | null) =
 const isArchivedCorrectedIntake = (admission: Partial<Admission>) =>
   getAdmissionDecisionStatus(admission) === 'REJECTED' &&
   admission.correction_reason === CORRECTED_INTAKE_ARCHIVE_REASON;
+
+const admissionCreatedRosterRecord = (admission?: Partial<Admission> | null) =>
+  admission?.person_id != null || getAdmissionDecisionStatus(admission) === 'ACCEPTED';
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   const apiError = error as {
@@ -164,6 +174,14 @@ export default function AdmissionList() {
   const { currentCampId } = useCampStore();
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
+
+  const invalidatePopulationConsumers = () => {
+    queryClient.invalidateQueries({ queryKey: ['people'] });
+    queryClient.invalidateQueries({ queryKey: ['camp-people'] });
+    queryClient.invalidateQueries({ queryKey: ['expedition-people'] });
+    queryClient.invalidateQueries({ queryKey: ['transfer-people'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-metrics'] });
+  };
 
   const canReevaluate =
     hasPermission(user?.permissions, 'admission.create') &&
@@ -299,9 +317,12 @@ export default function AdmissionList() {
       });
       return { admission: res.data as Admission, decision, applicantName };
     },
-    onSuccess: ({ decision, applicantName }) => {
+    onSuccess: ({ admission, decision, applicantName }) => {
       queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
-      queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['admission-details'] });
+      if (decision === 'ACCEPTED' || admissionCreatedRosterRecord(admission)) {
+        invalidatePopulationConsumers();
+      }
       setSelectedAdmissionId(null);
       setFeedback(
         decision === 'ACCEPTED'
@@ -344,8 +365,9 @@ export default function AdmissionList() {
       queryClient.invalidateQueries({
         queryKey: ['admissions', currentCampId],
       });
-      if (getAdmissionDecisionSource(admission) === 'AI') {
-        queryClient.invalidateQueries({ queryKey: ['people'] });
+      queryClient.invalidateQueries({ queryKey: ['admission-details'] });
+      if (admissionCreatedRosterRecord(admission)) {
+        invalidatePopulationConsumers();
       }
       setIsCreateModalOpen(false);
       setCreateFormError(null);
@@ -399,6 +421,10 @@ export default function AdmissionList() {
     },
     onSuccess: (admission: Admission) => {
       queryClient.invalidateQueries({ queryKey: ['admissions', currentCampId] });
+      queryClient.invalidateQueries({ queryKey: ['admission-details'] });
+      if (admissionCreatedRosterRecord(admission)) {
+        invalidatePopulationConsumers();
+      }
       setIsCorrectModalOpen(false);
       setCorrectFormError(null);
       setSelectedAdmissionId(null);

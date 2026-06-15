@@ -13,6 +13,8 @@
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
     "preview": "vite preview",
+    "test": "playwright test",
+    "test:e2e": "playwright test",
     "clean": "rm -rf dist",
     "format": "prettier --write src/",
     "format:check": "prettier --check src/",
@@ -20,11 +22,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "spell": "cspell src/",
-    "check": "pnpm run lint && pnpm run spell && pnpm run build",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug",
-    "test:e2e:headed": "playwright test --headed"
+    "check": "pnpm run lint && pnpm run spell && pnpm run build"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

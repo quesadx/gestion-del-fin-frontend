@@ -28,6 +28,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCallback } from 'react';
 import { useServerTime } from '../hooks/useServerTime';
 import { hasPermission, canAccessCamp } from '../lib/permissions';
+import { Perm } from '../lib/permissionMap';
 import { useDeniedPermissionsStore } from '../store/deniedPermissions';
 import { motion, AnimatePresence } from 'motion/react';
 import Dock, { type DockItemData } from '../components/navigation/Dock';
@@ -150,6 +151,49 @@ const NAV_PERMISSIONS: Record<string, string> = {
   '/users': 'users.read',
   '/roles': 'roles.read',
   '/permissions': 'permissions.read',
+};
+
+const NAV_ACTION_PERMISSIONS: Record<string, readonly string[]> = {
+  '/dashboard': [],
+  '/population': [
+    Perm.PEOPLE_CREATE,
+    Perm.PEOPLE_UPDATE,
+    Perm.PEOPLE_DELETE,
+    Perm.PEOPLE_STATUS_LOG_CREATE,
+    Perm.PEOPLE_PROFESSION_REASSIGN_CREATE,
+    Perm.PEOPLE_CONTRIBUTION_OVERRIDE_CREATE,
+  ],
+  '/inventory': [
+    Perm.INVENTORY_ADJUST,
+    Perm.INVENTORY_ADJUSTMENT_REQUESTS_CREATE,
+    Perm.INVENTORY_ADJUSTMENT_REQUESTS_REVIEW,
+  ],
+  '/rations': [
+    Perm.INVENTORY_ADJUST,
+    Perm.INVENTORY_ADJUSTMENT_REQUESTS_CREATE,
+    Perm.INVENTORY_ADJUSTMENT_REQUESTS_REVIEW,
+  ],
+  '/admission': [Perm.ADMISSION_CREATE, Perm.ADMISSION_REVIEW],
+  '/expeditions': [
+    Perm.EXPEDITIONS_CREATE,
+    Perm.EXPEDITIONS_UPDATE,
+    Perm.EXPEDITIONS_UPDATE_STATUS,
+    Perm.EXPEDITIONS_DELETE,
+  ],
+  '/transfers': [
+    Perm.TRANSFERS_CREATE,
+    Perm.TRANSFERS_APPROVE_SOURCE,
+    Perm.TRANSFERS_APPROVE_TARGET,
+    Perm.TRANSFERS_SCHEDULE,
+    Perm.TRANSFERS_COMPLETE,
+    Perm.TRANSFERS_REJECT,
+  ],
+  '/camps': [Perm.CAMPS_CREATE, Perm.CAMPS_UPDATE, Perm.CAMPS_DELETE],
+  '/resources': [Perm.RESOURCES_CREATE, Perm.RESOURCES_UPDATE, Perm.RESOURCES_DELETE],
+  '/professions': [Perm.PROFESSIONS_CREATE, Perm.PROFESSIONS_UPDATE, Perm.PROFESSIONS_DELETE],
+  '/users': [Perm.USERS_CREATE, Perm.USERS_UPDATE, Perm.USERS_DELETE],
+  '/roles': [Perm.ROLES_CREATE, Perm.ROLES_UPDATE, Perm.ROLES_DELETE],
+  '/permissions': [Perm.PERMISSIONS_CREATE, Perm.PERMISSIONS_UPDATE, Perm.PERMISSIONS_DELETE],
 };
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -426,6 +470,9 @@ export default function DashboardLayout() {
     const isActive = location.pathname === item.to || location.pathname.startsWith(`${item.to}/`);
     const showInventoryAlert =
       item.to === '/inventory' && (inventoryAlerts?.criticalCount ?? 0) > 0;
+    const hasActions = (NAV_ACTION_PERMISSIONS[item.to] ?? []).some((permission) =>
+      hasPermission(user?.permissions, permission),
+    );
 
     return {
       icon: (
@@ -437,10 +484,16 @@ export default function DashboardLayout() {
         </div>
       ),
       label: item.label,
+      hasActions,
       onClick: () => navigate(item.to),
-      className: isActive
-        ? 'bg-brand-primary/10 border-brand-primary/30 text-brand-primary shadow-[0_0_12px_rgba(239,68,68,0.18)]'
-        : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/70',
+      className: [
+        isActive
+          ? 'bg-brand-primary/10 border-brand-primary/30 text-brand-primary shadow-[0_0_12px_rgba(239,68,68,0.18)]'
+          : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/70',
+        hasActions && !isActive ? 'text-amber-300/90 hover:text-amber-200' : '',
+      ]
+        .filter(Boolean)
+        .join(' '),
     };
   });
 
