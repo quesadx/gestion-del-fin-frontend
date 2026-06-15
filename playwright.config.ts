@@ -4,9 +4,9 @@ export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30000,
   retries: process.env.CI ? 2 : 0,
-  trace: 'on-first-retry',
   use: {
     baseURL: 'http://localhost:3000',
+    trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
